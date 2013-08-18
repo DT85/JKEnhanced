@@ -41,6 +41,7 @@ extern qboolean WP_SaberBladeUseSecondBladeStyle( saberInfo_t *saber, int bladeN
 extern void WP_SaberSwingSound( gentity_t *ent, int saberNum, swingType_t swingType );
 
 extern vmCvar_t	cg_debugHealthBars;
+
 /*
 
 player entities generate a great deal of information from implicit ques
@@ -5626,6 +5627,9 @@ static void CG_RGBForSaberColor( saber_colors_t color, vec3_t rgb )
 		case SABER_PURPLE:
 			VectorSet( rgb, 0.9f, 0.2f, 1.0f );
 			break;
+		default://SABER_RGB
+			VectorSet( rgb, ((color) & 0xff)/255.0f, ((color >> 8) & 0xff)/255.0f, ((color >> 16) & 0xff)/255.0f );
+			break;
 	}
 }
 
@@ -5785,6 +5789,10 @@ static void CG_DoSaber( vec3_t origin, vec3_t dir, float length, float lengthMax
 			glow = cgs.media.purpleSaberGlowShader;
 			blade = cgs.media.purpleSaberCoreShader;
 			break;
+		default://SABER_RGB
+			glow = cgs.media.rgbSaberGlowShader;
+			blade = cgs.media.rgbSaberCoreShader;
+			break;
 	}
 
 	// always add a light because sabers cast a nice glow before they slice you in half!!  or something...
@@ -5825,6 +5833,13 @@ static void CG_DoSaber( vec3_t origin, vec3_t dir, float length, float lengthMax
 	saber.customShader = glow;
 	saber.shaderRGBA[0] = saber.shaderRGBA[1] = saber.shaderRGBA[2] = saber.shaderRGBA[3] = 0xff;
 	saber.renderfx = rfx;
+	
+	if (color >= SABER_RGB)
+	{
+		saber.shaderRGBA[0] = ((color) & 0xff);
+		saber.shaderRGBA[1] = ((color >> 8) & 0xff);
+		saber.shaderRGBA[2] = ((color >> 16) & 0xff);
+	}
 
 	cgi_R_AddRefEntityToScene( &saber );
 
@@ -6616,6 +6631,12 @@ Ghoul2 Insert End
 						case SABER_PURPLE:
 							VectorSet( rgb1, 220.0f, 0.0f, 255.0f );
 							break;
+						default://SABER_RGB
+							VectorSet( rgb1, ((client->ps.saber[saberNum].blade[bladeNum].color) & 0xff),
+									  ((client->ps.saber[saberNum].blade[bladeNum].color >> 8) & 0xff),
+									  ((client->ps.saber[saberNum].blade[bladeNum].color >> 16) & 0xff) );
+							break;
+
 					}
 				}
 

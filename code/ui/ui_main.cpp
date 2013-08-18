@@ -381,7 +381,15 @@ vmCvar_t	ui_char_color_green;
 vmCvar_t	ui_char_color_blue;
 vmCvar_t	ui_PrecacheModels;
 
-static cvarTable_t cvarTable[] =
+vmCvar_t	ui_rgb_saber_red;
+vmCvar_t	ui_rgb_saber_green;
+vmCvar_t	ui_rgb_saber_blue;
+
+vmCvar_t	ui_rgb_saber2_red;
+vmCvar_t	ui_rgb_saber2_green;
+vmCvar_t	ui_rgb_saber2_blue;
+
+static cvarTable_t cvarTable[] = 
 {
 	{ &ui_menuFiles,			"ui_menuFiles",			"ui/menus.txt", CVAR_ARCHIVE },
 #ifdef JK2_MODE
@@ -408,6 +416,13 @@ static cvarTable_t cvarTable[] =
 	{ &ui_char_color_blue,		"ui_char_color_blue",	"", 0},
 
 	{ &ui_PrecacheModels,		"ui_PrecacheModels",	"1", CVAR_ARCHIVE},
+	
+	{ &ui_rgb_saber_red,		"ui_rgb_saber_red",	"", 0},
+	{ &ui_rgb_saber_blue,		"ui_rgb_saber_blue",	"", 0},
+	{ &ui_rgb_saber_green,		"ui_rgb_saber_green",	"", 0},
+	{ &ui_rgb_saber2_red,		"ui_rgb_saber2_red",	"", 0},
+	{ &ui_rgb_saber2_blue,		"ui_rgb_saber2_blue",	"", 0},
+	{ &ui_rgb_saber2_green,		"ui_rgb_saber2_green",	"", 0},
 };
 
 #define FP_UPDATED_NONE -1
@@ -4290,6 +4305,8 @@ static void UI_GetCharacterCvars ( void )
 	}
 }
 
+extern saber_colors_t TranslateSaberColor( const char *name );
+
 static void UI_UpdateSaberCvars ( void )
 {
 	Cvar_Set ( "g_saber_type", Cvar_VariableString ( "ui_saber_type" ) );
@@ -4297,6 +4314,25 @@ static void UI_UpdateSaberCvars ( void )
 	Cvar_Set ( "g_saber2", Cvar_VariableString ( "ui_saber2" ) );
 	Cvar_Set ( "g_saber_color", Cvar_VariableString ( "ui_saber_color" ) );
 	Cvar_Set ( "g_saber2_color", Cvar_VariableString ( "ui_saber2_color" ) );
+	
+	if (TranslateSaberColor(Cvar_VariableString("ui_saber_color")) >= SABER_RGB)
+	{
+		char rgbColor[8];
+		Com_sprintf(rgbColor, 8, "x%02x%02x%02x", Cvar_VariableIntegerValue("ui_rgb_saber_red"),
+					(Cvar_VariableIntegerValue("ui_rgb_saber_green")),
+					(Cvar_VariableIntegerValue("ui_rgb_saber_blue")));
+		Cvar_Set( "g_saber_color", rgbColor );
+	}
+	
+	if (TranslateSaberColor(Cvar_VariableString("ui_saber2_color")) >= SABER_RGB)
+	{
+		char rgbColor[8];
+		Com_sprintf(rgbColor, 8, "x%02x%02x%02x", Cvar_VariableIntegerValue("ui_rgb_saber2_red"),
+					(Cvar_VariableIntegerValue("ui_rgb_saber2_green")),
+					(Cvar_VariableIntegerValue("ui_rgb_saber2_blue")));
+		Cvar_Set( "g_saber2_color", rgbColor );
+	}
+
 }
 
 #ifndef JK2_MODE
@@ -6120,7 +6156,28 @@ static void UI_GetSaberCvars ( void )
 	Cvar_Set ( "ui_saber2", Cvar_VariableString ( "g_saber2" ) );
 	Cvar_Set ( "ui_saber_color", Cvar_VariableString ( "g_saber_color" ) );
 	Cvar_Set ( "ui_saber2_color", Cvar_VariableString ( "g_saber2_color" ) );
-
+	Cvar_Set ( "ui_saber2_color", Cvar_VariableString ( "g_saber2_color" ) );
+	
+	saber_colors_t saberColour = TranslateSaberColor(Cvar_VariableString( "ui_saber_color" ));
+	
+	if (saberColour >= SABER_RGB)
+	{
+		
+		Cvar_SetValue ( "ui_rgb_saber_red", (saberColour & 0xff) );
+		Cvar_SetValue ( "ui_rgb_saber_green", ((saberColour >> 8) & 0xff) );
+		Cvar_SetValue ( "ui_rgb_saber_blue", ((saberColour >> 16) & 0xff) );
+	}
+	
+	saber_colors_t saber2Colour = TranslateSaberColor(Cvar_VariableString( "ui_saber2_color" ));
+	
+	if (saber2Colour >= SABER_RGB)
+	{
+		
+		Cvar_SetValue ( "ui_rgb_saber2_red", (saber2Colour & 0xff) );
+		Cvar_SetValue ( "ui_rgb_saber2_green", ((saber2Colour >> 8) & 0xff) );
+		Cvar_SetValue ( "ui_rgb_saber2_blue", ((saber2Colour >> 16) & 0xff) );
+	}
+	
 	Cvar_Set ( "ui_newfightingstyle", "0");
 
 }
