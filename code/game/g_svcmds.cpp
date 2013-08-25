@@ -30,6 +30,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 extern void G_NextTestAxes( void );
 extern void G_ChangePlayerModel( gentity_t *ent, const char *newModel );
+extern void G_ChangeHeadModel( gentity_t *ent, const char *newModel );
 extern void G_InitPlayerFromCvars( gentity_t *ent );
 extern void Q3_SetViewEntity(int entID, const char *name);
 extern qboolean G_ClearViewEntity( gentity_t *ent );
@@ -885,6 +886,25 @@ static void Svcmd_Difficulty_f(void)
 	}
 }
 
+static void Svcmd_HeadPlayerModel_f(void)
+{
+    if ( gi.argc() == 2 )
+    {
+        //this is debug type option!
+        G_ChangeHeadModel(&g_entities[0], gi.argv(1));
+    }
+    else if ( gi.argc() == 3 )
+    {
+        gi.cvar_set("g_char_head_model", gi.argv(1) );
+        gi.cvar_set("g_char_head_skin", gi.argv(2) );
+        G_InitPlayerFromCvars( &g_entities[0] );
+    }
+    else
+    {
+        gi.Printf( S_COLOR_RED"USAGE: headPlayerModel <g2model> <skin>" );
+    }
+}
+
 #define CMD_NONE				(0x00000000u)
 #define CMD_CHEAT				(0x00000001u)
 #define CMD_ALIVE				(0x00000002u)
@@ -952,6 +972,8 @@ static svcmd_t svcmds[] = {
 	
 	{ "secrets",					Svcmd_Secrets_f,							CMD_NONE },
 	{ "difficulty",					Svcmd_Difficulty_f,							CMD_NONE },
+    
+    { "headPlayerModel",            Svcmd_HeadPlayerModel_f,                    CMD_NONE },
 	
 	//{ "say",						Svcmd_Say_f,						qtrue },
 	//{ "toggleallowvote",			Svcmd_ToggleAllowVote_f,			qfalse },

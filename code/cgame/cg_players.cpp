@@ -135,7 +135,7 @@ qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *headModelName
 static void CG_PlayerFootsteps( centity_t *const cent, footstepType_t footStepType );
 static void CG_PlayerAnimEvents( int animFileIndex, qboolean torso, int oldFrame, int frame, int entNum );
 extern void BG_G2SetBoneAngles( centity_t *cent, gentity_t *gent, int boneIndex, const vec3_t angles, const int flags,
-							 const Eorientations up, const Eorientations left, const Eorientations forward, qhandle_t *modelList );
+							 const Eorientations up, const Eorientations left, const Eorientations forward, qhandle_t *modelList, qboolean isHead = qfalse );
 extern void FX_BorgDeathSparkParticles( vec3_t origin, vec3_t angles, vec3_t vel, vec3_t user );
 extern qboolean PM_SaberInSpecialAttack( int anim );
 extern qboolean PM_SaberInAttack( int move );
@@ -2201,8 +2201,13 @@ static void CG_G2ClientSpineAngles( centity_t *cent, vec3_t viewAngles, const ve
 	}
 	else
 	{
-		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->upperLumbarBone, ulAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw);
+		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->upperLumbarBone, ulAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw); 
 		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->lowerLumbarBone, llAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw);
+		if (cent->gent->headModel > 0)
+		{
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headUpperLumbarBone, ulAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue);
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headLowerLumbarBone, llAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue);
+		}
 	}
 }
 
@@ -2402,8 +2407,15 @@ static void CG_G2ClientNeckAngles( centity_t *cent, const vec3_t lookAngles, vec
 	else
 	{
 		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->craniumBone, headAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw );
-		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->cervicalBone, neckAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw);
+		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->cervicalBone, neckAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw); 
 		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->thoracicBone, thoracicAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw);
+		
+		if (cent->gent->headModel > 0)
+		{
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headCraniumBone, headAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue );
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headCervicalBone, neckAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue);
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headThoracicBone, thoracicAngles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue);
+		}
 	}
 }
 
@@ -2509,14 +2521,27 @@ static void CG_G2PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t angles )
 		cent->lerpAngles[PITCH] = cent->lerpAngles[ROLL] = 0;
 		VectorCopy( cent->lerpAngles, angles );
 
-		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->craniumBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw );
-		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->cervicalBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw );
+		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->craniumBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw ); 
+		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->cervicalBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw ); 
 		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->thoracicBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw );
+		
+		if ( cent->gent->headModel > 0)
+		{
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headCraniumBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue );
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headCervicalBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue );
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headThoracicBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue );
+		}
 
 		cent->pe.torso.pitchAngle = 0;
 		cent->pe.torso.yawAngle = 0;
-		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->upperLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw );
+		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->upperLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw ); 
 		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->lowerLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw );
+		
+		if (cent->gent->headModel > 0)
+		{
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headUpperLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue );
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headLowerLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw , qtrue);
+		}
 
 		cent->pe.legs.pitchAngle = angles[0];
 		cent->pe.legs.yawAngle = angles[1];
@@ -2534,6 +2559,11 @@ static void CG_G2PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t angles )
 		{
 			gi.G2API_StopBoneAnimIndex( &cent->gent->ghoul2[cent->gent->playerModel], cent->gent->hipsBone );
 		}
+		
+		if ( cent->gent->headModel > 0 && cent->gent->headHipsBone != -1)
+		{
+			gi.G2API_StopBoneAnimIndex( &cent->gent->ghoul2[cent->gent->headModel], cent->gent->headHipsBone );
+		}
 
 		VectorCopy( cent->lerpAngles, angles );
 
@@ -2541,10 +2571,23 @@ static void CG_G2PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t angles )
 		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->cervicalBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw );
 		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->thoracicBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw );
 
+		if ( cent->gent->headModel > 0)
+		{
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headCraniumBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue );
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headCervicalBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue );
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headThoracicBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue );
+		}
+
 		cent->pe.torso.pitchAngle = 0;
 		cent->pe.torso.yawAngle = 0;
-		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->upperLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw );
+		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->upperLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw ); 
 		BG_G2SetBoneAngles( cent, cent->gent, cent->gent->lowerLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw );
+		
+		if (cent->gent->headModel > 0)
+		{
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headUpperLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue );
+			BG_G2SetBoneAngles( cent, cent->gent, cent->gent->headLowerLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, cgs.model_draw, qtrue );
+		}
 
 		cent->pe.legs.pitchAngle = angles[0];
 		cent->pe.legs.yawAngle = angles[1];
@@ -2685,6 +2728,10 @@ static void CG_G2PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t angles )
 				if ( angles[YAW] == cent->pe.legs.yawAngle )
 				{
 					gi.G2API_StopBoneAnimIndex( &cent->gent->ghoul2[cent->gent->playerModel], cent->gent->hipsBone );
+					if ( cent->gent->headModel > 0 && cent->gent->headHipsBone >= 0 )
+					{
+						gi.G2API_StopBoneAnimIndex( &cent->gent->ghoul2[cent->gent->headModel], cent->gent->headHipsBone );
+					}
 				}
 				else if ( VectorCompare( vec3_origin, cent->gent->client->ps.velocity ) )
 				{//FIXME: because of LegsYawFromMovement, we play the turnAnims when we stop running, which looks really bad.
@@ -2700,16 +2747,30 @@ static void CG_G2PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t angles )
 							gi.G2API_SetBoneAnimIndex( &cent->gent->ghoul2[cent->gent->playerModel], cent->gent->hipsBone,
 								animations[turnAnim].firstFrame, animations[turnAnim].firstFrame+animations[turnAnim].numFrames,
 								BONE_ANIM_OVERRIDE_LOOP/*|BONE_ANIM_OVERRIDE_FREEZE|BONE_ANIM_BLEND*/, animSpeed, cg.time, -1, 100 );
+							if ( cent->gent->headModel > 0 && cent->gent->headHipsBone >= 0 )
+							{
+								gi.G2API_SetBoneAnimIndex( &cent->gent->ghoul2[cent->gent->headModel], cent->gent->headHipsBone,
+														  animations[turnAnim].firstFrame, animations[turnAnim].firstFrame+animations[turnAnim].numFrames,
+														  BONE_ANIM_OVERRIDE_LOOP/*|BONE_ANIM_OVERRIDE_FREEZE|BONE_ANIM_BLEND*/, animSpeed, cg.time, -1, 100 );
+							}
 						}
 					}
 					else
 					{
 						gi.G2API_StopBoneAnimIndex( &cent->gent->ghoul2[cent->gent->playerModel], cent->gent->hipsBone );
+						if ( cent->gent->headModel > 0 && cent->gent->headHipsBone >= 0 )
+						{
+							gi.G2API_StopBoneAnimIndex( &cent->gent->ghoul2[cent->gent->headModel], cent->gent->headHipsBone );
+						}
 					}
 				}
 				else
 				{
 					gi.G2API_StopBoneAnimIndex( &cent->gent->ghoul2[cent->gent->playerModel], cent->gent->hipsBone );
+					if ( cent->gent->headModel > 0 && cent->gent->headHipsBone >= 0 )
+					{
+						gi.G2API_StopBoneAnimIndex( &cent->gent->ghoul2[cent->gent->headModel], cent->gent->headHipsBone );
+					}
 				}
 			}
 
@@ -5062,7 +5123,7 @@ static void CG_G2SetHeadBlink( centity_t *cent, qboolean bStart )
 	{
 		return;
 	}
-
+	
 	vec3_t	desiredAngles = {0};
 	int blendTime = 80;
 	qboolean bWink = qfalse;
@@ -5078,6 +5139,17 @@ static void CG_G2SetHeadBlink( centity_t *cent, qboolean bStart )
 	}
 	gi.G2API_SetBoneAnglesIndex( &gent->ghoul2[gent->playerModel], hLeye, desiredAngles,
 		BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, blendTime, cg.time );
+	
+	if (gent->headModel > 0)
+	{
+		const int headLeye = gi.G2API_GetBoneIndex( &gent->ghoul2[gent->headModel], "leye", qtrue );
+		if (headLeye != -1)
+		{
+			gi.G2API_SetBoneAnglesIndex( &gent->ghoul2[gent->headModel], headLeye, desiredAngles,
+										BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, blendTime, cg.time );
+		}
+	}
+
 	const int hReye = gi.G2API_GetBoneIndex( &gent->ghoul2[0], "reye", qtrue );
 	if (hReye == -1)
 	{
@@ -5085,8 +5157,20 @@ static void CG_G2SetHeadBlink( centity_t *cent, qboolean bStart )
 	}
 
 	if (!bWink)
-	gi.G2API_SetBoneAnglesIndex( &gent->ghoul2[gent->playerModel], hReye, desiredAngles,
+	{
+		gi.G2API_SetBoneAnglesIndex( &gent->ghoul2[gent->playerModel], hReye, desiredAngles,
 		BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, blendTime, cg.time );
+		
+		if (gent->headModel > 0)
+		{
+			const int headReye = gi.G2API_GetBoneIndex( &gent->ghoul2[gent->headModel], "reye", qtrue );
+			if (headReye != -1)
+			{
+				gi.G2API_SetBoneAnglesIndex( &gent->ghoul2[gent->headModel], headReye, desiredAngles,
+											BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, blendTime, cg.time );
+			}
+		}
+	}
 }
 
 /*
@@ -5136,6 +5220,12 @@ static void CG_G2SetHeadAnim( centity_t *cent, int anim )
 	{
 		gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], cent->gent->faceBone,
 			firstFrame, lastFrame, animFlags, animSpeed, cg.time, -1, blendTime);
+	}
+	
+	if (gent->headModel > 0)
+	{
+		gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->headModel], cent->gent->headFaceBone,
+								  firstFrame, lastFrame, animFlags, animSpeed, cg.time, -1, blendTime);
 	}
 }
 

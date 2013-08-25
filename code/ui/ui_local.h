@@ -123,11 +123,17 @@ typedef struct {
 } modInfo_t;
 
 #define SKIN_LENGTH			16
+#define MODEL_LENGTH		32
 #define ACTION_BUFFER_SIZE	128
 
 typedef struct {
 	char name[SKIN_LENGTH];
 } skinName_t;
+
+typedef struct {
+	char model[MODEL_LENGTH];
+	char skin[SKIN_LENGTH];
+} headSwap_t;
 
 typedef struct {
 	char shader[MAX_QPATH];
@@ -151,6 +157,7 @@ typedef struct {
 	int			Color2Count;
 	playerColor_t	*Color;
 	playerColor_t	*Color2;
+	headSwap_t	*HeadSwap;
 } playerSpeciesInfo_t;
 
 typedef struct {

@@ -50,6 +50,9 @@ extern cvar_t	*g_saber_color;
 extern cvar_t	*g_saber2_color;
 extern cvar_t	*g_saberDarkSideSaberColor;
 
+extern cvar_t	*g_char_head_model;
+extern cvar_t	*g_char_head_skin;
+
 // g_client.c -- client functions that don't happen every frame
 
 float DEFAULT_MINS_0 = -16;
@@ -1799,6 +1802,15 @@ void G_SetG2PlayerModel( gentity_t * const ent, const char *modelName, const cha
 Ghoul2 Insert End
 */
 
+void G_RemoveHeadModel( gentity_t *ent )
+{
+	if ( ent->headModel >= 0 && ent->headModel != ent->playerModel && ent->ghoul2.size() )
+	{
+		gi.G2API_RemoveGhoul2Model( ent->ghoul2, ent->headModel );
+		ent->headModel = -1;
+	}
+}
+
 void G_RemovePlayerModel( gentity_t *ent )
 {
 	if ( ent->playerModel >= 0 && ent->ghoul2.size() )
@@ -1847,6 +1859,7 @@ void G_AddWeaponModels( gentity_t *ent )
 extern saber_colors_t TranslateSaberColor( const char *name );
 extern void WP_RemoveSaber( gentity_t *ent, int saberNum );
 void G_ChangePlayerModel( gentity_t *ent, const char *newModel );
+void G_ChangeHeadModel( gentity_t *ent, const char *newModel );
 void G_SetSabersFromCVars( gentity_t *ent )
 {
 	if ( g_saber->string
@@ -1939,6 +1952,11 @@ void G_InitPlayerFromCvars( gentity_t *ent )
 	else
 		G_ChangePlayerModel( ent, va("%s|%s|%s|%s", g_char_model->string, g_char_skin_head->string, g_char_skin_torso->string, g_char_skin_legs->string) );
 
+	if (g_char_head_model->string && g_char_head_model->string[0])
+	{
+		G_ChangeHeadModel( ent, va("%s|%s", g_char_head_model->string, g_char_head_skin->string) );
+	}
+	
 	//FIXME: parse these 2 from some cvar or require playermodel to be in a *.npc?
 	if( ent->NPC_type && gi.bIsFromZone(ent->NPC_type, TAG_G_ALLOC) ) {
 		gi.Free(ent->NPC_type);
@@ -1981,6 +1999,168 @@ void G_InitPlayerFromCvars( gentity_t *ent )
 	}
 }
 
+void G_SetHeadSkin( gentity_t *ent )
+{
+	
+	if (g_char_head_model->string && g_char_head_model->string[0])
+	{
+		if (g_char_head_skin->string && g_char_head_skin->string[0])
+		{
+			G_ChangeHeadModel( ent, va("%s|%s", g_char_head_model->string, g_char_head_skin->string) );
+		}
+		else
+		{
+			G_ChangeHeadModel( ent, va("%s|default", g_char_head_model->string) );
+		}
+	}
+
+/*	char	skinName[MAX_QPATH];
+	if (g_char_head_model->string && g_char_head_model->string[0])
+	{
+		if (g_char_head_skin->string && g_char_head_skin->string[0])
+		{
+			Com_sprintf( skinName, sizeof( skinName ), "models/players/%s/model_%s.skin", g_char_head_model->string, g_char_head_skin->string );
+		}
+		else
+		{
+			Com_sprintf( skinName, sizeof( skinName ), "models/players/%s/model_default.skin", g_char_head_model->string );
+		}
+	
+	}
+	
+	// lets see if it's out there
+	int skin = gi.RE_RegisterSkin( skinName );
+	
+	//What if it's a 3-parter or one part of a 3-parter?
+	if (!skin && g_char_head_skin->string && g_char_head_skin->string[0])
+	{
+		if (strchr(g_char_head_skin->string, '|'))
+		{
+			Com_sprintf( skinName, sizeof( skinName ), "models/players/%s/|%s", g_char_head_model->string, g_char_head_skin->string );
+		}
+		else
+		{
+			Com_sprintf( skinName, sizeof( skinName ), "models/players/%s/%s.skin", g_char_head_model->string, g_char_head_skin->string );
+		}
+		skin = gi.RE_RegisterSkin( skinName );
+	}
+
+	if ( skin )
+	{//what if this returns 0 because *one* part of a multi-skin didn't load?
+		// put it in the config strings
+		// and set the ghoul2 model to use it
+		gi.G2API_SetSkin( &ent->ghoul2[ent->headModel], G_SkinIndex( skinName ), skin );
+	}*/
+}
+
+void G_SetHeadSurfaceOnOff( gentity_t *ent )
+{
+	if (g_char_head_model->string && g_char_head_model->string[0])
+	{
+		gi.G2API_SetSurfaceOnOff( &ent->ghoul2[ent->playerModel], "head", G2SURFACEFLAG_NODESCENDANTS);
+		gi.G2API_SetSurfaceOnOff( &ent->ghoul2[ent->playerModel], "torso_cap_head", 0x00);
+	}
+}
+
+void G_ChangeHeadModel( gentity_t *ent, const char *newModel )
+{
+	if ( !ent || !ent->client || !newModel )
+	{
+		return;
+	}
+	
+	G_RemoveHeadModel( ent );
+	
+	char name[MAX_QPATH];
+	strcpy(name, newModel);
+	char *p = strchr(name, '|');
+	
+	if ( p )
+	{
+		*p = 0;
+		p++;
+	}
+	
+	char	skinName[MAX_QPATH];
+	vec3_t	angles = {0,0,0};
+	
+	if ( p && p[0] )
+	{
+		Com_sprintf( skinName, sizeof( skinName ), "models/players/%s/model_%s.skin", name, p );
+	}
+	else
+	{
+		Com_sprintf( skinName, sizeof( skinName ), "models/players/%s/model_default.skin", name );
+	}
+	
+	int skin = gi.RE_RegisterSkin( skinName );
+	
+	//What if it's a 3-parter or one part of a 3-parter?
+	if (!skin && p && p[0])
+	{
+		if (strchr(p, '|'))
+		{
+			Com_sprintf( skinName, sizeof( skinName ), "models/players/%s/|%s", name, p );
+		}
+		else
+		{
+			Com_sprintf( skinName, sizeof( skinName ), "models/players/%s/%s.skin", name, p );
+		}
+		skin = gi.RE_RegisterSkin( skinName );
+	}
+	
+	if (!skin) {
+		return;
+	}
+	
+	//now generate the ghoul2 model this client should be.
+		//NOTE: it still loads the default skin's tga's because they're referenced in the .glm.
+	ent->headModel = gi.G2API_InitGhoul2Model( ent->ghoul2, va("models/players/%s/model.glm", name), G_ModelIndex( va("models/players/%s/model.glm", name) ), G_SkinIndex( skinName ), NULL_HANDLE, 0, 0 );
+	
+	if (ent->headModel == -1)
+	{
+		return;
+	}
+	
+	gi.G2API_SetSkin( &ent->ghoul2[ent->headModel], G_SkinIndex( skinName ), skin );//this is going to set the surfs on/off matching the skin file
+	
+//	int getBolt = gi.G2API_AddBolt(&ent->ghoul2[ent->headModel], "cranium");
+	gi.G2API_SetRootSurface(ent->ghoul2, ent->headModel, "head");
+//	gi.G2API_AttachG2Model(&ent->ghoul2[ent->headModel], &ent->ghoul2[ent->playerModel], ent->motionBone, ent->playerModel);
+	
+	ent->headRootBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->headModel], "model_root", qtrue );
+	
+	ent->headMotionBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->headModel], "Motion", qtrue );
+	gi.G2API_SetBoneAnglesIndex( &ent->ghoul2[ent->headModel], ent->headMotionBone, angles, BONE_ANGLES_POSTMULT, POSITIVE_Z, NEGATIVE_X, NEGATIVE_Y, NULL, 0, 0 );
+	
+	ent->headLowerLumbarBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->headModel], "lower_lumbar", qtrue );
+	gi.G2API_SetBoneAnglesIndex( &ent->ghoul2[ent->headModel], ent->headLowerLumbarBone, angles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, NULL, 0, 0 );
+	
+	ent->headFaceBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->headModel], "face", qtrue );
+	gi.G2API_SetBoneAnglesIndex( &ent->ghoul2[ent->headModel], ent->headFaceBone, angles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, NULL, 0, 0 );
+	
+	ent->headHipsBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->headModel], "pelvis", qtrue );
+	gi.G2API_SetBoneAnglesIndex( &ent->ghoul2[ent->headModel], ent->headHipsBone, angles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, NULL, 0, 0 );
+	
+	ent->headUpperLumbarBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->headModel], "upper_lumbar", qtrue );
+	gi.G2API_SetBoneAnglesIndex( &ent->ghoul2[ent->headModel], ent->headUpperLumbarBone, angles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, NULL, 0, 0 );
+	
+	ent->headCraniumBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->headModel], "cranium", qtrue );
+	gi.G2API_SetBoneAnglesIndex( &ent->ghoul2[ent->headModel], ent->headCraniumBone, angles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, NULL, 0, 0 );
+	
+	ent->headCervicalBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->headModel], "cervical", qtrue );
+	gi.G2API_SetBoneAnglesIndex( &ent->ghoul2[ent->headModel], ent->headCervicalBone, angles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, NULL, 0, 0 );
+	
+	ent->headThoracicBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->headModel], "thoracic", qtrue );
+	gi.G2API_SetBoneAnglesIndex( &ent->ghoul2[ent->headModel], ent->headThoracicBone, angles, BONE_ANGLES_POSTMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, NULL, 0, 0 );
+
+
+//	gi.G2API_SetSurfaceOnOff( &ent->ghoul2[ent->headModel], "hips", G2SURFACEFLAG_NODESCENDANTS);
+//	gi.G2API_SetSurfaceOnOff( &ent->ghoul2[ent->headModel], "head", 0x0);
+	G_SetHeadSurfaceOnOff( ent );
+	gi.G2API_SetSurfaceOnOff( &ent->ghoul2[ent->headModel], "head_cap_torso", 0x00);//show caps so don't get such bad seams
+}
+
 void G_ChangePlayerModel( gentity_t *ent, const char *newModel )
 {
 	if ( !ent || !ent->client || !newModel )
@@ -1989,6 +2169,8 @@ void G_ChangePlayerModel( gentity_t *ent, const char *newModel )
 	}
 
 	G_RemovePlayerModel( ent );
+	G_RemoveHeadModel( ent );
+	
 	if ( Q_stricmp( "player", newModel ) == 0 )
 	{
 		G_InitPlayerFromCvars( ent );
@@ -2174,6 +2356,8 @@ qboolean ClientSpawn(gentity_t *ent, SavedGameJustLoaded_e eSavedGameJustLoaded 
 		{
 			G_LoadAnimFileSet( ent, ent->NPC_type );
 			G_SetSkin( ent );
+			G_SetHeadSurfaceOnOff( ent );
+			G_SetHeadSkin( ent );
 		}
 
 		//setup sabers
@@ -2373,6 +2557,8 @@ qboolean ClientSpawn(gentity_t *ent, SavedGameJustLoaded_e eSavedGameJustLoaded 
 			{
 				G_LoadAnimFileSet( ent, ent->NPC_type );
 				G_SetSkin( ent );
+				G_SetHeadSurfaceOnOff( ent );
+				G_SetHeadSkin( ent );
 			}
 			G_ReloadSaberData( ent );
 			//force power levels should already be set

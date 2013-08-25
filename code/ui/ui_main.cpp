@@ -52,6 +52,7 @@ extern stringID_table_t animTable [MAX_ANIMATIONS+1];
 
 extern qboolean ItemParse_model_g2anim_go( itemDef_t *item, const char *animName );
 extern qboolean ItemParse_asset_model_go( itemDef_t *item, const char *name );
+extern qboolean ItemParse_asset_model_go_head( itemDef_t *item, const char *name, qboolean cleanuponly );
 extern qboolean ItemParse_model_g2skin_go( itemDef_t *item, const char *skinName );
 extern qboolean UI_SaberModelForSaber( const char *saberName, char *saberModel );
 extern qboolean UI_SaberSkinForSaber( const char *saberName, char *saberSkin );
@@ -389,6 +390,9 @@ vmCvar_t	ui_rgb_saber2_red;
 vmCvar_t	ui_rgb_saber2_green;
 vmCvar_t	ui_rgb_saber2_blue;
 
+vmCvar_t	ui_char_head_model;
+vmCvar_t	ui_char_head_skin;
+
 static cvarTable_t cvarTable[] = 
 {
 	{ &ui_menuFiles,			"ui_menuFiles",			"ui/menus.txt", CVAR_ARCHIVE },
@@ -423,6 +427,9 @@ static cvarTable_t cvarTable[] =
 	{ &ui_rgb_saber2_red,		"ui_rgb_saber2_red",	"", 0},
 	{ &ui_rgb_saber2_blue,		"ui_rgb_saber2_blue",	"", 0},
 	{ &ui_rgb_saber2_green,		"ui_rgb_saber2_green",	"", 0},
+
+	{ &ui_char_head_model,			"ui_char_head_model",		"",0},	//these are filled in by the "g_*" versions on load
+	{ &ui_char_head_skin,		"ui_char_head_skin",	"",0},	//the "g_*" versions are initialized in UI_Init, ui_atoms.cpp
 };
 
 #define FP_UPDATED_NONE -1
@@ -864,6 +871,8 @@ static qboolean UI_DeferMenuScript ( const char **args )
 UI_RunMenuScript
 ===============
 */
+extern qboolean ItemParse_model_g2skin_go_head( itemDef_t *item, const char *skinName );
+extern void ItemParse_swapheads( itemDef_t *item );
 static qboolean UI_RunMenuScript ( const char **args )
 {
 	const char *name, *name2,*mapName,*menuName,*warningMenuName;
@@ -1182,6 +1191,46 @@ static qboolean UI_RunMenuScript ( const char **args )
 									);
 
 						ItemParse_model_g2skin_go( item, skin );
+						
+						if (Cvar_VariableString( "ui_char_head_model" )[0])
+						{
+							Com_sprintf( skin, sizeof( skin ), "models/players/%s/model.glm", Cvar_VariableString ( "ui_char_head_model" ) );
+							ItemParse_asset_model_go_head( item, skin, qfalse );
+						}
+						else
+						{
+							ItemParse_asset_model_go_head( item, NULL, qtrue );
+						}
+
+						if (Cvar_VariableString( "ui_char_head_model" )[0])
+						{
+							if (Cvar_VariableString( "ui_char_head_skin" )[0])
+							{
+								Com_sprintf( skin, sizeof( skin), "models/players/%s/model_%s.skin", Cvar_VariableString("ui_char_head_model"), Cvar_VariableString("ui_char_head_skin"));
+								if (!DC->registerSkin( skin ))
+								{
+									//What if it's a 3-parter or one part of a 3-parter?
+									if (strchr(Cvar_VariableString( "ui_char_head_skin" ), '|'))
+									{
+										Com_sprintf( skin, sizeof( skin ), "models/players/%s/|%s", Cvar_VariableString("ui_char_head_model"), Cvar_VariableString("ui_char_head_skin"));
+									}
+									else
+									{
+										Com_sprintf( skin, sizeof( skin ), "models/players/%s/%s.skin", Cvar_VariableString("ui_char_head_model"), Cvar_VariableString("ui_char_head_skin"));
+									}
+								}
+							}
+							else
+							{
+								Com_sprintf( skin, sizeof( skin), "models/players/%s/model_default.skin", Cvar_VariableString("ui_char_head_model"));
+							}
+							ItemParse_model_g2skin_go_head( item, skin );
+						}
+						
+						if (Cvar_VariableString( "ui_char_head_model" )[0])
+						{
+							ItemParse_swapheads( item );
+						}
 						UI_SaberAttachToChar( item );
 					}
 				}
@@ -1881,6 +1930,10 @@ static void UI_FeederSelection(float feederID, int index, itemDef_t *item)
 					{
 						ItemParse_model_g2anim_go( item, datapadMoveData[uiInfo.movesTitleIndex][index].anim );
 						uiInfo.moveAnimTime = DC->g2hilev_SetAnim(&item->ghoul2[0], "model_root", modelPtr->g2anim, qtrue);
+						if (Cvar_VariableString( "ui_char_head_model" )[0])
+						{
+							DC->g2hilev_SetAnim(&item->ghoul2[1], "model_root", modelPtr->g2anim, qtrue);
+						}
 
 						uiInfo.moveAnimTime += uiInfo.uiDC.realTime;
 
@@ -1962,6 +2015,10 @@ static void UI_FeederSelection(float feederID, int index, itemDef_t *item)
 				{
 					ItemParse_model_g2anim_go( item, uiInfo.movesBaseAnim );
 					uiInfo.moveAnimTime = DC->g2hilev_SetAnim(&item->ghoul2[0], "model_root", modelPtr->g2anim, qtrue);
+					if (Cvar_VariableString( "ui_char_head_model" )[0])
+					{
+						DC->g2hilev_SetAnim(&item->ghoul2[1], "model_root", modelPtr->g2anim, qtrue);
+					}
 				}
 			}
 		}
@@ -1986,6 +2043,24 @@ static void UI_FeederSelection(float feederID, int index, itemDef_t *item)
 		if (index >= 0 && index < uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].SkinHeadCount)
 		{
 			Cvar_Set("ui_char_skin_head", uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].SkinHead[index].name);
+			
+			if (uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].HeadSwap[index].model[0])
+			{
+				Cvar_Set("ui_char_head_model", uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].HeadSwap[index].model);
+			}
+			else
+			{
+				Cvar_Set("ui_char_head_model", "");
+			}
+			
+			if (uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].HeadSwap[index].skin[0])
+			{
+				Cvar_Set("ui_char_head_skin", uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].HeadSwap[index].skin);
+			}
+			else
+			{
+				Cvar_Set("ui_char_head_skin", "");
+			}
 		}
 	}
 	else if (feederID == FEEDER_PLAYER_SKIN_TORSO)
@@ -2418,6 +2493,62 @@ static qboolean UI_ParseColor2Data(char* buf, playerSpeciesInfo_t &species)
 	COM_EndParseSession(  );
 	return qtrue;//never get here
 }
+static qboolean UI_ParseHeadSwapData(char* buf, playerSpeciesInfo_t &species)
+{
+	const char	*token;
+	const char	*p;
+	
+	int count = species.SkinHeadCount - 1;
+	
+	p = buf;
+	COM_BeginParseSession();
+
+	if ( !p )
+	{
+		return qfalse;
+	}
+	token = COM_ParseExt( &p, qtrue );	//looking for action block {
+	if ( token[0] != '{' )
+	{
+		COM_EndParseSession(  );
+		return qfalse;
+	}
+	
+	token = COM_ParseExt( &p, qtrue );	//looking for model & skin commands!
+	while (token[0] != '}')
+	{
+		if ( token[0] == 0)
+		{	//EOF
+			COM_EndParseSession(  );
+			return qfalse;
+		}
+		if ( !Q_stricmp( token, "model" ) )
+		{
+			token = COM_ParseExt( &p, qtrue );
+			if ( token[0] == 0 )
+			{
+				COM_EndParseSession();
+				return qfalse;
+			}
+			Q_strncpyz( species.HeadSwap[count].model, token, MODEL_LENGTH );
+		}
+		if ( !Q_stricmp( token, "skin" ) )
+		{
+			token = COM_ParseExt( &p, qtrue );
+			if ( token[0] == 0 )
+			{
+				COM_EndParseSession();
+				return qfalse;
+			}
+			Q_strncpyz( species.HeadSwap[count].skin, token, SKIN_LENGTH );
+		}
+		token = COM_ParseExt( &p, qtrue );	//looking for action commands or final }
+	}
+	
+	COM_EndParseSession(  );
+	return qtrue;//never get here
+}
+
 /*
 =================
 bIsImageFile
@@ -2457,6 +2588,7 @@ static void UI_FreeSpecies( playerSpeciesInfo_t *species )
 	free(species->SkinHead);
 	free(species->SkinTorso);
 	free(species->SkinLeg);
+	free(species->HeadSwap);
 	free(species->Color);
 	free(species->Color2);
 	memset(species, 0, sizeof(playerSpeciesInfo_t));
@@ -2566,6 +2698,7 @@ static void UI_BuildPlayerModel_List( qboolean inGameLoad )
 			species->SkinLegMax = 8;
 
 			species->SkinHead = (skinName_t *)malloc(species->SkinHeadMax * sizeof(skinName_t));
+			species->HeadSwap = (headSwap_t *)malloc(species->SkinHeadMax * sizeof(headSwap_t));
 			species->SkinTorso = (skinName_t *)malloc(species->SkinTorsoMax * sizeof(skinName_t));
 			species->SkinLeg = (skinName_t *)malloc(species->SkinLegMax * sizeof(skinName_t));
 
@@ -2615,9 +2748,19 @@ static void UI_BuildPlayerModel_List( qboolean inGameLoad )
 						{
 							species->SkinHeadMax *= 2;
 							species->SkinHead = (skinName_t *)realloc(species->SkinHead, species->SkinHeadMax*sizeof(skinName_t));
+							species->HeadSwap = (headSwap_t *)realloc(species->HeadSwap, species->SkinHeadMax*sizeof(headSwap_t));
 						}
+						memset(&species->HeadSwap[species->SkinHeadCount], 0, sizeof(headSwap_t));
 						Q_strncpyz(species->SkinHead[species->SkinHeadCount++].name, skinname, SKIN_LENGTH);
 						iSkinParts |= 1<<0;
+						int headSwapFileLen = ui.FS_FOpenFile(va("models/players/%s/%s.headswap",dirptr,skinname), &f, FS_READ);
+						if (f)
+						{
+							ui.FS_Read(&buffer, headSwapFileLen, f);
+							ui.FS_FCloseFile(f);
+							buffer[headSwapFileLen] = 0;
+							UI_ParseHeadSwapData(buffer.data(),*species);
+						}
 					} else
 					if (Q_stricmpn(skinname,"torso_",6) == 0)
 					{
@@ -2774,6 +2917,10 @@ void _UI_Init( qboolean inGameLoad )
 	uiInfo.uiDC.g2_GiveMeVectorFromMatrix = re.G2API_GiveMeVectorFromMatrix;
 
 	uiInfo.uiDC.g2hilev_SetAnim = UI_G2SetAnim;
+	
+	uiInfo.uiDC.g2_SetSurfaceOnOff = re.G2API_SetSurfaceOnOff;
+	
+	uiInfo.uiDC.g2_SetRootSurface = re.G2API_SetRootSurface;
 
 	UI_BuildPlayerModel_List(inGameLoad);
 
@@ -4380,6 +4527,8 @@ static void UI_UpdateCharacterCvars ( void )
 	Cvar_Set ( "g_char_color_red", Cvar_VariableString ( "ui_char_color_red" ) );
 	Cvar_Set ( "g_char_color_green", Cvar_VariableString ( "ui_char_color_green" ) );
 	Cvar_Set ( "g_char_color_blue", Cvar_VariableString ( "ui_char_color_blue" ) );
+	Cvar_Set ( "g_char_head_model", Cvar_VariableString ( "ui_char_head_model" ) );
+	Cvar_Set ( "g_char_head_skin", Cvar_VariableString ( "ui_char_head_skin" ) );
 }
 
 static void UI_GetCharacterCvars ( void )
@@ -4390,6 +4539,9 @@ static void UI_GetCharacterCvars ( void )
 	Cvar_Set ( "ui_char_color_red", Cvar_VariableString ( "g_char_color_red" ) );
 	Cvar_Set ( "ui_char_color_green", Cvar_VariableString ( "g_char_color_green" ) );
 	Cvar_Set ( "ui_char_color_blue", Cvar_VariableString ( "g_char_color_blue" ) );
+
+	Cvar_Set ( "ui_char_head_model", Cvar_VariableString ( "g_char_head_model" ) );
+	Cvar_Set ( "ui_char_head_skin", Cvar_VariableString ( "g_char_head_skin" ) );
 
 	const char* model = Cvar_VariableString ( "g_char_model" );
 	Cvar_Set ( "ui_char_model", model );
@@ -6312,6 +6464,18 @@ static void UI_UpdateCharacterSkin( void )
 	{
 		Com_Error( ERR_FATAL, "UI_UpdateCharacterSkin: Could not find item (character) in menu (%s)", menu->window.name);
 	}
+	
+	
+	if (Cvar_VariableString( "ui_char_head_model" )[0])
+	{
+		Com_sprintf( skin, sizeof( skin ), "models/players/%s/model.glm", Cvar_VariableString ( "ui_char_head_model" ) );
+		ItemParse_asset_model_go_head( item, skin, qfalse );
+	}
+	else
+	{
+		ItemParse_asset_model_go_head( item, NULL, qtrue );
+	}
+
 
 	Com_sprintf( skin, sizeof( skin ), "models/players/%s/|%s|%s|%s",
 										Cvar_VariableString ( "ui_char_model"),
@@ -6321,6 +6485,36 @@ static void UI_UpdateCharacterSkin( void )
 				);
 
 	ItemParse_model_g2skin_go( item, skin );
+	
+	if (Cvar_VariableString( "ui_char_head_model" )[0])
+	{
+		if (Cvar_VariableString( "ui_char_head_skin" )[0])
+		{
+			Com_sprintf( skin, sizeof( skin), "models/players/%s/model_%s.skin", Cvar_VariableString("ui_char_head_model"), Cvar_VariableString("ui_char_head_skin"));
+			if (!DC->registerSkin( skin ))
+			{
+				//What if it's a 3-parter or one part of a 3-parter?
+				if (strchr(Cvar_VariableString( "ui_char_head_skin" ), '|'))
+				{
+					Com_sprintf( skin, sizeof( skin ), "models/players/%s/|%s", Cvar_VariableString("ui_char_head_model"), Cvar_VariableString("ui_char_head_skin"));
+				}
+				else
+				{
+					Com_sprintf( skin, sizeof( skin ), "models/players/%s/%s.skin", Cvar_VariableString("ui_char_head_model"), Cvar_VariableString("ui_char_head_skin"));
+				}
+			}
+		}
+		else
+		{
+			Com_sprintf( skin, sizeof( skin), "models/players/%s/model_default.skin", Cvar_VariableString("ui_char_head_model"));
+		}
+		ItemParse_model_g2skin_go_head( item, skin );
+	}
+	
+	if (Cvar_VariableString( "ui_char_head_model" )[0])
+	{
+		ItemParse_swapheads( item );
+	}
 }
 
 static void UI_UpdateCharacter( qboolean changedModel )
@@ -6347,7 +6541,7 @@ static void UI_UpdateCharacter( qboolean changedModel )
 
 	Com_sprintf( modelPath, sizeof( modelPath ), "models/players/%s/model.glm", Cvar_VariableString ( "ui_char_model" ) );
 	ItemParse_asset_model_go( item, modelPath );
-
+	
 	if ( changedModel )
 	{//set all skins to first skin since we don't know you always have all skins
 		//FIXME: could try to keep the same spot in each list as you swtich models

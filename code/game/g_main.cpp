@@ -215,6 +215,9 @@ cvar_t	*g_saber_color;
 cvar_t	*g_saber2_color;
 cvar_t	*g_saberDarkSideSaberColor;
 
+cvar_t	*g_char_head_model;
+cvar_t	*g_char_head_skin;
+
 // kef -- used with DebugTraceForNPC
 cvar_t	*g_npcdebug;
 
@@ -695,6 +698,9 @@ void G_InitCvars( void ) {
 	g_saber2_color = gi.cvar( "g_saber2_color", "yellow", CVAR_ARCHIVE|CVAR_SAVEGAME|CVAR_NORESTART );
 	g_saberDarkSideSaberColor = gi.cvar( "g_saberDarkSideSaberColor", "0", CVAR_ARCHIVE );	//when you turn evil, it turns your saber red!
 
+	g_char_head_model = gi.cvar( "g_char_head_model", "", CVAR_ARCHIVE|CVAR_SAVEGAME|CVAR_NORESTART );
+	g_char_head_skin = gi.cvar( "g_char_head_skin", "", CVAR_ARCHIVE|CVAR_SAVEGAME|CVAR_NORESTART );
+
 	g_broadsword = gi.cvar( "broadsword", "1", 0);
 
 	g_allowBunnyhopping = gi.cvar( "g_allowBunnyhopping", "0", 0 );
@@ -1146,6 +1152,11 @@ static void G_Animate ( gentity_t *self )
 
 		gi.G2API_SetBoneAnimIndex( &self->ghoul2[self->playerModel], self->rootBone,
 									self->startFrame, self->endFrame, BONE_ANIM_OVERRIDE_FREEZE, 1.0f, cg.time, -1, -1 );
+		if ( self->headModel > 0)
+		{
+			gi.G2API_SetBoneAnimIndex( &self->ghoul2[self->headModel], self->headRootBone,
+									  self->startFrame, self->endFrame, BONE_ANIM_OVERRIDE_FREEZE, 1.0f, cg.time, -1, -1 );
+		}
 		return;
 	}
 

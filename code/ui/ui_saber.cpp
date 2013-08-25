@@ -578,6 +578,7 @@ void UI_SaberDrawBlade( itemDef_t *item, char *saberName, int saberModel, saberT
 	char bladeColorString[MAX_QPATH];
 	vec3_t	angles={0};
 	int whichSaber = 0;
+	int secondSaberModel;
 	
 	if ( item->flags&(ITF_ISANYSABER) && item->flags&(ITF_ISCHARACTER) )
 	{	//it's bolted to a dude!
@@ -594,7 +595,16 @@ void UI_SaberDrawBlade( itemDef_t *item, char *saberName, int saberModel, saberT
 		return;
 	}
 
-	if ( (item->flags&ITF_ISSABER) && saberModel < 2 )
+	if (Cvar_VariableString( "ui_char_head_model" )[0])
+	{
+		secondSaberModel = 3;
+	}
+	else
+	{
+		secondSaberModel = 2;
+	}
+
+	if ( (item->flags&ITF_ISSABER) && saberModel < secondSaberModel )
 	{
 		whichSaber = 0;
 	}
@@ -878,7 +888,14 @@ void UI_SaberDrawBlades( itemDef_t *item, vec3_t origin, float curYaw )
 		if ( (item->flags&ITF_ISCHARACTER) )//hacked sabermoves sabers in character's hand
 		{
 			UI_GetSaberForMenu( saber, saberNum );
-			saberModel = saberNum + 1;
+			if (Cvar_VariableString( "ui_char_head_model" )[0])
+			{
+				saberModel = saberNum + 2;
+			}
+			else
+			{
+				saberModel = saberNum + 1;
+			}
 		}
 		else if ( (item->flags&ITF_ISSABER) )
 		{
@@ -919,13 +936,27 @@ void UI_SaberAttachToChar( itemDef_t *item )
 	int	numSabers = 1;
  	int	saberNum = 0;
 
-	if ( item->ghoul2.size() > 2 && item->ghoul2[2].mModelindex >=0 )
-	{//remove any extra models
-		DC->g2_RemoveGhoul2Model(item->ghoul2, 2);
+	if (Cvar_VariableString( "ui_char_head_model" )[0])
+	{
+		if ( item->ghoul2.size() > 3 && item->ghoul2[3].mModelindex >=0 )
+		{//remove any extra models
+			DC->g2_RemoveGhoul2Model(item->ghoul2, 3);
+		}
+		if ( item->ghoul2.size() > 2 && item->ghoul2[2].mModelindex >=0 )
+		{//remove any extra models
+			DC->g2_RemoveGhoul2Model(item->ghoul2, 2);
+		}
 	}
-	if ( item->ghoul2.size() > 1 && item->ghoul2[1].mModelindex >=0)
-	{//remove any extra models
-		DC->g2_RemoveGhoul2Model(item->ghoul2, 1);
+	else
+	{
+		if ( item->ghoul2.size() > 2 && item->ghoul2[2].mModelindex >=0 )
+		{//remove any extra models
+			DC->g2_RemoveGhoul2Model(item->ghoul2, 2);
+		}
+		if ( item->ghoul2.size() > 1 && item->ghoul2[1].mModelindex >=0)
+		{//remove any extra models
+			DC->g2_RemoveGhoul2Model(item->ghoul2, 1);
+		}
 	}
 
 	if ( uiInfo.movesTitleIndex == 4 /*MD_DUAL_SABERS*/ )

@@ -296,6 +296,7 @@ static const char *gcmds[] = {
 	"give",
 	"gloat",
 	"god",
+    "headplayermodel",
 	"invuse",
 	"kill",
 	"meditate",
