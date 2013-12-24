@@ -1051,7 +1051,7 @@ void SV_InitGameProgs (void) {
 #ifdef JK2_MODE
 	const char *gamename = "jospgame";
 #else
-	const char *gamename = "jagame";
+	const char *gamename = "jaenhancedgame";
 #endif
 
 	GetGameAPIProc *GetGameAPI;
