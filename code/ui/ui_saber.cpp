@@ -46,6 +46,17 @@ extern vmCvar_t	ui_rgb_saber2_red;
 extern vmCvar_t	ui_rgb_saber2_green;
 extern vmCvar_t	ui_rgb_saber2_blue;
 
+extern vmCvar_t	ui_saber_skin1;
+extern vmCvar_t	ui_saber_skin2;
+extern vmCvar_t	ui_saber_skin3;
+extern vmCvar_t	ui_saber_skin4;
+extern vmCvar_t	ui_saber_skin5;
+extern vmCvar_t	ui_saber2_skin1;
+extern vmCvar_t	ui_saber2_skin2;
+extern vmCvar_t	ui_saber2_skin3;
+extern vmCvar_t	ui_saber2_skin4;
+extern vmCvar_t	ui_saber2_skin5;
+
 static qhandle_t redSaberGlowShader;
 static qhandle_t redSaberCoreShader;
 static qhandle_t orangeSaberGlowShader;
@@ -60,6 +71,7 @@ static qhandle_t purpleSaberGlowShader;
 static qhandle_t purpleSaberCoreShader;
 static qhandle_t rgbSaberGlowShader;
 static qhandle_t rgbSaberCoreShader;
+
 void UI_CacheSaberGlowGraphics( void )
 {//FIXME: these get fucked by vid_restarts
 	redSaberGlowShader		= re.RegisterShader( "gfx/effects/sabers/red_glow" );
@@ -187,8 +199,99 @@ qboolean UI_SaberModelForSaber( const char *saberName, char *saberModel )
 	return UI_SaberParseParm( saberName, "saberModel", saberModel );
 }
 
-qboolean UI_SaberSkinForSaber( const char *saberName, char *saberSkin )
+qboolean UI_SaberSkinForSaber( const char *saberName, char *saberSkin, qboolean secondSaber )
 {
+	qboolean isCustomSaber = qfalse;
+	for (int i = 0; i < uiInfo.customSabersCount; i++)
+	{
+		if (uiInfo.customSabers[i].SaberName && uiInfo.customSabers[i].SaberName[0] && !Q_stricmp(saberName, uiInfo.customSabers[i].SaberName))
+		{
+			isCustomSaber = qtrue;
+			break;
+		}
+	}
+	if (isCustomSaber)
+	{
+		char skinRoot[MAX_QPATH];
+		if (!UI_SaberModelForSaber(saberName, skinRoot))
+		{
+			return qfalse;
+		}
+		
+		int l = strlen(skinRoot);
+		while (l > 0 && skinRoot[l] != '/')
+		{ //parse back to first /
+			l--;
+		}
+		
+		if (skinRoot[l] == '/')
+		{
+			l++;
+			skinRoot[l] = 0;
+			
+			{
+				Q_strcat(skinRoot, MAX_QPATH, "|_");
+				Q_strcat(skinRoot, MAX_QPATH, "|");
+				if (secondSaber)
+				{
+					if (Cvar_VariableString("ui_saber2_skin1") && Cvar_VariableString("ui_saber2_skin1")[0])
+					{
+						Q_strcat(skinRoot, MAX_QPATH, Cvar_VariableString("ui_saber2_skin1"));
+					}
+					Q_strcat(skinRoot, MAX_QPATH, "|");
+					if (Cvar_VariableString("ui_saber2_skin2") && Cvar_VariableString("ui_saber2_skin2")[0])
+					{
+						Q_strcat(skinRoot, MAX_QPATH, Cvar_VariableString("ui_saber2_skin2"));
+					}
+					Q_strcat(skinRoot, MAX_QPATH, "|");
+					if (Cvar_VariableString("ui_saber2_skin3") && Cvar_VariableString("ui_saber2_skin3")[0])
+					{
+						Q_strcat(skinRoot, MAX_QPATH, Cvar_VariableString("ui_saber2_skin3"));
+					}
+					Q_strcat(skinRoot, MAX_QPATH, "|");
+					if (Cvar_VariableString("ui_saber2_skin4") && Cvar_VariableString("ui_saber2_skin4")[0])
+					{
+						Q_strcat(skinRoot, MAX_QPATH, Cvar_VariableString("ui_saber2_skin4"));
+					}
+					Q_strcat(skinRoot, MAX_QPATH, "|");
+					if (Cvar_VariableString("ui_saber2_skin5") && Cvar_VariableString("ui_saber2_skin5")[0])
+					{
+						Q_strcat(skinRoot, MAX_QPATH, Cvar_VariableString("ui_saber2_skin5"));
+					}
+				}
+				else
+				{
+					if (Cvar_VariableString("ui_saber_skin1") && Cvar_VariableString("ui_saber_skin1")[0])
+					{
+						Q_strcat(skinRoot, MAX_QPATH, Cvar_VariableString("ui_saber_skin1"));
+					}
+					Q_strcat(skinRoot, MAX_QPATH, "|");
+					if (Cvar_VariableString("ui_saber_skin2") && Cvar_VariableString("ui_saber_skin2")[0])
+					{
+						Q_strcat(skinRoot, MAX_QPATH, Cvar_VariableString("ui_saber_skin2"));
+					}
+					Q_strcat(skinRoot, MAX_QPATH, "|");
+					if (Cvar_VariableString("ui_saber_skin3") && Cvar_VariableString("ui_saber_skin3")[0])
+					{
+						Q_strcat(skinRoot, MAX_QPATH, Cvar_VariableString("ui_saber_skin3"));
+					}
+					Q_strcat(skinRoot, MAX_QPATH, "|");
+					if (Cvar_VariableString("ui_saber_skin4") && Cvar_VariableString("ui_saber_skin4")[0])
+					{
+						Q_strcat(skinRoot, MAX_QPATH, Cvar_VariableString("ui_saber_skin4"));
+					}
+					Q_strcat(skinRoot, MAX_QPATH, "|");
+					if (Cvar_VariableString("ui_saber_skin5") && Cvar_VariableString("ui_saber_skin5")[0])
+					{
+						Q_strcat(skinRoot, MAX_QPATH, Cvar_VariableString("ui_saber_skin5"));
+					}
+				}
+			}
+			Q_strncpyz(saberSkin, skinRoot, MAX_QPATH);
+			return qtrue;
+			
+		}
+	}
 	return UI_SaberParseParm( saberName, "customSkin", saberSkin );
 }
 
@@ -979,7 +1082,7 @@ void UI_SaberAttachToChar( itemDef_t *item )
 			if (g2Saber)
 			{
 				//get the customSkin, if any
-				if ( UI_SaberSkinForSaber( saber, skinPath ) )
+				if ( UI_SaberSkinForSaber( saber, skinPath, (saberNum == 1)?qtrue:qfalse ) )
 				{
 					int g2skin = DC->registerSkin(skinPath);
 					DC->g2_SetSkin( &item->ghoul2[g2Saber], 0, g2skin );//this is going to set the surfs on/off matching the skin file

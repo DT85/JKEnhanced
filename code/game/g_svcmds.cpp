@@ -42,6 +42,8 @@ extern saber_colors_t TranslateSaberColor( const char *name );
 extern qboolean WP_SaberBladeUseSecondBladeStyle( saberInfo_t *saber, int bladeNum );
 extern qboolean WP_UseFirstValidSaberStyle( gentity_t *ent, int *saberAnimLevel );
 
+extern void G_SetSabersFromCVars( gentity_t *ent );
+
 extern void G_SetWeapon( gentity_t *self, int wp );
 extern stringID_table_t WPTable[];
 
@@ -948,6 +950,40 @@ static void Svcmd_NewPlayerTint_f(void)
 	}
 }
 
+static void Svcmd_CustomSaber_f(void)
+{
+    if ( gi.argc() == 1 )
+    {
+        gi.Printf( S_COLOR_RED"USAGE: customSaber <sabernum> <skin> <skin> <skin> <skin> <skin>\n" );
+    }
+    else if ( gi.argc() == 7 )
+    {
+        if (atoi(gi.argv(1)) == 1)
+        {
+            gi.cvar_set("g_saber2_skin1", gi.argv(2) );
+            gi.cvar_set("g_saber2_skin2", gi.argv(3) );
+            gi.cvar_set("g_saber2_skin3", gi.argv(4) );
+            gi.cvar_set("g_saber2_skin4", gi.argv(5) );
+            gi.cvar_set("g_saber2_skin5", gi.argv(6) );
+        }
+        else
+        {
+            gi.cvar_set("g_saber_skin1", gi.argv(2) );
+            gi.cvar_set("g_saber_skin2", gi.argv(3) );
+            gi.cvar_set("g_saber_skin3", gi.argv(4) );
+            gi.cvar_set("g_saber_skin4", gi.argv(5) );
+            gi.cvar_set("g_saber_skin5", gi.argv(6) );
+        }
+        
+        G_SetSabersFromCVars(&g_entities[0]);
+
+        if ((&g_entities[0])->client->ps.weapon == WP_SABER)
+        {
+            WP_SaberAddG2SaberModels(&g_entities[0]);
+        }
+    }
+}
+
 #define CMD_NONE				(0x00000000u)
 #define CMD_CHEAT				(0x00000001u)
 #define CMD_ALIVE				(0x00000002u)
@@ -1019,6 +1055,8 @@ static svcmd_t svcmds[] = {
     { "headPlayerModel",            Svcmd_HeadPlayerModel_f,                    CMD_NONE },
     
     { "newPlayerTint",              Svcmd_NewPlayerTint_f,                      CMD_NONE },
+
+	{ "customSaber",				Svcmd_CustomSaber_f,						CMD_NONE },
 	
 	//{ "say",						Svcmd_Say_f,						qtrue },
 	//{ "toggleallowvote",			Svcmd_ToggleAllowVote_f,			qfalse },
@@ -1047,7 +1085,37 @@ qboolean	ConsoleCommand( void ) {
 	else if ( (command->flags & CMD_ALIVE)
 		&& (g_entities[0].health <= 0) )
 	{
-		gi.Printf( "You must be alive to use this command.\n" );
+		if ( gi.argc() == 1 )
+		{
+			gi.Printf( S_COLOR_RED"USAGE: customSaber <sabernum> <skin> <skin> <skin> <skin> <skin>\n" );
+		}
+		else if ( gi.argc() == 7 )
+		{
+			if (atoi(gi.argv(1)) == 1)
+			{
+				gi.cvar_set("g_saber2_skin_1", gi.argv(2) );
+				gi.cvar_set("g_saber2_skin_2", gi.argv(3) );
+				gi.cvar_set("g_saber2_skin_3", gi.argv(4) );
+				gi.cvar_set("g_saber2_skin_4", gi.argv(5) );
+				gi.cvar_set("g_saber2_skin_5", gi.argv(6) );
+			}
+			else
+			{
+				gi.cvar_set("g_saber_skin_1", gi.argv(2) );
+				gi.cvar_set("g_saber_skin_2", gi.argv(3) );
+				gi.cvar_set("g_saber_skin_3", gi.argv(4) );
+				gi.cvar_set("g_saber_skin_4", gi.argv(5) );
+				gi.cvar_set("g_saber_skin_5", gi.argv(6) );
+			}
+			
+			G_SetSabersFromCVars(&g_entities[0]);
+
+			if ((&g_entities[0])->client->ps.weapon == WP_SABER)
+			{
+				WP_SaberAddG2SaberModels(&g_entities[0]);
+			}
+
+		}
 		return qtrue;
 	}
 	else

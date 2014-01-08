@@ -280,6 +280,7 @@ qboolean CG_ConsoleCommand( void ) {
 
 static const char *gcmds[] = {
 	"bow",
+	"customsaber",
 	"entitylist",
 	"difficulty",
 	"flourish",

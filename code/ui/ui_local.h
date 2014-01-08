@@ -161,6 +161,26 @@ typedef struct {
 } playerSpeciesInfo_t;
 
 typedef struct {
+	char name[32];
+	char desc[64];
+	int	count;
+	int max;
+	skinName_t *skins;
+} saberPartSkin_t;
+
+typedef struct {
+	char		SaberName[64];
+	char		SaberLongName[64];
+	char		FolderName[MAX_QPATH];
+	saberPartSkin_t	Skin1;
+	saberPartSkin_t Skin2;
+	saberPartSkin_t Skin3;
+	saberPartSkin_t Skin4;
+	saberPartSkin_t Skin5;
+	qboolean	isStaff;
+} customSaberInfo_t;
+
+typedef struct {
 	displayContextDef_t uiDC;
 
 	int effectsColor;
@@ -174,6 +194,12 @@ typedef struct {
 	int					playerSpeciesCount;
 	playerSpeciesInfo_t	*playerSpecies;
 	int					playerSpeciesIndex;
+	
+	int					customSabersMax;
+	int					customSabersCount;
+	customSaberInfo_t	*customSabers;
+	int					customSabersIndex;
+	int					customSabers2Index;
 
 
 	char		deferredScript [ MAX_DEFERRED_SCRIPT ];
