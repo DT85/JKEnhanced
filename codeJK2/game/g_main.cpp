@@ -1449,7 +1449,7 @@ void G_RunFrame( int levelTime ) {
 #ifndef FINAL_BUILD
 	if ( delayedShutDown != 0 && delayedShutDown < level.time )
 	{
-		G_Error( "Game Errors. Scroll up the console to read them.\n" );
+		G_Error( "Game Errors. Scroll up the console to read them." );
 	}
 #endif
 
