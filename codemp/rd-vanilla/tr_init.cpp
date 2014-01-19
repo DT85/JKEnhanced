@@ -741,7 +741,7 @@ void R_ScreenShot_f (void) {
 RB_TakeVideoFrameCmd
 ==================
 */
-const void *RB_TakeVideoFrameCmd( const void *data )
+/*const void *RB_TakeVideoFrameCmd( const void *data )
 {
 	const videoFrameCommand_t	*cmd;
 	byte				*cBuf;
@@ -811,7 +811,7 @@ const void *RB_TakeVideoFrameCmd( const void *data )
 	}
 
 	return (const void *)(cmd + 1);	
-}
+}*/
 
 //============================================================================
 

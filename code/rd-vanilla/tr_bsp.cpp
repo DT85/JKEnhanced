@@ -249,7 +249,7 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName, world_t &worldDat
 	}
 
 	if ( r_lightmap->integer == 2 )	{
-		ri.Printf( PRINT_ALL, "Brightest lightmap value: %d\n", ( int ) ( maxIntensity * 255 ) );
+		ri->Printf( PRINT_ALL, "Brightest lightmap value: %d\n", ( int ) ( maxIntensity * 255 ) );
 	}
 }
 
@@ -730,7 +730,7 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump, wor
 		}
 	}
 	
-	ri.Printf( PRINT_ALL, "...loaded %d faces, %i meshes, %i trisurfs, %i flares\n", 
+	ri->Printf( PRINT_ALL, "...loaded %d faces, %i meshes, %i trisurfs, %i flares\n", 
 		numFaces, numMeshes, numTriSurfs, numFlares );
 }
 
@@ -1201,7 +1201,7 @@ void R_LoadLightGridArray( lump_t *l, world_t &worldData ) {
 
 	if ( l->filelen != (int)(w->numGridArrayElements * sizeof(*w->lightGridArray)) ) {
 		if (l->filelen>0)//don't warn if not even lit
-			ri.Printf( PRINT_WARNING, "WARNING: light grid array mismatch\n" );
+			ri->Printf( PRINT_WARNING, "WARNING: light grid array mismatch\n" );
 		w->lightGridData = NULL;
 		return;
 	}
@@ -1264,7 +1264,7 @@ void R_LoadEntities( lump_t *l, world_t &worldData ) {
 		if (!Q_strncmp(keyname, s, strlen(s)) ) {
 			s = strchr(value, ';');
 			if (!s) {
-				ri.Printf( S_COLOR_YELLOW "WARNING: no semi colon in vertexshaderremap '%s'\n", value );
+				ri->Printf( S_COLOR_YELLOW "WARNING: no semi colon in vertexshaderremap '%s'\n", value );
 				break;
 			}
 			*s++ = 0;
@@ -1278,7 +1278,7 @@ void R_LoadEntities( lump_t *l, world_t &worldData ) {
 		if (!Q_strncmp(keyname, s, strlen(s)) ) {
 			s = strchr(value, ';');
 			if (!s) {
-				ri.Printf( S_COLOR_YELLOW "WARNING: no semi colon in shaderremap '%s'\n", value );
+				ri->Printf( S_COLOR_YELLOW "WARNING: no semi colon in shaderremap '%s'\n", value );
 				break;
 			}
 			*s++ = 0;
@@ -1354,13 +1354,13 @@ void RE_LoadWorldMap_Actual( const char *name, world_t &worldData, int index ) {
 
 	// check for cached disk file from the server first...
 	//
-	if (ri.gpvCachedMapDiskImage())
+	if (ri->gpvCachedMapDiskImage())
 	{
-		if (!strcmp(name, ri.gsCachedMapDiskImage()))
+		if (!strcmp(name, ri->gsCachedMapDiskImage()))
 		{
 			// we should always get here, if inside the first IF...
 			//
-			buffer = (byte *)ri.gpvCachedMapDiskImage();
+			buffer = (byte *)ri->gpvCachedMapDiskImage();
 		}
 		else
 		{
@@ -1381,7 +1381,7 @@ void RE_LoadWorldMap_Actual( const char *name, world_t &worldData, int index ) {
 	{
 		// still needs loading...
 		//
-		ri.FS_ReadFile( name, (void **)&buffer );
+		ri->FS_ReadFile( name, (void **)&buffer );
 		if ( !buffer ) {
 			Com_Error (ERR_DROP, "RE_LoadWorldMap: %s not found", name);
 		}
@@ -1434,7 +1434,7 @@ void RE_LoadWorldMap_Actual( const char *name, world_t &worldData, int index ) {
 	}
 
 
-	if (ri.gpvCachedMapDiskImage() && !loadedSubBSP)
+	if (ri->gpvCachedMapDiskImage() && !loadedSubBSP)
 	{
 		// For the moment, I'm going to keep this disk image around in case we need it to respawn.
 		//  No problem for memory, since it'll only be a NZ ptr if we're not low on physical memory
@@ -1447,7 +1447,7 @@ void RE_LoadWorldMap_Actual( const char *name, world_t &worldData, int index ) {
 	}
 	else
 	{
-		ri.FS_FreeFile( buffer );
+		ri->FS_FreeFile( buffer );
 	}
 }
 
@@ -1456,9 +1456,9 @@ void RE_LoadWorldMap_Actual( const char *name, world_t &worldData, int index ) {
 //
 void RE_LoadWorldMap( const char *name )
 {
-	*(ri.gbUsingCachedMapDataRightNow()) = qtrue;	// !!!!!!!!!!!!
+	*(ri->gbUsingCachedMapDataRightNow()) = qtrue;	// !!!!!!!!!!!!
 
 		RE_LoadWorldMap_Actual( name, s_worldData, 0 );
 
-	*(ri.gbUsingCachedMapDataRightNow()) = qfalse;	// !!!!!!!!!!!!
+	*(ri->gbUsingCachedMapDataRightNow()) = qfalse;	// !!!!!!!!!!!!
 }

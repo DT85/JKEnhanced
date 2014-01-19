@@ -15,6 +15,12 @@ if(BuildSPEngine)
 	add_subdirectory("${SPDir}/rd-vanilla")
 endif(BuildSPEngine)
 
+
+#	Add Rend2
+if(BuildSPRend2)
+	add_subdirectory("${SPDir}/rd-rend2")
+endif(BuildSPRend2)
+
 #    Add Engine Project
 if(BuildSPEngine)
 	# Libraries

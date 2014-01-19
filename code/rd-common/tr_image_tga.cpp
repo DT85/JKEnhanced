@@ -25,7 +25,7 @@ bool LoadTGAPalletteImage ( const char *name, byte **pic, int *width, int *heigh
 	//
 	// load the file
 	//
-	ri.FS_ReadFile ( ( char * ) name, (void **)&buffer);
+	ri->FS_ReadFile ( ( char * ) name, (void **)&buffer);
 	if (!buffer) {
 		return false;
 	}
@@ -78,7 +78,7 @@ bool LoadTGAPalletteImage ( const char *name, byte **pic, int *width, int *heigh
 	}
 	dataStart = buf_p + (targa_header.colormap_length * (targa_header.colormap_size / 4));
 	memcpy(*pic, dataStart, numPixels);
-	ri.FS_FreeFile (buffer);
+	ri->FS_FreeFile (buffer);
 
 	return true;
 }
@@ -133,7 +133,7 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height)
 	// load the file
 	//
 	byte *pTempLoadedBuffer = 0;
-	ri.FS_ReadFile ( ( char * ) name, (void **)&pTempLoadedBuffer);
+	ri->FS_ReadFile ( ( char * ) name, (void **)&pTempLoadedBuffer);
 	if (!pTempLoadedBuffer) {
 		return;
 	}
@@ -428,7 +428,7 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height)
 
 TGADone:
 
-	ri.FS_FreeFile (pTempLoadedBuffer);
+	ri->FS_FreeFile (pTempLoadedBuffer);
 
 	if (bFormatErrors)
 	{

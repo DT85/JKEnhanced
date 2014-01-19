@@ -577,7 +577,7 @@ void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, 
 
 	if ( cg_g2MarksAllModels == NULL )
 	{
-		cg_g2MarksAllModels = ri.Cvar_Get( "cg_g2MarksAllModels", "0", 0 );
+		cg_g2MarksAllModels = ri->Cvar_Get( "cg_g2MarksAllModels", "0", 0 );
 	}
 
 	if (cg_g2MarksAllModels == NULL
@@ -1563,7 +1563,7 @@ void G2_TraceModels(CGhoul2Info_v &ghoul2, vec3_t rayStart, vec3_t rayEnd, CColl
 
 	if ( cg_g2MarksAllModels == NULL )
 	{
-		cg_g2MarksAllModels = ri.Cvar_Get( "cg_g2MarksAllModels", "0", 0 );
+		cg_g2MarksAllModels = ri->Cvar_Get( "cg_g2MarksAllModels", "0", 0 );
 	}
 
 	if (cg_g2MarksAllModels == NULL
@@ -1774,7 +1774,7 @@ void G2_SaveGhoul2Models(CGhoul2Info_v &ghoul2)
 	// is there anything to save?
 	if (!ghoul2.IsValid()||!ghoul2.size())
 	{
-		ri.SG_Append(INT_ID('G','H','L','2'),&pGhoul2Data, 4);	//write out a zero buffer
+		ri->SG_Append(INT_ID('G','H','L','2'),&pGhoul2Data, 4);	//write out a zero buffer
 		return;
 	}
 
@@ -1849,7 +1849,7 @@ void G2_SaveGhoul2Models(CGhoul2Info_v &ghoul2)
 		}
 	}
 
-	ri.SG_Append(INT_ID('G','H','L','2'),pGhoul2Data, iGhoul2Size);
+	ri->SG_Append(INT_ID('G','H','L','2'),pGhoul2Data, iGhoul2Size);
 	Z_Free(pGhoul2Data);
 }
 
@@ -1859,7 +1859,7 @@ int G2_FindConfigStringSpace(char *name, int start, int max)
 	int  i=1;
 	for ( ; i<max ; i++ ) 
 	{
-		ri.SV_GetConfigstring( start + i, s, sizeof( s ) );
+		ri->SV_GetConfigstring( start + i, s, sizeof( s ) );
 		if ( !s[0] ) 
 		{
 			break;
@@ -1870,7 +1870,7 @@ int G2_FindConfigStringSpace(char *name, int start, int max)
 		}
 	}
 
-	ri.SV_SetConfigstring(start + i, name);
+	ri->SV_SetConfigstring(start + i, name);
 	return i;
 }
 

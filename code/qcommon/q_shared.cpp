@@ -312,6 +312,14 @@ int COM_GetCurrentParseLine( int index )
 	return parseData[parseDataCount].com_lines;
 }
 
+int COM_GetCurrentParseLine( void )
+{
+	if(parseDataCount < 0)
+		Com_Error(ERR_FATAL, "COM_GetCurrentParseLine: parseDataCount < 0 (be sure to call COM_BeginParseSession!)");
+
+	return parseData[parseDataCount].com_lines;
+}
+
 char *COM_Parse( const char **data_p )
 {
 	return COM_ParseExt( data_p, qtrue );

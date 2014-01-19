@@ -466,14 +466,14 @@ private:
 
 		void WriteToDisk( fileHandle_t f )
 		{			
-			ri.FS_Write(&mMarkedOutside,sizeof(mMarkedOutside),f);
-			ri.FS_Write( mPointCache, miPointCacheByteSize, f );
+			ri->FS_Write(&mMarkedOutside,sizeof(mMarkedOutside),f);
+			ri->FS_Write( mPointCache, miPointCacheByteSize, f );
 		}
 
 		void ReadFromDisk( fileHandle_t f )
 		{			
-			ri.FS_Read(&mMarkedOutside,sizeof(mMarkedOutside),f);
-			ri.FS_Read( mPointCache, miPointCacheByteSize, f);
+			ri->FS_Read(&mMarkedOutside,sizeof(mMarkedOutside),f);
+			ri->FS_Read( mPointCache, miPointCacheByteSize, f);
 		}
 
 		////////////////////////////////////////////////////////////////////////////////////
@@ -641,17 +641,17 @@ public:
 	
 	fileHandle_t WriteCachedWeatherFile( void )
 	{
-		fileHandle_t f = ri.FS_FOpenFileWrite( GenCachedWeatherFilename() );
+		fileHandle_t f = ri->FS_FOpenFileWrite( GenCachedWeatherFilename() );
 		if (f)
 		{
 			WeatherFileHeader_t WeatherFileHeader;
 
-            ri.FS_Write(&WeatherFileHeader, sizeof(WeatherFileHeader), f);
+            ri->FS_Write(&WeatherFileHeader, sizeof(WeatherFileHeader), f);
 			return f;
 		}
 		else
 		{
-			ri.Printf( PRINT_WARNING, "(Unable to open weather file \"%s\" for writing!)\n",GenCachedWeatherFilename());
+			ri->Printf( PRINT_WARNING, "(Unable to open weather file \"%s\" for writing!)\n",GenCachedWeatherFilename());
 		}
 
 		return 0;
@@ -662,7 +662,7 @@ public:
 	fileHandle_t ReadCachedWeatherFile( void )
 	{
 		fileHandle_t f = 0;
-		ri.FS_FOpenFileRead( GenCachedWeatherFilename(), &f, qfalse );
+		ri->FS_FOpenFileRead( GenCachedWeatherFilename(), &f, qfalse );
 		if ( f )
 		{
 			// ok, it exists, but is it valid for this map?...
@@ -670,7 +670,7 @@ public:
 			WeatherFileHeader_t WeatherFileHeaderForCompare;
 			WeatherFileHeader_t WeatherFileHeaderFromDisk;
 
-			ri.FS_Read(&WeatherFileHeaderFromDisk, sizeof(WeatherFileHeaderFromDisk), f);
+			ri->FS_Read(&WeatherFileHeaderFromDisk, sizeof(WeatherFileHeaderFromDisk), f);
 
 			if (!memcmp(&WeatherFileHeaderForCompare, &WeatherFileHeaderFromDisk, sizeof(WeatherFileHeaderFromDisk)))
 			{
@@ -679,12 +679,12 @@ public:
 				return f;
 			}
 
-            ri.Printf( PRINT_WARNING, "( Cached weather file \"%s\" out of date, regenerating... )\n",GenCachedWeatherFilename());
-			ri.FS_FCloseFile( f );
+            ri->Printf( PRINT_WARNING, "( Cached weather file \"%s\" out of date, regenerating... )\n",GenCachedWeatherFilename());
+			ri->FS_FCloseFile( f );
 		}
 		else
 		{
-			ri.Printf( PRINT_WARNING, "( No cached weather file found, generating... )\n");
+			ri->Printf( PRINT_WARNING, "( No cached weather file found, generating... )\n");
 		}
 
 		return 0;
@@ -767,7 +767,7 @@ public:
 								CurPos[2] = (zbase + q)	* POINTCACHE_CELL_SIZE;
 								CurPos	  += Mins;
 
-								contents = ri.CM_PointContents(CurPos.v, 0);
+								contents = ri->CM_PointContents(CurPos.v, 0);
 								if (contents&CONTENTS_INSIDE || contents&CONTENTS_OUTSIDE)
 								{
 									curPosOutside = ((contents&CONTENTS_OUTSIDE)!=0);
@@ -801,7 +801,7 @@ public:
 
 		if (f)
 		{
-			ri.FS_FCloseFile(f);
+			ri->FS_FCloseFile(f);
 			f=0;	// not really necessary, but wtf.
 		}
 
@@ -822,7 +822,7 @@ public:
 	{
 		if (!mCacheInit)
 		{
-			return ContentsOutside(ri.CM_PointContents(pos.v, 0));
+			return ContentsOutside(ri->CM_PointContents(pos.v, 0));
 		}
 		for (int zone=0; zone<mWeatherZones.size(); zone++)
 		{
@@ -1632,7 +1632,7 @@ void RB_RenderWorldEffects(void)
 		(tr.refdef.rdflags & RDF_NOWORLDMODEL) || 
 		(backEnd.refdef.rdflags & RDF_SKYBOXPORTAL) || 
 		!mParticleClouds.size() ||
-		ri.CL_IsRunningInGameCinematic()) 
+		ri->CL_IsRunningInGameCinematic()) 
 	{	//  no world rendering or no world or no particle clouds
 		return;
 	}
@@ -1699,10 +1699,10 @@ void RB_RenderWorldEffects(void)
 
 void R_WorldEffect_f(void)
 {
-	if (ri.Cvar_VariableIntegerValue("helpUsObi"))
+	if (ri->Cvar_VariableIntegerValue("helpUsObi"))
 	{
 		char	temp[2048];
-		ri.Cmd_ArgsBuffer(temp, sizeof(temp));
+		ri->Cmd_ArgsBuffer(temp, sizeof(temp));
 		R_WorldEffectCommand(temp);
 	}
 }

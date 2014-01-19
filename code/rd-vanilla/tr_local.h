@@ -24,18 +24,17 @@ This file is part of Jedi Academy.
 #include "../qcommon/qfiles.h"
 #include "../rd-common/tr_public.h"
 #include "../rd-common/mdx_format.h"
-#ifdef _WIN32
 #include "qgl.h"
+#ifdef _WIN32
 #include "glext.h"
 #else
-#include "qgl.h"
 #include "../sdl/sdl_qgl.h"
 #endif
 
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
 typedef unsigned int glIndex_t;
 
-extern refimport_t ri;
+extern refimport_t *ri;
 
 
 // 13 bits
@@ -1887,5 +1886,7 @@ void RB_DrawSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input);
 
 // tr_subs.cpp
 void *Z_Malloc( int iSize, memtag_t eTag, qboolean bZeroit, int iAlign );
+
+void Create_Matrix(const float *angle, mdxaBone_t *matrix);
 
 #endif //TR_LOCAL_H

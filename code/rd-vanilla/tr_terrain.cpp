@@ -261,7 +261,7 @@ void CTRPatch::SetVisibility(bool visCheck)
 		else
 		{
 			// Set the visibility of the patch
-			misVisible = ri.CM_CullWorldBox(backEnd.viewParms.frustum, GetBounds());
+			misVisible = ri->CM_CullWorldBox(backEnd.viewParms.frustum, GetBounds());
 		}
 	}
 	else
@@ -885,7 +885,7 @@ CTRLandScape::CTRLandScape(const char *configstring)
 	memset(this, 0, sizeof(*this));
 
 	// Sets up the common aspects of the terrain
-	common = ri.CM_RegisterTerrain(configstring, false);
+	common = ri->CM_RegisterTerrain(configstring, false);
 	SetCommon(common);
 
 	tr.landScape.landscape = this;
@@ -924,7 +924,7 @@ CTRLandScape::CTRLandScape(const char *configstring)
 	mSortedCount = 2 * common->GetBlockCount();
 	mSortedPatches = (TPatchInfo *)Z_Malloc(sizeof(TPatchInfo) * mSortedCount, TAG_R_TERRAIN, qfalse);
 
-	ri.CM_TerrainPatchIterate(common, InitRendererPatches, this);
+	ri->CM_TerrainPatchIterate(common, InitRendererPatches, this);
 
 	// Calculate shaders dependent on the .terrain file
 	CalculateShaders();
@@ -1030,10 +1030,10 @@ void R_TerrainInit(void)
 		tr.landScape.surfaceType = SF_TERRAIN;
 		tr.landScape.landscape = NULL;
 	}
-	r_terrainTessellate = ri.Cvar_Get("r_terrainTessellate", "3", CVAR_CHEAT);
-	r_drawTerrain = ri.Cvar_Get("r_drawTerrain", "1", CVAR_CHEAT);
-	r_terrainWaterOffset = ri.Cvar_Get("r_terrainWaterOffset", "0", 0);
-	r_count = ri.Cvar_Get("r_count", "2", 0);
+	r_terrainTessellate = ri->Cvar_Get("r_terrainTessellate", "3", CVAR_CHEAT);
+	r_drawTerrain = ri->Cvar_Get("r_drawTerrain", "1", CVAR_CHEAT);
+	r_terrainWaterOffset = ri->Cvar_Get("r_terrainWaterOffset", "0", 0);
+	r_count = ri->Cvar_Get("r_count", "2", 0);
 }
 
 void R_TerrainShutdown(void)
@@ -1044,7 +1044,7 @@ void R_TerrainShutdown(void)
 	ls = tr.landScape.landscape;
 	if(ls)
 	{
-		ri.CM_ShutdownTerrain(0);
+		ri->CM_ShutdownTerrain(0);
 		delete ls;
 		tr.landScape.landscape = NULL;
 	}

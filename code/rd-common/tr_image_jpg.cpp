@@ -72,7 +72,7 @@ void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height
 	* requires it in order to read binary files.
 	*/
 
-	int len = ri.FS_ReadFile ( ( char * ) filename, &fbuffer.v);
+	int len = ri->FS_ReadFile ( ( char * ) filename, &fbuffer.v);
 	if (!fbuffer.b || len < 0) {
 		return;
 	}
@@ -133,10 +133,10 @@ void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height
 		) 
 	{ 
 		// Free the memory to make sure we don't leak memory 
-		ri.FS_FreeFile (fbuffer.v); 
+		ri->FS_FreeFile (fbuffer.v); 
 		jpeg_destroy_decompress(&cinfo); 
 
-		ri.Printf( PRINT_ALL, "LoadJPG: %s has an invalid image format: %dx%d*4=%d, components: %d", filename, 
+		ri->Printf( PRINT_ALL, "LoadJPG: %s has an invalid image format: %dx%d*4=%d, components: %d", filename, 
 			cinfo.output_width, cinfo.output_height, pixelcount * 4, cinfo.output_components);
 		return;
 	}
@@ -196,7 +196,7 @@ void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height
 	* so as to simplify the setjmp error logic above.  (Actually, I don't
 	* think that jpeg_destroy can do an error exit, but why assume anything...)
 	*/
-	ri.FS_FreeFile (fbuffer.v);
+	ri->FS_FreeFile (fbuffer.v);
 	/* At this point you may want to check to see whether any corrupt-data
 	* warnings occurred (test whether jerr.pub.num_warnings is nonzero).
 	*/
@@ -394,11 +394,11 @@ void RE_SaveJPG(const char * filename, int quality, int image_width, int image_h
 	size_t bufSize;
 
 	bufSize = image_width * image_height * 3;
-	out = (byte *)ri.Z_Malloc( bufSize, TAG_TEMP_WORKSPACE, qfalse, 4 );
+	out = (byte *)ri->Z_Malloc( bufSize, TAG_TEMP_WORKSPACE, qfalse, 4 );
 
 	bufSize = RE_SaveJPGToBuffer(out, bufSize, quality, image_width, image_height, image_buffer, padding);
-	ri.FS_WriteFile(filename, out, bufSize);
+	ri->FS_WriteFile(filename, out, bufSize);
 
-	ri.Z_Free(out);
+	ri->Z_Free(out);
 }
 

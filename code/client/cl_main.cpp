@@ -1114,7 +1114,7 @@ static CMiniHeap *GetG2VertSpaceServer( void ) {
 
 void CL_InitRef( void ) {
 	refexport_t	*ret;
-	refimport_t rit;
+	static refimport_t rit;
 	char		dllName[MAX_OSPATH];
 	GetRefAPI_t	GetRefAPI;
 

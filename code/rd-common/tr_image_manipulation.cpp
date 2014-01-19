@@ -14,7 +14,7 @@ void R_InvertImage(byte *data, int width, int height, int depth)
 	stride = width * depth;
 
 	oldData = data + ((height - 1) * stride);
-	newData = (byte *)ri.Z_Malloc(height * stride, TAG_TEMP_WORKSPACE, qfalse, 4 );
+	newData = (byte *)ri->Z_Malloc(height * stride, TAG_TEMP_WORKSPACE, qfalse, 4 );
 	saveData = newData;
 
 	for(y = 0; y < height; y++)
@@ -24,7 +24,7 @@ void R_InvertImage(byte *data, int width, int height, int depth)
 		oldData -= stride;
 	}
 	memcpy(data, saveData, height * stride);
-	ri.Z_Free(saveData);
+	ri->Z_Free(saveData);
 }
 
 // Lanczos3 image resampling. Better than bicubic, based on sin(x)/x algorithm
@@ -66,10 +66,10 @@ void R_Resample(byte *source, int swidth, int sheight, byte *dest, int dwidth, i
 	float			center, weight, scale, width, height;
 	contrib_list_t	*contributors;
 
-	byte *work = (byte *)ri.Z_Malloc(dwidth * sheight * components, TAG_TEMP_WORKSPACE, qfalse, 4);
+	byte *work = (byte *)ri->Z_Malloc(dwidth * sheight * components, TAG_TEMP_WORKSPACE, qfalse, 4);
 
 	// Pre calculate filter contributions for rows
-	contributors = (contrib_list_t *)ri.Z_Malloc(sizeof(contrib_list_t) * dwidth, TAG_TEMP_WORKSPACE, qfalse, 4);
+	contributors = (contrib_list_t *)ri->Z_Malloc(sizeof(contrib_list_t) * dwidth, TAG_TEMP_WORKSPACE, qfalse, 4);
 
 	float xscale = (float)dwidth / (float)swidth;
 
@@ -88,7 +88,7 @@ void R_Resample(byte *source, int swidth, int sheight, byte *dest, int dwidth, i
 	for(i = 0; i < dwidth; i++)
 	{
 		contributors[i].n = 0;
-		contributors[i].p = (contrib_t *)ri.Z_Malloc(num * sizeof(contrib_t), TAG_TEMP_WORKSPACE, qfalse, 4);
+		contributors[i].p = (contrib_t *)ri->Z_Malloc(num * sizeof(contrib_t), TAG_TEMP_WORKSPACE, qfalse, 4);
 
 		center = (float)i / xscale;
 		left = (int)ceilf(center - width);
@@ -135,12 +135,12 @@ void R_Resample(byte *source, int swidth, int sheight, byte *dest, int dwidth, i
 	// Clean up
 	for(i = 0; i < dwidth; i++)
 	{
-		ri.Z_Free(contributors[i].p);
+		ri->Z_Free(contributors[i].p);
 	}
-	ri.Z_Free(contributors);
+	ri->Z_Free(contributors);
 
 	// Columns
-	contributors = (contrib_list_t *)ri.Z_Malloc(sizeof(contrib_list_t) * dheight, TAG_TEMP_WORKSPACE, qfalse, 4);
+	contributors = (contrib_list_t *)ri->Z_Malloc(sizeof(contrib_list_t) * dheight, TAG_TEMP_WORKSPACE, qfalse, 4);
 
 	float yscale = (float)dheight / (float)sheight;
 	if(yscale < 1.0f)
@@ -158,7 +158,7 @@ void R_Resample(byte *source, int swidth, int sheight, byte *dest, int dwidth, i
 	for(i = 0; i < dheight; i++)
 	{
 		contributors[i].n = 0;
-		contributors[i].p = (contrib_t *)ri.Z_Malloc(num * sizeof(contrib_t), TAG_TEMP_WORKSPACE, qfalse, 4);
+		contributors[i].p = (contrib_t *)ri->Z_Malloc(num * sizeof(contrib_t), TAG_TEMP_WORKSPACE, qfalse, 4);
 
 		center = (float)i / yscale;
 		left = (int)ceilf(center - height);
@@ -204,9 +204,9 @@ void R_Resample(byte *source, int swidth, int sheight, byte *dest, int dwidth, i
 	// Clean up
 	for(i = 0; i < dheight; i++)
 	{
-		ri.Z_Free(contributors[i].p);
+		ri->Z_Free(contributors[i].p);
 	}
-	ri.Z_Free(contributors);
-	ri.Z_Free(work);
+	ri->Z_Free(contributors);
+	ri->Z_Free(work);
 }
 
