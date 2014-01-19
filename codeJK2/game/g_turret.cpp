@@ -1232,6 +1232,21 @@ void pas_adjust_enemy( gentity_t *ent )
 }
 
 //---------------------------------
+void sentry_explode( gentity_t *ent)
+//---------------------------------
+{
+	ent->takedamage = qfalse;
+	ent->health = 0;
+
+	VectorSet( ent->s.angles, 0, 0, 1 );
+
+	G_PlayEffect("turret/explode", ent->s.pos.trBase, ent->s.angles);
+	G_RadiusDamage(ent->s.pos.trBase, ent->activator, 30, 256, ent, MOD_UNKNOWN);
+
+	G_FreeEntity( ent );
+}
+
+//---------------------------------
 void pas_think( gentity_t *ent )
 //---------------------------------
 {
@@ -1353,7 +1368,18 @@ void pas_think( gentity_t *ent )
 
 	if ( ent->enemy && ent->attackDebounceTime < level.time && random() > 0.3f )
 	{
-		ent->count--;
+		if(g_sentryinfiniteammo->integer == 1 ||
+			(g_sentryinfiniteammo->integer == 0 && ent->activator->s.number == 0) ||
+			(g_sentryinfiniteammo->integer == 2 && ent->activator->s.number != 0)) {}
+		else
+			ent->count--;
+
+		if(ent->activator->s.number == 0) {
+			if(g_sentryrate->integer)
+				ent->attackDebounceTime = level.time + 200;
+		}
+		else if(g_npcsentryrate->integer)
+			ent->attackDebounceTime = level.time + 200;
 
 		if ( ent->count )
 		{
@@ -1364,6 +1390,13 @@ void pas_think( gentity_t *ent )
 		{
 			ent->nextthink = 0;
 			G_Sound( ent, G_SoundIndex( "sound/chars/turret/shutdown.wav" ));
+
+			if(g_sentryexplode->integer == 1 ||
+				(g_sentryexplode->integer == 0 && ent->activator->s.number == 0) ||
+				(g_sentryexplode->integer == 2 && ent->activator->s.number != 0)) {
+				ent->e_ThinkFunc = thinkF_sentry_explode;
+				ent->nextthink = 2000;
+			}
 		}
 	}
 }

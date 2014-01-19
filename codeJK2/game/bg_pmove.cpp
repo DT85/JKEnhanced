@@ -646,7 +646,7 @@ static qboolean PM_CheckJump( void )
 							pm->ps->forcePowersActive |= (1<<FP_LEVITATION);
 							if ( pm->gent )
 							{
-								G_SoundOnEnt( pm->gent, CHAN_BODY, "sound/weapons/force/jump.wav" );
+								G_SoundOnEnt( pm->gent, CHAN_AUTO, "sound/weapons/force/jump.wav" );
 							}
 							//play flip
 							//FIXME: do this only when they stop the jump (below) or when they're just about to hit the peak of the jump
@@ -1118,7 +1118,7 @@ static qboolean PM_CheckJump( void )
 						pm->ps->forceJumpZStart = pm->ps->origin[2];//so we don't take damage if we land at same height
 						pm->ps->pm_flags |= (PMF_JUMPING|PMF_SLOW_MO_FALL);
 						pm->cmd.upmove = 0;
-						G_SoundOnEnt( pm->gent, CHAN_BODY, "sound/weapons/force/jump.wav" );
+						G_SoundOnEnt( pm->gent, CHAN_AUTO, "sound/weapons/force/jump.wav" );
 						WP_ForcePowerDrain( pm->gent, FP_LEVITATION, 0 );
 					}
 				}
@@ -3871,7 +3871,7 @@ qboolean PM_GettingUpFromKnockDown( float standheight, float crouchheight )
 							PM_AddEvent( Q_irand( EV_COMBAT1, EV_COMBAT3 ) );
 							pm->gent->NPC->blockedSpeechDebounceTime = level.time + 1000;
 						}
-						G_SoundOnEnt( pm->gent, CHAN_BODY, "sound/weapons/force/jump.wav" );
+						G_SoundOnEnt( pm->gent, CHAN_AUTO, "sound/weapons/force/jump.wav" );
 						//launch off ground?
 						pm->ps->weaponTime = 300;//just to make sure it's cleared
 					}
@@ -8306,6 +8306,7 @@ static void PM_Weapon( void )
 			return;
 		}
 		PM_AddEvent( EV_FIRE_WEAPON );
+
 		addTime = weaponData[pm->ps->weapon].fireTime;
 
 		switch( pm->ps->weapon)
@@ -8313,6 +8314,8 @@ static void PM_Weapon( void )
 		case WP_REPEATER:
 			// repeater is supposed to do smoke after sustained bursts
 			pm->ps->weaponShotCount++;
+			if(bg_repeaterrate->integer)
+				addTime += 50;
 			break;
 		case WP_BOWCASTER:
 			addTime *= (( trueCount < 3 ) ? 0.35f : 1.0f );// if you only did a small charge shot with the bowcaster, use less time between shots

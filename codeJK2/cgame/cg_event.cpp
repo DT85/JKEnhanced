@@ -181,9 +181,9 @@ void UseItem(int itemNum)
 		CG_ToggleLAGoggles();
 		break;
 	case INV_GOODIE_KEY:
-		if (cent->gent->client->ps.inventory[INV_GOODIE_KEY])
+		if (cent->gent->client->ps.inventory[INV_GOODIE_KEY] >= g_keysused->integer)
 		{
-			cent->gent->client->ps.inventory[INV_GOODIE_KEY]--;
+			cent->gent->client->ps.inventory[INV_GOODIE_KEY] -= g_keysused->integer;
 		}
 		break;
 	case INV_SECURITY_KEY:

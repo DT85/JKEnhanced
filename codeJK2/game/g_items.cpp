@@ -37,8 +37,6 @@ extern qboolean PM_InGetUp( playerState_t *ps );
 
 extern	cvar_t	*g_spskill;
 
-#define MAX_BACTA_HEAL_AMOUNT		25
-
 /*
 
   Items are any object that a player can touch to gain some effect.
@@ -196,6 +194,9 @@ int Pickup_Ammo (gentity_t *ent, gentity_t *other)
 
 	Add_Ammo2 (other, ent->item->giTag, quantity);
 
+	if(g_ammompsound->integer)
+		G_SoundOnEnt(other, CHAN_ITEM, "sound/player/pickupenergy.mp3");
+
 	return 30;
 }
 
@@ -334,6 +335,7 @@ int ITM_AddHealth (gentity_t *ent, int count)
 int Pickup_Health (gentity_t *ent, gentity_t *other) {
 	int			max;
 	int			quantity;
+	bool		bMaxAmountHealed = true;
 
 	max = other->client->ps.stats[STAT_MAX_HEALTH];
 
@@ -346,12 +348,20 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 	other->health += quantity;
 
 	if (other->health > max ) {
+		bMaxAmountHealed = false;
 		other->health = max;
 	}
 
 	if ( ent->item->giTag == 100 ) {		// mega health respawns slow
 		return 120;
 	}
+
+	if(!g_medpacgrunt->integer || (g_medpacgrunt->integer == 1 && bMaxAmountHealed == true))
+		G_SoundOnEnt( other, CHAN_VOICE, va( "sound/weapons/force/heal%d.mp3", Q_irand( 1, 4 ) ) );
+	if(!g_medpacmpsound->integer || (g_medpacmpsound->integer == 1 && bMaxAmountHealed == true))
+		G_SoundOnEnt( ent, CHAN_ITEM, "sound/player/pickuphealth.mp3" );
+	if(!g_medpacdoomsound->integer || (g_medpacdoomsound->integer == 1 && bMaxAmountHealed == true))
+		G_SoundOnEnt( ent, CHAN_ITEM, "sound/items/doomhealth.wav" );
 
 	return 30;
 }
@@ -374,14 +384,16 @@ int ITM_AddArmor (gentity_t *ent, int count)
 
 
 int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
-
-	// make sure that the shield effect is on
-	other->client->ps.powerups[PW_BATTLESUIT] = Q3_INFINITE;
+	bool bMaxAmountGiven = true;
 
 	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
 	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] ) {
 		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[STAT_MAX_HEALTH];
+		bMaxAmountGiven = false;
 	}
+
+	if(!g_armormpsound->integer || (g_armormpsound->integer == 1 && bMaxAmountGiven))
+		G_SoundOnEnt(other, CHAN_ITEM, "sound/player/pickupshield.mp3");
 
 	return 30;
 }
@@ -1062,8 +1074,11 @@ void G_BounceItem( gentity_t *ent, trace_t *trace ) {
 
 	// check for stop
 	if ( trace->plane.normal[2] > 0 && ent->s.pos.trDelta[2] < 40 ) {
+		trace->endpos[2] += 1.0f;
 		G_SetOrigin( ent, trace->endpos );
 		ent->s.groundEntityNum = trace->entityNum;
+		ent->s.pos.trType = TR_STATIONARY;
+		ent->s.pos.trDelta[0] = ent->s.pos.trDelta[1] = ent->s.pos.trDelta[2];
 		return;
 	}
 
@@ -1199,6 +1214,7 @@ ItemUse_Bacta
 */
 void ItemUse_Bacta(gentity_t *ent)
 {
+	qboolean bMaxHeal = qtrue;
 	if (!ent || !ent->client)
 	{
 		return;
@@ -1209,14 +1225,20 @@ void ItemUse_Bacta(gentity_t *ent)
 		return;
 	}
 
-	ent->health += MAX_BACTA_HEAL_AMOUNT;
+	ent->health += g_bactaheal->integer;
 
 	if (ent->health > ent->client->ps.stats[STAT_MAX_HEALTH])
 	{
 		ent->health = ent->client->ps.stats[STAT_MAX_HEALTH];
+		bMaxHeal = qfalse;
 	}
 
 	ent->client->ps.inventory[INV_BACTA_CANISTER]--;
 
-	G_SoundOnEnt( ent, CHAN_VOICE, va( "sound/weapons/force/heal%d.mp3", Q_irand( 1, 4 ) ) );
+	if(!g_bactagrunt->integer || (g_bactagrunt->integer == 1 && bMaxHeal))
+		G_SoundOnEnt( ent, CHAN_VOICE, va( "sound/weapons/force/heal%d.mp3", Q_irand( 1, 4 ) ) );
+	if(!g_bactampsound->integer || (g_bactampsound->integer == 1 && bMaxHeal))
+		G_SoundOnEnt( ent, CHAN_ITEM, "sound/items/use_bacta.wav" );
+	if(!g_bactadoomsound->integer || (g_bactadoomsound->integer == 1 && bMaxHeal))
+		G_SoundOnEnt( ent, CHAN_ITEM, "sound/items/doomhealth.wav" );
 }

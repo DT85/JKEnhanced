@@ -215,7 +215,7 @@ typedef struct ammoData_s
 //----------
 #define REPEATER_SPREAD				1.4f
 #define REPEATER_NPC_SPREAD			0.7f
-#define	REPEATER_DAMAGE				8
+#define	REPEATER_DAMAGE				14
 #define	REPEATER_VELOCITY			1600
 #define	REPEATER_NPC_DAMAGE_EASY	2
 #define	REPEATER_NPC_DAMAGE_NORMAL	4

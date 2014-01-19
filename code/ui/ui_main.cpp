@@ -348,7 +348,6 @@ typedef struct {
 } cvarTable_t;
 
 
-vmCvar_t	ui_menuFiles;
 vmCvar_t	ui_hudFiles;
 
 vmCvar_t	ui_char_anim;
@@ -375,7 +374,6 @@ vmCvar_t	ui_hideXcallout;
 
 static cvarTable_t cvarTable[] = 
 {
-	{ &ui_menuFiles,			"ui_menuFiles",			"ui/menus.txt", CVAR_ARCHIVE },
 	{ &ui_hudFiles,				"cg_hudFiles",			"ui/jahud.txt",CVAR_ARCHIVE}, 
 
 	{ &ui_char_anim,			"ui_char_anim",			"BOTH_WALK1",0}, 
@@ -2556,10 +2554,11 @@ void _UI_Init( qboolean inGameLoad )
 
 	String_Init();
 
-	const char *menuSet = UI_Cvar_VariableString("ui_menuFiles");
+	const char *menuSet = "\0";
 
 	if (menuSet == NULL || menuSet[0] == '\0') 
 	{
+		// WIDESCREEN
 		menuSet = "ui/menus.txt";
 	}
 	if ( Cvar_VariableIntegerValue("com_demo") )
@@ -2852,10 +2851,6 @@ void UI_Load(void)
 	if (uiInfo.inGameLoad)
 	{
 		menuSet= "ui/ingame.txt";
-	}
-	else 
-	{
-		menuSet= UI_Cvar_VariableString("ui_menuFiles");
 	}
 	if (menuSet == NULL || menuSet[0] == '\0') 
 	{

@@ -583,4 +583,6 @@ void		TIMER_Remove( gentity_t *ent, const char *identifier );
 float NPC_GetHFOVPercentage( vec3_t spot, vec3_t from, vec3_t facing, float hFOV );
 float NPC_GetVFOVPercentage( vec3_t spot, vec3_t from, vec3_t facing, float vFOV );
 
+void sentry_explode( gentity_t *ent);
+
 #endif//#ifndef __G_LOCAL_H__

@@ -2595,6 +2595,9 @@ void CG_NextInventory_f( void )
 		return;
 	}
 
+	if(cg.inventoryDebounce > cg.time)
+		return;
+
 	// The first time it's been hit so just show inventory but don't advance in inventory.
 	color = CG_FadeColor( cg.inventorySelectTime, WEAPON_SELECT_TIME );	
 	if ( !color )	
@@ -2602,6 +2605,8 @@ void CG_NextInventory_f( void )
 		SetInventoryTime();
 		return;
 	}
+
+	cg.inventoryDebounce = cg.time + 200;
 
 	const int original = cg.inventorySelect;
 
@@ -2649,6 +2654,9 @@ void CG_PrevInventory_f( void )
 		return;
 	}
 
+	if(cg.inventoryDebounce > cg.time)
+		return;
+
 	// The first time it's been hit so just show inventory but don't advance in inventory.
 	color = CG_FadeColor( cg.inventorySelectTime, WEAPON_SELECT_TIME );	
 	if ( !color )	
@@ -2656,6 +2664,8 @@ void CG_PrevInventory_f( void )
 		SetInventoryTime();
 		return;
 	}
+
+	cg.inventoryDebounce = cg.time + 200;
 
 	const int original = cg.inventorySelect;
 

@@ -128,7 +128,8 @@ typedef enum
 	thinkF_gas_random_jet,
 	thinkF_poll_converter,
 	thinkF_spawn_rack_goods,
-
+	// JK2HD
+	thinkF_sentry_explode,
 } thinkFunc_t;
 
 // THINK functions...

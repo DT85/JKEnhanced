@@ -629,4 +629,34 @@ void PlayerStateToEntityState( playerState_t *ps, entityState_t *s );
 
 qboolean	BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTime );
 
+// JK2:HD cvars
+
+// Items
+extern cvar_t	*g_pullitems;
+extern cvar_t	*g_pushitems;
+extern cvar_t	*g_gripitems;
+extern cvar_t	*g_sentryinfiniteammo;
+extern cvar_t	*g_sentryexplode;
+extern cvar_t	*g_sentrycheat;
+extern cvar_t	*g_npcsentryrate;
+extern cvar_t	*g_sentryrate;
+extern cvar_t	*g_maxsentries;
+extern cvar_t	*g_maxseekers;
+extern cvar_t	*g_medpacheal;
+extern cvar_t	*g_medpacgrunt;
+extern cvar_t	*g_medpacmpsound;
+extern cvar_t	*g_medpacdoomsound;
+extern cvar_t	*g_armormpsound;
+extern cvar_t	*g_ammompsound;
+extern cvar_t	*g_bactagrunt;
+extern cvar_t	*g_bactampsound;
+extern cvar_t	*g_bactadoomsound;
+extern cvar_t	*g_bactaheal;
+extern cvar_t	*g_maxbactas;
+extern cvar_t	*g_maxkeys;
+extern cvar_t	*g_keysused;
+
+extern cvar_t	*bg_repeaterrate;
+extern cvar_t	*g_repeaterspread;
+
 #endif//#ifndef __BG_PUBLIC_H__

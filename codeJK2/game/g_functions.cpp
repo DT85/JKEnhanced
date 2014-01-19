@@ -131,7 +131,7 @@ void GEntity_ThinkFunc(gentity_t *self)
 	THINKCASE( gas_random_jet )
 	THINKCASE( poll_converter ) // dumb loop sound handling 
 	THINKCASE( spawn_rack_goods ) // delay spawn of goods to help on ents
-
+	THINKCASE( sentry_explode )
 	default:
 		Com_Error(ERR_DROP, "GEntity_ThinkFunc: case %d not handled!\n",self->e_ThinkFunc);
 		break;

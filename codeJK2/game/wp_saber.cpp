@@ -5789,7 +5789,11 @@ void ForceThrow( gentity_t *self, qboolean pull )
 									{//not a limb
 										if ( ent->s.weapon == WP_TURRET && !Q_stricmp( "PAS", ent->classname ) && ent->s.apos.trType == TR_STATIONARY )
 										{//can knock over placed turrets
-											if ( !self->s.number || self->enemy != ent )
+											if ( !self->s.number && ((g_sentrycheat->integer != 0 && g_sentrycheat->integer != 1)||(!ent->activator->s.number)) )
+												continue; // Players can't knock over turrets in certain settings, and they can't knock over their own
+											if( g_sentrycheat->integer != 1 && g_sentrycheat->integer != 2 )
+												continue; // NPCs can't knock over turrets in certain settings
+											if ( self->enemy != ent )
 											{//only NPCs who are actively mad at this turret can push it over
 												continue;
 											}
@@ -5835,6 +5839,10 @@ void ForceThrow( gentity_t *self, qboolean pull )
 				&& ent->item->giTag == INV_SECURITY_KEY )
 				//&& (ent->flags&FL_DROPPED_ITEM) ???
 			{//dropped security keys can't be pushed?  But placed ones can...?  does this make any sense?
+				if ( !pull && !g_pushitems->integer )
+					continue; // Can't push, cvar disabled
+				if ( pull && !g_pullitems->integer )
+					continue; // Can't pull, cvar disabled
 				if ( !pull || self->s.number )
 				{//can't push, NPC's can't do anything to it
 					continue;
@@ -5861,6 +5869,13 @@ void ForceThrow( gentity_t *self, qboolean pull )
 						}
 					}
 				}
+			}
+			else
+			{
+				if(!pull && !g_pushitems->integer)
+					continue; // Pushing items disabled by cvar.
+				if(pull && !g_pullitems->integer)
+					continue; // Pulling items disabled by cvar.
 			}
 		}
 		else
@@ -6937,7 +6952,44 @@ void ForceGrip( gentity_t *self )
 		gi.trace( &tr, self->client->renderInfo.handLPoint, vec3_origin, vec3_origin, end, self->s.number, MASK_SHOT, G2_NOCOLLIDE, 0 );
 		if ( tr.entityNum >= ENTITYNUM_WORLD || tr.fraction == 1.0 || tr.allsolid || tr.startsolid )
 		{
-			return;
+			if(g_gripitems->integer) {
+				// One more try...try and physically check for entities in a box, similar to push
+				vec3_t mins, maxs;
+
+				for(int i = 0; i < 3; i++) {
+					mins[i] = self->currentOrigin[i] - 512;
+					maxs[i] = self->currentOrigin[i] + 512;
+				}
+
+				gentity_t *entlist[MAX_GENTITIES];
+				int numListedEntities = gi.EntitiesInBox(mins, maxs, entlist, MAX_GENTITIES);
+				vec3_t forward, vwangles, traceend;
+
+				VectorCopy(self->currentAngles, vwangles);
+				AngleVectors( vwangles, forward, NULL, NULL );
+				VectorMA(self->client->renderInfo.eyePoint, 512.0f, forward, traceend);
+
+				trace_t tr2;
+				gi.trace(&tr2, self->client->renderInfo.eyePoint, vec3_origin, vec3_origin, traceend, self->s.number, MASK_OPAQUE|CONTENTS_SOLID|CONTENTS_BODY|CONTENTS_ITEM|CONTENTS_CORPSE, G2_NOCOLLIDE, 0 );
+				gentity_t *fwdEnt = &g_entities[tr2.entityNum];
+				qboolean fwdEntIsCorrect = qfalse;
+				for(int i = 0; i < numListedEntities; i++) {
+					gentity_t *targEnt = entlist[i];
+					if(targEnt->s.eType == ET_ITEM) {
+						if(targEnt != fwdEnt)
+							continue;
+						else
+							fwdEntIsCorrect = qtrue;
+					}
+				}
+
+				if(fwdEntIsCorrect)
+					tr.entityNum = fwdEnt->s.number;
+				else
+					return;
+			}
+			else
+				return;
 		}
 
 		traceEnt = &g_entities[tr.entityNum];
@@ -7012,13 +7064,16 @@ void ForceGrip( gentity_t *self )
 	}
 	else
 	{//can't grip non-clients... right?
-		return;
+		if(g_gripitems->integer && traceEnt->s.eType == ET_ITEM)
+		{ /* WRONG! */ }
+		else
+			return;
 	}
 	WP_ForcePowerStart( self, FP_GRIP, 20 );
 	//FIXME: rule out other things?
 	//FIXME: Jedi resist, like the push and pull?
 	self->client->ps.forceGripEntityNum = traceEnt->s.number;
-	//if ( traceEnt->client )
+	if ( traceEnt->client )
 	{
 		G_AddVoiceEvent( traceEnt, Q_irand(EV_PUSHED1, EV_PUSHED3), 2000 );
 		if ( self->client->ps.forcePowerLevel[FP_GRIP] > FORCE_LEVEL_2 || traceEnt->s.weapon == WP_SABER )
@@ -7040,12 +7095,14 @@ void ForceGrip( gentity_t *self )
 		//else FIXME: need a one-armed choke if we're not on a high enough level to make them drop their gun
 		VectorCopy( traceEnt->client->renderInfo.headPoint, self->client->ps.forceGripOrg );
 	}
-	/*
 	else
 	{
 		VectorCopy( traceEnt->currentOrigin, self->client->ps.forceGripOrg );
+		traceEnt->s.pos.trTime = level.time;
+		traceEnt->s.pos.trType = TR_LINEAR;
+		VectorCopy(traceEnt->s.pos.trBase, self->client->ps.forceGripOrg);
 	}
-	*/
+
 	self->client->ps.forceGripOrg[2] += 48;//FIXME: define?
 	if ( self->client->ps.forcePowerLevel[FP_GRIP] < FORCE_LEVEL_2 )
 	{//just a duration

@@ -382,10 +382,26 @@ qboolean	BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps 
 	case IT_HOLDABLE:
 		if ( item->giTag >= INV_ELECTROBINOCULARS && item->giTag <= INV_SENTRY )
 		{
-			// hardcoded--can only pick up five of any holdable
-			if ( ps->inventory[item->giTag] >= 5 )
-			{
-				return qfalse;
+			switch(item->giTag) {
+				case INV_BACTA_CANISTER:
+					if( ps->inventory[item->giTag] >= g_maxbactas->integer )
+						return qfalse;
+					break;
+				case INV_SEEKER:
+					if( ps->inventory[item->giTag] >= g_maxseekers->integer )
+						return qfalse;
+					break;
+				case INV_SENTRY:
+					if( ps->inventory[item->giTag] >= g_maxsentries->integer )
+						return qfalse;
+					break;
+				case INV_GOODIE_KEY:
+					if( ps->inventory[item->giTag] >= g_maxkeys->integer )
+						return qfalse;
+				default:
+					if( ps->inventory[item->giTag] >= 5 )
+						return qfalse;
+					break;
 			}
 		}
 		return qtrue;

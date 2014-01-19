@@ -580,9 +580,20 @@ void CG_RegisterItemVisuals( int itemNum ) {
 			break;
 		}
 	}
-
-
-	if ( item->giType == IT_HOLDABLE )
+	else if ( item->giType == IT_ARMOR )
+	{
+		cgi_S_RegisterSound("sound/items/pickupshield.mp3");
+	}
+	else if ( item->giType == IT_HEALTH )
+	{
+		for ( int i = 1; i < 5; i++ )
+		{
+			cgi_S_RegisterSound( va( "sound/weapons/force/heal%d.mp3", i ));
+		}
+		cgi_S_RegisterSound( "sound/player/pickuphealth.mp3" );
+		cgi_S_RegisterSound( "sound/items/doomhealth.wav" );
+	}
+	else if ( item->giType == IT_HOLDABLE )
 	{
 		// This should be set up to actually work.
 		switch( item->giTag )
@@ -624,6 +635,8 @@ void CG_RegisterItemVisuals( int itemNum ) {
 			{
 				cgi_S_RegisterSound( va( "sound/weapons/force/heal%d.mp3", i ));
 			}
+			cgi_S_RegisterSound( "sound/items/use_bacta.wav" );
+			cgi_S_RegisterSound( "sound/items/doomhealth.wav" );
 			break;
 		}
 	}

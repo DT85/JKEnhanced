@@ -155,6 +155,38 @@ cvar_t	*g_saberMoveSpeed;
 cvar_t	*g_saberAnimSpeed;
 cvar_t	*g_saberAutoAim;
 
+// JK2:HD cvars
+
+// Items
+cvar_t	*g_pullitems;
+cvar_t	*g_pushitems;
+cvar_t	*g_gripitems;
+cvar_t	*g_sentryinfiniteammo;
+cvar_t	*g_sentryexplode;
+cvar_t	*g_sentrycheat;
+cvar_t	*g_npcsentryrate;
+cvar_t	*g_sentryrate;
+cvar_t	*g_maxsentries;
+cvar_t	*g_maxseekers;
+cvar_t	*g_medpacheal;
+cvar_t	*g_medpacgrunt;
+cvar_t	*g_medpacmpsound;
+cvar_t	*g_medpacdoomsound;
+cvar_t	*g_armormpsound;
+cvar_t	*g_ammompsound;
+cvar_t	*g_bactaheal;
+cvar_t	*g_bactagrunt;
+cvar_t	*g_bactampsound;
+cvar_t	*g_bactadoomsound;
+cvar_t	*g_maxbactas;
+cvar_t	*g_maxkeys;
+cvar_t	*g_keysused;
+
+// Weapons
+cvar_t	*bg_repeaterrate;
+cvar_t	*g_repeaterspread;
+
+
 qboolean	stop_icarus = qfalse;
 
 extern char *G_GetLocationForEnt( gentity_t *ent );
@@ -580,6 +612,36 @@ void G_InitCvars( void ) {
 	gi.cvar( "newTotalSecrets", "0", CVAR_ROM );
 	gi.cvar_set("newTotalSecrets", "0");//used to carry over the count from SP_target_secret to ClientBegin
 	g_iscensored = gi.cvar( "ui_iscensored", "0", CVAR_ARCHIVE|CVAR_ROM|CVAR_INIT|CVAR_CHEAT|CVAR_NORESTART );
+
+	// JK2:HD cvars
+	// Items
+	g_pullitems					= gi.cvar("g_pullitems", "1", CVAR_ARCHIVE);
+	g_pushitems					= gi.cvar("g_pushitems", "1", CVAR_ARCHIVE);
+	g_gripitems					= gi.cvar("g_gripitems", "0", CVAR_ARCHIVE);
+	g_sentryinfiniteammo		= gi.cvar("g_sentryinfiniteammo", "3", CVAR_ARCHIVE);
+	g_sentryexplode				= gi.cvar("g_sentryexplode", "3", CVAR_ARCHIVE);
+	g_sentrycheat				= gi.cvar("g_sentrycheat", "1", CVAR_ARCHIVE);
+	g_npcsentryrate				= gi.cvar("g_npcsentryrate", "0", CVAR_ARCHIVE);
+	g_sentryrate				= gi.cvar("g_sentryrate", "0", CVAR_ARCHIVE);
+	g_maxsentries				= gi.cvar("g_maxsentries", "5", CVAR_ARCHIVE);
+	g_maxseekers				= gi.cvar("g_maxseekers", "5", CVAR_ARCHIVE);
+	g_medpacheal				= gi.cvar("g_medpacheal", "25", CVAR_ARCHIVE);
+	g_medpacgrunt				= gi.cvar("g_medpacgrunt", "2", CVAR_ARCHIVE);
+	g_medpacmpsound				= gi.cvar("g_medpacmpsound", "2", CVAR_ARCHIVE);
+	g_medpacdoomsound			= gi.cvar("g_medpacdoomsound", "2", CVAR_ARCHIVE);
+	g_armormpsound				= gi.cvar("g_armormpsound", "2", CVAR_ARCHIVE);
+	g_ammompsound				= gi.cvar("g_ammompsound", "0", CVAR_ARCHIVE);
+	g_bactagrunt				= gi.cvar("g_bactagrunt", "0", CVAR_ARCHIVE);
+	g_bactampsound				= gi.cvar("g_bactampsound", "2", CVAR_ARCHIVE);
+	g_bactadoomsound			= gi.cvar("g_bactadoomsound", "2", CVAR_ARCHIVE);
+	g_bactaheal					= gi.cvar("g_bactaheal", "25", CVAR_ARCHIVE);
+	g_maxbactas					= gi.cvar("g_maxbactas", "5", CVAR_ARCHIVE);
+	g_maxkeys					= gi.cvar("g_maxkeys", "5", CVAR_ARCHIVE);
+	g_keysused					= gi.cvar("g_keysused", "1", CVAR_ARCHIVE);
+
+	// Weapons
+	bg_repeaterrate				= gi.cvar("bg_repeaterrate", "1", CVAR_ARCHIVE);
+	g_repeaterspread			= gi.cvar("g_repeaterspread", "1", CVAR_ARCHIVE);
 }
 
 /*
@@ -1082,81 +1144,6 @@ void G_Animate ( gentity_t *self )
 	}
 }
 
-/*
--------------------------
-ResetTeamCounters
--------------------------
-*/
-
-/*
-void ResetTeamCounters( void )
-{
-	//clear team enemy counters
-	for ( int team = TEAM_FREE; team < TEAM_NUM_TEAMS; team++ )
-	{
-		teamEnemyCount[team] = 0;
-		teamCount[team] = 0;
-	}
-}
-*/
-
-/*
--------------------------
-UpdateTeamCounters
--------------------------
-*/
-/*
-void UpdateTeamCounters( gentity_t *ent )
-{
-	if ( !ent->NPC )
-	{
-		return;
-	}
-	if ( !ent->client )
-	{
-		return;
-	}
-	if ( ent->health <= 0 )
-	{
-		return;
-	}
-	if ( (ent->s.eFlags&EF_NODRAW) )
-	{
-		return;
-	}
-	if ( ent->client->playerTeam == TEAM_FREE )
-	{
-		return;
-	}
-	//this is an NPC who is alive and visible and is on a specific team
-
-	teamCount[ent->client->playerTeam]++;
-	if ( !ent->enemy )
-	{
-		return;
-	}
-
-	//ent has an enemy
-	if ( !ent->enemy->client )
-	{//enemy is a normal ent
-		if ( ent->noDamageTeam == ent->client->playerTeam )
-		{//it's on my team, don't count it as an enemy
-			return;
-		}
-	}
-	else
-	{//enemy is another NPC/player
-		if ( ent->enemy->client->playerTeam == ent->client->playerTeam)
-		{//enemy is on the same team, don't count it as an enemy
-			return;
-		}
-	}
-
-	//ent's enemy is not on the same team
-	teamLastEnemyTime[ent->client->playerTeam] = level.time;
-	teamEnemyCount[ent->client->playerTeam]++;
-}
-*/
 extern void G_SoundOnEnt( gentity_t *ent, soundChannel_t channel, const char *soundPath );
 void G_PlayerGuiltDeath( void )
 {

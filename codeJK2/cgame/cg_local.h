@@ -440,6 +440,7 @@ typedef struct {
 
 	int			inventorySelect;		// Current inventory item chosen
 	int			inventorySelectTime;
+	int			inventoryDebounce;
 
 	int			forcepowerSelect;		// Current force power chosen
 	int			forcepowerSelectTime;
