@@ -2290,7 +2290,7 @@ void NPC_LoadParms( void )
 		else
 		{
 			if ( totallen + len >= MAX_NPC_DATA_SIZE ) {
-				G_Error( "NPC extensions (*.npc) are too large" );
+				G_Error( "ext_data/NPCs.cfg is too large" );
 			}
 			strcat( marker, buffer );
 			gi.FS_FreeFile( buffer );
