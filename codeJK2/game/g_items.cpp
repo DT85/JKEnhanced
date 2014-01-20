@@ -194,9 +194,6 @@ int Pickup_Ammo (gentity_t *ent, gentity_t *other)
 
 	Add_Ammo2 (other, ent->item->giTag, quantity);
 
-	if(g_ammompsound->integer)
-		G_SoundOnEnt(other, CHAN_ITEM, "sound/player/pickupenergy.mp3");
-
 	return 30;
 }
 
@@ -356,11 +353,11 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 		return 120;
 	}
 
-	if(!g_medpacgrunt->integer || (g_medpacgrunt->integer == 1 && bMaxAmountHealed == true))
+	if(g_medpacgrunt->integer == 1 && bMaxAmountHealed == true)
 		G_SoundOnEnt( other, CHAN_VOICE, va( "sound/weapons/force/heal%d.mp3", Q_irand( 1, 4 ) ) );
-	if(!g_medpacmpsound->integer || (g_medpacmpsound->integer == 1 && bMaxAmountHealed == true))
+	if(g_medpacmpsound->integer == 1 && bMaxAmountHealed == true)
 		G_SoundOnEnt( ent, CHAN_ITEM, "sound/player/pickuphealth.mp3" );
-	if(!g_medpacdoomsound->integer || (g_medpacdoomsound->integer == 1 && bMaxAmountHealed == true))
+	if(g_medpacdoomsound->integer == 1 && bMaxAmountHealed == true)
 		G_SoundOnEnt( ent, CHAN_ITEM, "sound/items/doomhealth.wav" );
 
 	return 30;
@@ -392,7 +389,7 @@ int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 		bMaxAmountGiven = false;
 	}
 
-	if(!g_armormpsound->integer || (g_armormpsound->integer == 1 && bMaxAmountGiven))
+	if(g_armormpsound->integer == 1 && bMaxAmountGiven)
 		G_SoundOnEnt(other, CHAN_ITEM, "sound/player/pickupshield.mp3");
 
 	return 30;
