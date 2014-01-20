@@ -163,14 +163,14 @@ void CG_ItemPickup( int itemNum, qboolean bHadItem ) {
 	else if( bg_itemlist[itemNum].giType == IT_HEALTH )
 	{
 		if(!g_medpacdoomsound->integer)
-			cgi_S_StartSound (NULL, 0, CHAN_ITEM,	cgi_S_RegisterSound( "sound/item/doomhealth.wav" ) );
+			cgi_S_StartSound (NULL, 0, CHAN_ITEM,	cgi_S_RegisterSound( "sound/items/doomhealth.wav" ) );
 		if(!g_medpacmpsound->integer)
 			cgi_S_StartSound (NULL, 0, CHAN_ITEM,	cgi_S_RegisterSound( "sound/player/pickuphealth.mp3" ) );
 	}
 	else if( bg_itemlist[itemNum].giType == IT_ARMOR )
 	{
 		if(!g_armormpsound->integer)
-			cgi_S_StartSound (NULL, 0, CHAN_ITEM,	cgi_S_RegisterSound( "sound/player/pickuparmor.mp3" ) );
+			cgi_S_StartSound (NULL, 0, CHAN_ITEM,	cgi_S_RegisterSound( "sound/player/pickupshield.mp3" ) );
 	}
 }
 
