@@ -2006,6 +2006,7 @@ usually be a couple times for each server frame on fast clients.
 */
 
 extern int G_FindLocalInterestPoint( gentity_t *self );
+static int lastShieldTakenAway = 0;
 void ClientThink_real( gentity_t *ent, usercmd_t *ucmd ) 
 {
 	gclient_t	*client;
@@ -2019,6 +2020,12 @@ void ClientThink_real( gentity_t *ent, usercmd_t *ucmd )
 	//Don't let the player do anything if in a camera
 	if ( ent->s.number == 0 ) 
 	{
+		if(ent->client->ps.stats[STAT_ARMOR] > 100 &&
+				g_armoroverflowdown->integer &&
+				lastShieldTakenAway < level.time) {
+			ent->client->ps.stats[STAT_ARMOR]--;
+			lastShieldTakenAway = level.time + g_armoroverflowdown->integer;
+		}
 extern cvar_t	*g_skippingcin;
 
 		if ( ent->s.eFlags & EF_LOCKED_TO_WEAPON )

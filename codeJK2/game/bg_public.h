@@ -647,6 +647,8 @@ extern cvar_t	*g_medpacgrunt;
 extern cvar_t	*g_medpacmpsound;
 extern cvar_t	*g_medpacdoomsound;
 extern cvar_t	*g_armormpsound;
+extern cvar_t	*g_armorlgoverflow;
+extern cvar_t	*g_armoroverflowdown;
 extern cvar_t	*g_ammompsound;
 extern cvar_t	*g_bactagrunt;
 extern cvar_t	*g_bactampsound;

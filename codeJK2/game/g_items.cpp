@@ -367,10 +367,13 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 
 int ITM_AddArmor (gentity_t *ent, int count) 
 {
-	
+	if ( ent->client->ps.stats[STAT_ARMOR] > ent->client->ps.stats[STAT_MAX_HEALTH] )
+		return qfalse;
+
 	ent->client->ps.stats[STAT_ARMOR] += count;
 
-	if (ent->client->ps.stats[STAT_ARMOR] > ent->client->ps.stats[STAT_MAX_HEALTH]) 
+	if (ent->client->ps.stats[STAT_ARMOR] > ent->client->ps.stats[STAT_MAX_HEALTH] &&
+		(!g_armorlgoverflow->integer || count < 50)) 
 	{
 		ent->client->ps.stats[STAT_ARMOR] = ent->client->ps.stats[STAT_MAX_HEALTH];
 		return qfalse;
@@ -384,7 +387,8 @@ int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 	bool bMaxAmountGiven = true;
 
 	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
-	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] ) {
+	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] &&
+		!g_armorlgoverflow->integer) {
 		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[STAT_MAX_HEALTH];
 		bMaxAmountGiven = false;
 	}

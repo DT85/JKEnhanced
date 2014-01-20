@@ -173,6 +173,8 @@ cvar_t	*g_medpacgrunt;
 cvar_t	*g_medpacmpsound;
 cvar_t	*g_medpacdoomsound;
 cvar_t	*g_armormpsound;
+cvar_t	*g_armorlgoverflow;
+cvar_t	*g_armoroverflowdown;
 cvar_t	*g_ammompsound;
 cvar_t	*g_bactaheal;
 cvar_t	*g_bactagrunt;
@@ -630,6 +632,8 @@ void G_InitCvars( void ) {
 	g_medpacmpsound				= gi.cvar("g_medpacmpsound", "2", CVAR_ARCHIVE);
 	g_medpacdoomsound			= gi.cvar("g_medpacdoomsound", "2", CVAR_ARCHIVE);
 	g_armormpsound				= gi.cvar("g_armormpsound", "2", CVAR_ARCHIVE);
+	g_armorlgoverflow			= gi.cvar("g_armorlgoverflow", "0", CVAR_ARCHIVE);
+	g_armoroverflowdown			= gi.cvar("g_armoroverflowdown", "0", CVAR_ARCHIVE);
 	g_ammompsound				= gi.cvar("g_ammompsound", "0", CVAR_ARCHIVE);
 	g_bactagrunt				= gi.cvar("g_bactagrunt", "0", CVAR_ARCHIVE);
 	g_bactampsound				= gi.cvar("g_bactampsound", "2", CVAR_ARCHIVE);
