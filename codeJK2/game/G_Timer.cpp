@@ -21,8 +21,12 @@ This file is part of Jedi Knight 2.
 
 
 #include "g_local.h"
+#include <unordered_map>
 
-typedef map		< string, int >	timer_m;
+// FIXME: this is really ridiculous and silly, lots of loops over all the entities. We really ought to make this into a map or smth
+// --eez
+
+typedef unordered_map		< string, int >	timer_m;
 
 timer_m	g_timers[ MAX_GENTITIES ];
 
@@ -64,30 +68,25 @@ TIMER_Save
 
 void TIMER_Save( void )
 {
-	int			j;
-	gentity_t	*ent;
-
-	for ( j = 0, ent = &g_entities[0]; j < MAX_GENTITIES; j++, ent++ )
+	for ( int j = 0; j < MAX_GENTITIES; j++ )
 	{
+		gentity_t *ent = &g_entities[j];
 		int numTimers = g_timers[ent->s.number].size();
-		int	i;
 
 		//Write out the timer information
 		gi.AppendToSaveGame(INT_ID('T','I','M','E'), (void *)&numTimers, sizeof(numTimers));
 		
-		timer_m::iterator	ti;
-
-		for ( i = 0, ti = g_timers[ j ].begin(); i < numTimers; i++, ti++ )
+		for ( auto it = g_timers[j].begin(); it != g_timers[j].end(); ++it )
 		{
-			const char *id = ((*ti).first).c_str();
-			int			length = strlen( id );
+			const char *id = it->first.c_str();
+			unsigned int length = strlen( id );
 
 			//Write out the string size and data
-			gi.AppendToSaveGame(INT_ID('T','S','L','N'), (void *) &length, sizeof(length) );
-			gi.AppendToSaveGame(INT_ID('T','S','N','M'), (void *) id, length );
+			gi.AppendToSaveGame(INT_ID('T','S','L','N'), (const void*)&length, sizeof(length));
+			gi.AppendToSaveGame(INT_ID('T','S','N','M'), (const void*)id, length);
 
 			//Write out the timer data
-			gi.AppendToSaveGame(INT_ID('T','D','T','A'), (void *) &(*ti).second, sizeof( (*ti).second ) );
+			gi.AppendToSaveGame(INT_ID('T','D','T','A'), (const void*)&it->second, sizeof( it->second ));
 		}
 	}
 }
@@ -100,12 +99,10 @@ TIMER_Load
 
 void TIMER_Load( void )
 {
-	int j;
-	gentity_t	*ent;
-
-	for ( j = 0, ent = &g_entities[0]; j < MAX_GENTITIES; j++, ent++ )
+	for ( int j = 0; j < MAX_GENTITIES; j++ )
 	{
 		int numTimers;
+		gentity_t *ent = &g_entities[j];
 
 		gi.ReadFromSaveGame( INT_ID('T','I','M','E'), (void *)&numTimers, sizeof(numTimers), NULL );
 
@@ -146,6 +143,13 @@ TIMER_Set
 
 void TIMER_Set( gentity_t *ent, const char *identifier, int duration )
 {
+	if(!ent)
+		return;
+	if(ent->s.number < 0 || ent->s.number >= MAX_GENTITIES)
+		return;
+	if(!identifier)
+		return;
+
 	g_timers[ent->s.number][identifier] = level.time + duration;
 }
 
@@ -157,17 +161,20 @@ TIMER_Get
 
 int	TIMER_Get( gentity_t *ent, const char *identifier )
 {
-	timer_m::iterator	ti;
+	if(!ent)
+		return -1;
+	if(!identifier)
+		return -1;
+	if(ent->s.number < 0 || ent->s.number >= MAX_GENTITIES)
+		return -1;
 
-	ti = g_timers[ent->s.number].find( identifier );
-
-	if ( ti == g_timers[ent->s.number].end() )
+	auto it = g_timers[ent->s.number].find( identifier );
+	if( it == g_timers[ent->s.number].end() )
 	{
-		//assert(0);
 		return -1;
 	}
 
-	return (*ti).second;
+	return it->second;
 }
 
 /*
@@ -178,14 +185,19 @@ TIMER_Done
 
 qboolean TIMER_Done( gentity_t *ent, const char *identifier )
 {
-	timer_m::iterator	ti;
+	if(!ent)
+		return qtrue;
+	if(ent->s.number < 0 || ent->s.number >= MAX_GENTITIES)
+		return qtrue;
+	if(!identifier)
+		return qtrue;
 
-	ti = g_timers[ent->s.number].find( identifier );
+	auto it = g_timers[ent->s.number].find( identifier );
 
-	if ( ti == g_timers[ent->s.number].end() )
+	if ( it == g_timers[ent->s.number].end() )
 		return true;
 
-	return ( (*ti).second < level.time );
+	return ( it->second < level.time );
 }
 
 /*
@@ -200,21 +212,26 @@ timer was never started
 
 qboolean TIMER_Done2( gentity_t *ent, const char *identifier, qboolean remove )
 {
-	timer_m::iterator	ti;
+	if(!ent)
+		return qfalse;
+	if(ent->s.number < 0 || ent->s.number >= MAX_GENTITIES)
+		return qfalse;
+	if(!identifier)
+		return qfalse;
 
-	ti = g_timers[ent->s.number].find( identifier );
+	auto it = g_timers[ent->s.number].find( identifier );
 
-	if ( ti == g_timers[ent->s.number].end() )
+	if ( it == g_timers[ent->s.number].end() )
 	{
 		return qfalse;
 	}
 
-	qboolean res =((*ti).second < level.time );
+	qboolean res = ( it->second < level.time );
 
 	if ( res && remove )
 	{
 		// Timer is done and it was requested that it should be removed.
-		g_timers[ent->s.number].erase( ti );
+		g_timers[ent->s.number].erase( it );
 	}
 
 	return res;
@@ -227,11 +244,16 @@ TIMER_Exists
 */
 qboolean TIMER_Exists( gentity_t *ent, const char *identifier )
 {
-	timer_m::iterator	ti;
+	if(!ent)
+		return qfalse;
+	if(ent->s.number < 0 || ent->s.number >= MAX_GENTITIES)
+		return qfalse;
+	if(!identifier)
+		return qfalse;
 
-	ti = g_timers[ent->s.number].find( identifier );
+	auto it = g_timers[ent->s.number].find( identifier );
 
-	if ( ti == g_timers[ent->s.number].end( ))
+	if ( it == g_timers[ent->s.number].end( ))
 	{
 		return qfalse;
 	}
@@ -247,13 +269,18 @@ Utility to get rid of any timer
 */
 void TIMER_Remove( gentity_t *ent, const char *identifier )
 {
-	timer_m::iterator	ti;
+	if(!ent)
+		return;
+	if(ent->s.number < 0 || ent->s.number >= MAX_GENTITIES)
+		return;
+	if(!identifier)
+		return;
 
-	ti = g_timers[ent->s.number].find( identifier );
+	auto it = g_timers[ent->s.number].find( identifier );
 
-	if ( ti != g_timers[ent->s.number].end() )
+	if ( it != g_timers[ent->s.number].end() )
 	{
-		g_timers[ent->s.number].erase( ti );
+		g_timers[ent->s.number].erase( it );
 	}
 }
 
@@ -265,6 +292,13 @@ TIMER_Start
 
 qboolean TIMER_Start( gentity_t *self, const char *identifier, int duration )
 {
+	if(!self)
+		return qfalse;
+	if(self->s.number < 0 || self->s.number >= MAX_GENTITIES)
+		return qfalse;
+	if(!identifier)
+		return qfalse;
+
 	if ( TIMER_Done( self, identifier ) )
 	{
 		TIMER_Set( self, identifier, duration );
