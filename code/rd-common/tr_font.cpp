@@ -1613,7 +1613,7 @@ int RE_Font_HeightPixels(const int iFontHandle, const float fScale)
 
 // iMaxPixelWidth is -1 for "all of string", else pixel display count...
 //
-void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, const int iFontHandle, int iMaxPixelWidth, const float fScale)
+void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, const int iFontHandle, int iMaxPixelWidth, const float fScale, const float fAspectCorrection)
 {
 	// HAAAAAAAAAAAAAAAX..fix me please --eez
 #ifndef __NO_JK2
@@ -1673,7 +1673,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 			offset = Round(curfont->GetPointSize() * fScale * 0.075f);
 
 			gbInShadow = qtrue;
-			RE_Font_DrawString(ox + offset, oy + offset, psText, colorTable[CT_DKGREY2], iFontHandle & SET_MASK, iMaxPixelWidth, fScale);
+			RE_Font_DrawString(ox + offset, oy + offset, psText, colorTable[CT_DKGREY2], iFontHandle & SET_MASK, iMaxPixelWidth, fScale, fAspectCorrection);
 			gbInShadow = qfalse;
 		}
 			
@@ -1729,8 +1729,10 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 					RE_StretchPic ( x + Round(pLetter->horizOffset * fScale), // float x
 									(uiLetter > 255) ? y - iAsianYAdjust : y,	// float y
-									curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale,	// float w
-									curfont->mbRoundCalcs ? Round(pLetter->height * fThisScale) : pLetter->height * fThisScale, // float h
+									//curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale * fAspectCorrection) :
+										pLetter->width * fThisScale * fAspectCorrection,	// float w
+									//curfont->mbRoundCalcs ? Round(pLetter->height * fThisScale * fAspectCorrection) :
+										pLetter->height * fThisScale, // float h
 									pLetter->s,						// float s1
 									pLetter->t,						// float t1
 									pLetter->s2,					// float s2
@@ -1831,7 +1833,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 		static const vec4_t v4DKGREY2 = {0.15f, 0.15f, 0.15f, 1};
 
 		gbInShadow = qtrue;
-		RE_Font_DrawString(ox + offset, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iMaxPixelWidth, fScale);
+		RE_Font_DrawString(ox + offset, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iMaxPixelWidth, fScale, fAspectCorrection);
 		gbInShadow = qfalse;
 	}
 		
@@ -1916,7 +1918,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 				RE_StretchPic ( x + Round(pLetter->horizOffset * fScale), // float x
 								(uiLetter > (unsigned)g_iNonScaledCharRange) ? y - iAsianYAdjust : y,	// float y
-								curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale,	// float w
+								curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale * fAspectCorrection,	// float w
 								curfont->mbRoundCalcs ? Round(pLetter->height * fThisScale) : pLetter->height * fThisScale, // float h
 								pLetter->s,						// float s1
 								pLetter->t,						// float t1

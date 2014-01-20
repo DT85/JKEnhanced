@@ -639,7 +639,7 @@ levelshots are specialized 256*256 thumbnails for
 the menu system, sampled down from full screen distorted images
 ====================
 */
-#define LEVELSHOTSIZE 256
+#define LEVELSHOTSIZE 2048
 static void R_LevelShot( void ) {
 	char		checkname[MAX_OSPATH];
 	byte		*buffer;

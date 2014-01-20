@@ -613,7 +613,7 @@ void CG_DrawCaptionText(void)
 		return;
 	}
 
-	const float fFontScale = cgi_Language_IsAsian() ? 0.8f : 1.0f;
+	float fFontScale = cgi_Language_IsAsian() ? 0.8f : 1.0f;
 
 	if (cg_skippingcin.integer != 0)
 	{
@@ -929,6 +929,124 @@ CG_DrawCenterString
 ===================
 */
 void CG_DrawCenterString( void ) 
+{
+	char	*start;
+	int		l;
+	int		x, y, w;
+	float	*color;
+
+	if ( !cg.centerPrintTime ) {
+		return;
+	}
+
+	color = CG_FadeColor( cg.centerPrintTime, 1000 * cg_centertime.value );
+	if ( !color ) {
+		return;
+	}
+
+	if((textcolor_center[0] == 0) && (textcolor_center[1] == 0) && 
+		(textcolor_center[2] == 0) && (textcolor_center[3] == 0))
+	{
+		Vector4Copy( colorTable[CT_WHITE], textcolor_center );
+	}
+
+	start = cg.centerPrint;
+
+	const int fontHeight = cgi_R_Font_HeightPixels(cgs.media.qhFontMedium, 1.0f);
+	y = cg.centerPrintY - (cg.centerPrintLines * fontHeight) / 2;
+
+	while ( 1 ) {
+		char linebuffer[1024];
+
+		// this is kind of unpleasant when dealing with MBCS, but...
+		//		
+		const char *psString = start;
+		int iOutIndex = 0;
+		for ( l = 0; l < sizeof(linebuffer)-1; l++ ) {
+			unsigned int uiLetter = cgi_AnyLanguage_ReadCharFromString(&psString, 0);
+			if (!uiLetter || uiLetter == '\n'){
+				break;
+			}
+			if (uiLetter > 255)
+			{
+				linebuffer[iOutIndex++] = uiLetter >> 8;
+				linebuffer[iOutIndex++] = uiLetter & 0xFF;
+			}
+			else
+			{
+				linebuffer[iOutIndex++] = uiLetter & 0xFF;
+			}
+		}
+		linebuffer[iOutIndex++] = '\0';
+
+		w = cgi_R_Font_StrLenPixels(linebuffer, cgs.media.qhFontMedium, 1.0f);	
+
+		x = ( SCREEN_WIDTH - w ) / 2;
+
+		cgi_R_Font_DrawString(x,y,linebuffer, textcolor_center, cgs.media.qhFontMedium, -1, 1.0f);
+
+		y += fontHeight;
+
+		while ( *start && ( *start != '\n' ) ) {
+			start++;
+		}
+		if ( !*start ) {
+			break;
+		}
+		start++;
+	}
+
+}
+
+/*
+==============
+CG_OutOfCinCaption
+
+These are like regular captions, but they take place outside of cinematics
+==============
+*/
+void CG_OutOfCinCaption( const char *str, int y) {
+	char	*s;
+	
+	// Find text to match the str given
+	if (*str == '@')
+	{
+		int i;
+
+		i = cgi_SP_GetStringTextString( str+1, cg.centerPrint, sizeof(cg.centerPrint) );
+
+		if (!i)
+		{
+			Com_Printf (S_COLOR_RED"CG_CenterPrint: cannot find reference '%s' in StringPackage!\n",str);	
+			Q_strncpyz( cg.centerPrint, str, sizeof(cg.centerPrint) );
+		}
+	}
+	else
+	{
+		Q_strncpyz( cg.centerPrint, str, sizeof(cg.centerPrint) );
+	}
+
+	cg.centerPrintTime = cg.time;
+	cg.centerPrintY = y;
+
+	// count the number of lines for centering
+	cg.centerPrintLines = 1;
+	s = cg.centerPrint;
+	while( *s ) {
+		if (*s == '\n')
+			cg.centerPrintLines++;
+		s++;
+	}
+
+}
+
+
+/*
+===================
+CG_DrawOutOfCinString
+===================
+*/
+void CG_DrawOutOfCinString( void ) 
 {
 	char	*start;
 	int		l;

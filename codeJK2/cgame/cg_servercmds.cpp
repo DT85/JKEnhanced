@@ -288,6 +288,11 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
+	// Cinematic text (out of cinematic)
+	if ( !strcmp( cmd, "ctooc" ) )
+	{
+	}
+
 	// Text stop
 	if ( !strcmp( cmd, "cts" ) ) 
 	{

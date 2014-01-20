@@ -573,8 +573,8 @@ void Text_Paint(float x, float y, float scale, vec4_t color, const char *text, i
 							color,	// paletteRGBA_c c
 							iStyleOR | iFontIndex,	// const int iFontHandle
 							!iMaxPixelWidth?-1:iMaxPixelWidth,	// iMaxPixelWidth (-1 = none)
-							scale	// const float scale = 1.0f
-							);
+							scale,	// const float scale = 1.0f
+							1.0f);
 }
 
 
@@ -3715,8 +3715,8 @@ static void UI_OwnerDraw(float x, float y, float w, float h, float text_x, float
 									color,	// paletteRGBA_c c
 									iFontIndex,	// const int iFontHandle
 									w,//-1,		// iMaxPixelWidth (-1 = none)
-									scale	// const float scale = 1.0f
-									);
+									scale,	// const float scale = 1.0f
+									1.0f);
 			break;
 		case UI_PREVIEWCINEMATIC:
 			// FIXME BOB - make this work?
