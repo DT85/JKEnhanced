@@ -77,6 +77,7 @@ qboolean G_InventorySelectable( int index,gentity_t *other)
 
 extern qboolean INV_GoodieKeyGive( gentity_t *target );
 extern qboolean INV_SecurityKeyGive( gentity_t *target, const char *keyname );
+void Add_Batteries( gentity_t *ent, float *count );
 int Pickup_Holdable( gentity_t *ent, gentity_t *other ) 
 {
 	int		i,original;
@@ -94,6 +95,32 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other )
 		//FIXME: temp message
 		gi.SendServerCommand( 0, "cp @INGAME_YOU_TOOK_SUPPLY_KEY" );
 		INV_GoodieKeyGive( other );
+	}
+	else if ( ent->item->giTag == INV_ELECTROBINOCULARS &&
+		g_binocgivebatteries->integer )
+	{
+		bool bFirstTime = false;
+		if(other->client->ps.inventory[ent->item->giTag] <= 0) {
+			other->client->ps.inventory[ent->item->giTag]++;
+			bFirstTime = true;
+		}
+		if(g_binocgivebatteries->integer != 1 || !bFirstTime) {
+			float count = 500.0f; // not as much as regular batteries
+			Add_Batteries(other, &count);
+		}
+	}
+	else if ( ent->item->giTag == INV_LIGHTAMP_GOGGLES &&
+		g_lagivebatteries->integer )
+	{
+		bool bFirstTime = false;
+		if(other->client->ps.inventory[ent->item->giTag] <= 0) {
+			other->client->ps.inventory[ent->item->giTag]++;
+			bFirstTime = true;
+		}
+		if(g_lagivebatteries->integer != 1 || !bFirstTime) {
+			float count = 500.0f; // not as much as regular batteries
+			Add_Batteries(other, &count);
+		}
 	}
 	else
 	{// Picking up a normal item?
@@ -198,7 +225,7 @@ int Pickup_Ammo (gentity_t *ent, gentity_t *other)
 }
 
 //======================================================================
-void Add_Batteries( gentity_t *ent, int *count )
+void Add_Batteries( gentity_t *ent, float *count )
 {
 	if ( ent->client && ent->client->ps.batteryCharge < MAX_BATTERIES && *count )
 	{
@@ -234,9 +261,14 @@ int Pickup_Battery( gentity_t *ent, gentity_t *other )
 	}
 
 	// There may be some left over in quantity if the player is close to full, but with pickup items, this amount will just be lost
-	Add_Batteries( other, &quantity );
+	float x = quantity;
+	Add_Batteries( other, &x );
+	ent->count = (int)x;
 
-	return 30;
+	if( ent->count >= 1 )
+		return 0;
+	else
+		return 30;
 }
 
 //======================================================================
@@ -339,7 +371,7 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 	if ( ent->count ) {
 		quantity = ent->count;
 	} else {
-		quantity = ent->item->quantity;
+		quantity = g_medpacheal->integer;
 	}
 
 	other->health += quantity;
@@ -386,7 +418,14 @@ int ITM_AddArmor (gentity_t *ent, int count)
 int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 	bool bMaxAmountGiven = true;
 
-	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
+	// this is sort of hack but whatever --eez
+	int amount = ent->item->quantity;
+	if(amount == 25)
+		amount = g_armorsmamount->integer;
+	else
+		amount = g_armorlgamount->integer;
+
+	other->client->ps.stats[STAT_ARMOR] += amount;
 	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] &&
 		!g_armorlgoverflow->integer) {
 		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[STAT_MAX_HEALTH];
@@ -600,11 +639,6 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		return;
 	}
 
-	if ( !respawn ) 
-	{
-		return;
-	}
-
 	// play the normal pickup sound
 	if ( !other->s.number && g_timescale->value < 1.0f  )
 	{//SIGH... with timescale on, you lose events left and right
@@ -628,6 +662,11 @@ extern void CG_ItemPickup( int itemNum, qboolean bHadItem );
 
 	// fire item targets
 	G_UseTargets (ent, other);
+
+	if ( !respawn ) 
+	{ // for batteries
+		return;
+	}
 
 	// wait of -1 will not respawn
 //	if ( ent->wait == -1 ) 
@@ -1029,6 +1068,42 @@ be on an entity that hasn't spawned yet.
 void G_SpawnItem (gentity_t *ent, gitem_t *item) {
 	G_SpawnFloat( "random", "0", &ent->random );
 	G_SpawnFloat( "wait", "0", &ent->wait );
+
+	if(!Q_stricmp(ent->classname, "item_battery")) {
+		// HAX
+		if(Q_irand(1,100) <= g_binocrandomrate->integer) {
+			gitem_t		*itemX;
+			int			itemNum;
+
+			strcpy(ent->classname, "item_binoculars");
+
+			itemNum=1;
+			for ( itemX = bg_itemlist + 1 ; itemX->classname ; itemX++,itemNum++) 
+			{
+				if (!strcmp(itemX->classname,ent->classname))
+				{
+					break;
+				}
+			}
+			item = itemX;
+		}
+		else if(Q_irand(1,100) <= g_larandomrate->integer) {
+			gitem_t		*itemX;
+			int			itemNum;
+
+			strcpy(ent->classname, "item_la_goggles");
+
+			itemNum=1;
+			for ( itemX = bg_itemlist + 1 ; itemX->classname ; itemX++,itemNum++) 
+			{
+				if (!strcmp(itemX->classname,ent->classname))
+				{
+					break;
+				}
+			}
+			item = itemX;
+		}
+	}
 
 	RegisterItem( item );
 	ent->item = item;

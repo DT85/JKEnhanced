@@ -528,7 +528,7 @@ typedef enum
 
 } saber_colors_t;
 
-#define MAX_BATTERIES	2500
+#define MAX_BATTERIES	2500.0f
 
 #define PI_DIV_180		0.017453292519943295769236907684886
 #define INV_PI_DIV_180	57.295779513082320876798154814105
@@ -1951,7 +1951,7 @@ typedef struct playerState_s {
 	int			weapon;			// copied to entityState_t->weapon
 	int			weaponstate;
 
-	int			batteryCharge;
+	float		batteryCharge;
 
 	vec3_t		viewangles;		// for fixed views
 	float		legsYaw;		// actual legs forward facing

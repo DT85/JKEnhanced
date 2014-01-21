@@ -974,7 +974,7 @@ void NPC_UseResponse( gentity_t *self, gentity_t *user, qboolean useWhenDone )
 NPC_Use
 -------------------------
 */
-extern void Add_Batteries( gentity_t *ent, int *count );
+extern void Add_Batteries( gentity_t *ent, float *count );
 
 void NPC_Use( gentity_t *self, gentity_t *other, gentity_t *activator ) 
 {

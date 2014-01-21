@@ -401,6 +401,18 @@ qboolean	BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps 
 				case INV_GOODIE_KEY:
 					if( ps->inventory[item->giTag] >= g_maxkeys->integer )
 						return qfalse;
+				case INV_ELECTROBINOCULARS:
+					if( g_binocrestrict->integer ) {
+						if( ps->batteryCharge >= MAX_BATTERIES )
+							return qfalse;
+					}
+					return qtrue;
+				case INV_LIGHTAMP_GOGGLES:
+					if( g_larestrict->integer ) {
+						if( ps->batteryCharge >= MAX_BATTERIES )
+							return qfalse;
+					}
+					return qtrue;
 				default:
 					if( ps->inventory[item->giTag] >= 5 )
 						return qfalse;

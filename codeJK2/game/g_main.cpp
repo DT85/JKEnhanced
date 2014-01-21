@@ -175,6 +175,8 @@ cvar_t	*g_medpacdoomsound;
 cvar_t	*g_armormpsound;
 cvar_t	*g_armorlgoverflow;
 cvar_t	*g_armoroverflowdown;
+cvar_t	*g_armorsmamount;
+cvar_t	*g_armorlgamount;
 cvar_t	*g_ammompsound;
 cvar_t	*g_bactaheal;
 cvar_t	*g_bactagrunt;
@@ -183,6 +185,14 @@ cvar_t	*g_bactadoomsound;
 cvar_t	*g_maxbactas;
 cvar_t	*g_maxkeys;
 cvar_t	*g_keysused;
+cvar_t	*g_binocgivebatteries;
+cvar_t	*g_binocrestrict;
+cvar_t	*g_binocdrainrate;
+cvar_t	*g_binocrandomrate;
+cvar_t	*g_lagivebatteries;
+cvar_t	*g_larestrict;
+cvar_t	*g_ladrainrate;
+cvar_t	*g_larandomrate;
 
 // Weapons
 cvar_t	*bg_repeaterrate;
@@ -634,6 +644,8 @@ void G_InitCvars( void ) {
 	g_armormpsound				= gi.cvar("g_armormpsound", "2", CVAR_ARCHIVE);
 	g_armorlgoverflow			= gi.cvar("g_armorlgoverflow", "0", CVAR_ARCHIVE);
 	g_armoroverflowdown			= gi.cvar("g_armoroverflowdown", "0", CVAR_ARCHIVE);
+	g_armorsmamount				= gi.cvar("g_armorsmamount", "25", CVAR_ARCHIVE);
+	g_armorlgamount				= gi.cvar("g_armorlgamount", "50", CVAR_ARCHIVE);
 	g_ammompsound				= gi.cvar("g_ammompsound", "0", CVAR_ARCHIVE);
 	g_bactagrunt				= gi.cvar("g_bactagrunt", "0", CVAR_ARCHIVE);
 	g_bactampsound				= gi.cvar("g_bactampsound", "2", CVAR_ARCHIVE);
@@ -642,6 +654,14 @@ void G_InitCvars( void ) {
 	g_maxbactas					= gi.cvar("g_maxbactas", "5", CVAR_ARCHIVE);
 	g_maxkeys					= gi.cvar("g_maxkeys", "5", CVAR_ARCHIVE);
 	g_keysused					= gi.cvar("g_keysused", "1", CVAR_ARCHIVE);
+	g_binocgivebatteries		= gi.cvar("g_binocgivebatteries", "1", CVAR_ARCHIVE);
+	g_binocrestrict				= gi.cvar("g_binocrestrict", "1", CVAR_ARCHIVE);
+	g_binocdrainrate			= gi.cvar("g_binocdrainrate", "1.0", CVAR_ARCHIVE);
+	g_binocrandomrate			= gi.cvar("g_binocrandomrate", "0", CVAR_ARCHIVE);
+	g_lagivebatteries			= gi.cvar("g_lagivebatteries", "1", CVAR_ARCHIVE);
+	g_larestrict				= gi.cvar("g_larestrict", "1", CVAR_ARCHIVE);
+	g_ladrainrate				= gi.cvar("g_ladrainrate", "1.0", CVAR_ARCHIVE);
+	g_larandomrate				= gi.cvar("g_larandomrate", "0", CVAR_ARCHIVE);
 
 	// Weapons
 	bg_repeaterrate				= gi.cvar("bg_repeaterrate", "1", CVAR_ARCHIVE);
@@ -1369,11 +1389,14 @@ void G_RunFrame( int levelTime ) {
 			// decay batteries if the goggles are active
 			if ( cg.zoomMode == 1 && ent->client->ps.batteryCharge > 0 )
 			{
-				ent->client->ps.batteryCharge--;
+				ent->client->ps.batteryCharge -= g_binocdrainrate->integer;
+
+				if ( ent->client->ps.batteryCharge < 0 )
+					ent->client->ps.batteryCharge = 0;
 			}
 			else if ( cg.zoomMode == 3 && ent->client->ps.batteryCharge > 0 )
 			{
-				ent->client->ps.batteryCharge -= 2;
+				ent->client->ps.batteryCharge -= g_ladrainrate->integer * 2;
 
 				if ( ent->client->ps.batteryCharge < 0 )
 				{

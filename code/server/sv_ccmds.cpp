@@ -132,7 +132,7 @@ void SV_Player_EndOfLevelSave(void)
 #ifndef __NO_JK2
 		if(usesJK2)
 		{
-			s = va("%i %i %i %i %i %i %i %f %f %f %i %i %i %i %i %i",
+			s = va("%i %i %i %i %i %i %f %f %f %f %i %i %i %i %i %i",
 							pState->stats[STAT_HEALTH],
 							pState->stats[STAT_ARMOR],
 							pState->stats[STAT_WEAPONS],
@@ -155,7 +155,7 @@ void SV_Player_EndOfLevelSave(void)
 #endif
 		{
 					//				|general info				  |-force powers |-saber 1		|-saber 2										  |-general saber
-					s = va("%i %i %i %i %i %i %i %f %f %f %i %i %i %i %i %s %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %s %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i",
+					s = va("%i %i %i %i %i %i %f %f %f %f %i %i %i %i %i %s %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %s %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i",
 							pState->stats[STAT_HEALTH],
 							pState->stats[STAT_ARMOR],
 							pState->stats[STAT_WEAPONS],

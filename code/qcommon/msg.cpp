@@ -981,7 +981,7 @@ static const netField_t	playerStateFields[] =
 { PSF(clientNum), 32 },
 { PSF(weapon), 5 },
 { PSF(weaponstate),	  4 },
-{ PSF(batteryCharge),	16 },
+{ PSF(batteryCharge),	0 },
 { PSF(viewangles[0]), 0 },
 { PSF(viewangles[1]), 0 },
 { PSF(viewangles[2]), 0 },
