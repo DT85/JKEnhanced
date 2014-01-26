@@ -203,7 +203,7 @@ int Pickup_Ammo (gentity_t *ent, gentity_t *other)
 }
 
 //======================================================================
-void Add_Batteries( gentity_t *ent, int *count )
+void Add_Batteries( gentity_t *ent, float *count )
 {
 	if ( ent->client && ent->client->ps.batteryCharge < MAX_BATTERIES && *count )
 	{
@@ -227,7 +227,7 @@ void Add_Batteries( gentity_t *ent, int *count )
 //-------------------------------------------------------
 int Pickup_Battery( gentity_t *ent, gentity_t *other )
 {
-	int	quantity;
+	float	quantity;
 
 	if ( ent->count ) 
 	{
