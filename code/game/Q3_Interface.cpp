@@ -3354,22 +3354,6 @@ static void Q3_SetItem (int entID, const char *item_name)
 		case INV_ELECTROBINOCULARS:
 		case INV_LIGHTAMP_GOGGLES:
 			self->client->ps.inventory[inv] = 1;
-		case INV_BACTA:
-			if(self->client->ps.inventory[inv] < g_maxbactas->integer)
-				self->client->ps.inventory[inv]++;
-			break;
-		case INV_SEEKER:
-			if(self->client->ps.inventory[inv] < g_maxseekers->integer)
-				self->client->ps.inventory[inv]++;
-			break;
-		case INV_SENTRY:
-			if(self->client->ps.inventory[inv] < g_maxsentries->integer)
-				self->client->ps.inventory[inv]++;
-			break;
-		case INV_GOODIE_KEY:
-			if(self->client->ps.inventory[inv] < g_maxkeys->integer)
-				self->client->ps.inventory[inv]++;
-			break;
 		default:
 			if(self->client->ps.inventory[inv] < 5)
 				self->client->ps.inventory[inv]++;

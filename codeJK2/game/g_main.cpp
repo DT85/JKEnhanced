@@ -197,6 +197,7 @@ cvar_t	*g_larandomrate;
 // Weapons
 cvar_t	*bg_repeaterrate;
 cvar_t	*g_repeaterspread;
+cvar_t	*g_weaponFile;
 
 
 qboolean	stop_icarus = qfalse;
