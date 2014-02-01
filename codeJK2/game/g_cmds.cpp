@@ -255,7 +255,7 @@ void Cmd_Give_f (gentity_t *ent)
 	if (give_all || Q_stricmp(name, "ammo") == 0)
 	{
 		for ( i = 0 ; i < AMMO_MAX ; i++ ) {
-			ent->client->ps.ammo[i] = ammoData[i].max;
+			ent->client->ps.ammo[i] = BG_GetAmmoMax(i);
 		}
 		if (!give_all)
 			return;

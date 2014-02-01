@@ -199,6 +199,16 @@ cvar_t	*bg_repeaterrate;
 cvar_t	*g_repeaterspread;
 cvar_t	*g_weaponFile;
 
+// Ammo
+cvar_t	*g_maxAmmo_Force;
+cvar_t	*g_maxAmmo_Blaster;
+cvar_t	*g_maxAmmo_Powercell;
+cvar_t	*g_maxAmmo_MetalBolts;
+cvar_t	*g_maxAmmo_Rockets;
+cvar_t	*g_maxAmmo_Thermal;
+cvar_t	*g_maxAmmo_TripMines;
+cvar_t	*g_maxAmmo_DetPack;
+cvar_t	*g_maxAmmo_Emplaced;
 
 qboolean	stop_icarus = qfalse;
 
@@ -667,6 +677,17 @@ void G_InitCvars( void ) {
 	// Weapons
 	bg_repeaterrate				= gi.cvar("bg_repeaterrate", "1", CVAR_ARCHIVE);
 	g_repeaterspread			= gi.cvar("g_repeaterspread", "1", CVAR_ARCHIVE);
+	g_weaponFile				= gi.cvar("g_weaponFile", "ext_data/weapons/default.json", CVAR_ARCHIVE);
+
+	g_maxAmmo_Force				= gi.cvar("g_maxAmmo_Force", "100", CVAR_ARCHIVE);
+	g_maxAmmo_Blaster			= gi.cvar("g_maxAmmo_Blaster", "300", CVAR_ARCHIVE);
+	g_maxAmmo_Powercell			= gi.cvar("g_maxAmmo_Powercell", "300", CVAR_ARCHIVE);
+	g_maxAmmo_MetalBolts		= gi.cvar("g_maxAmmo_MetalBolts", "400", CVAR_ARCHIVE);
+	g_maxAmmo_Rockets			= gi.cvar("g_maxAmmo_Rockets", "10", CVAR_ARCHIVE);
+	g_maxAmmo_Thermal			= gi.cvar("g_maxAmmo_Thermal", "10", CVAR_ARCHIVE);
+	g_maxAmmo_TripMines			= gi.cvar("g_maxAmmo_TripMines", "5", CVAR_ARCHIVE);
+	g_maxAmmo_DetPack			= gi.cvar("g_maxAmmo_DetPack", "5", CVAR_ARCHIVE);
+	g_maxAmmo_Emplaced			= gi.cvar("g_maxAmmo_Emplaced", "999", CVAR_ARCHIVE);
 }
 
 /*

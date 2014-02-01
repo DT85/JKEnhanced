@@ -172,30 +172,30 @@ int Add_Ammo2 (gentity_t *ent, int ammoType, int count)
 			break;
 		}
 
-		if ( ent->client->ps.ammo[ammoType] > ammoData[ammoType].max ) 
+		if ( ent->client->ps.ammo[ammoType] > BG_GetAmmoMax(ammoType) ) 
 		{
-			ent->client->ps.ammo[ammoType] = ammoData[ammoType].max;
+			ent->client->ps.ammo[ammoType] = BG_GetAmmoMax(ammoType);
 			return qfalse;
 		}
 	}
 	else
 	{
-		if ( ent->client->ps.forcePower >= ammoData[ammoType].max )
+		if ( ent->client->ps.forcePower >= BG_GetAmmoMax(ammoType) )
 		{//if have full force, just get 25 extra per crystal
 			ent->client->ps.forcePower += 25;
 		}
 		else
 		{//else if don't have full charge, give full amount, up to max + 25
 			ent->client->ps.forcePower += count;
-			if ( ent->client->ps.forcePower >= ammoData[ammoType].max + 25 )
+			if ( ent->client->ps.forcePower >= BG_GetAmmoMax(ammoType) + 25 )
 			{//cap at max + 25
-				ent->client->ps.forcePower = ammoData[ammoType].max + 25;
+				ent->client->ps.forcePower = BG_GetAmmoMax(ammoType) + 25;
 			}
 		}
 
-		if ( ent->client->ps.forcePower >= ammoData[ammoType].max*2 )
+		if ( ent->client->ps.forcePower >= BG_GetAmmoMax(ammoType)*2 )
 		{//always cap at twice a full charge
-			ent->client->ps.forcePower = ammoData[ammoType].max*2;
+			ent->client->ps.forcePower = BG_GetAmmoMax(ammoType)*2;
 			return qfalse;		// can't hold any more
 		}
 	}

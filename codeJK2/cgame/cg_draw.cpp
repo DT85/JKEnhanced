@@ -430,7 +430,7 @@ static void CG_DrawAmmo(centity_t	*cent,int x,int y)
 	cgi_R_SetColor( colorTable[numColor_i] );	
 	CG_DrawNumField(x + 29, y + 26, 3, value, 6, 12, NUM_FONT_SMALL,qfalse);
 
-	inc = (float) ammoData[weaponData[cent->currentState.weapon].ammoIndex].max / MAX_TICS;
+	inc = (float) BG_GetAmmoMax(weaponData[cent->currentState.weapon].ammoIndex) / MAX_TICS;
 	value =ps->ammo[weaponData[cent->currentState.weapon].ammoIndex];
 
 	for (i=MAX_TICS-1;i>=0;i--)
@@ -1073,7 +1073,7 @@ static void CG_DrawZoomMask( void )
 		float cx, cy;
 		float max;
 
-		max = cg_entities[0].gent->client->ps.ammo[weaponData[WP_DISRUPTOR].ammoIndex] / (float)ammoData[weaponData[WP_DISRUPTOR].ammoIndex].max;
+		max = cg_entities[0].gent->client->ps.ammo[weaponData[WP_DISRUPTOR].ammoIndex] / (float)BG_GetAmmoMax(weaponData[WP_DISRUPTOR].ammoIndex);
 
 		if ( max > 1.0f )
 		{

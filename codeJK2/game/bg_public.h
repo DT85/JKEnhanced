@@ -565,7 +565,6 @@ typedef struct ginfoitem_s
 extern weaponData_t weaponData[];
 
 //==============================================================================
-extern ammoData_t ammoData[];
 
 //==============================================================================
 
@@ -670,5 +669,17 @@ extern cvar_t	*g_larandomrate;
 
 extern cvar_t	*bg_repeaterrate;
 extern cvar_t	*g_repeaterspread;
+
+extern cvar_t	*g_maxAmmo_Force;
+extern cvar_t	*g_maxAmmo_Blaster;
+extern cvar_t	*g_maxAmmo_Powercell;
+extern cvar_t	*g_maxAmmo_MetalBolts;
+extern cvar_t	*g_maxAmmo_Rockets;
+extern cvar_t	*g_maxAmmo_Thermal;
+extern cvar_t	*g_maxAmmo_TripMines;
+extern cvar_t	*g_maxAmmo_DetPack;
+extern cvar_t	*g_maxAmmo_Emplaced;
+
+int BG_GetAmmoMax(int ammoIndex);
 
 #endif//#ifndef __BG_PUBLIC_H__

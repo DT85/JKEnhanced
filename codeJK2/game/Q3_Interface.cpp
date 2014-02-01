@@ -3391,7 +3391,7 @@ static void Q3_SetWeapon (int entID, const char *wp_name)
 	else
 	{
 		self->client->ps.stats[STAT_WEAPONS] |= ( 1 << wp );
-		self->client->ps.ammo[weaponData[wp].ammoIndex] = ammoData[weaponData[wp].ammoIndex].max;
+		self->client->ps.ammo[weaponData[wp].ammoIndex] = BG_GetAmmoMax(weaponData[wp].ammoIndex);
 
 		G_AddEvent( self, EV_ITEM_PICKUP, (item - bg_itemlist) );
 		//force it to change

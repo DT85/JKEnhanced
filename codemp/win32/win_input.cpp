@@ -929,7 +929,7 @@ JOYSTICK
 #ifndef NO_XINPUT
 
 static XINPUT_STATE xiState;
-static int xiButtonDebounce[16];
+static DWORD dwLastXIButtonState = 0;
 
 static HMODULE xiLibrary = NULL;
 
@@ -1426,36 +1426,47 @@ void IN_DoXInput( void )
 	for(int i = 0; i < 14; i++)
 	{
 		if( xiState.Gamepad.wButtons & (1 << i) &&
-			xiButtonDebounce[i] < g_wv.sysMsgTime )
+			!dwLastXIButtonState & (1 << i) )
 		{
-			Sys_QueEvent(g_wv.sysMsgTime, SE_KEY, A_JOY1+i, qtrue, 0, NULL);
-			xiButtonDebounce[i] = g_wv.sysMsgTime + 50;
+			Sys_QueEvent(g_wv.sysMsgTime, SE_KEY, A_JOY0+i, qtrue, 0, NULL);
+			
 		}
-		else if( !(xiState.Gamepad.wButtons & (1 << i)) )
+		if( !(xiState.Gamepad.wButtons & (1 << i)) &&
+			dwLastXIButtonState & (1 << i))
 		{
-			Sys_QueEvent(g_wv.sysMsgTime, SE_KEY, A_JOY1+i, qfalse, 0, NULL);
+			Sys_QueEvent(g_wv.sysMsgTime, SE_KEY, A_JOY0+i, qfalse, 0, NULL);
 		}
+		if( xiState.Gamepad.wButtons & (1 << i) )
+			dwLastXIButtonState |= (1 << i);
+		else
+			dwLastXIButtonState &= ~(1 << i);
 	}
 	// extra magic required for the triggers
-	if( xiState.Gamepad.bLeftTrigger && xiButtonDebounce[14] < g_wv.sysMsgTime )
+	if( xiState.Gamepad.bLeftTrigger && !(dwLastXIButtonState & (1 << 16)) )
 	{
 		Sys_QueEvent(g_wv.sysMsgTime, SE_KEY, A_JOY15, qtrue, 0, NULL);
-		xiButtonDebounce[14] = g_wv.sysMsgTime + 50;
 	}
-	else if( !xiState.Gamepad.bLeftTrigger )
+	else if( !xiState.Gamepad.bLeftTrigger && !(dwLastXIButtonState & (1 << 16)) )
 	{
 		Sys_QueEvent(g_wv.sysMsgTime, SE_KEY, A_JOY15, qfalse, 0, NULL);
 	}
+	if( xiState.Gamepad.bLeftTrigger )
+		dwLastXIButtonState |= (1 << 16);
+	if( !xiState.Gamepad.bLeftTrigger )
+		dwLastXIButtonState &= ~(1 << 16);
 
-	if( xiState.Gamepad.bRightTrigger && xiButtonDebounce[15] < g_wv.sysMsgTime )
+	if( xiState.Gamepad.bRightTrigger && !(dwLastXIButtonState & (1 << 17)) )
 	{
-		Sys_QueEvent(g_wv.sysMsgTime, SE_KEY, A_JOY16, qtrue, 0, NULL);
+		Sys_QueEvent(g_wv.sysMsgTime, SE_KEY, A_JOY15, qtrue, 0, NULL);
 	}
-	else if( !xiState.Gamepad.bRightTrigger )
+	else if( !xiState.Gamepad.bRightTrigger && !(dwLastXIButtonState & (1 << 17)) )
 	{
-		Sys_QueEvent(g_wv.sysMsgTime, SE_KEY, A_JOY16, qfalse, 0, NULL);
-		xiButtonDebounce[15] = g_wv.sysMsgTime + 50;
+		Sys_QueEvent(g_wv.sysMsgTime, SE_KEY, A_JOY15, qfalse, 0, NULL);
 	}
+	if( xiState.Gamepad.bRightTrigger )
+		dwLastXIButtonState |= (1 << 17);
+	else
+		dwLastXIButtonState &= ~(1 << 17);
 }
 #endif
 

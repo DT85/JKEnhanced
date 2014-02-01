@@ -153,6 +153,12 @@ typedef struct weaponData_s
 	int		altSplashDamage;
 	int		altSplashRadius;
 
+	// JK2:HD ADD
+	float	npcDamageModifier;
+	
+	float	projectileVelocity;
+	float	altProjectileVelocity;
+
 } weaponData_t;
 
 
