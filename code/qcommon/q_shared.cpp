@@ -344,7 +344,7 @@ const char *SkipWhitespace( const char *data, qboolean *hasNewLines )
 	if(parseDataCount < 0)
 		Com_Error(ERR_FATAL, "SkipWhitespace: parseDataCount < 0");
 
-	while( (c = *data) <= ' ') 
+	while( (c = *(const unsigned char* /*eurofix*/)data) <= ' ') 
 	{
 		if( !c ) 
 		{
@@ -359,6 +359,75 @@ const char *SkipWhitespace( const char *data, qboolean *hasNewLines )
 	}
 
 	return data;
+}
+
+int COM_Compress( char *data_p ) {
+	char *in, *out;
+	int c;
+	qboolean newline = qfalse, whitespace = qfalse;
+
+	in = out = data_p;
+	if (in) {
+		while ((c = *in) != 0) {
+			// skip double slash comments
+			if ( c == '/' && in[1] == '/' ) {
+				while (*in && *in != '\n') {
+					in++;
+				}
+			// skip /* */ comments
+			} else if ( c == '/' && in[1] == '*' ) {
+				while ( *in && ( *in != '*' || in[1] != '/' ) ) 
+					in++;
+				if ( *in ) 
+					in += 2;
+				// record when we hit a newline
+			} else if ( c == '\n' || c == '\r' ) {
+				newline = qtrue;
+				in++;
+				// record when we hit whitespace
+			} else if ( c == ' ' || c == '\t') {
+				whitespace = qtrue;
+				in++;
+				// an actual token
+			} else {
+				// if we have a pending newline, emit it (and it counts as whitespace)
+				if (newline) {
+					*out++ = '\n';
+					newline = qfalse;
+					whitespace = qfalse;
+				} if (whitespace) {
+					*out++ = ' ';
+					whitespace = qfalse;
+				}
+
+				// copy quoted strings unmolested
+				if (c == '"') {
+					*out++ = c;
+					in++;
+					while (1) {
+						c = *in;
+						if (c && c != '"') {
+							*out++ = c;
+							in++;
+						} else {
+							break;
+						}
+					}
+					if (c == '"') {
+						*out++ = c;
+						in++;
+					}
+				} else {
+					*out = c;
+					out++;
+					in++;
+				}
+			}
+		}
+
+		*out = 0;
+	}
+	return out - data_p;
 }
 
 char *COM_ParseExt( const char **data_p, qboolean allowLineBreaks )
@@ -401,7 +470,8 @@ char *COM_ParseExt( const char **data_p, qboolean allowLineBreaks )
 		// skip double slash comments
 		if ( c == '/' && data[1] == '/' )
 		{
-			while (*data && *data != '\n')	// Advance to the end of the line
+			data += 2;
+			while (*data && *data != '\n')
 			{
 				data++;
 			}
@@ -409,11 +479,11 @@ char *COM_ParseExt( const char **data_p, qboolean allowLineBreaks )
 		// skip /* */ comments
 		else if ( c=='/' && data[1] == '*' ) 
 		{
-			while ( *data && ( *data != '*' || data[1] != '/' ) )	// Advance to the */ characters
+			data += 2;
+			while ( *data && ( *data != '*' || data[1] != '/' ) ) 
 			{
 				data++;
 			}
-
 			if ( *data ) 
 			{
 				data += 2;
@@ -438,7 +508,7 @@ char *COM_ParseExt( const char **data_p, qboolean allowLineBreaks )
 				*data_p = ( char * ) data;
 				return com_token;
 			}
-			if (len < MAX_TOKEN_CHARS-1)
+			if (len < MAX_TOKEN_CHARS - 1)
 			{
 				com_token[len] = c;
 				len++;
@@ -449,7 +519,7 @@ char *COM_ParseExt( const char **data_p, qboolean allowLineBreaks )
 	// parse a regular word
 	do
 	{
-		if (len < MAX_TOKEN_CHARS-1)
+		if (len < MAX_TOKEN_CHARS - 1)
 		{
 			com_token[len] = c;
 			len++;
@@ -457,9 +527,7 @@ char *COM_ParseExt( const char **data_p, qboolean allowLineBreaks )
 		data++;
 		c = *data;
 		if ( c == '\n' )
-		{
 			parseData[parseDataCount].com_lines++;
-		}
 	} while (c>32);
 
 	com_token[len] = 0;
@@ -467,82 +535,6 @@ char *COM_ParseExt( const char **data_p, qboolean allowLineBreaks )
 	*data_p = ( char * ) data;
 	return com_token;
 }
-
-/*
-==============
-COM_Compress
-remove blank space and comments from source
-==============
-*/
-
-int COM_Compress( char *data_p ) {
-	char *in, *out;
-	int c;
-	qboolean newline = qfalse, whitespace = qfalse;
-	
-	in = out = data_p;
-	if (in) {
-		while ((c = *in) != 0) {
-			// skip double slash comments
-			if ( c == '/' && in[1] == '/' ) {
-				while (*in && *in != '\n') {
-					in++;
-				}
-				// skip /* */ comments
-			} else if ( c == '/' && in[1] == '*' ) {
-				while ( *in && ( *in != '*' || in[1] != '/' ) ) 
-					in++;
-				if ( *in ) 
-					in += 2;
-				// record when we hit a newline
-			} else if ( c == '\n' || c == '\r' ) {
-				newline = qtrue;
-				in++;
-				// record when we hit whitespace
-			} else if ( c == ' ' || c == '\t') {
-				whitespace = qtrue;
-				in++;
-				// an actual token
-			} else {
-				// if we have a pending newline, emit it (and it counts as whitespace)
-				if (newline) {
-					*out++ = '\n';
-					newline = qfalse;
-					whitespace = qfalse;
-				} if (whitespace) {
-					*out++ = ' ';
-					whitespace = qfalse;
-				}
-				
-				// copy quoted strings unmolested
-				if (c == '"') {
-					*out++ = c;
-					in++;
-					while (1) {
-						c = *in;
-						if (c && c != '"') {
-							*out++ = c;
-							in++;
-						} else {
-							break;
-						}
-					}
-					if (c == '"') {
-						*out++ = c;
-						in++;
-					}
-				} else {
-					*out = c;
-					out++;
-					in++;
-				}
-			}
-		}
-	}
-	*out = 0;
-	return out - data_p;
-}
-
 
 /*
 ==================

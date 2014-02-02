@@ -10,6 +10,12 @@ static const char *vmNames[MAX_VM] = {
 	"ui"
 };
 
+const char *vmStrs[MAX_VM] = {
+	"GameVM",
+	"CGameVM",
+	"UIVM",
+};
+
 // VM slots are automatically allocated by VM_Create, and freed by VM_Free
 // The VM table should never be directly accessed from other files.
 
@@ -58,7 +64,7 @@ Dlls will call this directly
 
   For speed, we just grab 15 arguments, and don't worry about exactly
    how many the syscall actually needs; the extra is thrown away.
- 
+
 ============
 */
 intptr_t QDECL VM_DllSyscall( intptr_t arg, ... ) {
@@ -66,14 +72,14 @@ intptr_t QDECL VM_DllSyscall( intptr_t arg, ... ) {
   // rcg010206 - see commentary above
   intptr_t args[16];
   va_list ap;
-  
+
   args[0] = arg;
-  
+
   va_start(ap, arg);
   for (size_t i = 1; i < ARRAY_LEN (args); i++)
     args[i] = va_arg(ap, intptr_t);
   va_end(ap);
-  
+
   return currentVM->legacy.syscall( args );
 #else // original id code
 	return currentVM->legacy.syscall( &arg );
@@ -305,9 +311,6 @@ an OP_ENTER instruction, which will subtract space for
 locals from sp
 ==============
 */
-#define	MAX_STACK	256
-#define	STACK_MASK	(MAX_STACK-1)
-
 intptr_t QDECL VM_Call( vm_t *vm, int callnum, ... ) {
 	vm_t *oldVM = NULL;
 	intptr_t r = 0;

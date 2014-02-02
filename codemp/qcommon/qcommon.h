@@ -64,7 +64,7 @@ void MSG_ReadDeltaUsercmdKey( msg_t *msg, int key, usercmd_t *from, usercmd_t *t
 
 void MSG_WriteDeltaEntity( msg_t *msg, struct entityState_s *from, struct entityState_s *to
 						   , qboolean force );
-void MSG_ReadDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, 
+void MSG_ReadDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to,
 						 int number );
 
 #ifdef _ONEBIT_COMBO
@@ -86,6 +86,8 @@ NET
 
 ==============================================================
 */
+
+#define NET_ENABLEV4		0x01
 
 #define	PACKET_BACKUP	32	// number of old messages that must be kept on client and
 							// server for delta comrpession and ping estimation
@@ -145,7 +147,7 @@ void		NET_Sleep(int msec);
 
 #define MAX_DOWNLOAD_WINDOW			8		// max of eight download frames
 #define MAX_DOWNLOAD_BLKSIZE		2048	// 2048 byte block chunks
- 
+
 
 /*
 Netchan handles packet fragmentation and out of order / duplicate suppression
@@ -165,7 +167,7 @@ typedef struct netchan_s {
 
 	// incoming fragment assembly buffer
 	int			fragmentSequence;
-	int			fragmentLength;	
+	int			fragmentLength;
 	byte		fragmentBuffer[MAX_MSGLEN];
 
 	// outgoing fragment buffer
@@ -230,7 +232,7 @@ enum svc_ops_e {
 //
 enum clc_ops_e {
 	clc_bad,
-	clc_nop, 		
+	clc_nop,
 	clc_move,				// [[usercmd_t]
 	clc_moveNoDelta,		// [[usercmd_t]
 	clc_clientCommand,		// [string] message
@@ -269,6 +271,8 @@ typedef struct vm_s {
 } vm_t;
 
 extern vm_t *currentVM;
+
+extern const char *vmStrs[MAX_VM];
 
 typedef enum {
 	TRAP_MEMSET = 100,
@@ -362,6 +366,7 @@ void	Cmd_AddCommand( const char *cmd_name, xcommand_t function );
 // as a clc_clientCommand instead of executed locally
 
 void	Cmd_RemoveCommand( const char *cmd_name );
+void	Cmd_VM_RemoveCommand( const char *cmd_name, vmSlots_t vmslot );
 typedef void (*completionFunc_t)( char *args, int argNum );
 
 void	Cmd_CommandCompletion( callbackFunc_t callback );
@@ -420,19 +425,19 @@ modules of the program.
 
 */
 
-cvar_t *Cvar_Get( const char *var_name, const char *value, int flags );
+cvar_t *Cvar_Get( const char *var_name, const char *value, uint32_t flags );
 // creates the variable if it doesn't exist, or returns the existing one
 // if it exists, the value will not be changed, but flags will be ORed in
 // that allows variables to be unarchived without needing bitflags
 // if value is "", the value will not override a previously set value.
 
-void	Cvar_Register( vmCvar_t *vmCvar, const char *varName, const char *defaultValue, int flags );
+void	Cvar_Register( vmCvar_t *vmCvar, const char *varName, const char *defaultValue, uint32_t flags );
 // basically a slightly modified Cvar_Get for the interpreted modules
 
 void	Cvar_Update( vmCvar_t *vmCvar );
 // updates an interpreted modules' version of a cvar
 
-cvar_t	*Cvar_Set2(const char *var_name, const char *value, int defaultFlags, qboolean force);
+cvar_t	*Cvar_Set2(const char *var_name, const char *value, uint32_t defaultFlags, qboolean force);
 //
 
 cvar_t	*Cvar_Set( const char *var_name, const char *value );
@@ -461,7 +466,7 @@ char	*Cvar_VariableString( const char *var_name );
 void	Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
 // returns an empty string if not defined
 
-int	Cvar_Flags(const char *var_name);
+uint32_t	Cvar_Flags(const char *var_name);
 // returns CVAR_NONEXISTENT if cvar doesn't exist or the flags of that particular CVAR.
 
 void	Cvar_CommandCompletion( callbackFunc_t callback );
@@ -496,7 +501,7 @@ void	Cvar_Restart_f( void );
 
 void Cvar_CompleteCvarName( char *args, int argNum );
 
-extern	int			cvar_modifiedFlags;
+extern uint32_t cvar_modifiedFlags;
 // whenever a cvar is modifed, its flags will be OR'd into this, so
 // a single check can determine if any CVAR_USERINFO, CVAR_SERVERINFO,
 // etc, variables have been modified since the last check.  The bit
@@ -640,9 +645,9 @@ const char *FS_LoadedPakPureChecksums( void );
 const char *FS_ReferencedPakNames( void );
 const char *FS_ReferencedPakChecksums( void );
 const char *FS_ReferencedPakPureChecksums( void );
-// Returns a space separated string containing the checksums of all loaded 
-// AND referenced pk3 files. Servers with sv_pure set will get this string 
-// back from clients for pure validation 
+// Returns a space separated string containing the checksums of all loaded
+// AND referenced pk3 files. Servers with sv_pure set will get this string
+// back from clients for pure validation
 
 void FS_ClearPakReferences( int flags );
 // clears referenced booleans on loaded pk3s
@@ -1070,7 +1075,7 @@ unsigned int Sys_ProcessorCount();
 #define INTERNAL_NODE (HMAX+1)
 
 typedef struct nodetype {
-	struct	nodetype *left, *right, *parent; /* tree structure */ 
+	struct	nodetype *left, *right, *parent; /* tree structure */
 	struct	nodetype *next, *prev; /* doubly-linked list */
 	struct	nodetype **head; /* highest ranked node in block */
 	int		weight;

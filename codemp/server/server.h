@@ -16,7 +16,7 @@
 typedef struct svEntity_s {
 	struct worldSector_s *worldSector;
 	struct svEntity_s *nextEntityInWorldSector;
-	
+
 	entityState_t	baseline;		// for delta compression of initial sighting
 	int			numClusters;		// if -1, use headnode instead
 	int			clusternums[MAX_ENT_CLUSTERS];
@@ -40,7 +40,6 @@ typedef struct server_s {
 	int				snapshotCounter;	// incremented for each snapshot built
 	int				timeResidual;		// <= 1000 / sv_frame->value
 	int				nextFrameTime;		// when time > nextFrameTime, process world
-	struct cmodel_s	*models[MAX_MODELS];
 	char			*configstrings[MAX_CONFIGSTRINGS];
 	svEntity_t		svEntities[MAX_GENTITIES];
 
@@ -99,6 +98,17 @@ typedef enum {
 } clientState_t;
 
 
+// struct to hold demo data for a single demo
+typedef struct {
+	char		demoName[MAX_QPATH];
+	qboolean	demorecording;
+	qboolean	demowaiting;	// don't record until a non-delta message is received
+	fileHandle_t	demofile;
+	qboolean	isBot;
+	int			botReliableAcknowledge; // for bots, need to maintain a separate reliableAcknowledge to record server messages into the demo file
+} demoInfo_t;
+
+
 typedef struct client_s {
 	clientState_t	state;
 	char			userinfo[MAX_INFO_STRING];		// name, etc
@@ -154,8 +164,9 @@ typedef struct client_s {
 	int				lastUserInfoCount; //allow a certain number of changes within a certain time period -rww
 
 	int				oldServerTime;
-	qboolean		csUpdated[MAX_CONFIGSTRINGS];	
+	qboolean		csUpdated[MAX_CONFIGSTRINGS];
 
+	demoInfo_t		demo;
 } client_t;
 
 //=============================================================================
