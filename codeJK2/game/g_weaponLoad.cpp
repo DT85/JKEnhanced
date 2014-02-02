@@ -453,7 +453,7 @@ static void PARSE_AltProjectileVelocity(cJSON* json, weaponData_t* wp) {
 
 static unordered_map<string, int> weapons;
 
-#define SPAIR(x)	make_pair("#x", x)
+#define SPAIR(x)	make_pair(#x "", x)
 static void WP_PopulateWeaponList() {
 	weapons.insert(SPAIR(WP_NONE));
 	weapons.insert(SPAIR(WP_SABER));
@@ -483,7 +483,7 @@ static void WP_PopulateWeaponList() {
 typedef void (*pfParse)(cJSON*, weaponData_t*);
 static unordered_map<string, pfParse> parsers;
 
-#define SPAIR2(x)	make_pair("##x##", (pfParse)PARSE_##x##)
+#define SPAIR2(x)	make_pair(#x "", (pfParse)PARSE_##x##)
 static void WP_PopulateParseList() {
 	parsers.insert(SPAIR2(Classname));
 	parsers.insert(SPAIR2(WeaponModel));
@@ -540,28 +540,27 @@ static void WP_ParseParms(const char *buffer)
 		return;
 	}
 
-	for(auto listPtr = cJSON_GetFirstItem(json); listPtr; listPtr = cJSON_GetNextItem(json)) {
-		for(auto wpnPtr = cJSON_GetFirstItem(listPtr); wpnPtr; wpnPtr = cJSON_GetNextItem(listPtr)) {
-			auto key = cJSON_GetItemKey(wpnPtr);
-			auto it2 = weapons.find(key);
-			if(it2 == weapons.end()) {
-				Com_Printf("^3WARNING: Invalid weapon %s in weapon parameter file\n");
+	for(auto wpnPtr = cJSON_GetFirstItem(json); wpnPtr; wpnPtr = cJSON_GetNextItem(wpnPtr)) {
+		auto key = cJSON_GetItemKey(wpnPtr);
+		auto it2 = weapons.find(key);
+		if(it2 == weapons.end()) {
+			Com_Printf("^3WARNING: Invalid weapon %s in weapon parameter file\n", key);
+			continue;
+		}
+
+		weaponData_t x;
+		memset(&x, 0, sizeof(x));
+		for(auto parmPtr = cJSON_GetFirstItem(wpnPtr); parmPtr; parmPtr = cJSON_GetNextItem(parmPtr)) {
+			auto parmKey = cJSON_GetItemKey(parmPtr);
+			auto it = parsers.find(parmKey);
+			if(it == parsers.end()) {
+				Com_Printf("^3WARNING: Nonfunctioning key %s found in weapon parameter file\n", parmKey);
 				continue;
 			}
-
-			weaponData_t x;
-			for(auto parmPtr = cJSON_GetFirstItem(wpnPtr); parmPtr; parmPtr = cJSON_GetNextItem(listPtr)) {
-				auto parmKey = cJSON_GetItemKey(parmPtr);
-				auto it = parsers.find(parmKey);
-				if(it == parsers.end()) {
-					Com_Printf("^3WARNING: Nonfunctioning key %s found in weapon parameter file\n");
-					continue;
-				}
-				it->second(parmPtr, &x);
-			}
-
-			memcpy(&weaponData[it2->second], &x, sizeof(weaponData_t));
+			it->second(parmPtr, &x);
 		}
+
+		memcpy(&weaponData[it2->second], &x, sizeof(weaponData_t));
 	}
 }
 

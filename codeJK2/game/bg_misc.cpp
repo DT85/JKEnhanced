@@ -303,6 +303,7 @@ int BG_GetAmmoMax(int ammoIndex) {
 		case AMMO_DETPACK:
 			return g_maxAmmo_DetPack->integer;
 	}
+}
 
 /*
 ================

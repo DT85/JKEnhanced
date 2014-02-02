@@ -909,6 +909,7 @@ extern "C" Q_EXPORT game_export_t *GetGameAPI( game_import_t *import ) {
 	gameinfo_import.Cvar_VariableStringBuffer = gi.Cvar_VariableStringBuffer;
 	gameinfo_import.Cvar_Create = G_Cvar_Create;
 
+	g_weaponFile = gi.cvar("g_weaponFile", "ext_data/weapons/default.json", CVAR_ARCHIVE);
 	GI_Init( &gameinfo_import );
 
 	return &globals;

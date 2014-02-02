@@ -1,5 +1,11 @@
 {
 	"WP_NONE": {
+		"Classname":		"weapon_none",
+		"AmmoIndex":		"AMMO_NONE",
+		"AmmoLow":			5,
+		"EnergyPerShot":	0,
+		"FireTime":			100,
+		"WeaponModel":		"models/weapons2/noweap/noweap.md3"
 	},
 
 	"WP_SABER": {
@@ -130,7 +136,7 @@
 	},
 
 	"WP_DEMP2": {
-		"Classname":		"weapon_demp2",
+		"Classname":		"weapon_repeater",
 		"WeaponModel":		"models/weapons2/demp2/demp2.md3",
 		"WeaponIcon":		"gfx/hud/w_icon_demp2",
 		"AmmoIndex":		"AMMO_POWERCELL",
@@ -141,9 +147,10 @@
 		"AltEnergyPerShot":	10,
 		"AltFireTime":		1200,
 		"AltRange":		8192,
+		"NumBarrels":		1,
 		"Func":			"demp2_func",
+		"AltFunc":		"demp2_alt_func",
 		"MuzzleEffect":		"demp2/muzzle_flash",
-		"AltFunc":		'demp2_alt_func",
 		"AltMuzzleEffect":	"demp2/altmuzzle_flash",
 		"SelectSound":		"sound/weapons/demp2/select.wav",
 		"AltChargeSound":	"sound/weapons/demp2/altCharge.wav",
@@ -152,7 +159,7 @@
 		"AltSplashDamage":	15,
 		"AltSplashRadius":	256
 	},
-
+	
 	"WP_FLECHETTE": {
 		"Classname":		"weapon_flechette",
 		"WeaponModel":		"models/weapons2/golan_arms/golan_arms.md3",
@@ -308,7 +315,7 @@
 	"WP_MELEE": {
 		"Classname":		"weapon_melee",
 		"WeaponModel":		"models/weapons2/noweap/noweap.md3",
-		"AmmoType":		"AMMO_POWERCELL",
+		"AmmoIndex":		"AMMO_POWERCELL",
 		"AmmoLow":		5,
 		"EnergyPerShot":	0,
 		"FireTime":		1000,
@@ -318,16 +325,16 @@
 	"WP_EMPLACED_GUN": {
 		"Classname":		"weapon_emplaced_gun",
 		"WeaponModel":		"models/weapons2/noweap/noweap.md3",
-		"AltEnergyPerShot":	1,
-		"AltRange":		8192,
-		"Func":			"emplaced_func",
-		"AltFunc":		"emplaced_func",
 		"AmmoIndex":		"AMMO_EMPLACED",
 		"EnergyPerShot":	1,
 		"FireTime":		150,
-		"AltFireTime":		150,
 		"Range":		8192,
-		"MuzzleEffect":		"emplaced/muzzle_flash"
+		"Func":			"emplaced_func",
+		"AltFunc":		"emplaced_func",
+		"AltEnergyPerShot":	1,
+		"AltFireTime":		150,
+		"AltRange":		8192,
+		"MuzzleEffect":		"emplaced/muzzle_flash",
 		"Damage":		150,
 		"AltDamage":		150
 	},
@@ -449,7 +456,7 @@
 		"WeaponModel":		"models/weapons2/imp_pistol/pistol.md3",
 		"Func":			"bryar_func",
 		"AltFunc":		"bryar_alt_func",
-		"AmmoType":		"AMMO_BLASTER",
+		"AmmoIndex":		"AMMO_BLASTER",
 		"AmmoLowCount":		15,
 		"EnergyPerShot":	2,
 		"FireTime":		400,
