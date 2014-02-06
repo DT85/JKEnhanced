@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8.8)
 
+set(ANGELSCRIPT_HOME "${OpenJKLibDir}/angelscript")
+
 # Make sure the user is not executing this script directly
 if(NOT InOpenJK)
 	message(FATAL_ERROR "Use the top-level cmake script!")
@@ -138,6 +140,7 @@ set(JK2SPGameFiles
 	"${JK2SPDir}/game/teams.h"
 	"${JK2SPDir}/game/weapons.h"
 	"${JK2SPDir}/game/wp_saber.h"
+	"${CMAKE_SOURCE_DIR}/lib/json/cjson.c"
 	)
 source_group("game" FILES ${JK2SPGameGameFiles})
 set(JK2SPGameFiles ${JK2SPGameFiles} ${JK2SPGameGameFiles})
@@ -229,6 +232,15 @@ set(JK2SPGameIcarusFiles
 source_group("icarus" FILES ${JK2SPGameIcarusFiles})
 set(JK2SPGameFiles ${JK2SPGameFiles} ${JK2SPGameIcarusFiles})
 
+set(AngelScript_FIND_COMPONENTS "scriptbuilder" "scriptstdstring")
+find_package(Angelscript REQUIRED)
+set(JK2SPGameIncludeDirectories ${JK2SPGameIncludeDirectories} ${AngelScript_INCLUDE_DIR})
+set(JK2SPGameLibraries ${JK2SPGameLibraries} ${AngelScript_LIBRARY_RELEASE} ${AngelScript_LIBRARY_DEBUG})
+
+source_group("angelscript" FILES ${AngelScript_FILES})
+set(JK2SPGameFiles ${JK2SPGameFiles} ${AngelScript_FILES})
+set(JK2SPGameIncludeDirectories ${JK2SPGameIncludeDirectories} ${AngelScript_INCLUDE_DIRS})
+
 if(WIN32)
 	set(JK2SPGameWin32Files
 		"${JK2SPDir}/win32/game.rc")
@@ -256,5 +268,5 @@ set_target_properties(${JK2SPGame} PROPERTIES INCLUDE_DIRECTORIES "${JK2SPGameIn
 set_target_properties(${JK2SPGame} PROPERTIES PROJECT_LABEL "JK2SP Game Library")
 # no libraries used
 if(JK2SPGameLibraries)
-	target_link_libraries(${JK2SPGame} ${JK2SPGameLibraries})
+	target_link_libraries(${JK2SPGame})
 endif(JK2SPGameLibraries)

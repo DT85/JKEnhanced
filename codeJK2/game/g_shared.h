@@ -418,6 +418,7 @@ typedef enum {
 struct gclient_s {
 	// ps MUST be the first element, because the server expects it
 	playerState_t	ps;				// communicated by server to clients
+	playerState_t*	GetPlayerState() { return &ps; }
 
 	// private to game
 	clientPersistant_t	pers;
@@ -530,6 +531,7 @@ typedef struct centity_s centity_t;
 struct gentity_s {
 	entityState_t	s;				// communicated by server to clients
 	struct gclient_s	*client;	// NULL if not a player (unless it's NPC ( if (this->NPC != NULL)  )  <sigh>... -slc)
+	struct gclient_s	*GetClient() { return client; }
 	qboolean	inuse;
 	qboolean	linked;				// qfalse if not in any good cluster
 

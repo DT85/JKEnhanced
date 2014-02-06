@@ -323,6 +323,8 @@ vmCvar_t	cg_smoothPlayerPos;
 vmCvar_t	cg_smoothPlayerPlat;
 vmCvar_t	cg_smoothPlayerPlatAccel;
 
+vmCvar_t	cg_sfxSabers;
+
 typedef struct {
 	vmCvar_t	*vmCvar;
 	char		*cvarName;
@@ -430,6 +432,8 @@ Ghoul2 Insert End
 	{ &cg_smoothPlayerPos, "cg_smoothPlayerPos", "0.5", 0},
 	{ &cg_smoothPlayerPlat, "cg_smoothPlayerPlat", "0.75", 0},
 	{ &cg_smoothPlayerPlatAccel, "cg_smoothPlayerPlatAccel", "3.25", 0},
+
+	{ &cg_sfxSabers, "cg_sfxSabers", "0", CVAR_ARCHIVE },
 };
 
 int		cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );

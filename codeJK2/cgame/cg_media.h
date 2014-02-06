@@ -116,6 +116,12 @@ typedef struct {
 	qhandle_t	saberBlurShader;
 	qhandle_t	yellowDroppedSaberShader; // glow
 
+	qhandle_t	sfxSaberTrailShader;
+	qhandle_t	sfxSaberBladeShader;
+	qhandle_t	sfxSaberBlade2Shader;
+	qhandle_t	sfxSaberEndShader;
+	qhandle_t	sfxSaberEnd2Shader;
+
 	qhandle_t	redSaberGlowShader;
 	qhandle_t	redSaberCoreShader;
 	qhandle_t	orangeSaberGlowShader;

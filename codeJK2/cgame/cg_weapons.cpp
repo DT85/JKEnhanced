@@ -311,6 +311,13 @@ void CG_RegisterWeapon( int weaponNum ) {
 		//saber graphics
 		cgs.media.saberBlurShader			= cgi_R_RegisterShader("gfx/effects/sabers/saberBlur");
 		cgs.media.yellowDroppedSaberShader	= cgi_R_RegisterShader("gfx/effects/yellow_glow");
+
+		cgs.media.sfxSaberTrailShader		= cgi_R_RegisterShader( "gfx/SFX_Sabers/saber_trail" );
+		cgs.media.sfxSaberBladeShader		= cgi_R_RegisterShader( "gfx/SFX_Sabers/saber_blade" );
+		cgs.media.sfxSaberBlade2Shader		= cgi_R_RegisterShader( "gfx/SFX_Sabers/saber_blade_rgb" );
+		cgs.media.sfxSaberEndShader			= cgi_R_RegisterShader( "gfx/SFX_Sabers/saber_end" );
+		cgs.media.sfxSaberEnd2Shader		= cgi_R_RegisterShader( "gfx/SFX_Sabers/saber_end_rgb" );
+
 		cgi_R_RegisterShader( "gfx/effects/saberDamageGlow" );
 		cgi_R_RegisterShader( "gfx/effects/solidWhite_cull" );
 		cgi_R_RegisterShader( "gfx/effects/forcePush" );
