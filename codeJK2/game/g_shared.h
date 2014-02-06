@@ -875,6 +875,8 @@ typedef struct weaponInfo_s {
 	sfxHandle_t		altChargeSound;
 
 	sfxHandle_t		selectSound;	// sound played when weapon is selected
+	bool			bUsesGhoul2;
+	CGhoul2Info_v	ghoul2;
 } weaponInfo_t;
 
 extern sfxHandle_t CAS_GetBModelSound( const char *name, int stage );
