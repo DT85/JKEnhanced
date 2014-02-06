@@ -159,6 +159,7 @@ void CG_RegisterWeapon( int weaponNum ) {
 	}
 
 	// Set up the viewmodel.
+	Q_strncpyz( path, weaponData[weaponNum].weaponMdl, sizeof(path) );
 	if( weaponInfo->bUsesGhoul2 ) {
 		gi.G2API_InitGhoul2Model(weaponInfo->ghoul2, path, 0, 0, 0, 0, 0);
 		weaponInfo->handsModel = cgi_R_RegisterModel( "models/weapons2/briar_pistol/briar_pistol_hand.md3" );
