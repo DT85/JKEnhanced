@@ -77,7 +77,6 @@ void CG_RegisterWeapon( int weaponNum ) {
 		CG_Error( "Couldn't find item for weapon %s\nNeed to update Items.dat!", weaponData[weaponNum].classname);
 	}
 	CG_RegisterItemVisuals( item - bg_itemlist );
-
 	Q_strncpyz( path, weaponData[weaponNum].weaponMdl, sizeof(path) );
 	// Detect model type
 	const char* test = &path[strlen(path)-4];
@@ -1110,6 +1109,7 @@ void CG_AddViewWeapon( playerState_t *ps )
 
 	// add the weapon
 	memset (&gun, 0, sizeof(gun));
+	AnglesToAxis( angles, gun.axis );
 
 	if(!weapon->bUsesGhoul2) {
 		gun.hModel = weapon->weaponModel;
@@ -1118,14 +1118,18 @@ void CG_AddViewWeapon( playerState_t *ps )
 			return;
 		}
 
-		AnglesToAxis( angles, gun.axis );
-		CG_PositionEntityOnTag( &gun, &hand, weapon->handsModel, "tag_weapon");
+		if(!wData->bNoHandModel)
+			CG_PositionEntityOnTag( &gun, &hand, weapon->handsModel, "tag_weapon");
+		else
+			VectorCopy(hand.origin, gun.origin);
 	}
 	else {
-		AnglesToAxis( angles, gun.axis );
 		gun.ghoul2 = const_cast<CGhoul2Info_v*>(&weapon->ghoul2);
 		gun.radius = 60;
-		CG_PositionEntityOnTag( &gun, &hand, weapon->handsModel, "tag_weapon");
+		if(!wData->bNoHandModel)
+			CG_PositionEntityOnTag( &gun, &hand, weapon->handsModel, "tag_weapon");
+		else
+			VectorCopy(hand.origin, gun.origin);
 	}
 
 	gun.renderfx = RF_DEPTHHACK | RF_FIRST_PERSON;

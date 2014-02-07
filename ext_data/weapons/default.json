@@ -48,7 +48,7 @@
 
 	"WP_BLASTER": {
 		"Classname":		"weapon_blaster",
-		"WeaponModel":		"models/weapons2/blaster_r/blaster.md3",
+		"WeaponModel":		"models/weapons/ak74/ak74.glm",
 		"WeaponIcon":		"gfx/hud/w_icon_blaster",
 		"AmmoIndex":		"AMMO_BLASTER",
 		"AmmoLow":		15,
@@ -64,7 +64,8 @@
 		"AltMuzzleEffect":	"blaster/altmuzzle_flash",
 		"SelectSound":		"sound/weapons/blaster/select.wav",
 		"Damage":		20,
-		"AltDamage":		20
+		"AltDamage":		20,
+		"NoHandModel":	1
 	},
 
 	"WP_DISRUPTOR": {

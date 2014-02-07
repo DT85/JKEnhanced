@@ -292,6 +292,10 @@ static void PARSE_AltProjectileVelocity(cJSON* json, weaponData_t* wp) {
 	wp->altProjectileVelocity = cJSON_ToNumber(json);
 }
 
+static void PARSE_NoHandModel(cJSON* json, weaponData_t* wp) {
+	wp->bNoHandModel = cJSON_ToBoolean(json);
+}
+
 // -----------------------------------------------
 
 static unordered_map<string, int> weapons;
@@ -369,6 +373,7 @@ static void WP_PopulateParseList() {
 	parsers.insert(SPAIR2(NPCDamageModifier));
 	parsers.insert(SPAIR2(ProjectileVelocity));
 	parsers.insert(SPAIR2(AltProjectileVelocity));
+	parsers.insert(SPAIR2(NoHandModel));
 }
 
 //--------------------------------------------

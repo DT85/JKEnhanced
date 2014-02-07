@@ -158,7 +158,7 @@ typedef struct weaponData_s
 	
 	float	projectileVelocity;
 	float	altProjectileVelocity;
-
+	bool	bNoHandModel;
 } weaponData_t;
 
 
