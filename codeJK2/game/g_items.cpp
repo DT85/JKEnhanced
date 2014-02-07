@@ -1075,7 +1075,7 @@ void G_SpawnItem (gentity_t *ent, gitem_t *item) {
 			gitem_t		*itemX;
 			int			itemNum;
 
-			Q_strncpyz(ent->classname, "item_binoculars", sizeof(ent->classname));
+			ent->classname = G_NewString("item_binoculars");
 
 			itemNum=1;
 			for ( itemX = bg_itemlist + 1 ; itemX->classname ; itemX++,itemNum++) 
@@ -1091,7 +1091,7 @@ void G_SpawnItem (gentity_t *ent, gitem_t *item) {
 			gitem_t		*itemX;
 			int			itemNum;
 
-			Q_strncpyz(ent->classname, "item_la_goggles", sizeof(ent->classname));
+			ent->classname = G_NewString("item_la_goggles");
 
 			itemNum=1;
 			for ( itemX = bg_itemlist + 1 ; itemX->classname ; itemX++,itemNum++) 
