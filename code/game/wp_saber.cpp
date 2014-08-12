@@ -350,6 +350,8 @@ stringID_table_t SaberStyleTable[] =
 	{ "desann",SS_DESANN },
 	ENUM2STRING(SS_TAVION),
 	{ "tavion",SS_TAVION },
+	ENUM2STRING(SS_KATARN),
+	{ "katarn",SS_KATARN },
 	ENUM2STRING(SS_DUAL),
 	{ "dual",SS_DUAL },
 	ENUM2STRING(SS_STAFF),
@@ -422,6 +424,7 @@ void G_CreateG2HolsteredWeaponModel( gentity_t *ent, const char *psWeaponModel, 
 											 NULL, 0, 0);
 				
 			}
+			// set up a bolt on the end so we can get where the sabre muzzle is - we can assume this is always bolt 0
 			gi.G2API_AddBolt(&ent->ghoul2[ent->holsterModel[weaponNum]], "*flash");
 	  		//gi.G2API_SetLodBias( &ent->ghoul2[ent->weaponModel[weaponNum]], 0 );
 		}
@@ -3142,8 +3145,8 @@ int G_SaberLockAnim( int attackerSaberStyle, int defenderSaberStyle, int topOrSi
 	int baseAnim = -1;
 	if ( lockOrBreakOrSuperBreak == SABERLOCK_LOCK )
 	{//special case: if we're using the same style and locking
-		if ( attackerSaberStyle == defenderSaberStyle
-			|| (attackerSaberStyle>=SS_FAST&&attackerSaberStyle<=SS_TAVION&&defenderSaberStyle>=SS_FAST&&defenderSaberStyle<=SS_TAVION) )
+		if ( attackerSaberStyle == defenderSaberStyle 
+			|| (attackerSaberStyle>=SS_FAST&&attackerSaberStyle<=SS_KATARN&&defenderSaberStyle>=SS_FAST&&defenderSaberStyle<=SS_KATARN) )
 		{//using same style
 			if ( winOrLose == SABERLOCK_LOSE )
 			{//you want the defender's stance...
@@ -3390,9 +3393,9 @@ qboolean WP_SabersCheckLock2( gentity_t *attacker, gentity_t *defender, sabersLo
 		}
 		//FIXME: attStart% and idealDist will change per saber lock anim pairing... do we need a big table like in bg_panimate.cpp?
 		if ( attacker->client->ps.saberAnimLevel >= SS_FAST
-			&& attacker->client->ps.saberAnimLevel <= SS_TAVION
+			&& attacker->client->ps.saberAnimLevel <= SS_KATARN
 			&& defender->client->ps.saberAnimLevel >= SS_FAST
-			&& defender->client->ps.saberAnimLevel <= SS_TAVION )
+			&& defender->client->ps.saberAnimLevel <= SS_KATARN )
 		{//2 single sabers?  Just do it the old way...
 			switch ( lockMode )
 			{
@@ -7423,6 +7426,85 @@ void WP_SaberThrow( gentity_t *self, usercmd_t *ucmd )
 	}
 }
 
+extern void	G_CreateG2AttachedWeaponModel( gentity_t *ent, const char *weaponModel, int boltNum, int weaponNum );
+void WP_SaberFireGun( gentity_t *self, usercmd_t *ucmd, int whichGun )
+{
+	int addTime, oldWeapon;
+	qboolean chargedShot = qfalse;
+	
+	if ( self->health <= 0 )
+	{
+		return;
+	}
+	
+	if ( !self->s.number && (cg.zoomMode || in_camera) )
+	{//can't shoot when zoomed in or in cinematic
+		return;
+	}
+	
+	if ( self->client->ps.leanofs )
+	{
+		return;
+	}
+	
+	if ( self->client->ps.weaponTime > 0 )
+	{
+		return;
+	}
+	
+	if ( self->client->ps.saberAnimLevel != SS_KATARN )
+	{
+		return;
+	}
+	
+	if ( self->s.weapon != WP_SABER )
+	{
+		return;
+	}
+	
+	if ( !(self->client->ps.stats[STAT_WEAPONS] & (1<<whichGun)) )
+	{
+		return;
+	}
+	
+	if ( !(ucmd->buttons & BUTTON_ALT_ATTACK) )
+	{
+		return;
+	}
+	
+	if ( !self->weaponModel[1] || (self->weaponModel[1] == -1) )
+	{
+		G_CreateG2AttachedWeaponModel( self, weaponData[whichGun].weaponMdl, self->handLBolt, 1 );
+	}
+	
+	addTime = weaponData[whichGun].fireTime;
+	self->client->ps.weaponTime += addTime;
+	self->client->ps.lastShotTime = level.time;
+//TODO:proper addTime scaling
+	
+	if ( whichGun == WP_BRYAR_PISTOL && self->client->ps.saberLockTime > level.time )
+	{
+		//shoot your way out of saberlocks!
+		G_StartMatrixEffect( self );
+		chargedShot = qtrue;
+		self->client->ps.weaponChargeTime = level.time - 10*BRYAR_CHARGE_UNIT;
+	}
+	
+	self->client->ps.saberBlocked = BLOCKED_NONE;
+	self->client->ps.saberMove = self->client->ps.saberBounceMove = LS_READY;
+	NPC_SetAnim( self, SETANIM_TORSO, BOTH_FORCELIGHTNING, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART );
+	
+	oldWeapon = self->s.weapon;
+	self->s.weapon = whichGun;
+	FireWeapon(self, chargedShot);
+	
+	cg_entities[self->s.number].muzzleFlashTime = level.time;
+	cg_entities[self->s.number].muzzleFlashWeapon = whichGun;
+	
+	self->s.weapon = oldWeapon;
+}
+
+
 
 //SABER BLOCKING============================================================================
 //SABER BLOCKING============================================================================
@@ -8063,6 +8145,9 @@ void WP_SaberUpdate( gentity_t *self, usercmd_t *ucmd )
 		return;
 	}
 
+	// Check if we want to fire the pistol
+	WP_SaberFireGun(self, ucmd, WP_BRYAR_PISTOL);
+	
 	// Check if we are throwing it, launch it if needed, update position if needed.
 	WP_SaberThrow(self, ucmd);
 

@@ -603,6 +603,7 @@ int PM_PowerLevelForSaberAnim( playerState_t *ps, int saberNum )
 		case SS_STAFF:
 		case SS_DUAL:
 		case SS_MEDIUM:
+		case SS_KATARN:
 			return FORCE_LEVEL_2;
 			break;
 		case SS_FAST:
@@ -1977,6 +1978,15 @@ qboolean PM_SaberKataDone( int curmove = LS_NONE, int newmove = LS_NONE )
 
 	if ( pm->ps->saberAnimLevel == SS_DESANN || pm->ps->saberAnimLevel == SS_TAVION )
 	{//desann and tavion can link up as many attacks as they want
+		return qfalse;
+	}
+	
+	if ( pm->ps->saberAnimLevel == SS_KATARN )
+	{
+		if (pm->ps->saberAttackChainCount > 0)
+		{
+			return qtrue;
+		}
 		return qfalse;
 	}
 	//FIXME: instead of random, apply some sort of logical conditions to whether or
@@ -3919,7 +3929,8 @@ saberMoveName_t PM_SaberAttackForMovement( int forwardmove, int rightmove, int c
 				else
 				{
 					if ( pm->ps->saberAnimLevel == SS_FAST ||
-						pm->ps->saberAnimLevel == SS_TAVION )
+						pm->ps->saberAnimLevel == SS_TAVION ||
+						pm->ps->saberAnimLevel == SS_KATARN )
 					{//player is in fast attacks, so come right back down from the same spot
 						newmove = PM_AttackMoveForQuad( saberMoveData[curmove].endQuad );
 					}

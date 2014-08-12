@@ -8253,6 +8253,7 @@ static void PM_Footsteps( void )
 						{
 						case SS_FAST:
 						case SS_TAVION:
+						case SS_KATARN:
 							legsAnim = BOTH_SABERFAST_STANCE;
 							break;
 						case SS_STRONG:
@@ -9104,6 +9105,9 @@ int PM_ReadyPoseForSaberAnimLevel( void )
 	case SS_STAFF:
 		anim = BOTH_SABERSTAFF_STANCE;
 		break;
+	case SS_KATARN:
+		anim = BOTH_STAND6;
+		break;
 	case SS_FAST:
 	case SS_TAVION:
 		anim = BOTH_SABERFAST_STANCE;
@@ -9379,7 +9383,14 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 		}
 		else
 		{//add the appropriate animLevel
-			anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			if (pm->ps->saberAnimLevel < SS_KATARN)
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			}
+			else
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1-1) * SABER_ANIM_GROUP_SIZE;
+			}
 		}
 	}
 	else if ( (pm->ps->saberAnimLevel == SS_DUAL
@@ -9418,7 +9429,14 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 		}
 		else
 		{//add the appropriate animLevel
-			anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			if (pm->ps->saberAnimLevel < SS_KATARN)
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			}
+			else
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1-1) * SABER_ANIM_GROUP_SIZE;
+			}
 		}
 	}
 	/*
@@ -9436,7 +9454,14 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 		}
 		else
 		{//increment the anim to the next level of saber anims
-			anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			if (pm->ps->saberAnimLevel < SS_KATARN)
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			}
+			else
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1-1) * SABER_ANIM_GROUP_SIZE;
+			}
 		}
 	}
 	else if ( newMove == LS_KICK_F_AIR
@@ -9599,6 +9624,7 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 							break;
 						case SS_TAVION:
 						case SS_FAST:
+						case SS_KATARN:
 							WP_SaberSwingSound( pm->gent, 0, SWING_FAST );
 							break;
 						}
@@ -12469,6 +12495,7 @@ void PM_WeaponLightsaber(void)
 			{
 			case SS_FAST:
 			case SS_TAVION:
+			case SS_KATARN:
 				PM_SetSaberMove( LS_A1_SPECIAL );
 				break;
 			case SS_MEDIUM:

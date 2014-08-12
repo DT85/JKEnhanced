@@ -297,6 +297,11 @@ static void CG_DrawSaberStyle(const centity_t	*cent,const int xPos,const int yPo
 	}
 
 	cgi_R_SetColor( otherHUDBits[index].color);
+	if (cg.saberAnimLevelPending == SS_KATARN)
+	{
+		cgi_R_SetColor( otherHUDBits[OHB_ARMORAMOUNT].color );
+		index = OHB_SABERSTYLE_MEDIUM;
+	}
 
 	CG_DrawPic(
 		otherHUDBits[index].xPos,
@@ -3056,6 +3061,16 @@ static void CG_ScanForCrosshairEntity( qboolean scanAll )
 						VectorCopy( cg_entities[cg.snap->ps.viewEntity].lerpOrigin, start );
 					}
 					AngleVectors( cg_entities[cg.snap->ps.viewEntity].lerpAngles, d_f, d_rt, d_up );
+				}
+				//temporary fix for third person aiming with gun/saber dual wield. shots should come from left hand anyway
+				else if (cg.snap->ps.weapon == WP_SABER && cg.snap->ps.viewEntity == 0 && cg_entities[0].gent->client->ps.saberAnimLevel == SS_KATARN)
+				{
+					extern void CalcMuzzlePoint( gentity_t *const ent, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint, float lead_in );
+					AngleVectors( cg_entities[0].lerpAngles, d_f, d_rt, d_up );
+					int oldWeapon = g_entities[0].s.weapon;
+					g_entities[0].s.weapon = WP_BRYAR_PISTOL;//Should be whichever weapon is being dual wielded, not always set to bryar!
+					CalcMuzzlePoint( &g_entities[0], d_f, d_rt, d_up, start , 0 );
+					g_entities[0].s.weapon = oldWeapon;
 				}
 				else
 				{
