@@ -14329,6 +14329,9 @@ void PM_CheckForceUseButton( gentity_t *ent, usercmd_t *ucmd  )
 			// FIXME! Failing at WP_ForcePowerUsable(). -AReis
 			ucmd->buttons |= BUTTON_FORCE_DRAIN;
 			break;
+		case FP_SABERTHROW:
+			ucmd->buttons |= BUTTON_SABERTHROW;
+			break;
 //		default:
 //			Com_Printf( "Use Force: Unhandled force: %d\n", showPowers[cg.forcepowerSelect]);
 //			break;
@@ -15112,6 +15115,15 @@ void Pmove( pmove_t *pmove )
 	else
 	{
 		pm->ps->pm_flags &= ~PMF_FORCE_FOCUS_HELD;
+	}
+	
+	if ( pm->cmd.buttons & BUTTON_SABERTHROW )
+	{
+		pm->ps->pm_flags |= PMF_SABERTHROW_HELD;
+	}
+	else
+	{
+		pm->ps->pm_flags &= ~PMF_SABERTHROW_HELD;
 	}
 
 	if ( pm->gent )//&& pm->gent->s.number == 0 )//player only?
