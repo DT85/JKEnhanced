@@ -345,6 +345,8 @@ vmCvar_t	cg_SFXSabers;
 vmCvar_t	cg_SFXSabersGlowSize;
 vmCvar_t	cg_SFXSabersCoreSize;
 
+vmCvar_t	cg_ignitionFlare;
+
 typedef struct {
 	vmCvar_t	*vmCvar;
 	const char	*cvarName;
@@ -468,6 +470,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_SFXSabersGlowSize,	"cg_SFXSabersGlowSize",	"1.0", CVAR_ARCHIVE },
 	{ &cg_SFXSabersCoreSize,	"cg_SFXSabersCoreSize",	"1.0", CVAR_ARCHIVE },
 
+	{ &cg_ignitionFlare,	"cg_ignitionFlare",	"0", CVAR_ARCHIVE },
 
 };
 
