@@ -940,6 +940,13 @@ typedef enum
 
 typedef enum
 {
+	SABER_CRYSTAL_DEFAULT = 0,
+	SABER_CRYSTAL_BLACK	= (1 << 0),
+	SABER_CRYSTAL_UNSTABLE = (1 << 1)
+} saber_crystals_t;
+
+typedef enum
+{
 	HOLSTER_INVALID = -1,
 	HOLSTER_NONE = 0,
 	HOLSTER_HIPS,
@@ -1053,6 +1060,8 @@ typedef struct
 	int	meditateAnim;			//-1 - anim to use when hit "meditate"
 	int	flourishAnim;			//-1 - anim to use when hit "flourish"
 	int	gloatAnim;				//-1 - anim to use when hit "gloat"
+	
+	saber_crystals_t crystals;
 	
 	holster_locations_t holsterPlace;
 

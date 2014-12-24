@@ -302,6 +302,33 @@ static void Svcmd_SaberColor_f()
 	}
 }
 
+static void Svcmd_SaberCrystal_f()
+{
+	int saberNum = atoi(gi.argv(1));
+	
+	saberNum--;
+	
+	gentity_t *self = G_GetSelfForPlayerCmd();
+	
+	if ( saberNum == 0 || saberNum == 1 )
+	{
+		if (!Q_stricmp(gi.argv(2), "black"))
+		{
+			self->client->ps.saber[saberNum].crystals = (saber_crystals_t)(self->client->ps.saber[saberNum].crystals^SABER_CRYSTAL_BLACK);
+			return;
+		}
+		else if (!Q_stricmp(gi.argv(2), "unstable"))
+		{
+			self->client->ps.saber[saberNum].crystals = (saber_crystals_t)(self->client->ps.saber[saberNum].crystals^SABER_CRYSTAL_UNSTABLE);
+			return;
+		}
+	}
+	
+	gi.Printf( "Usage:  saberCrystal <saberNum> <crystal> \n" );
+	gi.Printf( "valid saberNums:  1 or 2\n" );
+	gi.Printf( "valid crystals:  black and unstable\n" );
+}
+
 struct SetForceCmd {
 	const char *desc;
 	const char *cmdname;
@@ -1073,6 +1100,8 @@ static svcmd_t svcmds[] = {
     { "newPlayerTint",              Svcmd_NewPlayerTint_f,                      CMD_NONE },
 
 	{ "customSaber",				Svcmd_CustomSaber_f,						CMD_NONE },
+
+	{ "saberCrystal",				Svcmd_SaberCrystal_f,						CMD_CHEAT },
 	
 	//{ "say",						Svcmd_Say_f,						qtrue },
 	//{ "toggleallowvote",			Svcmd_ToggleAllowVote_f,			qfalse },
