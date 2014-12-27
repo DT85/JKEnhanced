@@ -1660,7 +1660,7 @@ void G_MatchPlayerWeapon( gentity_t *ent )
 			}
 			else
 			{
-				G_CreateG2AttachedWeaponModel( ent, weaponData[newWeap].weaponMdl, ent->handRBolt, 0 );
+				G_CreateG2AttachedWeaponModel( ent, weaponData[newWeap].worldModel, ent->handRBolt, 0 );
 				WP_SaberAddHolsteredG2SaberModels( ent );
 			}
 		}
@@ -4288,7 +4288,7 @@ void G_CheckClientIdle( gentity_t *ent, usercmd_t *ucmd )
 	{
 		return;
 	}
-	if ( !ent->s.number && ( !cg.renderingThirdPerson || cg.zoomMode ) )
+	if ( !ent->s.number && ( /*!cg.renderingThirdPerson ||*/ cg.zoomMode ) )
 	{
 		if ( ent->client->idleTime < level.time )
 		{
