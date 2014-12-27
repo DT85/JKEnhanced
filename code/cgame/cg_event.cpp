@@ -115,7 +115,7 @@ void CG_ItemPickup( int itemNum, qboolean bHadItem ) {
 		const int nCurWpn = cg.predicted_player_state.weapon;
 		const int nNewWpn = bg_itemlist[itemNum].giTag;
 
-		if ( nCurWpn == WP_SABER || bHadItem)
+		if ( (nCurWpn == WP_SABER && nNewWpn != WP_EMPLACED_GUN) || bHadItem)
 		{//never switch away from the saber!
 			return;
 		}
@@ -129,7 +129,12 @@ void CG_ItemPickup( int itemNum, qboolean bHadItem ) {
 		// NOTE: automatically switching to any weapon you pick up is stupid and annoying and we won't do it.
 		//
 
-		if ( nNewWpn == WP_SABER )
+		if ( nNewWpn == WP_EMPLACED_GUN )
+		{
+			SetWeaponSelectTime();
+			cg.weaponSelect = nNewWpn;
+		}
+		else if ( nNewWpn == WP_SABER )
 		{//always switch to saber
 			SetWeaponSelectTime();
 			cg.weaponSelect = nNewWpn;

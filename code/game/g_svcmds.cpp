@@ -132,7 +132,7 @@ void	Svcmd_EntityList_f (void) {
 //---------------------------
 extern void G_StopCinematicSkip( void );
 extern void G_StartCinematicSkip( void );
-extern void ExitEmplacedWeapon( gentity_t *ent );
+extern void ExitEmplacedWeapon( gentity_t *ent, qboolean detach = qfalse );
 static void Svcmd_ExitView_f( void )
 {
 extern cvar_t	*g_skippingcin;

@@ -375,7 +375,7 @@ extern void ChangeWeapon( gentity_t *ent, int newWeapon );
 	{
 		// we don't want for it to draw the weapon select stuff
 		cg.weaponSelect = WP_EMPLACED_GUN;
-		CG_CenterPrint( "@SP_INGAME_EXIT_VIEW", SCREEN_HEIGHT * 0.95 );
+		CG_CenterPrint( "@SPMOD_EWEB_EXIT", SCREEN_HEIGHT * 0.95 );
 	}
 
 	VectorCopy( activator->currentOrigin, self->pos4 );//keep this around so we know when to make them play the strafe anim
@@ -890,7 +890,7 @@ void G_UpdateEmplacedWeaponData( gentity_t *ent )
 	}
 }
 
-void ExitEmplacedWeapon( gentity_t *ent )
+void ExitEmplacedWeapon( gentity_t *ent, qboolean detach = qfalse )
 {
 	// requesting to unlock from the weapon
 	// We'll leave the gun pointed in the direction it was last facing, though we'll cut out the pitch
@@ -1021,6 +1021,12 @@ extern void CG_ChangeWeapon( int num );
 	{
 		// when we lock or unlock from the the gun, we get our old weapon back
 		ent->client->ps.weapon = ent->owner->s.weapon;
+		//player can pull the eweb gun away
+		if ( !ent->s.number && detach )
+		{
+			ent->client->ps.weapon = WP_EMPLACED_GUN;
+			ent->client->ps.ammo[AMMO_EMPLACED] = 100;
+		}
 
 		if ( ent->NPC )
 		{//BTW, if a saber-using NPC ever gets off of an emplaced gun/eweb, this will not work, look at NPC_ChangeWeapon for the proper way
@@ -1030,7 +1036,12 @@ extern void CG_ChangeWeapon( int num );
 		{
 			G_RemoveWeaponModels( ent );
 			CG_ChangeWeapon( ent->client->ps.weapon );
-			if ( ent->client->ps.weapon == WP_SABER )
+			if ( ent->client->ps.weapon == WP_EMPLACED_GUN && detach )
+			{
+				G_CreateG2AttachedWeaponModel( ent, "models/map_objects/hoth/eweb_model.glm", ent->handRBolt, 0 );
+				WP_SaberAddHolsteredG2SaberModels( ent );
+			}
+			else if ( ent->client->ps.weapon == WP_SABER )
 			{
 				WP_SaberAddG2SaberModels( ent );
 				G_RemoveHolsterModels( ent );
@@ -1081,6 +1092,10 @@ extern void CG_ChangeWeapon( int num );
 	if ( !ent->NPC )
 	{
 		// by keeping the owner, a dead npc can be pushed out of the chair without colliding with it
+		if ( ent->health > 0 && detach )
+		{
+			GEntity_DieFunc(ent->owner, ent->owner, ent->owner, 100, MOD_UNKNOWN);
+		}
 		ent->owner = NULL;
 	}
 }
@@ -1107,6 +1122,14 @@ void RunEmplacedWeapon( gentity_t *ent, usercmd_t **ucmd )
 		{//don't actually jump
 			(*ucmd)->upmove = 0;
 		}
+	}
+	//detach eweb!
+	else if (( (*ucmd)->buttons & BUTTON_USE_FORCE ) && ent->owner && ent->owner->delay + 500 < level.time && ent->owner->e_UseFunc == useF_eweb_use)
+	{
+		ent->owner->s.loopSound = 0;
+		G_Sound( ent, G_SoundIndex( "sound/weapons/eweb/eweb_dismount.mp3" ));
+		ExitEmplacedWeapon( ent, qtrue );
+		(*ucmd)->buttons &= ~BUTTON_USE_FORCE;
 	}
 	else
 	{
