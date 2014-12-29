@@ -1627,6 +1627,7 @@ public:
 								// used to twist the legs during strafing
 
 	int			eFlags;			// copied to entityState_t->eFlags
+	int			eFlags2;
 
 	int			eventSequence;	// pmove generated events
 	int			events[MAX_PS_EVENTS];
@@ -1919,8 +1920,11 @@ public:
 	//NOTE: not really used in SP, just for Fighter Vehicle damage stuff
 	int			brokenLimbs;
 	int			electrifyTime;
+	
+	//when hyperspacing, you just go forward really fast for HYPERSPACE_TIME
+	int			hyperSpaceTime;
+	vec3_t		hyperSpaceAngles;
 #endif // !JK2_MODE
-
 
 	void sg_export(
 		ojk::SavedGameHelper& saved_game) const
@@ -1947,6 +1951,7 @@ public:
 		saved_game.write<int32_t>(torsoAnimTimer);
 		saved_game.write<int32_t>(movementDir);
 		saved_game.write<int32_t>(eFlags);
+        saved_game.write<int32_t>(eFlags2);
 		saved_game.write<int32_t>(eventSequence);
 		saved_game.write<int32_t>(events);
 		saved_game.write<int32_t>(eventParms);
@@ -2088,6 +2093,9 @@ public:
 		saved_game.write<int32_t>(vehTurnaroundTime);
 		saved_game.write<int32_t>(brokenLimbs);
 		saved_game.write<int32_t>(electrifyTime);
+        
+        saved_game.write<int32_t>(hyperSpaceTime);
+        saved_game.write<float>(hyperSpaceAngles);
 #endif // !JK2_MODE
 	}
 
@@ -2116,6 +2124,7 @@ public:
 		saved_game.read<int32_t>(torsoAnimTimer);
 		saved_game.read<int32_t>(movementDir);
 		saved_game.read<int32_t>(eFlags);
+        saved_game.read<int32_t>(eFlags2);
 		saved_game.read<int32_t>(eventSequence);
 		saved_game.read<int32_t>(events);
 		saved_game.read<int32_t>(eventParms);
@@ -2257,6 +2266,9 @@ public:
 		saved_game.read<int32_t>(vehTurnaroundTime);
 		saved_game.read<int32_t>(brokenLimbs);
 		saved_game.read<int32_t>(electrifyTime);
+        
+        saved_game.read<int32_t>(hyperSpaceTime);
+        saved_game.read<float>(hyperSpaceAngles);
 #endif // !JK2_MODE
 	}
 }; // PlayerStateBase
@@ -2404,6 +2416,7 @@ typedef struct entityState_s {// !!!!!!!!!!! LOADSAVE-affecting struct !!!!!!!!!
 	int		number;			// entity index
 	int		eType;			// entityType_t
 	int		eFlags;
+	int		eFlags2;
 
 	trajectory_t	pos;	// for calculating position
 	trajectory_t	apos;	// for calculating angles
@@ -2483,6 +2496,7 @@ Ghoul2 Insert End
 		saved_game.write<int32_t>(number);
 		saved_game.write<int32_t>(eType);
 		saved_game.write<int32_t>(eFlags);
+        saved_game.write<int32_t>(eFlags2);
 		saved_game.write<>(pos);
 		saved_game.write<>(apos);
 		saved_game.write<int32_t>(time);
@@ -2539,6 +2553,7 @@ Ghoul2 Insert End
 		saved_game.read<int32_t>(number);
 		saved_game.read<int32_t>(eType);
 		saved_game.read<int32_t>(eFlags);
+        saved_game.read<int32_t>(eFlags2);
 		saved_game.read<>(pos);
 		saved_game.read<>(apos);
 		saved_game.read<int32_t>(time);

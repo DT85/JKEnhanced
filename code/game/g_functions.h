@@ -333,6 +333,7 @@ typedef enum
 	touchF_TouchTieBomb,
 	touchF_space_touch,
 	touchF_shipboundary_touch,
+	touchF_hyperspace_touch,
 } touchFunc_t;
 
 // TOUCH functions...
@@ -358,6 +359,7 @@ extern void TouchTieBomb( gentity_t *self, gentity_t *other, trace_t *trace );
 extern void TieFighterUse( gentity_t *self, gentity_t *other, gentity_t *activator );
 extern void space_touch( gentity_t *self, gentity_t *other, trace_t *trace );
 extern void shipboundary_touch( gentity_t *self, gentity_t *other, trace_t *trace );
+extern void hyperspace_touch( gentity_t *self, gentity_t *other, trace_t *trace );
 
 //	void		(*use)(gentity_t *self, gentity_t *other, gentity_t *activator);
 typedef enum
