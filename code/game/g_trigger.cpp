@@ -1332,6 +1332,8 @@ void space_touch( gentity_t *self, gentity_t *other, trace_t *trace )
 		if (veh->inuse && veh->client && veh->m_pVehicle &&
 			veh->m_pVehicle->m_pVehicleInfo->hideRider)
 		{ //if they are "inside" a vehicle, then let that protect them from THE HORRORS OF SPACE.
+			other->client->inSpaceSuffocation = 0;
+			other->client->inSpaceIndex = ENTITYNUM_NONE;
 			return;
 		}
 	}
@@ -1358,9 +1360,8 @@ void SP_trigger_space(gentity_t *self)
 {
 	InitTrigger(self);
 	self->contents = CONTENTS_TRIGGER;
-
-	//FIXME: implement!!!
-	//self->e_TouchFunc = touchF_space_touch;
+	
+	self->e_TouchFunc = touchF_space_touch;
 
     gi.linkentity(self);
 }
