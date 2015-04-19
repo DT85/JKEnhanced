@@ -758,6 +758,14 @@ typedef enum
 	FP_ABSORB,//duration - protect against dark force powers (grip, lightning, drain - maybe push/pull, too?)
 	FP_DRAIN,//hold/duration - drain force power for health
 	FP_SEE,//duration - detect/see hidden enemies
+	//extra powers!
+	FP_DESTRUCTION,//instant
+	FP_INSANITY,//instant
+	FP_STASIS,//duration + instant?
+	FP_BLINDING,//instant
+	FP_DEADLYSIGHT,//duration
+	FP_REPULSE,//hold/duration
+	FP_INVULNERABILITY,//duration
 #endif // !JK2_MODE
 
 	NUM_FORCE_POWERS
@@ -1924,6 +1932,9 @@ public:
 	//when hyperspacing, you just go forward really fast for HYPERSPACE_TIME
 	int			hyperSpaceTime;
 	vec3_t		hyperSpaceAngles;
+	
+	int			stasisTime;
+	int			deadlySightLastChecked;
 #endif // !JK2_MODE
 
 	void sg_export(
@@ -2096,6 +2107,9 @@ public:
         
         saved_game.write<int32_t>(hyperSpaceTime);
         saved_game.write<float>(hyperSpaceAngles);
+
+        saved_game.write<int32_t>(stasisTime);
+        saved_game.write<int32_t>(deadlySightLastChecked);
 #endif // !JK2_MODE
 	}
 
@@ -2269,6 +2283,9 @@ public:
         
         saved_game.read<int32_t>(hyperSpaceTime);
         saved_game.read<float>(hyperSpaceAngles);
+
+        saved_game.read<int32_t>(stasisTime);
+        saved_game.read<int32_t>(deadlySightLastChecked);
 #endif // !JK2_MODE
 	}
 }; // PlayerStateBase
@@ -2317,6 +2334,13 @@ typedef enum
 	GENCMD_FORCE_ABSORB,
 	GENCMD_FORCE_DRAIN,
 	GENCMD_FORCE_SEEING,
+	GENCMD_FORCE_DESTRUCTION,
+	GENCMD_FORCE_INSANITY,
+	GENCMD_FORCE_STASIS,
+	GENCMD_FORCE_BLINDING,
+	GENCMD_FORCE_DEADLYSIGHT,
+	GENCMD_FORCE_REPULSE,
+	GENCMD_FORCE_INVULNERABILITY,
 } genCmds_t;
 
 

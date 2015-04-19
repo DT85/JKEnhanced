@@ -48,6 +48,7 @@ extern void Mark1_dying( gentity_t *self );
 extern void NPC_BSCinematic( void );
 extern int GetTime ( int lastTime );
 extern void G_CheckCharmed( gentity_t *self );
+extern void G_CheckInsanity( gentity_t *self );
 extern qboolean Boba_Flying( gentity_t *self );
 extern qboolean RT_Flying( gentity_t *self );
 extern qboolean Jedi_CultistDestroyer( gentity_t *self );
@@ -979,7 +980,7 @@ void NPC_ApplyScriptFlags (void)
 {
 	if ( NPCInfo->scriptFlags & SCF_CROUCHED )
 	{
-		if ( NPCInfo->charmedTime > level.time && (ucmd.forwardmove || ucmd.rightmove) )
+		if ( (NPCInfo->charmedTime > level.time || NPCInfo->darkCharmedTime > level.time) && (ucmd.forwardmove || ucmd.rightmove) )
 		{//ugh, if charmed and moving, ignore the crouched command
 		}
 		else
@@ -994,7 +995,7 @@ void NPC_ApplyScriptFlags (void)
 	}
 	else if(NPCInfo->scriptFlags & SCF_WALKING)
 	{
-		if ( NPCInfo->charmedTime > level.time && (ucmd.forwardmove || ucmd.rightmove) )
+		if ( (NPCInfo->charmedTime > level.time || NPCInfo->darkCharmedTime > level.time) && (ucmd.forwardmove || ucmd.rightmove) )
 		{//ugh, if charmed and moving, ignore the walking command
 		}
 		else
@@ -1880,6 +1881,7 @@ void NPC_RunBehavior( int team, int bState )
 	{
 		NPC_BSEmplaced();
 		G_CheckCharmed( NPC );
+		G_CheckInsanity( NPC );
 		return;
 	}
 	else if ( NPC->client->NPC_class == CLASS_HOWLER )
@@ -1936,6 +1938,7 @@ void NPC_RunBehavior( int team, int bState )
 			NPC_BehaviorSet_Stormtrooper( bState );
 		}
 		G_CheckCharmed( NPC );
+		G_CheckInsanity( NPC );
 	}
 	else if ( NPC->client->NPC_class == CLASS_RANCOR )
 	{
@@ -1949,6 +1952,7 @@ void NPC_RunBehavior( int team, int bState )
 	{
 		NPC_BehaviorSet_Wampa( bState );
 		G_CheckCharmed( NPC );
+		G_CheckInsanity( NPC );
 	}
 	else if ( NPCInfo->scriptFlags & SCF_FORCED_MARCH )
 	{//being forced to march
@@ -1960,12 +1964,14 @@ void NPC_RunBehavior( int team, int bState )
 		{
 			NPC_BehaviorSet_Sniper( bState );
 			G_CheckCharmed( NPC );
+			G_CheckInsanity( NPC );
 			return;
 		}
 		else
 		{
 			NPC_BehaviorSet_Tusken( bState );
 			G_CheckCharmed( NPC );
+			G_CheckInsanity( NPC );
 			return;
 		}
 	}
@@ -1973,15 +1979,18 @@ void NPC_RunBehavior( int team, int bState )
 	{
 		NPC_BehaviorSet_Tusken( bState );
 		G_CheckCharmed( NPC );
+		G_CheckInsanity( NPC );
 		return;
 	}
 	else if ( NPC->client->ps.weapon == WP_NOGHRI_STICK )
 	{
 		NPC_BehaviorSet_Stormtrooper( bState );
 		G_CheckCharmed( NPC );
+		G_CheckInsanity( NPC );
 	}
 	else
 	{
+		G_CheckInsanity( NPC );
 		switch( team )
 		{
 
@@ -2122,7 +2131,7 @@ void NPC_RunBehavior( int team, int bState )
 			}
 			else
 			{
-				if ( NPCInfo->charmedTime > level.time )
+				if ( (NPCInfo->charmedTime > level.time || NPCInfo->darkCharmedTime > level.time) )
 				{
 					NPC_BehaviorSet_Charmed( bState );
 				}
@@ -2378,7 +2387,7 @@ void NPC_Think ( gentity_t *self)//, int msec )
 	VectorCopy( self->client->ps.moveDir, oldMoveDir );
 	VectorClear( self->client->ps.moveDir );
 	// see if NPC ai is frozen
-	if ( debugNPCFreeze->integer || (NPC->svFlags&SVF_ICARUS_FREEZE) )
+	if ( debugNPCFreeze->integer || (NPC->svFlags&SVF_ICARUS_FREEZE) || (self && self->client && self->client->ps.stasisTime > level.time))
 	{
 		NPC_UpdateAngles( qtrue, qtrue );
 		ClientThink(self->s.number, &ucmd);
@@ -2627,6 +2636,11 @@ void NPC_SetAnim(gentity_t	*ent,int setAnimParts,int anim,int setAnimFlags, int 
 	}
 
 	if ( !setAnimParts )
+	{
+		return;
+	}
+	
+	if ( ent->client->ps.stasisTime > level.time )
 	{
 		return;
 	}

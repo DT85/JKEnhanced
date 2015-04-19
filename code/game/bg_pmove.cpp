@@ -14345,6 +14345,14 @@ extern void ForceRage( gentity_t *self );
 extern void ForceProtect( gentity_t *self );
 extern void ForceAbsorb( gentity_t *self );
 extern void ForceSeeing( gentity_t *self );
+extern void ForceDestruction( gentity_t *self );
+extern void ForceInsanity( gentity_t *self );
+extern void ForceStasis( gentity_t *self );
+extern void ForceBlinding( gentity_t *self );
+extern void ForceDeadlySight( gentity_t *self );
+extern void ForceRepulse( gentity_t *self );
+extern void ForceInvulnerability( gentity_t *self );
+
 void PM_CheckForceUseButton( gentity_t *ent, usercmd_t *ucmd  )
 {
 	if ( !ent )
@@ -14386,6 +14394,27 @@ void PM_CheckForceUseButton( gentity_t *ent, usercmd_t *ucmd  )
 				break;
 			case FP_SEE:		//duration - detect/see hidden enemies
 				ForceSeeing( ent );
+				break;
+			case FP_DESTRUCTION:
+				ForceDestruction( ent );
+				break;
+			case FP_INSANITY:
+				ForceInsanity( ent );
+				break;
+			case FP_STASIS:
+				ForceStasis( ent );
+				break;
+			case FP_BLINDING:
+				ForceBlinding( ent );
+				break;
+			case FP_DEADLYSIGHT:
+				ForceDeadlySight( ent );
+				break;
+			case FP_REPULSE:
+				ForceRepulse( ent );
+				break;
+			case FP_INVULNERABILITY:
+				ForceInvulnerability( ent );
 				break;
 			}
 		}
@@ -15052,7 +15081,7 @@ void Pmove( pmove_t *pmove )
 	if (pm->ps->pm_type == PM_FREEZE) {
 		return;		// no movement at all
 	}
-
+	
 	if ( pm->ps->pm_type == PM_INTERMISSION ) {
 		return;		// no movement at all
 	}
@@ -15307,7 +15336,6 @@ void Pmove( pmove_t *pmove )
 		}
 	}
 
-
 	// ANIMATION
 	//================================
 
@@ -15340,12 +15368,16 @@ void Pmove( pmove_t *pmove )
 	else // TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
 	{
 		// footstep events / legs animations
-		PM_Footsteps();
+		if (pm->ps->stasisTime < level.time) {
+			PM_Footsteps();
+		}
 	}
 	// torso animation
 	if ( !pVeh )
 	{//not riding a vehicle
-		PM_TorsoAnimation();
+		if (pm->ps->stasisTime < level.time) {
+			PM_TorsoAnimation();
+		}
 	}
 
 	// entering / leaving water splashes

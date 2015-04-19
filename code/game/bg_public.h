@@ -638,6 +638,8 @@ typedef enum {
 	MOD_SUICIDE,
 	MOD_TRIGGER_HURT,
 	MOD_GAS,
+	
+	MOD_DESTRUCTION,
 
 	NUM_MODS,
 

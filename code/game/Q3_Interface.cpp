@@ -419,6 +419,13 @@ stringID_table_t setTable[] =
 	ENUM2STRING(SET_FORCE_ABSORB_LEVEL),
 	ENUM2STRING(SET_FORCE_DRAIN_LEVEL),
 	ENUM2STRING(SET_FORCE_SIGHT_LEVEL),
+	ENUM2STRING(SET_FORCE_DESTRUCTION_LEVEL),
+	ENUM2STRING(SET_FORCE_INSANITY_LEVEL),
+	ENUM2STRING(SET_FORCE_STASIS_LEVEL),
+	ENUM2STRING(SET_FORCE_BLINDING_LEVEL),
+	ENUM2STRING(SET_FORCE_DEADLYSIGHT_LEVEL),
+	ENUM2STRING(SET_FORCE_REPULSE_LEVEL),
+	ENUM2STRING(SET_FORCE_INVULNERABILITY_LEVEL),
 	ENUM2STRING(SET_SABER1_COLOR1),
 	ENUM2STRING(SET_SABER1_COLOR2),
 	ENUM2STRING(SET_SABER2_COLOR1),
@@ -485,6 +492,13 @@ stringID_table_t setTable[] =
 	ENUM2STRING(SET_FORCE_PROTECT),
 	ENUM2STRING(SET_FORCE_ABSORB),
 	ENUM2STRING(SET_FORCE_DRAIN),
+	ENUM2STRING(SET_FORCE_DESTRUCTION),
+	ENUM2STRING(SET_FORCE_INSANITY),
+	ENUM2STRING(SET_FORCE_STASIS),
+	ENUM2STRING(SET_FORCE_BLINDING),
+	ENUM2STRING(SET_FORCE_DEADLYSIGHT),
+	ENUM2STRING(SET_FORCE_REPULSE),
+	ENUM2STRING(SET_FORCE_INVULNERABILITY),
 	ENUM2STRING(SET_WINTER_GEAR),
 	ENUM2STRING(SET_NO_ANGLES),
 	ENUM2STRING(SET_SABER_ORIGIN),
@@ -4817,9 +4831,11 @@ static void Q3_SetNoMindTrick( int entID, qboolean add)
 	{
 		ent->NPC->scriptFlags |= SCF_NO_MIND_TRICK;
 		ent->NPC->confusionTime = 0;
+		ent->NPC->insanityTime = 0;
 		if ( ent->ghoul2.size() && ent->headBolt != -1 )
 		{
 			G_StopEffect("force/confusion", ent->playerModel, ent->headBolt, ent->s.number );
+			G_StopEffect("force/drain_hand", ent->playerModel, ent->headBolt, ent->s.number );
 		}
 	}
 	else
@@ -9442,6 +9458,13 @@ extern void LockDoors(gentity_t *const ent);
 	case SET_FORCE_ABSORB_LEVEL:
 	case SET_FORCE_DRAIN_LEVEL:
 	case SET_FORCE_SIGHT_LEVEL:
+	case SET_FORCE_DESTRUCTION_LEVEL:
+	case SET_FORCE_INSANITY_LEVEL:
+	case SET_FORCE_STASIS_LEVEL:
+	case SET_FORCE_BLINDING_LEVEL:
+	case SET_FORCE_DEADLYSIGHT_LEVEL:
+	case SET_FORCE_REPULSE_LEVEL:
+	case SET_FORCE_INVULNERABILITY_LEVEL:
 		int_data = atoi((char *) data);
 		Q3_SetForcePowerLevel( entID, (toSet-SET_FORCE_HEAL_LEVEL), int_data );
 		break;
@@ -9530,6 +9553,28 @@ extern void Saboteur_Cloak( gentity_t *self );
 	case SET_FORCE_DRAIN:
 		Q3_SetForcePower( entID, FP_DRAIN, (qboolean)(Q_stricmp("true",(char*)data)==0) );
 		break;
+	case SET_FORCE_DESTRUCTION:
+		Q3_SetForcePower( entID, FP_DESTRUCTION, (qboolean)(Q_stricmp("true",(char*)data)==0) );
+		break;
+	case SET_FORCE_INSANITY:
+		Q3_SetForcePower( entID, FP_INSANITY, (qboolean)(Q_stricmp("true",(char*)data)==0) );
+		break;
+	case SET_FORCE_STASIS:
+		Q3_SetForcePower( entID, FP_STASIS, (qboolean)(Q_stricmp("true",(char*)data)==0) );
+		break;
+	case SET_FORCE_BLINDING:
+		Q3_SetForcePower( entID, FP_BLINDING, (qboolean)(Q_stricmp("true",(char*)data)==0) );
+		break;
+	case SET_FORCE_DEADLYSIGHT:
+		Q3_SetForcePower( entID, FP_DEADLYSIGHT, (qboolean)(Q_stricmp("true",(char*)data)==0) );
+		break;
+	case SET_FORCE_REPULSE:
+		Q3_SetForcePower( entID, FP_REPULSE, (qboolean)(Q_stricmp("true",(char*)data)==0) );
+		break;
+	case SET_FORCE_INVULNERABILITY:
+		Q3_SetForcePower( entID, FP_INVULNERABILITY, (qboolean)(Q_stricmp("true",(char*)data)==0) );
+		break;
+
 
 extern cvar_t	*g_char_model;
 extern cvar_t	*g_char_skin_head;

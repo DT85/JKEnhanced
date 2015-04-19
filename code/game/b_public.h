@@ -372,6 +372,9 @@ public:
 	int			controlledTime;	//controlled by player
 	int			surrenderTime;	//Hands up
 	int			kneelTime;		//kneeling (for troopers)
+	
+	int			insanityTime;	//Insanity!
+	int			darkCharmedTime;	//Charmed to enemy team (dark version)
 
 	//Lagging enemy position - FIXME: seems awful wasteful...
 	vec3_t		enemyLaggedPos[ENEMY_POS_LAG_STEPS];

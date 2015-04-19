@@ -352,6 +352,13 @@ SetForceCmd SetForceTable[NUM_FORCE_POWERS] = {
 	{ "forceAbsorb",		"setForceAbsorb",		FORCE_LEVEL_3			},
 	{ "forceDrain",			"setForceDrain",		FORCE_LEVEL_3			},
 	{ "forceSight",			"setForceSight",		FORCE_LEVEL_3			},
+	{ "forceDestruction",	"setForceDestruction",	FORCE_LEVEL_3			},
+	{ "forceInsanity",		"setForceInsanity",		FORCE_LEVEL_3			},
+	{ "forceStasis",		"setForceStasis",		FORCE_LEVEL_3			},
+	{ "forceBlinding",		"setForceBlinding",		FORCE_LEVEL_3			},
+	{ "forceDeadlySight",	"setForceDeadlySight",	FORCE_LEVEL_3			},
+	{ "forceRepulse",		"setForceRepulse",		FORCE_LEVEL_3			},
+	{ "forceInvulnerability",	"setForceInvulnerability",	FORCE_LEVEL_3	},
 };
 
 static void Svcmd_ForceSetLevel_f( int forcePower )
@@ -1071,6 +1078,13 @@ static svcmd_t svcmds[] = {
 	{ "setForceProtect",			Svcmd_ForceSetLevel_f<FP_PROTECT>,			CMD_CHEAT },
 	{ "setForceAbsorb",				Svcmd_ForceSetLevel_f<FP_ABSORB>,			CMD_CHEAT },
 	{ "setForceSight",				Svcmd_ForceSetLevel_f<FP_SEE>,				CMD_CHEAT },
+	{ "setForceDestruction",		Svcmd_ForceSetLevel_f<FP_DESTRUCTION>,		CMD_CHEAT },
+	{ "setForceInsanity",			Svcmd_ForceSetLevel_f<FP_INSANITY>,			CMD_CHEAT },
+	{ "setForceStasis",				Svcmd_ForceSetLevel_f<FP_STASIS>,			CMD_CHEAT },
+	{ "setForceBlinding",			Svcmd_ForceSetLevel_f<FP_BLINDING>,			CMD_CHEAT },
+	{ "setForceDeadlySight",		Svcmd_ForceSetLevel_f<FP_DEADLYSIGHT>,		CMD_CHEAT },
+	{ "setForceRepulse",			Svcmd_ForceSetLevel_f<FP_REPULSE>,			CMD_CHEAT },
+	{ "setForceInvulnerability",	Svcmd_ForceSetLevel_f<FP_INVULNERABILITY>,	CMD_CHEAT },
 	{ "setForceAll",				Svcmd_SetForceAll_f,						CMD_CHEAT },
 	{ "setSaberAll",				Svcmd_SetSaberAll_f,						CMD_CHEAT },
 	

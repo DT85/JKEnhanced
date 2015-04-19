@@ -5618,6 +5618,7 @@ static const char *g_bindCommands[] = {
 	"+moveright",
 	"+moveup",
 	"+right",
+	"+saber_throw",
 	"+speed",
 	"+strafe",
 	"+use",
@@ -5628,18 +5629,27 @@ static const char *g_bindCommands[] = {
 	"exitview",
 #ifndef JK2_MODE
 	"force_absorb",
+	"force_blinding",
+	"force_destruction",
+	"force_deadlysight",
 #endif
 	"force_distract",
 	"force_heal",
 #ifndef JK2_MODE
+	"force_insanity",
+	"force_invulnerability",
 	"force_protect",
 #endif
 	"force_pull",
 #ifndef JK2_MODE
 	"force_rage",
+	"force_repulse",
 	"force_sight",
 #endif
 	"force_speed",
+#ifndef JK2_MODE
+	"force_stasis",
+#endif
 	"force_throw",
 	"forcenext",
 	"forceprev",
