@@ -1757,7 +1757,7 @@ int CG_WeaponCheck( int weaponIndex )
 
 int cgi_UI_GetItemText(char *menuFile,char *itemName, char *text);
 
-const char *weaponDesc[13] =
+const char *weaponDesc[WP_NUM_WEAPONS - 1] =
 {
 "SABER_DESC",
 "NEW_BLASTER_PISTOL_DESC",
@@ -1772,6 +1772,21 @@ const char *weaponDesc[13] =
 "TRIP_MINE_DESC",
 "DET_PACK_DESC",
 "CONCUSSION_DESC",
+"MELEE_DESC",
+"ATST_MAIN_DESC",
+"ATST_SIDE_DESC",
+"STUN_BATON_DESC",
+"BLASTER_PISTOL_DESC",
+"EMPLACED_GUN_DESC",
+"BOT_LASER_DESC",
+"TURRET_DESC",
+"TIE_FIGHTER_DESC",
+"RAPID_CONCUSSION_DESC",
+"JAWA_DESC",
+"TUSKEN_RIFLE_DESC",
+"TUSKEN_STAFF_DESC",
+"SCEPTER_DESC",
+"NOGHRI_STICK_DESC",
 };
 
 /*
@@ -1798,7 +1813,7 @@ void CG_DrawDataPadWeaponSelect( void )
 
 	// count the number of weapons owned
 	weaponCount = 0;
-	for ( i = 1 ; i < 16 ; i++ )
+	for ( i = 1 ; i < WP_NUM_WEAPONS ; i++ )
 	{
 		if ( weaponBitFlag & ( 1 << i ) )
 		{
@@ -1836,9 +1851,9 @@ void CG_DrawDataPadWeaponSelect( void )
 	{
 		cg.DataPadWeaponSelect = FIRST_WEAPON;
 	}
-	else if (cg.DataPadWeaponSelect>13)
+	else if (cg.DataPadWeaponSelect>=WP_NUM_WEAPONS)
 	{
-		cg.DataPadWeaponSelect = 13;
+		cg.DataPadWeaponSelect = WP_NUM_WEAPONS - 1;
 	}
 
 	// What weapon does the player currently have selected
@@ -1852,8 +1867,8 @@ void CG_DrawDataPadWeaponSelect( void )
 	}
 	if (weaponSelectI<1)
 	{
-		weaponSelectI = 13;
-	}
+		weaponSelectI = WP_NUM_WEAPONS - 1;
+	}	
 
 	const int smallIconSize = 40;
 	const int bigIconSize = 80;
@@ -1882,7 +1897,7 @@ void CG_DrawDataPadWeaponSelect( void )
 
 		if (weaponSelectI<1)
 		{
-			weaponSelectI = 13;
+			weaponSelectI = WP_NUM_WEAPONS - 1;
 		}
 
 		if ( !(weaponBitFlag & ( 1 << weaponSelectI )))	// Does he have this weapon?
@@ -1951,7 +1966,7 @@ void CG_DrawDataPadWeaponSelect( void )
 		weaponSelectI = cg.DataPadWeaponSelect + 1;
 	}
 
-	if (weaponSelectI> 13)
+	if (weaponSelectI>= WP_NUM_WEAPONS)
 	{
 		weaponSelectI = 1;
 	}
@@ -1970,7 +1985,7 @@ void CG_DrawDataPadWeaponSelect( void )
 		{
 			weaponSelectI = WP_CONCUSSION;
 		}
-		if (weaponSelectI>13)
+		if (weaponSelectI>= WP_NUM_WEAPONS)
 		{
 			weaponSelectI = 1;
 		}
@@ -2014,7 +2029,10 @@ void CG_DrawDataPadWeaponSelect( void )
 	}
 
 	// Print the weapon description
-	cgi_SP_GetStringTextString( va("SP_INGAME_%s",weaponDesc[cg.DataPadWeaponSelect-1]), text, sizeof(text) );
+	if (!cgi_SP_GetStringTextString( va("SP_INGAME_%s",weaponDesc[cg.DataPadWeaponSelect-1]), text, sizeof(text) ))
+	{
+		cgi_SP_GetStringTextString( va("SPMOD_INGAME_%s",weaponDesc[cg.DataPadWeaponSelect-1]), text, sizeof(text) );
+	}
 
 	if (text[0])
 	{
@@ -2149,10 +2167,11 @@ void CG_DrawWeaponSelect( void )
 	// count the number of weapons owned
 	count = 0;
 	isOnVeh = (G_IsRidingVehicle(cg_entities[0].gent)!=0);
- 	for ( i = 1 ; i < MAX_PLAYER_WEAPONS ; i++ )
+ 	for ( i = 1 ; i < WP_NUM_WEAPONS ; i++ )
 	{
 		if ((bits & ( 1 << i ))  &&
-			(!isOnVeh || i==WP_NONE || i==WP_SABER || i==WP_BLASTER))
+			playerUsableWeapons[i] &&
+			(!isOnVeh || i==WP_NONE || i==WP_SABER || i==WP_BLASTER)) 
 		{
 			count++;
 		}
@@ -2193,7 +2212,7 @@ void CG_DrawWeaponSelect( void )
 	}
 	if (i<1)
 	{
-		i = MAX_PLAYER_WEAPONS;
+		i = WP_NUM_WEAPONS;
 	}
 
 	smallIconSize = 40;
@@ -2231,10 +2250,10 @@ void CG_DrawWeaponSelect( void )
 		}
 		if (i<1)
 		{
-			i = MAX_PLAYER_WEAPONS;
+			i = WP_NUM_WEAPONS;
 		}
 
-		if ( !(bits & ( 1 << i )))	// Does he have this weapon?
+		if ( !(bits & ( 1 << i ) && playerUsableWeapons[i]) )	// Does he have this weapon?
 		{
 			if ( i == WP_CONCUSSION )
 			{
@@ -2309,7 +2328,7 @@ void CG_DrawWeaponSelect( void )
 	{
 		i = cg.weaponSelect + 1;
 	}
-	if (i> MAX_PLAYER_WEAPONS)
+	if (i>= WP_NUM_WEAPONS)
 	{
 		i = 1;
 	}
@@ -2330,12 +2349,12 @@ void CG_DrawWeaponSelect( void )
 		{
 			i = WP_CONCUSSION;
 		}
-		if (i>MAX_PLAYER_WEAPONS)
+		if (i>= WP_NUM_WEAPONS)
 		{
 			i = 1;
 		}
 
-		if ( !(bits & ( 1 << i )))	// Does he have this weapon?
+		if ( !(bits & ( 1 << i ) && playerUsableWeapons[i]))	// Does he have this weapon?
 		{
 			if ( i == WP_CONCUSSION )
 			{
@@ -2397,6 +2416,12 @@ void CG_DrawWeaponSelect( void )
 			int x = ( SCREEN_WIDTH - w ) / 2;
 			cgi_R_Font_DrawString(x, (SCREEN_HEIGHT - 24)+yOffset, text, textColor, cgs.media.qhFontSmall, -1, 1.0f);
 		}
+		else if ( cgi_SP_GetStringTextString( va("SPMOD_INGAME_%s",item->classname), text, sizeof( text )))
+		{
+			int w = cgi_R_Font_StrLenPixels(text, cgs.media.qhFontSmall, 1.0f);
+			int x = ( SCREEN_WIDTH - w ) / 2;
+			cgi_R_Font_DrawString(x, (SCREEN_HEIGHT - 24)+yOffset, text, textColor, cgs.media.qhFontSmall, -1, 1.0f);
+		}
 	}
 
 	cgi_R_SetColor( NULL );
@@ -2412,8 +2437,8 @@ qboolean CG_WeaponSelectable( int i, int original, qboolean dpMode )
 {
 	int	usage_for_weap;
 
-	if (i > MAX_PLAYER_WEAPONS)
-	{
+	if (i >= WP_NUM_WEAPONS || !playerUsableWeapons[i])
+	{	
 #ifndef FINAL_BUILD
 		Com_Printf("CG_WeaponSelectable() passed illegal index of %d!\n",i);
 #endif
@@ -2563,7 +2588,7 @@ void CG_NextWeapon_f( void ) {
 		firstWeapon = 0;	// include WP_NONE here
 	}
 
-	for ( i = 0 ; i <= MAX_PLAYER_WEAPONS ; i++ )
+	for ( i = 0 ; i < WP_NUM_WEAPONS ; i++ )
 	{
 
 		//*SIGH*... Hack to put concussion rifle before rocketlauncher
@@ -2577,15 +2602,15 @@ void CG_NextWeapon_f( void ) {
 		}
 		else if ( cg.weaponSelect == WP_DET_PACK )
 		{
-			cg.weaponSelect = firstWeapon;
+			cg.weaponSelect = WP_MELEE;
 		}
 		else
 		{
 			cg.weaponSelect++;
 		}
 
-		if ( cg.weaponSelect < firstWeapon || cg.weaponSelect > MAX_PLAYER_WEAPONS) {
-			cg.weaponSelect = firstWeapon;
+		if ( cg.weaponSelect < firstWeapon || cg.weaponSelect >= WP_NUM_WEAPONS) {
+			cg.weaponSelect = firstWeapon; 
 		}
 
 		if ( CG_WeaponSelectable( cg.weaponSelect, original, qfalse ) )
@@ -2619,7 +2644,7 @@ void CG_DPNextWeapon_f( void ) {
 
 	original = cg.DataPadWeaponSelect;
 
-	for ( i = 0 ; i <= MAX_PLAYER_WEAPONS ; i++ )
+	for ( i = 0 ; i < WP_NUM_WEAPONS ; i++ )
 	{
 
 		//*SIGH*... Hack to put concussion rifle before rocketlauncher
@@ -2633,15 +2658,15 @@ void CG_DPNextWeapon_f( void ) {
 		}
 		else if ( cg.DataPadWeaponSelect == WP_DET_PACK )
 		{
-			cg.DataPadWeaponSelect = FIRST_WEAPON;
+			cg.DataPadWeaponSelect = WP_MELEE;
 		}
 		else
 		{
 			cg.DataPadWeaponSelect++;
 		}
 
-		if ( cg.DataPadWeaponSelect < FIRST_WEAPON || cg.DataPadWeaponSelect > MAX_PLAYER_WEAPONS) {
-			cg.DataPadWeaponSelect = FIRST_WEAPON;
+		if ( cg.DataPadWeaponSelect < FIRST_WEAPON || cg.DataPadWeaponSelect >= WP_NUM_WEAPONS ) {
+			cg.DataPadWeaponSelect = FIRST_WEAPON; 
 		}
 
 		if ( CG_WeaponSelectable( cg.DataPadWeaponSelect, original, qtrue ) )
@@ -2677,7 +2702,7 @@ void CG_DPPrevWeapon_f( void )
 
 	original = cg.DataPadWeaponSelect;
 
-	for ( i = 0 ; i <= MAX_PLAYER_WEAPONS ; i++ )
+	for ( i = 0 ; i < WP_NUM_WEAPONS ; i++ )
 	{
 
 		//*SIGH*... Hack to put concussion rifle before rocketlauncher
@@ -2698,9 +2723,9 @@ void CG_DPPrevWeapon_f( void )
 			cg.DataPadWeaponSelect--;
 		}
 
-		if ( cg.DataPadWeaponSelect < FIRST_WEAPON || cg.DataPadWeaponSelect > MAX_PLAYER_WEAPONS)
-		{
-			cg.DataPadWeaponSelect = MAX_PLAYER_WEAPONS;
+		if ( cg.DataPadWeaponSelect < FIRST_WEAPON || cg.DataPadWeaponSelect >= WP_NUM_WEAPONS )
+		{ 
+			cg.DataPadWeaponSelect = WP_NUM_WEAPONS;
 		}
 
 		if ( CG_WeaponSelectable( cg.DataPadWeaponSelect, original, qtrue ) )
@@ -2767,8 +2792,8 @@ void CG_PrevWeapon_f( void ) {
 		firstWeapon = 0;	// include WP_NONE here
 	}
 
-	for ( i = 0 ; i <= MAX_PLAYER_WEAPONS ; i++ ) {
-
+	for ( i = 0 ; i < WP_NUM_WEAPONS ; i++ ) {
+		
 		//*SIGH*... Hack to put concussion rifle before rocketlauncher
 		if ( cg.weaponSelect == WP_ROCKET_LAUNCHER )
 		{
@@ -2788,8 +2813,8 @@ void CG_PrevWeapon_f( void ) {
 		}
 
 
-		if ( cg.weaponSelect < firstWeapon || cg.weaponSelect > MAX_PLAYER_WEAPONS) {
-			cg.weaponSelect = MAX_PLAYER_WEAPONS;
+		if ( cg.weaponSelect < firstWeapon || cg.weaponSelect >= WP_NUM_WEAPONS ) {
+			cg.weaponSelect = WP_NUM_WEAPONS;
 		}
 
 		if ( CG_WeaponSelectable( cg.weaponSelect, original, qfalse ) )
@@ -3101,7 +3126,7 @@ void CG_FireWeapon( centity_t *cent, qboolean alt_fire )
 		CG_Error( "CG_FireWeapon: ent->weapon >= WP_NUM_WEAPONS" );
 		return;
 	}
-	if ( ent->weapon == WP_TUSKEN_RIFLE && cent->gent->client)
+	if ( (ent->weapon == WP_TUSKEN_RIFLE || ent->weapon == WP_NOGHRI_STICK) && cent->gent->client)
 	{
 		if (cent->gent->client->ps.torsoAnim==BOTH_TUSKENATTACK1 ||
 		cent->gent->client->ps.torsoAnim==BOTH_TUSKENATTACK2 ||
