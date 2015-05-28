@@ -8898,7 +8898,7 @@ static void PM_BeginWeaponChange( int weapon ) {
 		return;
 	}
 
-	if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+	if ( !( pm->ps->weapons[weapon] ) ) {
 		return;
 	}
 
@@ -8982,7 +8982,7 @@ static void PM_FinishWeaponChange( void ) {
 		weapon = WP_NONE;
 	}
 
-	if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+	if ( !( pm->ps->weapons[weapon] ) ) {
 		weapon = WP_NONE;
 	}
 
@@ -9002,7 +9002,7 @@ static void PM_FinishWeaponChange( void ) {
 		dropped->s.radius = 10;
 		dropped->delay = level.time + 1000;
 		pm->ps->ammo[AMMO_EMPLACED] = 0;
-		pm->ps->stats[STAT_WEAPONS] &= ~(1 << WP_EMPLACED_GUN);
+		pm->ps->weapons[WP_EMPLACED_GUN] = 0;
 	}
 	
 	//int oldWeap = pm->ps->weapon;
@@ -12086,7 +12086,7 @@ void PM_WeaponLightsaber(void)
 		}
 	}
 
-	if ( pm->ps->stats[STAT_WEAPONS]&(1<<WP_SCEPTER)
+	if ( pm->ps->weapons[WP_SCEPTER]
 		&& !pm->ps->dualSabers
 		&& pm->gent
 		&& pm->gent->weaponModel[1] )
@@ -13939,6 +13939,14 @@ static void PM_Weapon( void )
 						PM_SetAnim( pm, SETANIM_TORSO, anim, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART );
 					}
 				}
+				break;
+
+			case WP_E5_CARBINE:
+			case WP_DC15S_CARBINE:
+			case WP_SONIC_BLASTER:
+			case WP_DC15A_RIFLE:
+			case WP_Z6_ROTARY:
+				PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
 				break;
 
 			case WP_BLASTER:

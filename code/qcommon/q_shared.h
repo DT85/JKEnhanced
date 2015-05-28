@@ -800,8 +800,9 @@ typedef enum
 #define	MAX_PERSISTANT			16
 
 #define	MAX_POWERUPS			16
-#define	MAX_WEAPONS				32
-#define MAX_AMMO				10
+#define	MAX_WEAPONS				64
+#define MAX_WEAPONBITS			1 + (MAX_WEAPONS - 1)/32
+#define MAX_AMMO				10		
 #define MAX_INVENTORY			15		// See INV_MAX
 #define MAX_SECURITY_KEYS		5
 #define MAX_SECURITY_KEY_MESSSAGE		24
@@ -1667,6 +1668,7 @@ public:
 	int			ammo[MAX_AMMO];
 	int			inventory[MAX_INVENTORY];							// Count of each inventory item.
 	char  		security_key_message[MAX_SECURITY_KEYS][MAX_SECURITY_KEY_MESSSAGE];	// Security key types
+	char		weapons[MAX_WEAPONS];
 
 	vec3_t		serverViewOrg;
 
@@ -1986,6 +1988,7 @@ public:
 		saved_game.write<int32_t>(ammo);
 		saved_game.write<int32_t>(inventory);
 		saved_game.write<int8_t>(security_key_message);
+		saved_game.write<int8_t>(weapons);
 		saved_game.write<float>(serverViewOrg);
 		saved_game.write<int32_t>(saberInFlight);
 
@@ -2162,6 +2165,7 @@ public:
 		saved_game.read<int32_t>(ammo);
 		saved_game.read<int32_t>(inventory);
 		saved_game.read<int8_t>(security_key_message);
+		saved_game.write<int8_t>(weapons);
 		saved_game.read<float>(serverViewOrg);
 		saved_game.read<int32_t>(saberInFlight);
 

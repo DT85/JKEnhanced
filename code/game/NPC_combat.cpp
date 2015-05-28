@@ -344,6 +344,13 @@ void G_AttackDelay( gentity_t *self, gentity_t *enemy )
 		case WP_NOGHRI_STICK:
 			attDelay += Q_irand( 0, 500 );
 			break;
+		case WP_SONIC_BLASTER:
+		case WP_E5_CARBINE:
+		case WP_DC15S_CARBINE:
+		case WP_DC15A_RIFLE:
+		case WP_Z6_ROTARY:
+			attDelay -= Q_irand( 0, 500 );
+			break;
 		/*
 		case WP_DEMP2:
 			break;
@@ -609,14 +616,14 @@ void G_SetEnemy( gentity_t *self, gentity_t *enemy )
 		//FIXME: this is a disgusting hack that is supposed to make the Imperials start with their weapon holstered- need a better way
 		if ( self->client->ps.weapon == WP_NONE && !Q_stricmpn( self->NPC_type, "imp", 3 ) && !(self->NPC->scriptFlags & SCF_FORCED_MARCH)  )
 		{
-			if ( self->client->ps.stats[STAT_WEAPONS] & ( 1 << WP_BLASTER ) )
+			if ( self->client->ps.weapons[WP_BLASTER] )
 			{
 				ChangeWeapon( self, WP_BLASTER );
 				self->client->ps.weapon = WP_BLASTER;
 				self->client->ps.weaponstate = WEAPON_READY;
 				G_CreateG2AttachedWeaponModel( self, weaponData[WP_BLASTER].worldModel, self->handRBolt, 0 );
 			}
-			else if ( self->client->ps.stats[STAT_WEAPONS] & ( 1 << WP_BLASTER_PISTOL ) )
+			else if ( self->client->ps.weapons[WP_BLASTER_PISTOL] )
 			{
 				ChangeWeapon( self, WP_BLASTER_PISTOL );
 				self->client->ps.weapon = WP_BLASTER_PISTOL;
@@ -1020,6 +1027,20 @@ void ChangeWeapon( gentity_t *ent, int newWeapon )
 		else
 			ent->NPC->burstSpacing = 750;//attack debounce
 		break;
+			
+	case WP_SONIC_BLASTER:
+	case WP_E5_CARBINE:
+	case WP_DC15S_CARBINE:
+	case WP_DC15A_RIFLE:
+	case WP_Z6_ROTARY:
+		if ( g_spskill->integer == 0 )
+			ent->NPC->burstSpacing = 1000;//attack debounce
+		else if ( g_spskill->integer == 1 )
+			ent->NPC->burstSpacing = 750;//attack debounce
+		else
+			ent->NPC->burstSpacing = 500;//attack debounce
+		break;
+
 
 	default:
 		ent->NPC->aiFlags &= ~NPCAI_BURST_WEAPON;
@@ -1251,7 +1272,7 @@ HaveWeapon
 
 qboolean HaveWeapon( int weapon )
 {
-	return (qboolean)( client->ps.stats[STAT_WEAPONS] & ( 1 << weapon ) );
+	return ( (qboolean)(client->ps.weapons[weapon] != 0) );
 }
 
 qboolean EntIsGlass (gentity_t *check)
