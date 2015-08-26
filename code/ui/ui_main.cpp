@@ -406,10 +406,13 @@ vmCvar_t	ui_saber2_skin3;
 vmCvar_t	ui_saber2_skin4;
 vmCvar_t	ui_saber2_skin5;
 
+vmCvar_t	ui_SFXSabers;
+vmCvar_t	ui_SFXSabersGlowSize;
+vmCvar_t	ui_SFXSabersCoreSize;
+
 vmCvar_t	ui_char_color_2_red;
 vmCvar_t	ui_char_color_2_green;
 vmCvar_t	ui_char_color_2_blue;
-
 vmCvar_t    ui_hilt_color_red;
 vmCvar_t    ui_hilt_color_green;
 vmCvar_t    ui_hilt_color_blue;
@@ -485,6 +488,10 @@ static cvarTable_t cvarTable[] =
 	{ &ui_saber2_skin3,		"ui_saber2_skin3",	"", 0},
 	{ &ui_saber2_skin4,		"ui_saber2_skin4",	"", 0},
 	{ &ui_saber2_skin5,		"ui_saber2_skin5",	"", 0},
+	
+	{ &ui_SFXSabers,	"cg_SFXSabers",	"0", CVAR_ARCHIVE },
+	{ &ui_SFXSabersGlowSize,	"cg_SFXSabersGlowSize",	"1.0", CVAR_ARCHIVE },
+	{ &ui_SFXSabersCoreSize,	"cg_SFXSabersCoreSize",	"1.0", CVAR_ARCHIVE },
 
 
 };
