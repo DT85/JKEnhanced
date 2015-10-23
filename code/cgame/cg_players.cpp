@@ -5959,7 +5959,7 @@ void CG_DoSFXSaber( vec3_t blade_muz, vec3_t blade_tip, vec3_t trail_tip, vec3_t
 			vec3_t rgb={1,1,1};
 			CG_RGBForSaberColor( color, rgb );
 			VectorScale( rgb, 0.66f, rgb );
-			cgi_R_AddLightToScene( mid, (blade_len*2.0f) + (random()*10.0f), rgb[0], rgb[1], rgb[2] );
+			cgi_R_AddLightToScene( mid, (blade_len*2.0f) + (Q_flrand(0.0f, 1.0f)*10.0f), rgb[0], rgb[1], rgb[2] );
 		}
 	}
 	
