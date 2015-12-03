@@ -1294,6 +1294,8 @@ Ghoul2 Insert End
 	//Force effects
 	int			forcePushTime;
 	int			forcePuller;	//who force-pulled me (so we don't damage them if we hit them)
+	
+	char		*radarIcon;
 
 
 	void sg_export(
@@ -1483,6 +1485,7 @@ Ghoul2 Insert End
 		saved_game.write<float>(lightLevel);
 		saved_game.write<int32_t>(forcePushTime);
 		saved_game.write<int32_t>(forcePuller);
+        saved_game.write<int32_t>(radarIcon);
 	}
 
 	void sg_import(
@@ -1672,6 +1675,7 @@ Ghoul2 Insert End
 		saved_game.read<float>(lightLevel);
 		saved_game.read<int32_t>(forcePushTime);
 		saved_game.read<int32_t>(forcePuller);
+        saved_game.read<int32_t>(radarIcon);
 	}
 };
 #endif //#ifdef GAME_INCLUDE
