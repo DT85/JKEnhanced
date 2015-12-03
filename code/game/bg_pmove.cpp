@@ -134,6 +134,8 @@ qboolean PM_InReboundJump( int anim );
 qboolean PM_ForceJumpingAnim( int anim );
 void PM_CmdForRoll( playerState_t *ps, usercmd_t *pCmd );
 
+extern qboolean PlayerAffectedByStasis( void );
+
 extern int parryDebounce[];
 extern qboolean cg_usingInFrontOf;
 extern qboolean		player_locked;
@@ -12993,7 +12995,7 @@ void PM_WeaponLightsaber(void)
 				{
 					if ( !MatrixMode )
 					{//Special test for Matrix Mode (tm)
-						if ( pm->ps->clientNum == 0 && !player_locked && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
+						if ( pm->ps->clientNum == 0 && !player_locked && !PlayerAffectedByStasis() && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
 						{//player always fires at normal speed
 							addTime *= g_timescale->value;
 						}
@@ -14187,7 +14189,7 @@ static void PM_Weapon( void )
 		{
 			if ( !MatrixMode )
 			{//Special test for Matrix Mode (tm)
-				if ( pm->ps->clientNum == 0 && !player_locked && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
+				if ( pm->ps->clientNum == 0 && !player_locked && !PlayerAffectedByStasis() && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
 				{//player always fires at normal speed
 					addTime *= g_timescale->value;
 				}
@@ -14353,7 +14355,7 @@ static void PM_VehicleWeapon( void )
 		{
 			if ( !MatrixMode )
 			{//Special test for Matrix Mode (tm)
-				if ( pm->ps->clientNum == 0 && !player_locked && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
+				if ( pm->ps->clientNum == 0 && !player_locked && !PlayerAffectedByStasis() && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
 				{//player always fires at normal speed
 					addTime *= g_timescale->value;
 				}
@@ -14442,9 +14444,6 @@ void PM_CheckForceUseButton( gentity_t *ent, usercmd_t *ucmd  )
 			case FP_DEADLYSIGHT:
 				ForceDeadlySight( ent );
 				break;
-			case FP_REPULSE:
-				ForceRepulse( ent );
-				break;
 			case FP_INVULNERABILITY:
 				ForceInvulnerability( ent );
 				break;
@@ -14468,6 +14467,9 @@ void PM_CheckForceUseButton( gentity_t *ent, usercmd_t *ucmd  )
 			break;
 		case FP_SABERTHROW:
 			ucmd->buttons |= BUTTON_SABERTHROW;
+			break;
+		case FP_REPULSE:
+			ucmd->buttons |= BUTTON_REPULSE;
 			break;
 //		default:
 //			Com_Printf( "Use Force: Unhandled force: %d\n", showPowers[cg.forcepowerSelect]);
@@ -14584,7 +14586,7 @@ void PM_SetSpecialMoveValues (void )
 		{
 			if ( !MatrixMode )
 			{
-				if ( pm->ps->clientNum == 0 && !player_locked && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
+				if ( pm->ps->clientNum == 0 && !player_locked && !PlayerAffectedByStasis() && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
 				{
 					pml.frametime *= (1.0f/g_timescale->value);
 				}

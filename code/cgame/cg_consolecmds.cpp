@@ -296,7 +296,6 @@ static const char *gcmds[] = {
 	"force_protect",
 	"force_pull",
 	"force_rage",
-	"force_repulse",
 	"force_sight",
 	"force_speed",
 	"force_stasis",

@@ -1937,6 +1937,7 @@ public:
 	
 	int			stasisTime;
 	int			deadlySightLastChecked;
+	int			repulseChargeStart;
 #endif // !JK2_MODE
 
 	void sg_export(
@@ -2113,6 +2114,7 @@ public:
 
         saved_game.write<int32_t>(stasisTime);
         saved_game.write<int32_t>(deadlySightLastChecked);
+        saved_game.write<int32_t>(repulseChargeStart);
 #endif // !JK2_MODE
 	}
 
@@ -2290,6 +2292,7 @@ public:
 
         saved_game.read<int32_t>(stasisTime);
         saved_game.read<int32_t>(deadlySightLastChecked);
+        saved_game.read<int32_t>(repulseChargeStart);
 #endif // !JK2_MODE
 	}
 }; // PlayerStateBase
@@ -2319,6 +2322,8 @@ using playerState_t = PlayerStateBase<saberInfo_t>;
 #define	BUTTON_FORCE_FOCUS	256			// any key whatsoever
 
 #define BUTTON_SABERTHROW	512			// set to 128 for base behaviour!
+
+#define BUTTON_REPULSE		1024
 
 #define	MOVE_RUN			120			// if forwardmove or rightmove are >= MOVE_RUN,
 										// then BUTTON_WALKING should be set

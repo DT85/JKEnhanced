@@ -5608,6 +5608,7 @@ static const char *g_bindCommands[] = {
 #endif
 	"+force_grip",
 	"+force_lightning",
+	"+force_repulse",
 	"+forward",
 	"+left",
 	"+lookdown",
@@ -5643,7 +5644,6 @@ static const char *g_bindCommands[] = {
 	"force_pull",
 #ifndef JK2_MODE
 	"force_rage",
-	"force_repulse",
 	"force_sight",
 #endif
 	"force_speed",
