@@ -1,20 +1,25 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // g_combat.c
 
@@ -1364,7 +1369,6 @@ int G_GetHitLocation ( gentity_t *target, const vec3_t ppoint )
 	vec3_t			point, point_dir;
 	vec3_t			forward, right, up;
 	vec3_t			tangles, tcenter;
-	float			tradius;
 	float			udot, fdot, rdot;
 	int				Vertical, Forward, Lateral;
 	int				HitLoc;
@@ -1380,9 +1384,6 @@ int G_GetHitLocation ( gentity_t *target, const vec3_t ppoint )
 //get center of target
 	VectorAdd(target->absmin, target->absmax, tcenter);
 	VectorScale(tcenter, 0.5, tcenter);
-
-//get radius width of target
-	tradius = (fabs(target->maxs[0]) + fabs(target->maxs[1]) + fabs(target->mins[0]) + fabs(target->mins[1]))/4;
 
 //get impact point
 	if(ppoint && !VectorCompare(ppoint, vec3_origin))
@@ -5537,7 +5538,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, const
 {
 	gclient_t	*client;
 	int			take;
-	int			save;
 	int			asave = 0;
 	int			knockback;
 	vec3_t		newDir;
@@ -6168,7 +6168,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, const
 	}
 
 	take = damage;
-	save = 0;
 
 	//FIXME: Do not use this method of difficulty changing
 	// Scale the amount of damage given to the player based on the skill setting

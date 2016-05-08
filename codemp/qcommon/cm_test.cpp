@@ -1,5 +1,25 @@
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
 
 #include "cm_local.h"
 
@@ -235,13 +255,6 @@ int CM_PointContents( const vec3_t p, clipHandle_t model ) {
 		if ( i == b->numsides )
 		{
 			contents |= b->contents;
-			if(cmg.landScape && (contents & CONTENTS_TERRAIN))
-			{
-				if(p[2] < cmg.landScape->GetWaterHeight())
-				{
-					contents |= cmg.landScape->GetWaterContents();
-				}
-			}
 		}
 	}
 

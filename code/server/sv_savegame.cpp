@@ -1,48 +1,41 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // Filename:-	sv_savegame.cpp
-//
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
 
 #define JPEG_IMAGE_QUALITY 95
-
 
 //#define USE_LAST_SAVE_FROM_THIS_MAP	// enable this if you want to use the last explicity-loaded savegame from this map
 				 						//	when respawning after dying, else it'll just load "auto" regardless 
 										//	(EF1 behaviour). I should maybe time/date check them though?
 
 #include "server.h"
+#include "../qcommon/stringed_ingame.h"
 #include "../game/statindex.h"
 #include "../game/weapons.h"
 #include "../game/g_items.h"
 
-#ifdef _MSC_VER
-#pragma warning(disable : 4786)  // identifier was truncated (STL crap)
-#pragma warning(disable : 4710)  // function was not inlined (STL crap)
-#pragma warning(disable : 4512)  // yet more STL drivel...
-#endif
-
 #include <map>
-
-using namespace std;
 
 static char	saveGameComment[iSG_COMMENT_SIZE];
 
@@ -94,12 +87,11 @@ CChidInfo_t	save_info;
 
 const char *SG_GetChidText(unsigned int chid)
 {
-	static char	chidtext[5];
+	static union { char c[5]; int i; } chidtext;
 
-	*(unsigned int *)chidtext = BigLong(chid);
-	chidtext[4] = 0;
+	chidtext.i = BigLong(chid);
 
-	return chidtext;
+	return chidtext.c;
 }
 
 
@@ -108,8 +100,12 @@ static const char *GetString_FailedToOpenSaveGame(const char *psFilename, qboole
 	static char sTemp[256];
 
 	strcpy(sTemp,S_COLOR_RED);
-	
+
+#ifdef JK2_MODE
+	const char *psReference = bOpen ? "MENUS3_FAILED_TO_OPEN_SAVEGAME" : "MENUS3_FAILED_TO_CREATE_SAVEGAME";
+#else
 	const char *psReference = bOpen ? "MENUS_FAILED_TO_OPEN_SAVEGAME" : "MENUS3_FAILED_TO_CREATE_SAVEGAME";
+#endif
 	Q_strncpyz(sTemp + strlen(sTemp), va( SE_GetString(psReference), psFilename),sizeof(sTemp));
 	strcat(sTemp,"\n");
 	return sTemp;
@@ -316,7 +312,11 @@ qboolean SV_TryLoadTransition( const char *mapname )
 	{//couldn't load a savegame
 		return qfalse;
 	}
+#ifdef JK2_MODE
+	Com_Printf (S_COLOR_CYAN "Done.\n");
+#else
 	Com_Printf (S_COLOR_CYAN "%s.\n",SE_GetString("MENUS_DONE"));
+#endif
 
 	return qtrue;
 }
@@ -404,14 +404,22 @@ void SV_LoadGame_f(void)
 		}
 		//default will continue to load auto
 	}
+#ifdef JK2_MODE
+	Com_Printf (S_COLOR_CYAN "Loading game \"%s\"...\n", psFilename);
+#else
 	Com_Printf (S_COLOR_CYAN "%s\n",va(SE_GetString("MENUS_LOADING_MAPNAME"), psFilename));
+#endif
 
 	gbAlreadyDoingLoad = qtrue;
 	if (!SG_ReadSavegame(psFilename)) {
 		gbAlreadyDoingLoad = qfalse; //	do NOT do this here now, need to wait until client spawn, unless the load failed.
 	} else
 	{
+#ifdef JK2_MODE
+		Com_Printf (S_COLOR_CYAN "Done.\n");
+#else
 		Com_Printf (S_COLOR_CYAN "%s.\n",SE_GetString("MENUS_DONE"));
+#endif
 	}
 }
 
@@ -440,14 +448,18 @@ void SV_SaveGame_f(void)
 	//
 	if ( Cmd_Argc() != 2 ) 
 	{
-		Com_Printf( "USAGE: \"save <filename>\"\n" );
+		Com_Printf( "USAGE: save <filename>\n" );
 		return;
 	}
 
 
 	if (svs.clients[0].frames[svs.clients[0].netchan.outgoingSequence & PACKET_MASK].ps.stats[STAT_HEALTH] <= 0)
 	{
+#ifdef JK2_MODE
+		Com_Printf (S_COLOR_RED "\nCan't savegame while dead!\n");
+#else
 		Com_Printf (S_COLOR_RED "\n%s\n", SE_GetString("SP_INGAME_CANT_SAVE_DEAD"));
+#endif
 		return;
 	}
 
@@ -456,19 +468,26 @@ void SV_SaveGame_f(void)
 	svent = SV_GentityNum(0);
 	if (svent->client->stats[STAT_HEALTH]<=0)
 	{
+#ifdef JK2_MODE
+		Com_Printf (S_COLOR_RED "\nCan't savegame while dead!\n");
+#else
 		Com_Printf (S_COLOR_RED "\n%s\n", SE_GetString("SP_INGAME_CANT_SAVE_DEAD"));
+#endif
 		return;
 	}
 
 	const char *psFilename = Cmd_Argv(1);
+	char filename[MAX_QPATH] = {0};
 
-	if (!Q_stricmp (psFilename, "current"))
+	Q_strncpyz(filename, psFilename, sizeof(filename));
+
+	if (!Q_stricmp (filename, "current"))
 	{
 		Com_Printf (S_COLOR_RED "Can't save to 'current'\n");
 		return;
 	}
 
-	if (strstr (psFilename, "..") || strstr (psFilename, "/") || strstr (psFilename, "\\") )
+	if (strstr (filename, "..") || strstr (filename, "/") || strstr (filename, "\\") )
 	{
 		Com_Printf (S_COLOR_RED "Bad savegame name.\n");
 		return;
@@ -477,21 +496,41 @@ void SV_SaveGame_f(void)
 	if (!SG_GameAllowedToSaveHere(qfalse))	//full check
 		return;	// this prevents people saving via quick-save now during cinematics.
 
-	if ( !Q_stricmp (psFilename, "auto") )
+#ifdef JK2_MODE
+	if ( !Q_stricmp (filename, "quik*") || !Q_stricmp (filename, "auto*") )
 	{
-		
+		if ( filename[4]=='*' )
+			filename[4]=0;	//remove the *
 		SG_StoreSaveGameComment("");	// clear previous comment/description, which will force time/date comment.
 	}
-
-	Com_Printf (S_COLOR_CYAN "%s \"%s\"...\n", SE_GetString("CON_TEXT_SAVING_GAME"), psFilename);
-
-	if (SG_WriteSavegame(psFilename, qfalse))
+#else
+	if ( !Q_stricmp (filename, "auto") )
 	{
+		SG_StoreSaveGameComment("");	// clear previous comment/description, which will force time/date comment.
+	}
+#endif
+
+#ifdef JK2_MODE
+	Com_Printf (S_COLOR_CYAN "Saving game \"%s\"...\n", filename);
+#else
+	Com_Printf (S_COLOR_CYAN "%s \"%s\"...\n", SE_GetString("CON_TEXT_SAVING_GAME"), filename);
+#endif
+
+	if (SG_WriteSavegame(filename, qfalse))
+	{
+#ifdef JK2_MODE
+		Com_Printf (S_COLOR_CYAN "Done.\n");
+#else
 		Com_Printf (S_COLOR_CYAN "%s.\n",SE_GetString("MENUS_DONE"));
+#endif
 	}
 	else
 	{
+#ifdef JK2_MODE
+		Com_Printf (S_COLOR_RED "Failed.\n");
+#else
 		Com_Printf (S_COLOR_RED "%s.\n",SE_GetString("MENUS_FAILED_TO_OPEN_SAVEGAME"));
+#endif
 	}
 }
 
@@ -591,7 +630,11 @@ void SG_WriteCvars(void)
 	//	
 	for (var = cvar_vars; var; var = var->next)
 	{
+#ifdef JK2_MODE
+		if (!(var->flags & (CVAR_SAVEGAME|CVAR_USERINFO)))
+#else
 		if (!(var->flags & CVAR_SAVEGAME))
+#endif
 		{
 			continue;
 		}
@@ -606,7 +649,11 @@ void SG_WriteCvars(void)
 	//
 	for (var = cvar_vars; var; var = var->next)
 	{
+#ifdef JK2_MODE
+		if (!(var->flags & (CVAR_SAVEGAME|CVAR_USERINFO)))
+#else
 		if (!(var->flags & CVAR_SAVEGAME))
+#endif
 		{
 			continue;
 		}
@@ -725,7 +772,7 @@ static void SG_WriteComment(qboolean qbAutosave, const char *psMapName)
 	}
 	else
 	{
-		strcpy(sComment,saveGameComment);
+		Q_strncpyz(sComment,saveGameComment, sizeof(sComment));
 	}
 
 	SG_Append(INT_ID('C','O','M','M'), sComment, sizeof(sComment));
@@ -749,6 +796,9 @@ int SG_GetSaveGameComment(const char *psPathlessBaseName, char *sComment, char *
 {
 	int ret = 0;
 	time_t tFileTime;
+#ifdef JK2_MODE
+	size_t iScreenShotLength;
+#endif
 
 	qbSGReadIsTestOnly = qtrue;	// do NOT leave this in this state
 
@@ -764,10 +814,20 @@ int SG_GetSaveGameComment(const char *psPathlessBaseName, char *sComment, char *
 		if (SG_Read( INT_ID('C','M','T','M'), &fileTime, sizeof(fileTime)))	//read
 		{
 			tFileTime = SG_GetTime (fileTime);
+#ifdef JK2_MODE
+			if (SG_Read(INT_ID('S','H','L','N'), &iScreenShotLength, sizeof(iScreenShotLength)))
+			{
+				if (SG_Read(INT_ID('S','H','O','T'), NULL, iScreenShotLength, NULL))
+				{
+#endif
 			if (SG_Read(INT_ID('M','P','C','M'), sMapName, iSG_MAPCMD_SIZE ))	// read
 			{
 				ret = tFileTime;
 			}
+#ifdef JK2_MODE
+				}
+			}
+#endif
 		}
 	}
 	qbSGReadIsTestOnly = qfalse;
@@ -799,7 +859,7 @@ static char *SG_GetSaveGameMapName(const char *psPathlessBaseName)
 
 // pass in qtrue to set as loading screen, else pass in pvDest to read it into there...
 //
-/*
+#ifdef JK2_MODE
 static qboolean SG_ReadScreenshot(qboolean qbSetAsLoadingScreen, void *pvDest = NULL);
 static qboolean SG_ReadScreenshot(qboolean qbSetAsLoadingScreen, void *pvDest)
 {
@@ -807,12 +867,12 @@ static qboolean SG_ReadScreenshot(qboolean qbSetAsLoadingScreen, void *pvDest)
 
 	// get JPG screenshot data length...
 	//
-	int iScreenShotLength = 0;
+	size_t iScreenShotLength = 0;
 	SG_Read(INT_ID('S','H','L','N'), &iScreenShotLength, sizeof(iScreenShotLength));
 	//
 	// alloc enough space plus extra 4K for sloppy JPG-decode reader to not do memory access violation...
 	//
-	byte *pJPGData = (byte *) Z_Malloc(iScreenShotLength + 4096,TAG_TEMP_SAVEGAME_WORKSPACE, qfalse);
+	byte *pJPGData = (byte *) Z_Malloc(iScreenShotLength + 4096,TAG_TEMP_WORKSPACE, qfalse);
 	//
 	// now read the JPG data...
 	//
@@ -822,7 +882,7 @@ static qboolean SG_ReadScreenshot(qboolean qbSetAsLoadingScreen, void *pvDest)
 	//
 	byte *pDecompressedPic = NULL;
 	int iWidth, iHeight;
-	Decompress_JPG( "[savegame]", pJPGData, &pDecompressedPic, &iWidth, &iHeight );
+	re.LoadJPGFromBuffer(pJPGData, iScreenShotLength, &pDecompressedPic, &iWidth, &iHeight);
 	//
 	// if the loaded image is the same size as the game is expecting, then copy it to supplied arg (if present)...
 	//
@@ -845,7 +905,6 @@ static qboolean SG_ReadScreenshot(qboolean qbSetAsLoadingScreen, void *pvDest)
 	Z_Free( pDecompressedPic );
 
 	return bReturn;
-#endif
 }
 // Gets the savegame screenshot
 //
@@ -855,31 +914,6 @@ qboolean SG_GetSaveImage( const char *psPathlessBaseName, void *pvAddress )
 	{
 		return qfalse;
 	}
-//JLFSAVEGAME
-#if 0
-	unsigned short saveGameName[filepathlength];
-	char directoryInfo[filepathlength];
-	char psLocalFilename[filepathlength];
-	DWORD bytesRead;
-	
-	mbstowcs(saveGameName, psPathlessBaseName,filepathlength);
-	
-	XCreateSaveGame("U:\\", saveGameName, OPEN_ALWAYS, 0,directoryInfo, filepathlength);
-
-	strcpy (psLocalFilename , directoryInfo);
-	strcat (psLocalFilename , "saveimage.xbx");
-
-
-	sg_Handle = NULL;
-	sg_Handle = CreateFile(psLocalFilename, GENERIC_READ, FILE_SHARE_READ, 0, 
-		OPEN_EXISTING,	FILE_ATTRIBUTE_NORMAL, 0);
-
-	if (!sg_Handle)
-		return qfalse;
-
-
-
-#else
 
 	if (!SG_Open(psPathlessBaseName))
 	{
@@ -887,12 +921,11 @@ qboolean SG_GetSaveImage( const char *psPathlessBaseName, void *pvAddress )
 	}
 	
 	SG_Read(INT_ID('C','O','M','M'), NULL, 0, NULL);	// skip
-	SG_Read(INT_ID('C','M','T','M'), NULL, sizeof( time_t ));
+	SG_Read(INT_ID('C','M','T','M'), NULL, sizeof( unsigned int ));
 
 	qboolean bGotSaveImage = SG_ReadScreenshot(qfalse, pvAddress);
 
 	SG_Close();
-#endif
 	return bGotSaveImage;
 }
 
@@ -900,6 +933,7 @@ qboolean SG_GetSaveImage( const char *psPathlessBaseName, void *pvAddress )
 static void SG_WriteScreenshot(qboolean qbAutosave, const char *psMapName)
 {
 	byte *pbRawScreenShot = NULL;
+	byte *byBlank = NULL;
 
 	if( qbAutosave )
 	{
@@ -907,9 +941,26 @@ static void SG_WriteScreenshot(qboolean qbAutosave, const char *psMapName)
 		//
 		int iWidth = SG_SCR_WIDTH;
 		int iHeight= SG_SCR_HEIGHT;
-		byte	byBlank[SG_SCR_WIDTH * SG_SCR_HEIGHT * 4] = {0};
+		const size_t	bySize = SG_SCR_WIDTH * SG_SCR_HEIGHT * 4;
+		byte *src, *dst;
 
+		byBlank = new byte[bySize];
 		pbRawScreenShot = SCR_TempRawImage_ReadFromFile(va("levelshots/%s.tga",psMapName), &iWidth, &iHeight, byBlank, qtrue);	// qtrue = vert flip
+		
+		if (pbRawScreenShot)
+		{
+			for (int y = 0; y < iHeight; y++)
+			{
+				for (int x = 0; x < iWidth; x++)
+				{
+					src = pbRawScreenShot + 4 * (y * iWidth + x);
+					dst = pbRawScreenShot + 3 * (y * iWidth + x);
+					dst[0] = src[0];
+					dst[1] = src[1];
+					dst[2] = src[2];
+				}
+			}
+		}
 	}
 
 	if (!pbRawScreenShot)
@@ -918,14 +969,19 @@ static void SG_WriteScreenshot(qboolean qbAutosave, const char *psMapName)
 	}
 
 
-	int iJPGDataSize = 0;
-	byte *pJPGData = Compress_JPG(&iJPGDataSize, JPEG_IMAGE_QUALITY, SG_SCR_WIDTH, SG_SCR_HEIGHT, pbRawScreenShot, qfalse);
+	size_t iJPGDataSize = 0;
+	size_t bufSize = SG_SCR_WIDTH * SG_SCR_HEIGHT * 3;
+	byte *pJPGData = (byte *)Z_Malloc( bufSize, TAG_TEMP_WORKSPACE, qfalse, 4 );
+	iJPGDataSize = re.SaveJPGToBuffer(pJPGData, bufSize, JPEG_IMAGE_QUALITY, SG_SCR_WIDTH, SG_SCR_HEIGHT, pbRawScreenShot, 0 );
+	if ( qbAutosave )
+		delete[] byBlank;
 	SG_Append(INT_ID('S','H','L','N'), &iJPGDataSize, sizeof(iJPGDataSize));
 	SG_Append(INT_ID('S','H','O','T'), pJPGData, iJPGDataSize);
 	Z_Free(pJPGData);
 	SCR_TempRawImage_CleanUp();
 }
-*/
+#endif
+
 
 qboolean SG_GameAllowedToSaveHere(qboolean inCamera)
 {
@@ -975,13 +1031,17 @@ qboolean SG_WriteSavegame(const char *psPathlessBaseName, qboolean qbAutosave)
 	const char *psServerInfo = sv.configstrings[CS_SERVERINFO];
 	const char *psMapName    = Info_ValueForKey( psServerInfo, "mapname" );
 //JLF
+#ifdef JK2_MODE
+	if ( !strcmp("quik",psPathlessBaseName))
+#else
 	if ( !strcmp("quick",psPathlessBaseName))
+#endif
 	{
 		SG_StoreSaveGameComment(va("--> %s <--",psMapName));
 	}
 
 	if(!SG_Create( "current" ))
-			{
+	{
 		Com_Printf (GetString_FailedToOpenSaveGame("current",qfalse));//S_COLOR_RED "Failed to create savegame\n");
 		SG_WipeSavegame( "current" );
 		sv_testsave->integer = iPrevTestSave;
@@ -990,10 +1050,12 @@ qboolean SG_WriteSavegame(const char *psPathlessBaseName, qboolean qbAutosave)
 //END JLF
 
 	char   sMapCmd[iSG_MAPCMD_SIZE]={0};
-	strcpy( sMapCmd,psMapName);	// need as array rather than ptr because const strlen needed for MPCM chunk
+	Q_strncpyz( sMapCmd,psMapName, sizeof(sMapCmd));	// need as array rather than ptr because const strlen needed for MPCM chunk
 
 	SG_WriteComment(qbAutosave, sMapCmd);
-//	SG_WriteScreenshot(qbAutosave, sMapCmd);
+#ifdef JK2_MODE
+	SG_WriteScreenshot(qbAutosave, sMapCmd);
+#endif
 	SG_Append(INT_ID('M','P','C','M'), sMapCmd, sizeof(sMapCmd));
 	SG_WriteCvars();
 
@@ -1034,6 +1096,10 @@ qboolean SG_ReadSavegame(const char *psPathlessBaseName)
 	int iPrevTestSave = sv_testsave->integer;
 	sv_testsave->integer = 0;
 
+#ifdef JK2_MODE
+	Cvar_Set( "cg_missionstatusscreen", "0" );//reset if loading a game
+#endif
+
 	if (!SG_Open( psPathlessBaseName ))
 	{
 		Com_Printf (GetString_FailedToOpenSaveGame(psPathlessBaseName, qtrue));//S_COLOR_RED "Failed to open savegame \"%s\"\n", psPathlessBaseName);
@@ -1054,7 +1120,9 @@ qboolean SG_ReadSavegame(const char *psPathlessBaseName)
 	Com_DPrintf("Reading: %s\n", sComment);
 	SG_Read( INT_ID('C','M','T','M'), NULL, sizeof( unsigned int ));
 
-//	SG_ReadScreenshot(qtrue);	// qboolean qbSetAsLoadingScreen
+#ifdef JK2_MODE
+	SG_ReadScreenshot(qtrue);	// qboolean qbSetAsLoadingScreen
+#endif
 	SG_Read(INT_ID('M','P','C','M'), sMapCmd, sizeof(sMapCmd));
 	SG_ReadCvars();
 

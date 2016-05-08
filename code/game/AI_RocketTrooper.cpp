@@ -1,20 +1,24 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 #include "b_local.h"
 extern qboolean PM_FlippingAnim( int anim );
@@ -66,7 +70,6 @@ void RT_FireDecide( void )
 	qboolean enemyCS = qfalse;
 	qboolean enemyInFOV = qfalse;
 	//qboolean move = qtrue;
-	qboolean faceEnemy = qfalse;
 	qboolean shoot = qfalse;
 	qboolean hitAlly = qfalse;
 	vec3_t	impactPos;
@@ -164,21 +167,15 @@ void RT_FireDecide( void )
 		else if ( gi.inPVS( NPC->enemy->currentOrigin, NPC->currentOrigin ) )
 		{
 			NPCInfo->enemyLastSeenTime = level.time;
-			faceEnemy = qtrue;
 			//NPC_AimAdjust( -1 );//adjust aim worse longer we cannot see enemy
 		}
 
 		if ( NPC->client->ps.weapon == WP_NONE )
 		{
-			faceEnemy = qfalse;
 			shoot = qfalse;
 		}
 		else
 		{
-			if ( enemyLOS )
-			{//FIXME: no need to face enemy if we're moving to some other goal and he's too far away to shoot?
-				faceEnemy = qtrue;
-			}
 			if ( enemyCS )
 			{
 				shoot = qtrue;
@@ -293,7 +290,6 @@ void RT_FireDecide( void )
 							NPCInfo->desiredPitch	= angles[PITCH];
 
 							shoot = qtrue;
-							faceEnemy = qfalse;
 						}
 					}
 				}

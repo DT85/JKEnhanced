@@ -1,3 +1,25 @@
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
 
 #include "FxSystem.h"
@@ -220,7 +242,7 @@ protected:
 	vec3_t		mRGBEnd;
 	float		mRGBParm;
 
-	CGhoul2Info_v mGhoul2;
+	CGhoul2Info_v *mGhoul2;
 	short		mEntNum;
 	char		mModelNum;
 	char		mBoltNum;
@@ -236,14 +258,12 @@ public:
 		mEntNum = -1; mModelNum = -1; mBoltNum = -1;
 	}
 
-	virtual ~CLight(void)
+	inline void SetBoltinfo( CGhoul2Info_v *ghoul2,  int entNum, int modelNum = -1, int boltNum = -1 )
 	{
-		mGhoul2.kill();	//remove my model ref without actually deleting
-	}
-
-	inline void SetBoltinfo( int iGhoul2,  int entNum, int modelNum = -1, int boltNum = -1 )
-	{
-		mGhoul2 = iGhoul2; mEntNum = entNum; mModelNum = modelNum; mBoltNum = boltNum;
+		mGhoul2 = ghoul2;
+		mEntNum = entNum;
+		mModelNum = modelNum;
+		mBoltNum = boltNum;
 	}
 
 	virtual bool Update();
@@ -283,7 +303,7 @@ protected:
 	float		mRotationDelta;
 	float		mElasticity;
 
-	CGhoul2Info_v mGhoul2;
+	CGhoul2Info_v *mGhoul2;
 	short		mEntNum;
 	char		mModelNum;
 	char		mBoltNum;
@@ -297,29 +317,18 @@ protected:
 
 public:
 
-	inline void SetBoltinfo( int iGhoul2,  int entNum, int modelNum = -1, int boltNum = -1 )
+	inline void SetBoltinfo( CGhoul2Info_v *ghoul2,  int entNum, int modelNum = -1, int boltNum = -1 )
 	{
-		mGhoul2 = iGhoul2; mEntNum = entNum; mModelNum = modelNum; mBoltNum = boltNum;
+		mGhoul2 = ghoul2;
+		mEntNum = entNum;
+		mModelNum = modelNum;
+		mBoltNum = boltNum;
 	}
 
-#ifdef _WIN32
-	inline CParticle::CParticle(void)
-#else
 	inline CParticle(void)
-#endif
 	{
 		mRefEnt.reType = RT_SPRITE; mEntNum = -1; mModelNum = -1; mBoltNum = -1;
 	}
-
-#ifdef _WIN32
-	virtual CParticle::~CParticle(void)
-#else
-    virtual ~CParticle(void)
-#endif
-	{
-		mGhoul2.kill();	//remove my model ref without actually deleting
-	}
-
 
 	virtual void Init();
 	virtual void Die();

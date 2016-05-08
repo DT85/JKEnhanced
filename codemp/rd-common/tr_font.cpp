@@ -1,3 +1,25 @@
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #include "qcommon/sstring.h"	// stl string class won't compile in here (MS shite), so use Gil's.
 #include "tr_local.h"
 #include "tr_font.h"
@@ -73,8 +95,8 @@ SBCSOverrideLanguages_t g_SBCSOverrideLanguages[]=
 
 struct ThaiCodes_t
 {
-	map <int, int>	m_mapValidCodes;
-	vector<int>		m_viGlyphWidths;
+	std::map <int, int>	m_mapValidCodes;
+	std::vector<int>		m_viGlyphWidths;
 	sstring_t		m_strInitFailureReason;	// so we don't have to keep retrying to work this out
 
 	void Clear( void )
@@ -93,7 +115,7 @@ struct ThaiCodes_t
 	//
 	int GetValidIndex( int iCode )
 	{
-		map <int,int>::iterator it = m_mapValidCodes.find( iCode );
+		std::map <int,int>::iterator it = m_mapValidCodes.find( iCode );
 		if (it != m_mapValidCodes.end())
 		{
             return (*it).second;
@@ -240,8 +262,8 @@ float RoundTenth( float fValue )
 
 
 int							g_iCurrentFontIndex;	// entry 0 is reserved index for missing/invalid, else ++ with each new font registered
-vector<CFontInfo *>			g_vFontArray;
-typedef map<sstring_t, int>	FontIndexMap_t;
+std::vector<CFontInfo *>			g_vFontArray;
+typedef std::map<sstring_t, int>	FontIndexMap_t;
 							FontIndexMap_t g_mapFontIndexes;
 int g_iNonScaledCharRange;	// this is used with auto-scaling of asian fonts, anything below this number is preserved in scale, anything above is scaled down by 0.75f
 
@@ -850,14 +872,26 @@ CFontInfo::CFontInfo(const char *_fontName)
 
 		for(i = 0; i < GLYPH_COUNT; i++)
 		{
+#ifdef Q3_BIG_ENDIAN
+			mGlyphs[i].width = LittleShort(fontdat->mGlyphs[i].width);
+			mGlyphs[i].height = LittleShort(fontdat->mGlyphs[i].height);
+			mGlyphs[i].horizAdvance = LittleShort(fontdat->mGlyphs[i].horizAdvance);
+			mGlyphs[i].horizOffset = LittleShort(fontdat->mGlyphs[i].horizOffset);
+			mGlyphs[i].baseline = LittleLong(fontdat->mGlyphs[i].baseline);
+			mGlyphs[i].s = LittleFloat(fontdat->mGlyphs[i].s);
+			mGlyphs[i].t = LittleFloat(fontdat->mGlyphs[i].t);
+			mGlyphs[i].s2 = LittleFloat(fontdat->mGlyphs[i].s2);
+			mGlyphs[i].t2 = LittleFloat(fontdat->mGlyphs[i].t2);
+#else
 			mGlyphs[i] = fontdat->mGlyphs[i];
+#endif
 		}
-		mPointSize = fontdat->mPointSize;
-		mHeight = fontdat->mHeight;
-		mAscender = fontdat->mAscender;
-		mDescender = fontdat->mDescender;
-//		mAsianHack = fontdat->mKoreanHack;	// ignore this crap, it's some junk in the fontdat file that no-one uses
-		mbRoundCalcs = !!strstr(fontName,"ergo");
+		mPointSize = LittleShort(fontdat->mPointSize);
+		mHeight = LittleShort(fontdat->mHeight);
+		mAscender = LittleShort(fontdat->mAscender);
+		mDescender = LittleShort(fontdat->mDescender);
+//		mAsianHack = LittleShort(fontdat->mKoreanHack);	// ignore this crap, it's some junk in the fontdat file that no-one uses
+		mbRoundCalcs = false /*!!strstr(fontName,"ergo")*/;
 
 		// cope with bad fontdat headers...
 		//
@@ -1324,8 +1358,8 @@ CFontInfo *GetFont(int index)
 
 int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float fScale)
 {
-	int			iMaxWidth = 0;
-	int			iThisWidth= 0;
+	float		fMaxWidth = 0.0f;
+	float		fThisWidth = 0.0f;
 	CFontInfo	*curfont;
 
 	curfont = GetFont(iFontHandle);
@@ -1334,10 +1368,10 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float 
 		return(0);
 	}
 
-	float fScaleA = fScale;
+	float fScaleAsian = fScale;
 	if (Language_IsAsian() && fScale > 0.7f )
 	{
-		fScaleA = fScale * 0.75f;
+		fScaleAsian = fScale * 0.75f;
 	}
 
 	while(*psText)
@@ -1359,22 +1393,23 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float 
 
 		if (uiLetter == 0x0A)
 		{
-			iThisWidth = 0;
+			fThisWidth = 0.0f;
 		}
 		else
 		{
 			int iPixelAdvance = curfont->GetLetterHorizAdvance( uiLetter );
 
-			float fValue = iPixelAdvance * ((uiLetter > (unsigned)g_iNonScaledCharRange) ? fScaleA : fScale);
-			iThisWidth += curfont->mbRoundCalcs ? Round( fValue ) : fValue;
-			if (iThisWidth > iMaxWidth)
+			float fValue = iPixelAdvance * ((uiLetter > (unsigned)g_iNonScaledCharRange) ? fScaleAsian : fScale);
+			fThisWidth += curfont->mbRoundCalcs ? Round( fValue ) : fValue;
+			if (fThisWidth > fMaxWidth)
 			{
-				iMaxWidth = iThisWidth;
+				fMaxWidth = fThisWidth;
 			}
 		}
 	}
 
-	return iMaxWidth;
+	// using ceil because we need to make sure that all the text is contained within the integer pixel width we're returning
+	return (int)ceilf(fMaxWidth);
 }
 
 // not really a font function, but keeps naming consistant...
@@ -1434,7 +1469,8 @@ int RE_Font_HeightPixels(const int iFontHandle, const float fScale)
 void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, const int iFontHandle, int iMaxPixelWidth, const float fScale)
 {
 	static qboolean gbInShadow = qfalse;	// MUST default to this
-	int					x, y, colour, offset;
+	float				fox, foy, fx, fy;
+	int					colour, offset;
 	const glyphInfo_t	*pLetter;
 	qhandle_t			hShader;
 
@@ -1499,12 +1535,12 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 		return;
 	}
 
-	float fScaleA = fScale;
-	int iAsianYAdjust = 0;
+	float fScaleAsian = fScale;
+	float fAsianYAdjust = 0.0f;
 	if (Language_IsAsian() && fScale > 0.7f)
 	{
-		fScaleA = fScale * 0.75f;
-		iAsianYAdjust = /*Round*/((((float)curfont->GetPointSize() * fScale) - ((float)curfont->GetPointSize() * fScaleA))/2);
+		fScaleAsian = fScale * 0.75f;
+		fAsianYAdjust = ((curfont->GetPointSize() * fScale) - (curfont->GetPointSize() * fScaleAsian)) / 2.0f;
 	}
 
 	// Draw a dropshadow if required
@@ -1512,7 +1548,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 	{
 		offset = Round(curfont->GetPointSize() * fScale * 0.075f);
 
-		static const vec4_t v4DKGREY2 = {0.15f, 0.15f, 0.15f, 1};
+		const vec4_t v4DKGREY2 = {0.15f, 0.15f, 0.15f, rgba?rgba[3]:1.0f};
 
 		gbInShadow = qtrue;
 		RE_Font_DrawString(ox + offset, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iMaxPixelWidth, fScale);
@@ -1521,8 +1557,13 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 	RE_SetColor( rgba );
 
-	x = ox;
-	oy += Round((curfont->GetHeight() - (curfont->GetDescender() >> 1)) * fScale);
+	// Now we take off the training wheels and become a big font renderer
+	// It's all floats from here on out
+	fox = ox;
+	foy = oy;
+
+	fx = fox;
+	foy += curfont->mbRoundCalcs ? Round((curfont->GetHeight() - (curfont->GetDescender() >> 1)) * fScale) : (curfont->GetHeight() - (curfont->GetDescender() >> 1)) * fScale;
 
 	qboolean bNextTextWouldOverflow = qfalse;
 	while (*psText && !bNextTextWouldOverflow)
@@ -1534,19 +1575,19 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 		switch( uiLetter )
 		{
 		case 10:						//linefeed
-			x = ox;
-			oy += Round(curfont->GetPointSize() * fScale);
+			fx = fox;
+			foy += curfont->mbRoundCalcs ? Round(curfont->GetPointSize() * fScale) : curfont->GetPointSize() * fScale;
 			if (Language_IsAsian())
 			{
-				oy += 4;	// this only comes into effect when playing in asian for "A long time ago in a galaxy" etc, all other text is line-broken in feeder functions
+				foy += 4.0f;	// this only comes into effect when playing in asian for "A long time ago in a galaxy" etc, all other text is line-broken in feeder functions
 			}
 			break;
 		case 13:						// Return
 			break;
 		case 32:						// Space
 			pLetter = curfont->GetLetter(' ');
-			x += Round(pLetter->horizAdvance * fScale);
-			bNextTextWouldOverflow = ( iMaxPixelWidth != -1 && ((x-ox)>iMaxPixelWidth) ) ? qtrue : qfalse;	// yeuch
+			fx += curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fScale) : pLetter->horizAdvance * fScale;
+			bNextTextWouldOverflow = ( iMaxPixelWidth != -1 && ((fx-fox) > (float)iMaxPixelWidth) ) ? qtrue : qfalse; // yeuch
 			break;
 		case '_':	// has a special word-break usage if in Thai (and followed by a thai char), and should not be displayed, else treat as normal
 			if (GetLanguageEnum()== eThai && ((unsigned char *)psText)[0] >= TIS_GLYPHS_START)
@@ -1565,7 +1606,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 					{
 						vec4_t color;
 						Com_Memcpy( color, g_color_table[colour], sizeof( color ) );
-						color[3] = rgba[3];
+						color[3] = rgba ? rgba[3] : 1.0f;
 						RE_SetColor( color );
 					}
 					break;
@@ -1579,29 +1620,29 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 				pLetter = curfont->GetLetter('.');
 			}
 
-			float fThisScale = uiLetter > (unsigned)g_iNonScaledCharRange ? fScaleA : fScale;
+			float fThisScale = uiLetter > (unsigned)g_iNonScaledCharRange ? fScaleAsian : fScale;
 
 			// sigh, super-language-specific hack...
 			//
 			if (uiLetter == TIS_SARA_AM && GetLanguageEnum() == eThai)
 			{
-				x -= Round(7 * fThisScale);
+				fx -= curfont->mbRoundCalcs ? Round(7.0f * fThisScale) : 7.0f * fThisScale;
 			}
 
-			int iAdvancePixels = Round(pLetter->horizAdvance * fThisScale);
-			bNextTextWouldOverflow = ( iMaxPixelWidth != -1 && (((x+iAdvancePixels)-ox)>iMaxPixelWidth) ) ? qtrue : qfalse;	// yeuch
+			float fAdvancePixels = curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fThisScale) : pLetter->horizAdvance * fThisScale;
+			bNextTextWouldOverflow = ( iMaxPixelWidth != -1 && (((fx+fAdvancePixels)-fox) > (float)iMaxPixelWidth) ) ? qtrue : qfalse; // yeuch
 			if (!bNextTextWouldOverflow)
 			{
 				// this 'mbRoundCalcs' stuff is crap, but the only way to make the font code work. Sigh...
 				//
-				y = oy - (curfont->mbRoundCalcs ? Round(pLetter->baseline * fThisScale) : pLetter->baseline * fThisScale);
+				fy = foy - (curfont->mbRoundCalcs ? Round(pLetter->baseline * fThisScale) : pLetter->baseline * fThisScale);
 				if (curfont->m_fAltSBCSFontScaleFactor != -1)
 				{
-					y+=3;	// I'm sick and tired of going round in circles trying to do this legally, so bollocks to it
+					fy += 3.0f; // I'm sick and tired of going round in circles trying to do this legally, so bollocks to it
 				}
 
-				RE_StretchPic ( x + Round(pLetter->horizOffset * fScale), // float x
-								(uiLetter > (unsigned)g_iNonScaledCharRange) ? y - iAsianYAdjust : y,	// float y
+				RE_StretchPic(curfont->mbRoundCalcs ? fx + Round(pLetter->horizOffset * fThisScale) : fx + pLetter->horizOffset * fThisScale, // float x
+								(uiLetter > (unsigned)g_iNonScaledCharRange) ? fy - fAsianYAdjust : fy,	// float y
 								curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale,	// float w
 								curfont->mbRoundCalcs ? Round(pLetter->height * fThisScale) : pLetter->height * fThisScale, // float h
 								pLetter->s,						// float s1
@@ -1612,12 +1653,12 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 								hShader							// qhandle_t hShader
 								);
 
-				x += iAdvancePixels;
+				fx += fAdvancePixels;
 			}
 			break;
 		}
 	}
-	//let it remember the old color //RE_SetColor(NULL);;
+	//let it remember the old color //RE_SetColor(NULL);
 }
 
 int RE_RegisterFont(const char *psName)
@@ -1695,7 +1736,7 @@ void R_ReloadFonts_f(void)
 {
 	// first, grab all the currently-registered fonts IN THE ORDER THEY WERE REGISTERED...
 	//
-	vector <sstring_t> vstrFonts;
+	std::vector <sstring_t> vstrFonts;
 
 	int iFontToFind;
 	for (iFontToFind = 1; iFontToFind < g_iCurrentFontIndex; iFontToFind++)

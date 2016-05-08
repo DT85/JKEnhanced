@@ -1,5 +1,24 @@
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
 
 // Script Command Sequencer
 //
@@ -9,6 +28,7 @@
 #include "icarus.h"
 
 #include "assert.h"
+#include <algorithm>
 
 // Sequencer
 
@@ -165,7 +185,7 @@ Deletes parsing stream
 */
 void CSequencer::DeleteStream( bstream_t *bstream )
 {
-	vector<bstream_t*>::iterator finder = find(m_streamsCreated.begin(), m_streamsCreated.end(), bstream);
+	std::vector<bstream_t*>::iterator finder = std::find(m_streamsCreated.begin(), m_streamsCreated.end(), bstream);
 	if(finder != m_streamsCreated.end())
 	{
 		m_streamsCreated.erase(finder);
@@ -349,7 +369,7 @@ int CSequencer::ParseRun( CBlock *block )
 	int			buffer_size;
 
 	//Get the name and format it
-	StripExtension( (char*) block->GetMemberData( 0 ), (char *) newname );
+	COM_StripExtension( (char*) block->GetMemberData( 0 ), (char *) newname, sizeof(newname) );
 
 	//Get the file from the game engine
   	buffer_size = m_ie->I_LoadFile( newname, (void **) &buffer );
@@ -2203,31 +2223,6 @@ CBlock *CSequencer::PopCommand( int flag )
 }
 
 /*
-========================
-StripExtension
-
-Filename ultility.  Probably get rid of this if I decided to use CStrings...
-========================
-*/
-
-void CSequencer::StripExtension( const char *in, char *out )
-{
-	int		i = strlen(in) + 1;
-
-	while ( (in[i] != '.') && (i >= 0) )
-	 i--;
-
-	if ( i < 0 )
-	{
-		strcpy(out, in);
-		return;
-	}
-
-	strncpy(out, in, i);
-}
-
-
-/*
 -------------------------
 RemoveSequence
 -------------------------
@@ -2276,13 +2271,7 @@ int CSequencer::DestroySequence( CSequence *sequence )
 	{
 		if((*tsi).second == sequence)
 		{
-#ifdef _WIN32
-			tsi = m_taskSequences.erase(tsi);
-#else
-			taskSequence_m::iterator itTemp = tsi;
-			++tsi;
-			m_taskSequences.erase(itTemp);
-#endif
+			m_taskSequences.erase(tsi++);
 		}
 		else
 		{

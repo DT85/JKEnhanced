@@ -1,20 +1,24 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 #include "g_local.h"
 #include "g_functions.h"
@@ -184,6 +188,32 @@ void SP_misc_model_ghoul( gentity_t *ent )
 
 	G_SetOrigin( ent, ent->s.origin );
 	G_SetAngles( ent, ent->s.angles );
+
+	qboolean bHasScale = G_SpawnVector( "modelscale_vec", "1 1 1", ent->s.modelScale );
+	if ( !bHasScale ) {
+		float temp;
+		G_SpawnFloat( "modelscale", "0", &temp );
+		if ( temp != 0.0f ) {
+			ent->s.modelScale[0] = ent->s.modelScale[1] = ent->s.modelScale[2] = temp;
+			bHasScale = qtrue;
+		}
+	}
+	if ( bHasScale ) {
+		//scale the x axis of the bbox up.
+		ent->maxs[0] *= ent->s.modelScale[0];
+		ent->mins[0] *= ent->s.modelScale[0];
+
+		//scale the y axis of the bbox up.
+		ent->maxs[1] *= ent->s.modelScale[1];
+		ent->mins[1] *= ent->s.modelScale[1];
+
+		//scale the z axis of the bbox up and adjust origin accordingly
+		ent->maxs[2] *= ent->s.modelScale[2];
+		float oldMins2 = ent->mins[2];
+		ent->mins[2] *= ent->s.modelScale[2];
+		ent->s.origin[2] += (oldMins2 - ent->mins[2]);
+	}
+
 	gi.linkentity (ent);
 #else
 	char name1[200] = "models/players/kyle/model.glm";

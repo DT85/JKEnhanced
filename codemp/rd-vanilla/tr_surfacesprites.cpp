@@ -1,3 +1,25 @@
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // tr_shade.c
 
 #include "tr_local.h"
@@ -309,7 +331,7 @@ qboolean SSUsingFog=qfalse;
 // Vertical surface sprites
 
 static void RB_VerticalSurfaceSprite(vec3_t loc, float width, float height, byte light,
-										byte alpha, float wind, float windidle, vec2_t fog, int hangdown, vec2_t skew)
+										byte alpha, float wind, float windidle, vec2_t fog, int hangdown, vec2_t skew, bool flattened)
 {
 	vec3_t loc2, right;
 	float angle;
@@ -366,7 +388,16 @@ static void RB_VerticalSurfaceSprite(vec3_t loc, float width, float height, byte
 		loc2[2] += sin(angle*2.5)*windsway;
 	}
 
-	VectorScale(ssrightvectors[rightvectorcount], width*0.5, right);
+	if ( flattened )
+	{
+		right[0] = sin( DEG2RAD( loc[0] ) ) * width; 
+		right[1] = cos( DEG2RAD( loc[0] ) ) * height;
+		right[2] = 0.0f;
+	}
+	else
+	{
+		VectorScale(ssrightvectors[rightvectorcount], width*0.5, right);
+	}
 
 	color[0]=light;
 	color[1]=light;
@@ -407,7 +438,7 @@ static void RB_VerticalSurfaceSprite(vec3_t loc, float width, float height, byte
 
 static void RB_VerticalSurfaceSpriteWindPoint(vec3_t loc, float width, float height, byte light,
 												byte alpha, float wind, float windidle, vec2_t fog,
-												int hangdown, vec2_t skew, vec2_t winddiff, float windforce)
+												int hangdown, vec2_t skew, vec2_t winddiff, float windforce, bool flattened)
 {
 	vec3_t loc2, right;
 	float angle;
@@ -452,7 +483,17 @@ static void RB_VerticalSurfaceSpriteWindPoint(vec3_t loc, float width, float hei
 	loc2[1] += height*winddiff[1]*windforce;
 	loc2[2] -= height*windforce*(0.75 + 0.15*sin((tr.refdef.time + 500*windforce)*0.01));
 
-	VectorScale(ssrightvectors[rightvectorcount], width*0.5, right);
+	if ( flattened )
+	{
+		right[0] = sin( DEG2RAD( loc[0] ) ) * width; 
+		right[1] = cos( DEG2RAD( loc[0] ) ) * height;
+		right[2] = 0.0f;
+	}
+	else
+	{
+		VectorScale(ssrightvectors[rightvectorcount], width*0.5, right);
+	}
+	
 
 	color[0]=light;
 	color[1]=light;
@@ -759,13 +800,13 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 						{
 							RB_VerticalSurfaceSpriteWindPoint(curpoint, width, height, (byte)light, (byte)(alpha*255.0),
 										stage->ss->wind, stage->ss->windIdle, fogv, stage->ss->facing, skew,
-										winddiffv, windforce);
+										winddiffv, windforce, SURFSPRITE_FLATTENED == stage->ss->surfaceSpriteType);
 						}
 						else
 						{
 							RB_VerticalSurfaceSpriteWindPoint(curpoint, width, height, (byte)light, (byte)(alpha*255.0),
 										stage->ss->wind, stage->ss->windIdle, NULL, stage->ss->facing, skew,
-										winddiffv, windforce);
+										winddiffv, windforce, SURFSPRITE_FLATTENED == stage->ss->surfaceSpriteType);
 						}
 					}
 					else
@@ -773,12 +814,12 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 						if (SSUsingFog)
 						{
 							RB_VerticalSurfaceSprite(curpoint, width, height, (byte)light, (byte)(alpha*255.0),
-										stage->ss->wind, stage->ss->windIdle, fogv, stage->ss->facing, skew);
+										stage->ss->wind, stage->ss->windIdle, fogv, stage->ss->facing, skew, SURFSPRITE_FLATTENED == stage->ss->surfaceSpriteType);
 						}
 						else
 						{
 							RB_VerticalSurfaceSprite(curpoint, width, height, (byte)light, (byte)(alpha*255.0),
-										stage->ss->wind, stage->ss->windIdle, NULL, stage->ss->facing, skew);
+										stage->ss->wind, stage->ss->windIdle, NULL, stage->ss->facing, skew, SURFSPRITE_FLATTENED == stage->ss->surfaceSpriteType);
 						}
 					}
 
@@ -1441,6 +1482,7 @@ void RB_DrawSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input)
 
 	switch(stage->ss->surfaceSpriteType)
 	{
+	case SURFSPRITE_FLATTENED:
 	case SURFSPRITE_VERTICAL:
 		RB_DrawVerticalSurfaceSprites(stage, input);
 		break;

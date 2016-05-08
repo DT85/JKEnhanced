@@ -1,5 +1,26 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // cg_players.c -- handle the media and animation for player entities
 #include "cg_local.h"
 #include "ghoul2/G2.h"
@@ -815,7 +836,7 @@ void CG_LoadCISounds(clientInfo_t *ci, qboolean modelloaded)
 
 	dir = ci->modelName;
 
-	if ( !ci->skinName || !Q_stricmp( "default", ci->skinName ) )
+	if ( !ci->skinName[0] || !Q_stricmp( "default", ci->skinName ) )
 	{//try default sounds.cfg first
 		fLen = trap->FS_Open(va("models/players/%s/sounds.cfg", dir), &f, FS_READ);
 		if ( !f )
@@ -841,35 +862,38 @@ void CG_LoadCISounds(clientInfo_t *ci, qboolean modelloaded)
 
 		i = fLen;
 
-		while (i >= 0 && soundpath[i] != '\n')
-		{
-			if (soundpath[i] == 'f')
-			{
+		while (i >= 0 && soundpath[i] != '\n') {
+			if (soundpath[i] == 'f') {
 				isFemale = qtrue;
 				soundpath[i] = 0;
 			}
-
 			i--;
 		}
 
 		i = 0;
 
-		while (soundpath[i] && soundpath[i] != '\r' && soundpath[i] != '\n')
-		{
+		while (soundpath[i] && soundpath[i] != '\r' && soundpath[i] != '\n') {
 			i++;
 		}
 		soundpath[i] = 0;
 
 		trap->FS_Close(f);
-	}
 
-	if (isFemale)
-	{
-		ci->gender = GENDER_FEMALE;
+		if (isFemale)
+		{
+			ci->gender = GENDER_FEMALE;
+		}
+		else
+		{
+			ci->gender = GENDER_MALE;
+		}
 	}
 	else
 	{
-		ci->gender = GENDER_MALE;
+		if ( cgs.gametype != GT_SIEGE )
+			isFemale = ci->gender == GENDER_FEMALE;
+		else
+			isFemale = qfalse;
 	}
 
 	trap->S_Shutup(qtrue);
@@ -930,7 +954,9 @@ void CG_LoadCISounds(clientInfo_t *ci, qboolean modelloaded)
 			// if the model didn't load use the sounds of the default model
 			if (soundpath[0])
 			{
-				ci->siegeSounds[i] = trap->S_RegisterSound( va("sound/%s/%s", soundpath, soundName) );
+				ci->siegeSounds[i] = trap->S_RegisterSound( va("sound/chars/%s/misc/%s", soundpath, soundName) );
+				if ( !ci->siegeSounds[i] )
+					ci->siegeSounds[i] = trap->S_RegisterSound( va( "sound/%s/%s", soundpath, soundName ) );
 			}
 			else
 			{
@@ -1604,10 +1630,10 @@ void CG_NewClientInfo( int clientNum, qboolean entitiesInitialized ) {
 	// Gender hints
 	if ( (v = Info_ValueForKey( configstring, "ds" )) )
 	{
-		if ( *v == 'm' )
-			newInfo.gender = GENDER_MALE;
-		else
+		if ( *v == 'f' )
 			newInfo.gender = GENDER_FEMALE;
+		else
+			newInfo.gender = GENDER_MALE;
 	}
 
 	// team task
@@ -2715,7 +2741,7 @@ void CG_TriggerAnimSounds( centity_t *cent )
 	{
 		CG_PlayerAnimEvents( cent->localAnimIndex, sFileIndex, qfalse, cent->pe.legs.frame, curFrame, cent->currentState.number );
 	}
-	cent->pe.legs.oldFrame = cent->pe.torso.frame;
+	cent->pe.legs.oldFrame = cent->pe.legs.frame;
 	cent->pe.legs.frame = curFrame;
 
 	if (cent->noLumbar)
@@ -2733,7 +2759,7 @@ void CG_TriggerAnimSounds( centity_t *cent )
 	{
 		CG_PlayerAnimEvents( cent->localAnimIndex, sFileIndex, qtrue, cent->pe.torso.frame, curFrame, cent->currentState.number );
 	}
-	cent->pe.torso.oldFrame = cent->pe.torso.oldFrame;
+	cent->pe.torso.oldFrame = cent->pe.torso.frame;
 	cent->pe.torso.frame = curFrame;
 	cent->pe.torso.backlerp = 1.0f - (currentFrame - (float)curFrame);
 }
@@ -4377,7 +4403,6 @@ static void CG_TrailItem( centity_t *cent, qhandle_t hModel ) {
 }
 #endif
 
-
 /*
 ===============
 CG_PlayerFlag
@@ -4742,7 +4767,7 @@ static void CG_PlayerSplash( centity_t *cent ) {
 
 	// if the feet aren't in liquid, don't make a mark
 	// this won't handle moving water brushes, but they wouldn't draw right anyway...
-	contents = trap->CM_PointContents( end, 0 );
+	contents = CG_PointContents( end, 0 );
 	if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) ) {
 		return;
 	}
@@ -4751,7 +4776,7 @@ static void CG_PlayerSplash( centity_t *cent ) {
 	start[2] += 32;
 
 	// if the head isn't out of liquid, don't make a mark
-	contents = trap->CM_PointContents( start, 0 );
+	contents = CG_PointContents( start, 0 );
 	if ( contents & ( CONTENTS_SOLID | CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
 		return;
 	}
@@ -6896,7 +6921,7 @@ int CG_HandleAppendedSkin(char *modelName)
 }
 
 //Create a temporary ghoul2 instance and get the gla name so we can try loading animation data and sounds.
-void BG_GetVehicleModelName(char *modelname, int len);
+void BG_GetVehicleModelName(char *modelName, const char *vehicleName, size_t len);
 void BG_GetVehicleSkinName(char *skinname, int len);
 
 void CG_CacheG2AnimInfo(char *modelName)
@@ -6912,7 +6937,7 @@ void CG_CacheG2AnimInfo(char *modelName)
 
 	if (modelName[0] == '$')
 	{ //it's a vehicle name actually, let's precache the whole vehicle
-		BG_GetVehicleModelName(useModel, sizeof( useModel ) );
+		BG_GetVehicleModelName(useModel, useModel, sizeof( useModel ) );
 		BG_GetVehicleSkinName(useSkin, sizeof( useSkin ) );
 		if ( useSkin[0] )
 		{ //use a custom skin
@@ -7074,7 +7099,7 @@ void CG_G2AnimEntModelLoad(centity_t *cent)
 			//attach the handles for fx cgame-side
 			CG_RegisterVehicleAssets(cent->m_pVehicle);
 
-			BG_GetVehicleModelName(modelName, sizeof( modelName ) );
+			BG_GetVehicleModelName(modelName, modelName, sizeof( modelName ) );
 			if (cent->m_pVehicle->m_pVehicleInfo->skin &&
 				cent->m_pVehicle->m_pVehicleInfo->skin[0])
 			{ //use a custom skin
@@ -10240,7 +10265,7 @@ stillDoSaber:
 				{
 					BG_SI_SetDesiredLength(&ci->saber[0], -1, -1);
 				}
-				if ( ci->saber[1].model	//dual sabers
+				if ( ci->saber[1].model[0]	//dual sabers
 					&& cent->currentState.saberHolstered == 1 )//second one off
 				{
 					BG_SI_SetDesiredLength(&ci->saber[1], 0, -1);
@@ -10324,7 +10349,7 @@ stillDoSaber:
 			{
 				BG_SI_SetDesiredLength(&ci->saber[0], -1, -1);
 			}
-			if ( ci->saber[1].model	//dual sabers
+			if ( ci->saber[1].model[0]	//dual sabers
 				&& cent->currentState.saberHolstered == 1 )//second one off
 			{
 				BG_SI_SetDesiredLength(&ci->saber[1], 0, -1);
@@ -10573,9 +10598,9 @@ stillDoSaber:
 					savRGBA[0] = legs.shaderRGBA[0];
 					savRGBA[1] = legs.shaderRGBA[1];
 					savRGBA[2] = legs.shaderRGBA[2];
-					legs.shaderRGBA[0] = max(255-subLen/4,1);
-					legs.shaderRGBA[1] = max(255-subLen/4,1);
-					legs.shaderRGBA[2] = max(255-subLen/4,1);
+					legs.shaderRGBA[0] = Q_max(255-subLen/4,1);
+					legs.shaderRGBA[1] = Q_max(255-subLen/4,1);
+					legs.shaderRGBA[2] = Q_max(255-subLen/4,1);
 
 					legs.renderfx &= ~RF_RGB_TINT;
 					legs.renderfx &= ~RF_FORCE_ENT_ALPHA;
@@ -10585,9 +10610,9 @@ stillDoSaber:
 
 					legs.customShader = 0;	//reset to player model
 
-					legs.shaderRGBA[0] = max(savRGBA[0]-subLen/8,1);
-					legs.shaderRGBA[1] = max(savRGBA[1]-subLen/8,1);
-					legs.shaderRGBA[2] = max(savRGBA[2]-subLen/8,1);
+					legs.shaderRGBA[0] = Q_max(savRGBA[0]-subLen/8,1);
+					legs.shaderRGBA[1] = Q_max(savRGBA[1]-subLen/8,1);
+					legs.shaderRGBA[2] = Q_max(savRGBA[2]-subLen/8,1);
 				}
 
 				if (subLen <= 1024)
@@ -11204,7 +11229,7 @@ void CG_ResetPlayerEntity( centity_t *cent )
 		cent->pe.legs.pitchAngle = 0;
 		cent->pe.legs.pitching = qfalse;
 
-		memset( &cent->pe.torso, 0, sizeof( cent->pe.legs ) );
+		memset( &cent->pe.torso, 0, sizeof( cent->pe.torso ) );
 		cent->pe.torso.yawAngle = cent->rawAngles[YAW];
 		cent->pe.torso.yawing = qfalse;
 		cent->pe.torso.pitchAngle = cent->rawAngles[PITCH];

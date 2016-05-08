@@ -1,3 +1,29 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
+#pragma once
+
 // for windows fastcall option
 #define QDECL
 #define QCALL
@@ -14,9 +40,9 @@
 	#define QCALL __stdcall
 
 	#if defined(_MSC_VER)
-		#define OS_STRING "win_msvc64"
+		#define OS_STRING "win_msvc"
 	#elif defined(__MINGW64__)
-		#define OS_STRING "win_mingw64"
+		#define OS_STRING "win_mingw"
 	#endif
 
 	#define QINLINE __inline
@@ -100,41 +126,17 @@
 	#ifdef __clang__
 		#define QINLINE static inline
 	#else
-		#define QINLINE /*inline*/
+		#define QINLINE inline
 	#endif
 
 	#define PATH_SEP '/'
 
+	#if !defined(ARCH_STRING)
+		#error ARCH_STRING should be defined by the build system
+	#endif
 
-	#if defined(__i386__)
-		#define ARCH_STRING "i386"
-	#elif defined(__x86_64__)
+	#if defined(__x86_64__)
 		#define idx64
-		#define ARCH_STRING "x86_64"
-	#elif defined(__powerpc64__)
-		#define ARCH_STRING "ppc64"
-	#elif defined(__powerpc__)
-		#define ARCH_STRING "ppc"
-	#elif defined(__s390__)
-		#define ARCH_STRING "s390"
-	#elif defined(__s390x__)
-		#define ARCH_STRING "s390x"
-	#elif defined(__ia64__)
-		#define ARCH_STRING "ia64"
-	#elif defined(__alpha__)
-		#define ARCH_STRING "alpha"
-	#elif defined(__sparc__)
-		#define ARCH_STRING "sparc"
-	#elif defined(__arm__)
-		#define ARCH_STRING "arm"
-	#elif defined(__cris__)
-		#define ARCH_STRING "cris"
-	#elif defined(__hppa__)
-		#define ARCH_STRING "hppa"
-	#elif defined(__mips__)
-		#define ARCH_STRING "mips"
-	#elif defined(__sh__)
-		#define ARCH_STRING "sh"
 	#endif
 
 	#if __FLOAT_WORD_ORDER == __BIG_ENDIAN
@@ -166,13 +168,12 @@
 	#define QINLINE inline
 	#define PATH_SEP '/'
 
-	#if defined(__i386__)
-		#define ARCH_STRING "i386"
-	#elif defined(__amd64__)
+	#if !defined(ARCH_STRING)
+		#error ARCH_STRING should be defined by the build system
+	#endif
+
+	#if defined(__amd64__)
 		#define idx64
-		#define ARCH_STRING "amd64"
-	#elif defined(__axp__)
-		#define ARCH_STRING "alpha"
 	#endif
 
 	#if BYTE_ORDER == BIG_ENDIAN

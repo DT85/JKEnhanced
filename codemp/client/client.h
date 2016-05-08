@@ -1,3 +1,26 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
 
 // client.h -- primary header for client
@@ -219,14 +242,6 @@ typedef struct clientConnection_s {
 
 	// big stuff at end of structure so most offsets are 15 bits or less
 	netchan_t	netchan;
-
-	//rwwRMG - added:
-	int					rmgSeed;
-	int					rmgHeightMapSize;
-	unsigned char		rmgHeightMap[MAX_HEIGHTMAP_SIZE];
-	unsigned char		rmgFlattenMap[MAX_HEIGHTMAP_SIZE];
-	rmAutomapSymbol_t	rmgAutomapSymbols[MAX_AUTOMAP_SYMBOLS];
-	int					rmgAutomapSymbolCount;
 } clientConnection_t;
 
 extern	clientConnection_t clc;
@@ -264,6 +279,7 @@ typedef struct serverInfo_s {
 	int			trueJedi;
 	int			weaponDisable;
 	int			forceDisable;
+	int			humans, bots;
 } serverInfo_t;
 
 typedef struct clientStatic_s {
@@ -367,6 +383,8 @@ extern	cvar_t	*cl_sensitivity;
 extern	cvar_t	*cl_freelook;
 
 extern	cvar_t	*cl_mouseAccel;
+extern	cvar_t	*cl_mouseAccelOffset;
+extern	cvar_t	*cl_mouseAccelStyle;
 extern	cvar_t	*cl_showMouseRate;
 
 extern	cvar_t	*m_pitchVeh;
@@ -379,6 +397,9 @@ extern	cvar_t	*m_filter;
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;
 extern	cvar_t	*cl_aviMotionJpeg;
+extern	cvar_t	*cl_avi2GBLimit;
+
+extern	cvar_t	*cl_forceavidemo;
 
 extern	cvar_t	*cl_activeAction;
 
@@ -387,9 +408,7 @@ extern	cvar_t	*cl_allowAltEnter;
 extern	cvar_t	*cl_conXOffset;
 extern	cvar_t	*cl_inGameVideo;
 
-#ifndef _WIN32
 extern	cvar_t	*cl_consoleKeys;
-#endif
 
 extern  cvar_t  *cl_lanForcePackets;
 
@@ -428,7 +447,6 @@ void CL_GetPingInfo( int n, char *buf, int buflen );
 void CL_ClearPing( int n );
 int CL_GetPingQueueCount( void );
 
-void CL_ShutdownRef( void );
 void CL_InitRef( void );
 
 int CL_ServerStatus( const char *serverAddress, char *serverStatusString, int maxLen );
@@ -451,6 +469,7 @@ extern 	kbutton_t 	in_strafe;
 extern 	kbutton_t 	in_speed;
 
 void CL_InitInput (void);
+void CL_ShutdownInput(void);
 void CL_SendCmd (void);
 void CL_ClearState (void);
 void CL_ReadPackets (void);
@@ -488,6 +507,7 @@ qboolean CL_UpdateVisiblePings_f( int source );
 
 void Con_CheckResize (void);
 void Con_Init (void);
+void Con_Shutdown(void);
 void Con_Clear_f (void);
 void Con_ToggleConsole_f (void);
 void Con_DrawNotify (void);

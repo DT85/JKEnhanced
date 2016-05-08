@@ -1,20 +1,24 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 //
 // NPC.cpp - generic functions
@@ -1010,7 +1014,6 @@ vec3_t NPCDEBUG_BLUE = {0.0, 0.0, 1.0};
 vec3_t NPCDEBUG_LIGHT_BLUE = {0.3f, 0.7f, 1.0};
 extern void CG_Cube( vec3_t mins, vec3_t maxs, vec3_t color, float alpha );
 extern void CG_Line( vec3_t start, vec3_t end, vec3_t color, float alpha );
-extern void CG_Cylinder( vec3_t start, vec3_t end, float radius, vec3_t color );
 
 void NPC_ShowDebugInfo (void)
 {
@@ -1919,8 +1922,6 @@ extern bool Pilot_MasterUpdate();
 
 void NPC_RunBehavior( int team, int bState )
 {
-	qboolean dontSetAim = qfalse;
-
 	//
 	if ( bState == BS_CINEMATIC )
 	{
@@ -1953,7 +1954,6 @@ void NPC_RunBehavior( int team, int bState )
 	else if ( Jedi_CultistDestroyer( NPC ) )
 	{
 		NPC_BSJedi_Default();
-		dontSetAim = qtrue;
 	}
 	else if ( NPC->client->NPC_class == CLASS_SABER_DROID )
 	{//saber droid
@@ -1962,12 +1962,10 @@ void NPC_RunBehavior( int team, int bState )
 	else if ( NPC->client->ps.weapon == WP_SABER )
 	{//jedi
 		NPC_BehaviorSet_Jedi( bState );
-		dontSetAim = qtrue;
 	}
 	else if ( NPC->client->NPC_class == CLASS_REBORN && NPC->client->ps.weapon == WP_MELEE )
 	{//force-only reborn
 		NPC_BehaviorSet_Jedi( bState );
-		dontSetAim = qtrue;
 	}
 	else if ( NPC->client->NPC_class == CLASS_BOBAFETT )
 	{
@@ -1990,7 +1988,6 @@ void NPC_RunBehavior( int team, int bState )
 				}
 			}
 		}
-		dontSetAim = qtrue;
 	}
 	else if ( NPC->client->NPC_class == CLASS_ROCKETTROOPER )
 	{//bounty hunter
@@ -2003,7 +2000,6 @@ void NPC_RunBehavior( int team, int bState )
 			NPC_BehaviorSet_Stormtrooper( bState );
 		}
 		G_CheckCharmed( NPC );
-		dontSetAim = qtrue;
 	}
 	else if ( NPC->client->NPC_class == CLASS_RANCOR )
 	{
@@ -2199,7 +2195,6 @@ void NPC_RunBehavior( int team, int bState )
 					NPC_BehaviorSet_Default( bState );
 				}
 				G_CheckCharmed( NPC );
-				dontSetAim = qtrue;
 			}
 			break;
 		}

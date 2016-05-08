@@ -1,17 +1,35 @@
-// leave this as first line for PCH reasons...
-//
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
+This file is part of the OpenJK source code.
 
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #include "qcommon/matcomp.h"
 #include "ghoul2/G2.h"
 #include "qcommon/MiniHeap.h"
 #include "server/server.h"
-#include "G2_local.h"
+#include "ghoul2/g2_local.h"
 
 #ifdef _G2_GORE
 #include "ghoul2/G2_gore.h"
+
+#include "tr_local.h"
 
 #define GORE_TAG_UPPER (256)
 #define GORE_TAG_MASK (~255)
@@ -19,8 +37,8 @@
 static int CurrentTag=GORE_TAG_UPPER+1;
 static int CurrentTagUpper=GORE_TAG_UPPER;
 
-static map<int,GoreTextureCoordinates> GoreRecords;
-static map<pair<int,int>,int> GoreTagsTemp; // this is a surface index to gore tag map used only
+static std::map<int,GoreTextureCoordinates> GoreRecords;
+static std::map<std::pair<int,int>,int> GoreTagsTemp; // this is a surface index to gore tag map used only
 								  // temporarily during the generation phase so we reuse gore tags per LOD
 int goreModelIndex;
 
@@ -47,7 +65,7 @@ int AllocGoreRecord()
 	while (GoreRecords.size()>MAX_GORE_RECORDS)
 	{
 		int tagHigh=(*GoreRecords.begin()).first&GORE_TAG_MASK;
-		map<int,GoreTextureCoordinates>::iterator it;
+		std::map<int,GoreTextureCoordinates>::iterator it;
 		GoreTextureCoordinates *gTC;
 
 		it = GoreRecords.begin();
@@ -89,7 +107,7 @@ void ResetGoreTag()
 
 GoreTextureCoordinates *FindGoreRecord(int tag)
 {
-	map<int,GoreTextureCoordinates>::iterator i=GoreRecords.find(tag);
+	std::map<int,GoreTextureCoordinates>::iterator i=GoreRecords.find(tag);
 	if (i!=GoreRecords.end())
 	{
 		return &(*i).second;
@@ -109,11 +127,11 @@ void DeleteGoreRecord(int tag)
 }
 
 static int CurrentGoreSet=1; // this is a UUID for gore sets
-static map<int,CGoreSet *> GoreSets; // map from uuid to goreset
+static std::map<int,CGoreSet *> GoreSets; // map from uuid to goreset
 
 CGoreSet *FindGoreSet(int goreSetTag)
 {
-	map<int,CGoreSet *>::iterator f=GoreSets.find(goreSetTag);
+	std::map<int,CGoreSet *>::iterator f=GoreSets.find(goreSetTag);
 	if (f!=GoreSets.end())
 	{
 		return (*f).second;
@@ -131,7 +149,7 @@ CGoreSet *NewGoreSet()
 
 void DeleteGoreSet(int goreSetTag)
 {
-	map<int,CGoreSet *>::iterator f=GoreSets.find(goreSetTag);
+	std::map<int,CGoreSet *>::iterator f=GoreSets.find(goreSetTag);
 	if (f!=GoreSets.end())
 	{
 		if ( (*f).second->mRefCount == 0 || (*f).second->mRefCount - 1 == 0 )
@@ -149,7 +167,7 @@ void DeleteGoreSet(int goreSetTag)
 
 CGoreSet::~CGoreSet()
 {
-	multimap<int,SGoreSurface>::iterator i;
+	std::multimap<int,SGoreSurface>::iterator i;
 	for (i=mGoreRecords.begin();i!=mGoreRecords.end();++i)
 	{
 		DeleteGoreRecord((*i).second.mGoreTag);
@@ -158,10 +176,6 @@ CGoreSet::~CGoreSet()
 #endif // _SOF2
 
 const mdxaBone_t &EvalBoneCache(int index,CBoneCache *boneCache);
-
-#ifdef _MSC_VER
-#pragma warning(disable : 4512)		//assignment op could not be genereated
-#endif
 class CTraceSurface
 {
 public:
@@ -175,11 +189,7 @@ public:
 	int					entNum;
 	int					modelIndex;
 	skin_t				*skin;
-#ifdef _WIN32
-	struct shader_t		*cust_shader;
-#else
     shader_t            *cust_shader;
-#endif
 	size_t				*TransformedVertsArray;
 	int					traceFlags;
 	bool				hitOne;
@@ -376,7 +386,7 @@ int G2_DecideTraceLod(CGhoul2Info &ghoul2, int useLod)
 	return returnLod;
 }
 
-void R_TransformEachSurface( const mdxmSurface_t *surface, vec3_t scale, CMiniHeap *G2VertSpace, size_t *TransformedVertsArray,CBoneCache *boneCache)
+void R_TransformEachSurface( const mdxmSurface_t *surface, vec3_t scale, IHeapAllocator *G2VertSpace, size_t *TransformedVertsArray,CBoneCache *boneCache)
 {
 	int				 j, k;
 	mdxmVertex_t 	*v;
@@ -488,7 +498,7 @@ void R_TransformEachSurface( const mdxmSurface_t *surface, vec3_t scale, CMiniHe
 }
 
 void G2_TransformSurfaces(int surfaceNum, surfaceInfo_v &rootSList,
-					CBoneCache *boneCache, const model_t *currentModel, int lod, vec3_t scale, CMiniHeap *G2VertSpace, size_t *TransformedVertArray, bool secondTimeAround)
+					CBoneCache *boneCache, const model_t *currentModel, int lod, vec3_t scale, IHeapAllocator *G2VertSpace, size_t *TransformedVertArray, bool secondTimeAround)
 {
 	int	i;
 	assert(currentModel);
@@ -530,9 +540,9 @@ void G2_TransformSurfaces(int surfaceNum, surfaceInfo_v &rootSList,
 
 // main calling point for the model transform for collision detection. At this point all of the skeleton has been transformed.
 #ifdef _G2_GORE
-void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, CMiniHeap *G2VertSpace, int useLod, bool ApplyGore)
+void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, IHeapAllocator *G2VertSpace, int useLod, bool ApplyGore)
 #else
-void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, CMiniHeap *G2VertSpace, int useLod)
+void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, IHeapAllocator *G2VertSpace, int useLod)
 #endif
 {
 	int				i, lod;
@@ -929,7 +939,7 @@ void G2_GorePolys( const mdxmSurface_t *surface, CTraceSurface &TS, const mdxmSu
 	}
 
 	int newTag;
-	map<pair<int,int>,int>::iterator f=GoreTagsTemp.find(pair<int,int>(goreModelIndex,TS.surfaceNum));
+	std::map<std::pair<int,int>,int>::iterator f=GoreTagsTemp.find(std::make_pair(goreModelIndex,TS.surfaceNum));
 	if (f==GoreTagsTemp.end()) // need to generate a record
 	{
 		newTag=AllocGoreRecord();
@@ -969,8 +979,8 @@ void G2_GorePolys( const mdxmSurface_t *surface, CTraceSurface &TS, const mdxmSu
 		add.mGoreGrowFactor = ( 1.0f - TS.gore->goreScaleStartFraction) / (float)(TS.gore->growDuration);	//curscale = (curtime-mGoreGrowStartTime)*mGoreGrowFactor;
 		add.mGoreGrowOffset = TS.gore->goreScaleStartFraction;
 
-		goreSet->mGoreRecords.insert(pair<int,SGoreSurface>(TS.surfaceNum,add));
-		GoreTagsTemp[pair<int,int>(goreModelIndex,TS.surfaceNum)]=newTag;
+		goreSet->mGoreRecords.insert(std::make_pair(TS.surfaceNum,add));
+		GoreTagsTemp[std::make_pair(goreModelIndex,TS.surfaceNum)]=newTag;
 	}
 	else
 	{
@@ -1779,27 +1789,6 @@ void G2_FreeSaveBuffer(char *buffer)
 	Z_Free(buffer);
 }
 
-int G2_FindConfigStringSpace(char *name, int start, int max)
-{
-	char	s[MAX_STRING_CHARS];
-	int i;
-	for ( i=1 ; i<max ; i++ )
-	{
-		ri->SV_GetConfigstring( start + i, s, sizeof( s ) );
-		if ( !s[0] )
-		{
-			break;
-		}
-		if ( !Q_stricmp( s, name ) )
-		{
-			return i;
-		}
-	}
-
-	ri->SV_SetConfigstring(start + i, name);
-	return i;
-}
-
 qboolean G2_SetupModelPointers(CGhoul2Info *ghlInfo);
 qboolean G2_SetupModelPointers(CGhoul2Info_v &ghoul2);
 
@@ -1911,10 +1900,4 @@ void G2_LerpAngles(CGhoul2Info_v &ghoul2,CGhoul2Info_v &nextGhoul2, float interp
 			}
 		}
 	}
-}
-
-// chucking this in here from ghoul2_shared
-IGhoul2InfoArray &TheGhoul2InfoArray();
-IGhoul2InfoArray &_TheGhoul2InfoArray( void ) {
-	return TheGhoul2InfoArray();
 }

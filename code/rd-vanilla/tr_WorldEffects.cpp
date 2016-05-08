@@ -1,20 +1,24 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // RAVEN SOFTWARE - STAR WARS: JK II
@@ -25,18 +29,11 @@ This file is part of Jedi Academy.
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 #include "../server/exe_headers.h"
-#ifdef _MSC_VER
-#pragma warning( disable : 4512 )
-#endif
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Externs & Fwd Decl.
 ////////////////////////////////////////////////////////////////////////////////////////
 extern void			SetViewportAndScissor( void );
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Includes
@@ -641,7 +638,7 @@ public:
 	
 	fileHandle_t WriteCachedWeatherFile( void )
 	{
-		fileHandle_t f = ri->FS_FOpenFileWrite( GenCachedWeatherFilename() );
+		fileHandle_t f = ri.FS_FOpenFileWrite( GenCachedWeatherFilename(), qtrue );
 		if (f)
 		{
 			WeatherFileHeader_t WeatherFileHeader;
@@ -1445,36 +1442,18 @@ public:
 
 		// Enable And Disable Things
 		//---------------------------
-		if (mGLModeEnum==GL_POINTS && qglPointParameteriNV)
-		{
-			qglEnable(GL_POINT_SPRITE_NV);
+		qglEnable(GL_TEXTURE_2D);
+		qglDisable(GL_CULL_FACE);
 
-			qglPointSize(mWidth);
-#ifdef WIN32
-			qglPointParameterfEXT( GL_POINT_SIZE_MIN_EXT, 4.0f );
-			qglPointParameterfEXT( GL_POINT_SIZE_MAX_EXT, 2047.0f );
-#else
-			qglPointParameterfEXT( GL_POINT_SIZE_MIN, 4.0f );
-			qglPointParameterfEXT( GL_POINT_SIZE_MAX, 2047.0f );
-#endif
-
-			qglTexEnvi(GL_POINT_SPRITE_NV, GL_COORD_REPLACE_NV, GL_TRUE);
-		}
-		else
-		{
-			qglEnable(GL_TEXTURE_2D);
-			qglDisable(GL_CULL_FACE);
-
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (mFilterMode==0)?(GL_LINEAR):(GL_NEAREST));
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (mFilterMode==0)?(GL_LINEAR):(GL_NEAREST));
+		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (mFilterMode==0)?(GL_LINEAR):(GL_NEAREST));
+		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (mFilterMode==0)?(GL_LINEAR):(GL_NEAREST));
 
 
-			// Setup Matrix Mode And Translation
-			//-----------------------------------
-			qglMatrixMode(GL_MODELVIEW);
-			qglPushMatrix();
+		// Setup Matrix Mode And Translation
+		//-----------------------------------
+		qglMatrixMode(GL_MODELVIEW);
+		qglPushMatrix();
 
-		}
 
 		// Begin
 		//-------
@@ -1520,16 +1499,10 @@ public:
 				qglColor4f(mColor[0]*part->mAlpha, mColor[1]*part->mAlpha, mColor[2]*part->mAlpha, mColor[3]*part->mAlpha);
 			}
 
-			// Render A Point
-			//----------------
-			if (mGLModeEnum==GL_POINTS)
-			{
-				qglVertex3fv(part->mPosition.v);
-			}
 
 			// Render A Triangle
 			//-------------------
-			else if (mVertexCount==3)
+			if (mVertexCount==3)
 			{
  				qglTexCoord2f(1.0, 0.0);
 				qglVertex3f(part->mPosition[0],
@@ -1578,16 +1551,8 @@ public:
 		}
 		qglEnd();
 
-		if (mGLModeEnum==GL_POINTS)
-		{
-			qglDisable(GL_POINT_SPRITE_NV);
-			qglTexEnvi(GL_POINT_SPRITE_NV, GL_COORD_REPLACE_NV, GL_FALSE);
-		}
-		else
-		{
-			qglEnable(GL_CULL_FACE);
-			qglPopMatrix();
-		}
+		qglEnable(GL_CULL_FACE);
+		qglPopMatrix();
 
 		mParticlesRendered += mParticleCountRender;
 	}

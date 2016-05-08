@@ -1,4 +1,26 @@
-//bg_saberLoad.c
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
+// bg_saberLoad.c
 // game and cgame, NOT ui
 
 #include "qcommon/q_shared.h"
@@ -229,7 +251,7 @@ qboolean WP_UseFirstValidSaberStyle( saberInfo_t *saber1, saberInfo_t *saber2, i
 	qboolean dualSabers = qfalse;
 	int	validStyles=0, styleNum;
 
-	if ( saber2 && saber2->model && saber2->model[0] )
+	if ( saber2 && saber2->model[0] )
 		dualSabers = qtrue;
 
 	//dual
@@ -2033,7 +2055,7 @@ qboolean WP_SaberParseParms( const char *saberName, saberInfo_t *saber ) {
 		if ( !Q_stricmp( token, useSaber ) )
 			break;
 
-		SkipBracedSection( &p );
+		SkipBracedSection( &p, 0 );
 	}
 
 	// even the default saber isn't found?
@@ -2101,7 +2123,7 @@ qboolean WP_SaberParseParm( const char *saberName, const char *parmname, char *s
 			break;
 		}
 
-		SkipBracedSection( &p );
+		SkipBracedSection( &p, 0 );
 	}
 	if ( !p )
 	{
@@ -2335,7 +2357,7 @@ void WP_SaberGetHiltInfo( const char *singleHilts[MAX_SABER_HILTS], const char *
 		//this is a saber name
 		if ( !WP_SaberValidForPlayerInMP( saberName ) )
 		{
-			SkipBracedSection( &p );
+			SkipBracedSection( &p, 0 );
 			continue;
 		}
 
@@ -2362,7 +2384,7 @@ void WP_SaberGetHiltInfo( const char *singleHilts[MAX_SABER_HILTS], const char *
 			}
 		}
 		//skip the whole braced section and move on to the next entry
-		SkipBracedSection( &p );
+		SkipBracedSection( &p, 0 );
 	}
 	//null terminate the list so the UI code knows where to stop listing them
 	singleHilts[numSingleHilts] = NULL;

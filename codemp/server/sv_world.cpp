@@ -1,10 +1,31 @@
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
 
 // world.c -- world query functions
 
 #include "server.h"
 #include "ghoul2/ghoul2_shared.h"
+#include "qcommon/cm_public.h"
 
 /*
 ================
@@ -247,7 +268,6 @@ void SV_LinkEntity( sharedEntity_t *gEnt ) {
 	if ( gEnt->r.bmodel && (angles[0] || angles[1] || angles[2]) ) {
 		// expand for rotation
 		float		max;
-		int			i;
 
 		max = RadiusFromBounds( gEnt->r.mins, gEnt->r.maxs );
 		for (i=0 ; i<3 ; i++) {
@@ -514,9 +534,7 @@ static float VectorDistance(vec3_t p1, vec3_t p2)
 	return VectorLength(dir);
 }
 #endif
-#ifdef _MSC_VER
-#pragma warning(disable : 4701) //local variable used without having been init
-#endif
+
 static void SV_ClipMoveToEntities( moveclip_t *clip ) {
 	static int	touchlist[MAX_GENTITIES];
 	int			i, num;
@@ -729,7 +747,7 @@ Ghoul2 Insert Start
 #ifndef FINAL_BUILD
 			if (sv_showghoultraces->integer)
 			{
-				Com_Printf( "Ghoul2 trace   lod=%1d   length=%6.0f   to %s\n",clip->useLod,VectorDistance(clip->start, clip->end),(*((CGhoul2Info_v *)touch->ghoul2))[0].mFileName);
+				Com_Printf( "Ghoul2 trace   lod=%1d   length=%6.0f   to %s\n",clip->useLod,VectorDistance(clip->start, clip->end), re->G2API_GetModelName (*(CGhoul2Info_v *)touch->ghoul2, 0));
 			}
 #endif
 
@@ -785,9 +803,6 @@ Ghoul2 Insert End
 */
 	}
 }
-#ifdef _MSC_VER
-#pragma warning(default : 4701) //local variable used without having been init
-#endif
 
 /*
 ==================
@@ -889,7 +904,7 @@ int SV_PointContents( const vec3_t p, int passEntityNum ) {
 		// might intersect, so do an exact clip
 		clipHandle = SV_ClipHandleForEntity( hit );
 
-		c2 = CM_TransformedPointContents (p, clipHandle, hit->s.origin, hit->s.angles);
+		c2 = CM_TransformedPointContents (p, clipHandle, hit->r.currentOrigin, hit->r.currentAngles);
 
 		contents |= c2;
 	}

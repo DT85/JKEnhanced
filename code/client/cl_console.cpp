@@ -1,30 +1,34 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // console.c
 
-// leave this as first line for PCH reasons...
-//
-#include "../server/exe_headers.h"
-
+#include "server/exe_headers.h"
 
 #include "client.h"
-#include "../qcommon/stv_version.h"
+#include "qcommon/stringed_ingame.h"
+#include "qcommon/stv_version.h"
 
 int g_console_field_width = 78;
 
@@ -32,7 +36,7 @@ console_t	con;
 
 cvar_t		*con_conspeed;
 cvar_t		*con_notifytime;
-cvar_t		*con_conAlpha;	//background alpha multiplier
+cvar_t		*con_opacity; // background alpha multiplier
 cvar_t		*con_autoclear;
 
 #define	DEFAULT_CONSOLE_WIDTH	78
@@ -279,7 +283,9 @@ void Con_Init (void) {
 
 	con_notifytime = Cvar_Get ("con_notifytime", "3", 0);
 	con_conspeed = Cvar_Get ("scr_conspeed", "3", 0);
-	con_conAlpha = Cvar_Get( "conAlpha", "1.6", CVAR_ARCHIVE );
+	Cvar_CheckRange (con_conspeed, 1.0f, 100.0f, qfalse);
+
+	con_opacity = Cvar_Get ("con_opacity", "0.8", CVAR_ARCHIVE);
 	con_autoclear = Cvar_Get ("con_autoclear", "1", CVAR_ARCHIVE);
 	
 	Field_Clear( &g_consoleField );
@@ -542,11 +548,11 @@ void Con_DrawSolidConsole( float frac )
 		y = 0;
 	}
 	else {
-		// draw the background only if fullscreen
-		if ( frac != 1.0f )
+		// draw the background at full opacity only if fullscreen
+		if (frac < 1.0f)
 		{
-			vec4_t	con_color;
-			MAKERGBA( con_color, 0.0f, 0.0f, 0.0f, frac*con_conAlpha->value );
+			vec4_t con_color;
+			MAKERGBA(con_color, 1.0f, 1.0f, 1.0f, Com_Clamp(0.0f, 1.0f, con_opacity->value));
 			re.SetColor(con_color);
 		}
 		else
@@ -564,7 +570,7 @@ void Con_DrawSolidConsole( float frac )
 	i = strlen( Q3_VERSION );
 
 	for (x=0 ; x<i ; x++) {
-		SCR_DrawSmallChar( cls.glconfig.vidWidth - ( i - x ) * SMALLCHAR_WIDTH, 
+		SCR_DrawSmallChar( cls.glconfig.vidWidth - ( i - x + 1 ) * SMALLCHAR_WIDTH, 
 			(lines-(SMALLCHAR_HEIGHT+SMALLCHAR_HEIGHT/2)), Q3_VERSION[x] );
 	}
 

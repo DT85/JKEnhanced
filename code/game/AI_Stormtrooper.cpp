@@ -1,20 +1,25 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
+
 #include "b_local.h"
 #include "g_nav.h"
 #include "anims.h"
@@ -1848,13 +1853,10 @@ FIXME: work in pairs?
 void ST_Commander( void )
 {
 	int		i;//, j;
-	int		cp, cpFlags_org, cpFlags;
+	int		cp, cpFlags;
 	AIGroupInfo_t	*group = NPCInfo->group;
 	gentity_t	*member;//, *buddy;
-	qboolean	runner = qfalse;
 	qboolean	enemyLost = qfalse;
-	qboolean	scouting = qfalse;
-	int			squadState;
 	float		avoidDist;
 
 	group->processed = qtrue;
@@ -1909,17 +1911,6 @@ void ST_Commander( void )
 		return;
 	}
 
-
-
-
-	//see if anyone is running
-	if ( group->numState[SQUAD_SCOUT] > 0 || 
-		group->numState[SQUAD_TRANSITION] > 0 || 
-		group->numState[SQUAD_RETREAT] > 0 )
-	{//someone is running
-		runner = qtrue;
-	}
-
 	if ( /*!runner &&*/ group->lastSeenEnemyTime > level.time - 32000 && group->lastSeenEnemyTime < level.time - 30000 )
 	{//no-one has seen the enemy for 30 seconds// and no-one is running after him
 		if ( group->commander && !Q_irand( 0, 1 ) )
@@ -1963,9 +1954,7 @@ void ST_Commander( void )
 		//reset combat point flags
 		cp = -1;
 		cpFlags = 0;
-		squadState = SQUAD_IDLE;
 		avoidDist = 0;
-		scouting = qfalse;
 
 		//get the next guy
 		member = &g_entities[group->member[i].number];
@@ -2142,7 +2131,6 @@ void ST_Commander( void )
 			//always avoid enemy when picking combat points, and we always want to be able to get there
 			cpFlags		|= CP_AVOID_ENEMY|CP_HAS_ROUTE|CP_TRYFAR;
 			avoidDist	 = 200;
-			cpFlags_org  = cpFlags;			//remember what we *wanted* to do...
 
 			//now get a combat point
 			if ( cp == -1 )
@@ -2154,7 +2142,6 @@ void ST_Commander( void )
 			if ( cp != -1 )
 			{//found a combat point
 				//let others know that someone is now running
-				runner = qtrue;
 				//don't change course again until we get to where we're going
 				TIMER_Set( NPC, "roamTime", Q3_INFINITE );
 

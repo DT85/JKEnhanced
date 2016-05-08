@@ -1,5 +1,8 @@
 // win_local.h: Win32-specific Quake3 header file
 #pragma once
+#error Deprecated file
+
+#include "qcommon/qcommon.h"
 
 #define DIRECTINPUT_VERSION 0x0800  //[ 0x0300 | 0x0500 | 0x0700 | 0x0800 ]
 #include <dinput.h>

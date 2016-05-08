@@ -1,8 +1,28 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
-
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
-
 
 // q_shared.h -- included first by ALL program modules.
 // A user mod should never modify this file
@@ -16,11 +36,13 @@
 #define HOMEPATH_NAME_MACOSX HOMEPATH_NAME_WIN
 
 #define	BASEGAME "base"
+#define OPENJKGAME "OpenJK"
 
 //NOTENOTE: Only change this to re-point ICARUS to a new script directory
 #define Q3_SCRIPT_DIR	"scripts"
 
 #define MAX_TEAMNAME 32
+#define MAX_MASTER_SERVERS      5	// number of supported master servers
 
 #define BASE_COMPAT // some unused and leftover code has been stripped out, but this breaks compatibility
 					//	between base<->modbase clients and servers (mismatching events, powerups, etc)
@@ -105,6 +127,12 @@
 	#define Q_EXPORT
 #endif
 
+#if defined(__GNUC__)
+#define NORETURN __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define NORETURN __declspec(noreturn)
+#endif
+
 // this is the define for determining if we have an asm version of a C function
 #if (defined(_M_IX86) || defined(__i386__)) && !defined(__sun__)
 	#define id386	1
@@ -135,12 +163,8 @@ typedef unsigned long ulong;
 
 typedef enum qboolean_e { qfalse=0, qtrue } qboolean;
 
-#ifndef min
-	#define min(x,y) ((x)<(y)?(x):(y))
-#endif
-#ifndef max
-	#define max(x,y) ((x)>(y)?(x):(y))
-#endif
+#define Q_min(x,y) ((x)<(y)?(x):(y))
+#define Q_max(x,y) ((x)>(y)?(x):(y))
 
 #if defined (_MSC_VER) && (_MSC_VER >= 1600)
 
@@ -217,7 +241,7 @@ typedef int32_t qhandle_t, thandle_t, fxHandle_t, sfxHandle_t, fileHandle_t, cli
 #define	MAX_QINT			0x7fffffff
 #define	MIN_QINT			(-MAX_QINT-1)
 
-#define INT_ID( a, b, c, d ) (uint32_t)((((d) & 0xff) << 24) | (((c) & 0xff) << 16) | (((b) & 0xff) << 8) | ((a) & 0xff))
+#define INT_ID( a, b, c, d ) (uint32_t)((((a) & 0xff) << 24) | (((b) & 0xff) << 16) | (((c) & 0xff) << 8) | ((d) & 0xff))
 
 // angle indexes
 #define	PITCH				0		// up / down
@@ -1023,7 +1047,7 @@ typedef struct pc_token_s
 
 void	COM_MatchToken( const char**buf_p, char *match );
 
-void SkipBracedSection (const char **program);
+qboolean SkipBracedSection (const char **program, int depth);
 void SkipRestOfLine ( const char **data );
 
 void Parse1DMatrix (const char **buf_p, int x, float *m);
@@ -1111,6 +1135,9 @@ float	LittleFloat (const float *l);
 
 void	Swap_Init (void);
 */
+
+int FloatAsInt( float f );
+
 char	* QDECL va(const char *format, ...);
 
 #define TRUNCATE_LENGTH	64
@@ -1134,7 +1161,7 @@ qboolean Info_NextPair( const char **s, char *key, char *value );
 	void (*Com_Error)( int level, const char *error, ... );
 	void (*Com_Printf)( const char *msg, ... );
 #else
-	void QDECL Com_Error( int level, const char *error, ... );
+	void NORETURN QDECL Com_Error( int level, const char *error, ... );
 	void QDECL Com_Printf( const char *msg, ... );
 #endif
 
@@ -2371,3 +2398,7 @@ enum {
 };
 
 void NET_AddrToString( char *out, size_t size, void *addr );
+
+qboolean Q_InBitflags( const uint32_t *bits, int index, uint32_t bitsPerByte );
+void Q_AddToBitflags( uint32_t *bits, int index, uint32_t bitsPerByte );
+void Q_RemoveFromBitflags( uint32_t *bits, int index, uint32_t bitsPerByte );

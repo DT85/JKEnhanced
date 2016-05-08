@@ -1,7 +1,31 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
 
 #include "cm_polylib.h"
-#include "cm_landscape.h" //rwwRMG - include
+#include "cm_public.h"
+#include "qcommon/qcommon.h"
 
 #define	MAX_SUBMODELS			512
 #define	BOX_MODEL_HANDLE		(MAX_SUBMODELS-1)
@@ -122,9 +146,6 @@ typedef struct clipMap_s {
 
 	int			floodvalid;
 	int			checkcount;					// incremented on each trace
-
-	//rwwRMG - added:
-	CCMLandScape	*landScape;
 } clipMap_t;
 
 
@@ -138,6 +159,7 @@ extern	int			c_traces, c_brush_traces, c_patch_traces;
 extern	cvar_t		*cm_noAreas;
 extern	cvar_t		*cm_noCurves;
 extern	cvar_t		*cm_playerCurveClip;
+extern	cvar_t		*cm_extraVerbose;
 
 // cm_test.c
 
@@ -187,9 +209,6 @@ typedef struct leafList_s {
 	void	(*storeLeafs)( struct leafList_s *ll, int nodenum );
 } leafList_t;
 
-
-bool CM_CullWorldBox (const cplane_t *frustum, const vec3pair_t bounds); //rwwRMG - added
-
 void CM_StoreLeafs( leafList_t *ll, int nodenum );
 void CM_StoreBrushes( leafList_t *ll, int nodenum );
 
@@ -203,10 +222,6 @@ struct patchCollide_s	*CM_GeneratePatchCollide( int width, int height, vec3_t *p
 void CM_TraceThroughPatchCollide( traceWork_t *tw, trace_t &trace, const struct patchCollide_s *pc );
 qboolean CM_PositionTestInPatchCollide( traceWork_t *tw, const struct patchCollide_s *pc );
 void CM_ClearLevelPatches( void );
-
-//rwwRMG - added
-CCMLandScape *CM_RegisterTerrain(const char *config, bool server);
-void CM_ShutdownTerrain( thandle_t terrainId );
 
 // cm_shader.cpp
 void CM_SetupShaderProperties( void );

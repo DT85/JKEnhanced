@@ -1,20 +1,29 @@
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
 
-/*
-Ghoul2 Insert Start
-*/
-#ifdef _MSC_VER
-#pragma warning (push, 3)	//go back down to 3 for the stl include
-#endif
 #include <vector>
 #include <map>
-#ifdef _MSC_VER
-#pragma warning (pop)
-#endif
-using namespace std;
-/*
-Ghoul2 Insert End
-*/
 
 #define MDXABONEDEF
 #include "rd-common/mdx_format.h"
@@ -221,10 +230,10 @@ struct SSkinGoreData
 
 #define MAX_GHOUL_COUNT_BITS 8 // bits required to send across the MAX_G2_MODELS inside of the networking - this is the only restriction on ghoul models possible per entity
 
-typedef vector <surfaceInfo_t> surfaceInfo_v;
-typedef vector <boneInfo_t> boneInfo_v;
-typedef vector <boltInfo_t> boltInfo_v;
-typedef vector <pair<int,mdxaBone_t> > mdxaBone_v;
+typedef std::vector <surfaceInfo_t> surfaceInfo_v;
+typedef std::vector <boneInfo_t> boneInfo_v;
+typedef std::vector <boltInfo_t> boltInfo_v;
+typedef std::vector <std::pair<int,mdxaBone_t> > mdxaBone_v;
 
 // defines for stuff to go into the mflags
 #define		GHOUL2_NOCOLLIDE 0x001
@@ -313,155 +322,6 @@ public:
 };
 
 class CGhoul2Info_v;
-
-class IGhoul2InfoArray
-{
-public:
-	virtual ~IGhoul2InfoArray() {}
-
-	virtual int New()=0;
-	virtual void Delete(int handle)=0;
-	virtual bool IsValid(int handle) const=0;
-	virtual vector<CGhoul2Info> &Get(int handle)=0;
-	virtual const vector<CGhoul2Info> &Get(int handle) const=0;
-};
-
-//externing this out of headers for re access :/
-IGhoul2InfoArray &_TheGhoul2InfoArray();
-
-extern const CGhoul2Info NullG2;
-class CGhoul2Info_v
-{
-	IGhoul2InfoArray &InfoArray() const
-	{
-		return _TheGhoul2InfoArray();
-	}
-
-	void Alloc()
-	{
-		assert(!mItem); //already alloced
-		mItem=InfoArray().New();
-		assert(!Array().size());
-	}
-	void Free()
-	{
-		if (mItem)
-		{
-			assert(InfoArray().IsValid(mItem));
-			InfoArray().Delete(mItem);
-			mItem=0;
-		}
-	}
-	vector<CGhoul2Info> &Array()
-	{
-		assert(InfoArray().IsValid(mItem));
-		return InfoArray().Get(mItem);
-	}
-	const vector<CGhoul2Info> &Array() const
-	{
-		assert(InfoArray().IsValid(mItem));
-		return InfoArray().Get(mItem);
-	}
-public:
-	int mItem;	//dont' be bad and muck with this
-	CGhoul2Info_v()
-	{
-		mItem=0;
-	}
-	CGhoul2Info_v(const int item)
-	{	//be VERY carefull with what you pass in here
-		mItem=item;
-	}
-	~CGhoul2Info_v()
-	{
-		Free(); //this had better be taken care of via the clean ghoul2 models call
-	}
-	void operator=(const CGhoul2Info_v &other)
-	{
-		mItem=other.mItem;
-	}
-	void operator=(const int otherItem)	//assigning one from the VM side item number
-	{
-		mItem=otherItem;
-	}
-	void DeepCopy(const CGhoul2Info_v &other)
-	{
-		Free();
-		if (other.mItem)
-		{
-			Alloc();
-			Array()=other.Array();
-			int i;
-			for (i=0;i<size();i++)
-			{
-				Array()[i].mBoneCache=0;
-				Array()[i].mTransformedVertsArray=0;
-				Array()[i].mSkelFrameNum=0;
-				Array()[i].mMeshFrameNum=0;
-			}
-		}
-	}
-	CGhoul2Info &operator[](int idx)
-	{
-		if ( IsValid() && idx >= 0 && idx < size() /*&& mItem */ )
-			return Array()[idx];
-		else
-			return const_cast<CGhoul2Info&>( NullG2 );
-	}
-	const CGhoul2Info &operator[](int idx) const
-	{
-		if ( idx >=0 && idx < size() /*&& mItem */ )
-			return Array()[idx];
-		else
-			return NullG2;
-	}
-	void resize(int num)
-	{
-		assert(num>=0);
-		if (num)
-		{
-			if (!mItem)
-			{
-				Alloc();
-			}
-		}
-		if (mItem||num)
-		{
-			Array().resize(num);
-		}
-	}
-	void clear()
-	{
-		Free();
-	}
-	void push_back(const CGhoul2Info &model)
-	{
-		if (!mItem)
-		{
-			Alloc();
-		}
-		Array().push_back(model);
-	}
-	int size() const
-	{
-		if (!IsValid())
-		{
-			return 0;
-		}
-		return Array().size();
-	}
-	bool IsValid() const
-	{
-		return InfoArray().IsValid(mItem);
-	}
-	void kill()
-	{
-		// this scary method zeros the infovector handle without actually freeing it
-		// it is used for some places where a copy is made, but we don't want to go through the trouble
-		// of making a deep copy
-		mItem=0;
-	}
-};
 
 // collision detection stuff
 #define G2_FRONTFACE 1

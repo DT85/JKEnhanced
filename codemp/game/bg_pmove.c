@@ -1,5 +1,26 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // bg_pmove.c -- both games player movement code
 // takes a playerstate and a usercmd as input and returns a modifed playerstate
 
@@ -357,9 +378,6 @@ void PM_pitch_roll_for_slope( bgEntity_t *forwhom, vec3_t pass_slope, vec3_t sto
 //			forwhom.flags(-)FL_ONGROUND;
 
 		if ( trace.fraction >= 1.0 )
-			return;
-
-		if( !( &trace.plane ) )
 			return;
 
 		if ( VectorCompare( vec3_origin, trace.plane.normal ) )
@@ -9628,7 +9646,7 @@ static QINLINE void PM_CmdForSaberMoves(usercmd_t *ucmd)
 void PM_VehicleViewAngles(playerState_t *ps, bgEntity_t *veh, usercmd_t *ucmd)
 {
 	Vehicle_t *pVeh = veh->m_pVehicle;
-	qboolean setAngles = qtrue;
+	qboolean setAngles = qfalse;
 	vec3_t clampMin;
 	vec3_t clampMax;
 	int i;

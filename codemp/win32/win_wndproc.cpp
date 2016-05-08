@@ -1,6 +1,3 @@
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
-
 #include "client/client.h"
 #include "win_local.h"
 
@@ -363,7 +360,7 @@ LONG WINAPI MainWndProc (
 				r.right  = 1;
 				r.bottom = 1;
 
-				style = GetWindowLong( hWnd, GWL_STYLE );
+				style = GetWindowLongPtr( hWnd, GWL_STYLE );
 				AdjustWindowRect( &r, style, FALSE );
 
 				Cvar_SetValue( "vid_xpos", xPos + r.left);

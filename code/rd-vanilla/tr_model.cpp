@@ -1,25 +1,29 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // tr_models.c -- model loading and caching
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
 
 #include "tr_local.h"
@@ -27,6 +31,8 @@ This file is part of Jedi Academy.
 #include "../qcommon/sstring.h"
 
 #define	LL(x) x=LittleLong(x)
+#define	LS(x) x=LittleShort(x)
+#define	LF(x) x=LittleFloat(x)
 
 void RE_LoadWorldMap_Actual( const char *name, world_t &worldData, int index ); //should only be called for sub-bsp instances
 
@@ -57,8 +63,8 @@ Ghoul2 Insert End
 // This stuff looks a bit messy, but it's kept here as black box, and nothing appears in any .H files for other 
 //	modules to worry about. I may make another module for this sometime.
 //
-typedef pair<int,int> StringOffsetAndShaderIndexDest_t;
-typedef vector <StringOffsetAndShaderIndexDest_t> ShaderRegisterData_t;
+typedef std::pair<int,int> StringOffsetAndShaderIndexDest_t;
+typedef std::vector <StringOffsetAndShaderIndexDest_t> ShaderRegisterData_t;
 struct CachedEndianedModelBinary_s
 {
 	void	*pModelDiskImage;
@@ -76,7 +82,7 @@ struct CachedEndianedModelBinary_s
 	}
 };
 typedef struct CachedEndianedModelBinary_s CachedEndianedModelBinary_t;
-typedef map <sstring_t,CachedEndianedModelBinary_t>	CachedModels_t;
+typedef std::map <sstring_t,CachedEndianedModelBinary_t>	CachedModels_t;
 													CachedModels_t *CachedModels = NULL;	// the important cache item.
 
 void RE_RegisterModels_StoreShaderRequest(const char *psModelFileName, const char *psShaderName, const int *piShaderIndexPoke)
@@ -262,11 +268,8 @@ qboolean RE_RegisterModels_LevelLoadEnd(qboolean bDeleteEverythingNotUsedThisLev
 		int iLoadedModelBytes	=	GetModelDataAllocSize();
 		const int iMaxModelBytes=	r_modelpoolmegs->integer * 1024 * 1024;
 
-		qboolean bEraseOccured = qfalse;
-		for (CachedModels_t::iterator itModel = CachedModels->begin(); itModel != CachedModels->end() && ( bDeleteEverythingNotUsedThisLevel || iLoadedModelBytes > iMaxModelBytes ); bEraseOccured?itModel:++itModel)
-		{			
-			bEraseOccured = qfalse;
-
+		for (CachedModels_t::iterator itModel = CachedModels->begin(); itModel != CachedModels->end() && ( bDeleteEverythingNotUsedThisLevel || iLoadedModelBytes > iMaxModelBytes ); )
+		{
 			CachedEndianedModelBinary_t &CachedModel = (*itModel).second;
 
 			qboolean bDeleteThis = qfalse;
@@ -295,17 +298,13 @@ qboolean RE_RegisterModels_LevelLoadEnd(qboolean bDeleteEverythingNotUsedThisLev
 					//CachedModel.pModelDiskImage = NULL;	// REM for reference, erase() call below negates the need for it.
 					bAtLeastoneModelFreed = qtrue;
 				}
+				CachedModels->erase(itModel++);
 
-#ifdef _WIN32
-				itModel = CachedModels->erase(itModel);
-#else
-                CachedModels_t::iterator itTemp = itModel;
-                itModel++;
-                CachedModels->erase(itTemp);
-#endif
-				bEraseOccured = qtrue;
-
-				iLoadedModelBytes = GetModelDataAllocSize();				
+				iLoadedModelBytes = GetModelDataAllocSize();
+			}
+			else
+			{
+				++itModel;
 			}
 		}
 	}
@@ -344,20 +343,19 @@ void RE_RegisterModels_Info_f( void )
 
 static void RE_RegisterModels_DeleteAll(void)
 {
+	if(!CachedModels) {
+		return;	//argh!
+	}
+
 	for (CachedModels_t::iterator itModel = CachedModels->begin(); itModel != CachedModels->end(); )
 	{
 		CachedEndianedModelBinary_t &CachedModel = (*itModel).second;
 
 		if (CachedModel.pModelDiskImage) {
-			Z_Free(CachedModel.pModelDiskImage);					
+			Z_Free(CachedModel.pModelDiskImage);
 		}
-#ifdef _WIN32
-		itModel = CachedModels->erase(itModel);	
-#else
-        CachedModels_t::iterator itTemp = itModel;
-        itModel++;
-        CachedModels->erase(itTemp);
-#endif
+
+		CachedModels->erase(itModel++);
 	}
 
 	extern void RE_AnimationCFGs_DeleteAll(void);
@@ -631,7 +629,7 @@ Ghoul2 Insert End
 	Q_strncpyz( mod->name, name, sizeof( mod->name ) );
 
 	// make sure the render thread is stopped
-	//R_SyncRenderThread();
+	R_IssuePendingRenderCommands(); //
 
 	int iLODStart = 0;
 	if (strstr (name, ".md3")) {
@@ -792,7 +790,7 @@ static qboolean R_LoadMD3 (model_t *mod, int lod, void *buffer, const char *mod_
 	int					version;
 	int					size;
 
-#if 0 //#ifndef _M_IX86
+#ifdef Q3_BIG_ENDIAN
 	md3Frame_t			*frame;
 	md3Triangle_t		*tri;
 	md3St_t				*st;
@@ -861,31 +859,27 @@ static qboolean R_LoadMD3 (model_t *mod, int lod, void *buffer, const char *mod_
 		return qtrue;	// All done. Stop, go no further, do not pass Go...
 	}
 
-#if 0 //#ifndef _M_IX86
-	//
-	// optimisation, we don't bother doing this for standard intel case since our data's already in that format...
-	//
-
+#ifdef Q3_BIG_ENDIAN
 	// swap all the frames
-    frame = (md3Frame_t *) ( (byte *)mod->md3[lod] + mod->md3[lod]->ofsFrames );
-    for ( i = 0 ; i < mod->md3[lod]->numFrames ; i++, frame++) {
-    	frame->radius = LittleFloat( frame->radius );
-        for ( j = 0 ; j < 3 ; j++ ) {
-            frame->bounds[0][j] = LittleFloat( frame->bounds[0][j] );
-            frame->bounds[1][j] = LittleFloat( frame->bounds[1][j] );
-	    	frame->localOrigin[j] = LittleFloat( frame->localOrigin[j] );
-        }
+	frame = (md3Frame_t *) ( (byte *)mod->md3[lod] + mod->md3[lod]->ofsFrames );
+	for ( i = 0 ; i < mod->md3[lod]->numFrames ; i++, frame++) {
+		LF(frame->radius);
+		for ( j = 0 ; j < 3 ; j++ ) {
+			LF(frame->bounds[0][j]);
+			LF(frame->bounds[1][j]);
+			LF(frame->localOrigin[j]);
+		}
 	}
 
 	// swap all the tags
-    tag = (md3Tag_t *) ( (byte *)mod->md3[lod] + mod->md3[lod]->ofsTags );
-    for ( i = 0 ; i < mod->md3[lod]->numTags * mod->md3[lod]->numFrames ; i++, tag++) {
-        for ( j = 0 ; j < 3 ; j++ ) {
-			tag->origin[j] = LittleFloat( tag->origin[j] );
-			tag->axis[0][j] = LittleFloat( tag->axis[0][j] );
-			tag->axis[1][j] = LittleFloat( tag->axis[1][j] );
-			tag->axis[2][j] = LittleFloat( tag->axis[2][j] );
-        }
+	tag = (md3Tag_t *) ( (byte *)mod->md3[lod] + mod->md3[lod]->ofsTags );
+	for ( i = 0 ; i < mod->md3[lod]->numTags * mod->md3[lod]->numFrames ; i++, tag++) {
+		for ( j = 0 ; j < 3 ; j++ ) {
+			LF(tag->origin[j]);
+			LF(tag->axis[0][j]);
+			LF(tag->axis[1][j]);
+			LF(tag->axis[2][j]);
+		}
 	}
 #endif
 
@@ -940,11 +934,7 @@ static qboolean R_LoadMD3 (model_t *mod, int lod, void *buffer, const char *mod_
         }
 
 
-#if 0 //#ifndef _M_IX86
-//
-// optimisation, we don't bother doing this for standard intel case since our data's already in that format...
-//
-
+#ifdef Q3_BIG_ENDIAN
 		// swap all the triangles
 		tri = (md3Triangle_t *) ( (byte *)surf + surf->ofsTriangles );
 		for ( j = 0 ; j < surf->numTriangles ; j++, tri++ ) {
@@ -954,22 +944,22 @@ static qboolean R_LoadMD3 (model_t *mod, int lod, void *buffer, const char *mod_
 		}
 
 		// swap all the ST
-        st = (md3St_t *) ( (byte *)surf + surf->ofsSt );
-        for ( j = 0 ; j < surf->numVerts ; j++, st++ ) {
-            st->st[0] = LittleFloat( st->st[0] );
-            st->st[1] = LittleFloat( st->st[1] );
-        }
+		st = (md3St_t *) ( (byte *)surf + surf->ofsSt );
+		for ( j = 0 ; j < surf->numVerts ; j++, st++ ) {
+			LF(st->st[0]);
+			LF(st->st[1]);
+		}
 
 		// swap all the XyzNormals
-        xyz = (md3XyzNormal_t *) ( (byte *)surf + surf->ofsXyzNormals );
-        for ( j = 0 ; j < surf->numVerts * surf->numFrames ; j++, xyz++ ) 
+		xyz = (md3XyzNormal_t *) ( (byte *)surf + surf->ofsXyzNormals );
+		for ( j = 0 ; j < surf->numVerts * surf->numFrames ; j++, xyz++ ) 
 		{
-            xyz->xyz[0] = LittleShort( xyz->xyz[0] );
-            xyz->xyz[1] = LittleShort( xyz->xyz[1] );
-            xyz->xyz[2] = LittleShort( xyz->xyz[2] );
+			LS(xyz->xyz[0]);
+			LS(xyz->xyz[1]);
+			LS(xyz->xyz[2]);
 
-            xyz->normal = LittleShort( xyz->normal );
-        }
+			LS(xyz->normal);
+		}
 #endif
 
 		// find the next surface
@@ -989,16 +979,16 @@ void CM_SetupShaderProperties(void);
 ** RE_BeginRegistration
 */
 void RE_BeginRegistration( glconfig_t *glconfigOut ) {
-	ri->CM_ShaderTableCleanup();
 	ri->Hunk_ClearToMark();
 
 	R_Init();
 
 	*glconfigOut = glConfig;
 
+	R_IssuePendingRenderCommands();
+
 	tr.viewCluster = -1;		// force markleafs to regenerate
 
-	R_SyncRenderThread();
 
 	RE_ClearScene();
 

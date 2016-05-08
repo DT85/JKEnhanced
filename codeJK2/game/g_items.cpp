@@ -1,25 +1,28 @@
 /*
-This file is part of Jedi Knight 2.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Knight 2 is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Knight 2 is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Knight 2.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // leave this line at the top for all g_xxxx.cpp files...
 #include "g_headers.h"
-
-
 
 #include "g_local.h"
 #include "g_functions.h"
@@ -65,7 +68,7 @@ extern	cvar_t	*g_spskill;
 G_InventorySelectable
 ===============
 */
-qboolean G_InventorySelectable( int index,gentity_t *other) 
+qboolean G_InventorySelectable( int index,gentity_t *other)
 {
 	if (other->client->ps.inventory[index])
 	{
@@ -78,7 +81,7 @@ qboolean G_InventorySelectable( int index,gentity_t *other)
 extern qboolean INV_GoodieKeyGive( gentity_t *target );
 extern qboolean INV_SecurityKeyGive( gentity_t *target, const char *keyname );
 void Add_Batteries( gentity_t *ent, float *count );
-int Pickup_Holdable( gentity_t *ent, gentity_t *other ) 
+int Pickup_Holdable( gentity_t *ent, gentity_t *other )
 {
 	int		i,original;
 
@@ -130,15 +133,15 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other )
 
 	// Set the inventory select, just in case it hasn't
 	original = cg.inventorySelect;
-	for ( i = 0 ; i < INV_MAX ; i++ ) 
+	for ( i = 0 ; i < INV_MAX ; i++ )
 	{
 		if ((cg.inventorySelect < INV_ELECTROBINOCULARS) || (cg.inventorySelect >= INV_MAX))
-		{ 
-			cg.inventorySelect = (INV_MAX - 1); 
+		{
+			cg.inventorySelect = (INV_MAX - 1);
 		}
-		
-		if ( G_InventorySelectable( cg.inventorySelect,other ) ) 
-		{	
+
+		if ( G_InventorySelectable( cg.inventorySelect,other ) )
+		{
 			return 60;
 		}
 		cg.inventorySelect++;
@@ -238,7 +241,7 @@ void Add_Batteries( gentity_t *ent, float *count )
 		else
 		{
 			// just drain all of the batteries
-			ent->client->ps.batteryCharge += *count;	
+			ent->client->ps.batteryCharge += *count;
 			*count = 0;
 		}
 
@@ -251,11 +254,11 @@ int Pickup_Battery( gentity_t *ent, gentity_t *other )
 {
 	int	quantity;
 
-	if ( ent->count ) 
+	if ( ent->count )
 	{
 		quantity = ent->count;
-	} 
-	else 
+	}
+	else
 	{
 		quantity = ent->item->quantity;
 	}
@@ -276,24 +279,24 @@ int Pickup_Battery( gentity_t *ent, gentity_t *other )
 
 extern void WP_SaberInitBladeData( gentity_t *ent );
 extern void CG_ChangeWeapon( int num );
-int Pickup_Weapon (gentity_t *ent, gentity_t *other) 
+int Pickup_Weapon (gentity_t *ent, gentity_t *other)
 {
 	int		quantity;
 	qboolean	hadWeapon = qfalse;
 
 	/*
-	if ( ent->count || (ent->activator && !ent->activator->s.number) ) 
+	if ( ent->count || (ent->activator && !ent->activator->s.number) )
 	{
 		quantity = ent->count;
-	} 
-	else 
+	}
+	else
 	{
 		quantity = ent->item->quantity;
 	}
 	*/
 
 	// dropped items are always picked up
-	if ( ent->flags & FL_DROPPED_ITEM ) 
+	if ( ent->flags & FL_DROPPED_ITEM )
 	{
 		quantity = ent->count;
 	}
@@ -345,9 +348,9 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other)
 
 //======================================================================
 
-int ITM_AddHealth (gentity_t *ent, int count) 
+int ITM_AddHealth (gentity_t *ent, int count)
 {
-	
+
 	ent->health += count;
 
 	if (ent->health > ent->client->ps.stats[STAT_MAX_HEALTH])	// Past max health
@@ -397,7 +400,7 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 
 //======================================================================
 
-int ITM_AddArmor (gentity_t *ent, int count) 
+int ITM_AddArmor (gentity_t *ent, int count)
 {
 	if ( ent->client->ps.stats[STAT_ARMOR] > ent->client->ps.stats[STAT_MAX_HEALTH] )
 		return qfalse;
@@ -452,7 +455,7 @@ int Pickup_Holocron( gentity_t *ent, gentity_t *other )
 		gi.Printf(" Pickup_Holocron : count %d not in valid range\n", forceLevel );
 		return 1;
 	}
-	 
+
 	// don't pick up if already known AND your level is higher than pickup level
 	if ( ( other->client->ps.forcePowersKnown & ( 1 << forcePower )) )
 	{
@@ -465,15 +468,15 @@ int Pickup_Holocron( gentity_t *ent, gentity_t *other )
 
 	other->client->ps.forcePowerLevel[forcePower] = forceLevel;
 	other->client->ps.forcePowersKnown |= ( 1 << forcePower );
-	
+
 	missionInfo_Updated = qtrue;	// Activate flashing text
-	gi.cvar_set("cg_updatedDataPadForcePower1", va("%d",forcePower+1)); // The +1 is offset in the print routine. 
+	gi.cvar_set("cg_updatedDataPadForcePower1", va("%d",forcePower+1)); // The +1 is offset in the print routine.
 	cg_updatedDataPadForcePower1.integer = forcePower+1;
-	gi.cvar_set("cg_updatedDataPadForcePower2", "0"); // The +1 is offset in the print routine. 
+	gi.cvar_set("cg_updatedDataPadForcePower2", "0"); // The +1 is offset in the print routine.
 	cg_updatedDataPadForcePower2.integer = 0;
-	gi.cvar_set("cg_updatedDataPadForcePower3", "0"); // The +1 is offset in the print routine. 
+	gi.cvar_set("cg_updatedDataPadForcePower3", "0"); // The +1 is offset in the print routine.
 	cg_updatedDataPadForcePower3.integer = 0;
-	
+
 	return 1;
 }
 
@@ -491,15 +494,21 @@ void RespawnItem( gentity_t *ent ) {
 
 qboolean CheckItemCanBePickedUpByNPC( gentity_t *item, gentity_t *pickerupper )
 {
-	if ( (item->flags&FL_DROPPED_ITEM) 
-		&& item->activator != &g_entities[0] 
-		&& pickerupper->s.number 
-		&& pickerupper->s.weapon == WP_NONE 
-		&& pickerupper->enemy 
+	if ( !item->item ) {
+		return qfalse;
+	}
+	if ( item->item->giType == IT_HOLDABLE &&
+		item->item->giTag == INV_SECURITY_KEY ) {
+		return qfalse;
+	}
+	if ( (item->flags&FL_DROPPED_ITEM)
+		&& item->activator != &g_entities[0]
+		&& pickerupper->s.number
+		&& pickerupper->s.weapon == WP_NONE
+		&& pickerupper->enemy
 		&& pickerupper->painDebounceTime < level.time
 		&& pickerupper->NPC && pickerupper->NPC->surrenderTime < level.time //not surrendering
-		&& !(pickerupper->NPC->scriptFlags&SCF_FORCED_MARCH) //not being forced to march
-		&& item->item->giTag != INV_SECURITY_KEY )
+		&& !(pickerupper->NPC->scriptFlags&SCF_FORCED_MARCH) ) // not being forced to march
 	{//non-player, in combat, picking up a dropped item that does NOT belong to the player and it *not* a security key
 		if ( level.time - item->s.time < 3000 )//was 5000
 		{
@@ -540,18 +549,18 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		return;
 	}
 
-	
-	if ( other->client->NPC_class == CLASS_ATST || 
-		other->client->NPC_class == CLASS_GONK || 
-		other->client->NPC_class == CLASS_MARK1 || 
-		other->client->NPC_class == CLASS_MARK2 || 
-		other->client->NPC_class == CLASS_MOUSE || 
-		other->client->NPC_class == CLASS_PROBE || 
-		other->client->NPC_class == CLASS_PROTOCOL || 
-		other->client->NPC_class == CLASS_R2D2 || 
-		other->client->NPC_class == CLASS_R5D2 || 
-		other->client->NPC_class == CLASS_SEEKER || 
-		other->client->NPC_class == CLASS_REMOTE || 
+
+	if ( other->client->NPC_class == CLASS_ATST ||
+		other->client->NPC_class == CLASS_GONK ||
+		other->client->NPC_class == CLASS_MARK1 ||
+		other->client->NPC_class == CLASS_MARK2 ||
+		other->client->NPC_class == CLASS_MOUSE ||
+		other->client->NPC_class == CLASS_PROBE ||
+		other->client->NPC_class == CLASS_PROTOCOL ||
+		other->client->NPC_class == CLASS_R2D2 ||
+		other->client->NPC_class == CLASS_R5D2 ||
+		other->client->NPC_class == CLASS_SEEKER ||
+		other->client->NPC_class == CLASS_REMOTE ||
 		other->client->NPC_class == CLASS_SENTRY )
 	{//FIXME: some flag would be better
 		//droids can't pick up items/weapons!
@@ -598,7 +607,7 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	}
 	qboolean bHadWeapon = qfalse;
 	// call the item-specific pickup function
-	switch( ent->item->giType ) 
+	switch( ent->item->giType )
 	{
 	case IT_WEAPON:
 		if ( other->NPC && other->s.weapon == WP_NONE )
@@ -653,7 +662,7 @@ extern void CG_ItemPickup( int itemNum, qboolean bHadItem );
 		if ( bHadWeapon )
 		{
 			G_AddEvent( other, EV_ITEM_PICKUP, -ent->s.modelindex );
-		} 
+		}
 		else
 		{
 			G_AddEvent( other, EV_ITEM_PICKUP, ent->s.modelindex );
@@ -669,7 +678,7 @@ extern void CG_ItemPickup( int itemNum, qboolean bHadItem );
 	}
 
 	// wait of -1 will not respawn
-//	if ( ent->wait == -1 ) 
+//	if ( ent->wait == -1 )
 	{
 		//why not just remove me?
 		G_FreeEntity( ent );
@@ -710,7 +719,7 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity, char *targ
 	VectorSet( dropped->mins, item->mins[0], item->mins[1], item->mins[2] );
 	VectorSet( dropped->maxs, item->maxs[0], item->maxs[1], item->maxs[2] );
 
-	if ((!dropped->mins[0] && !dropped->mins[1] && !dropped->mins[2]) && 
+	if ((!dropped->mins[0] && !dropped->mins[1] && !dropped->mins[2]) &&
 		(!dropped->maxs[0] && !dropped->maxs[1] && !dropped->maxs[2]))
 	{
 		VectorSet( dropped->maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS );
@@ -788,7 +797,7 @@ gentity_t *Drop_Item( gentity_t *ent, gitem_t *item, float angle, qboolean copyt
 	AngleVectors( angles, velocity, NULL, NULL );
 	VectorScale( velocity, 150, velocity );
 	velocity[2] += 200 + crandom() * 50;
-	
+
 	if ( copytarget )
 	{
 		dropped = LaunchItem( item, ent->s.pos.trBase, velocity, ent->opentarget );
@@ -811,7 +820,7 @@ Use_Item
 Respawn the item
 ================
 */
-void Use_Item( gentity_t *ent, gentity_t *other, gentity_t *activator ) 
+void Use_Item( gentity_t *ent, gentity_t *other, gentity_t *activator )
 {
 	if ( (ent->svFlags&SVF_PLAYER_USABLE) && other && !other->s.number )
 	{//used directly by the player, pick me up
@@ -854,7 +863,7 @@ void FinishSpawningItem( gentity_t *ent ) {
 	int			itemNum;
 
 	itemNum=1;
-	for ( item = bg_itemlist + 1 ; item->classname ; item++,itemNum++) 
+	for ( item = bg_itemlist + 1 ; item->classname ; item++,itemNum++)
 	{
 		if (!strcmp(item->classname,ent->classname))
 		{
@@ -866,7 +875,7 @@ void FinishSpawningItem( gentity_t *ent ) {
 	VectorSet( ent->mins, item->mins[0],item->mins[1] ,item->mins[2]);
 	VectorSet( ent->maxs, item->maxs[0],item->maxs[1] ,item->maxs[2]);
 
-	if ((!ent->mins[0] && !ent->mins[1] && !ent->mins[2]) && 
+	if ((!ent->mins[0] && !ent->mins[1] && !ent->mins[2]) &&
 		(!ent->maxs[0] && !ent->maxs[1] && !ent->maxs[2]))
 	{
 		VectorSet (ent->mins, -ITEM_RADIUS, -ITEM_RADIUS, -2);//to match the comments in the items.dat file!
@@ -880,7 +889,7 @@ void FinishSpawningItem( gentity_t *ent ) {
 
 	if ((item->quantity) && (item->giType == IT_BATTERY))
 	{
-		ent->count = item->quantity; 
+		ent->count = item->quantity;
 	}
 
 
@@ -888,7 +897,7 @@ void FinishSpawningItem( gentity_t *ent ) {
 	{
 		ent->s.radius = 20;
 		VectorSet( ent->s.modelScale, 1.0f, 1.0f, 1.0f );
-		gi.G2API_InitGhoul2Model( ent->ghoul2, ent->item->world_model, G_ModelIndex( ent->item->world_model ), NULL, NULL, 0, 0);
+		gi.G2API_InitGhoul2Model( ent->ghoul2, ent->item->world_model, G_ModelIndex( ent->item->world_model ), NULL_HANDLE, NULL_HANDLE, 0, 0);
 	}
 
 	// Set crystal ammo amount based on skill level
@@ -913,17 +922,17 @@ void FinishSpawningItem( gentity_t *ent ) {
 
 	// Hang in air?
 	ent->s.origin[2] += 1;//just to get it off the damn ground because coplanar = insolid
-	if ( ent->spawnflags & ITMSF_SUSPEND) 
+	if ( ent->spawnflags & ITMSF_SUSPEND)
 	{
 		// suspended
 		G_SetOrigin( ent, ent->s.origin );
-	} 
-	else 
+	}
+	else
 	{
 		// drop to floor
 		VectorSet( dest, ent->s.origin[0], ent->s.origin[1], MIN_WORLD_COORD );
 		gi.trace( &tr, ent->s.origin, ent->mins, ent->maxs, dest, ent->s.number, MASK_SOLID|CONTENTS_PLAYERCLIP, G2_NOCOLLIDE, 0 );
-		if ( tr.startsolid ) 
+		if ( tr.startsolid )
 		{
 			if ( &g_entities[tr.entityNum] != NULL )
 			{
@@ -981,7 +990,10 @@ ClearRegisteredItems
 ==============
 */
 void ClearRegisteredItems( void ) {
-	memset( itemRegistered, '0', bg_numItems );
+	for ( int i = 0; i < bg_numItems; i++ )
+	{
+		itemRegistered[i] = '0';
+	}
 	itemRegistered[ bg_numItems ] = 0;
 
 	RegisterItem( FindItemForWeapon( WP_BRYAR_PISTOL ) );	//these are given in g_client, ClientSpawn(), but MUST be registered HERE, BEFORE cgame starts.
@@ -1052,7 +1064,7 @@ void item_spawn_use( gentity_t *self, gentity_t *other, gentity_t *activator )
 	self->nextthink = level.time + 50;
 	self->e_ThinkFunc = thinkF_FinishSpawningItem;
 	// I could be fancy and add a count or something like that to be able to spawn the item numerous times...
-	self->e_UseFunc = NULL;
+	self->e_UseFunc = useF_NULL;
 }
 
 /*
@@ -1177,16 +1189,16 @@ void G_RunItem( gentity_t *ent ) {
 	int			mask;
 
 	// if groundentity has been set to -1, it may have been pushed off an edge
-	if ( ent->s.groundEntityNum == ENTITYNUM_NONE ) 
+	if ( ent->s.groundEntityNum == ENTITYNUM_NONE )
 	{
-		if ( ent->s.pos.trType != TR_GRAVITY ) 
+		if ( ent->s.pos.trType != TR_GRAVITY )
 		{
 			ent->s.pos.trType = TR_GRAVITY;
 			ent->s.pos.trTime = level.time;
 		}
 	}
 
-	if ( ent->s.pos.trType == TR_STATIONARY ) 
+	if ( ent->s.pos.trType == TR_STATIONARY )
 	{
 		// check think function
 		G_RunThink( ent );
@@ -1205,11 +1217,11 @@ void G_RunItem( gentity_t *ent ) {
 	EvaluateTrajectory( &ent->s.pos, level.time, origin );
 
 	// trace a line from the previous position to the current position
-	if ( ent->clipmask ) 
+	if ( ent->clipmask )
 	{
 		mask = ent->clipmask;
-	} 
-	else 
+	}
+	else
 	{
 		mask = MASK_SOLID|CONTENTS_PLAYERCLIP;//shouldn't be able to get anywhere player can't
 	}
@@ -1227,7 +1239,7 @@ void G_RunItem( gentity_t *ent ) {
 
 	VectorCopy( tr.endpos, ent->currentOrigin );
 
-	if ( tr.startsolid ) 
+	if ( tr.startsolid )
 	{
 		tr.fraction = 0;
 	}
@@ -1237,7 +1249,7 @@ void G_RunItem( gentity_t *ent ) {
 	// check think function
 	G_RunThink( ent );
 
-	if ( tr.fraction == 1 ) 
+	if ( tr.fraction == 1 )
 	{
 		if ( g_gravity->value <= 0 )
 		{
@@ -1270,7 +1282,7 @@ void G_RunItem( gentity_t *ent ) {
 
 	// if it is in a nodrop volume, remove it
 	contents = gi.pointcontents( ent->currentOrigin, -1 );
-	if ( contents & CONTENTS_NODROP ) 
+	if ( contents & CONTENTS_NODROP )
 	{
 		G_FreeEntity( ent );
 		return;

@@ -1,20 +1,25 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 #include "../icarus/IcarusInterface.h"
 #include "../cgame/cg_local.h"
@@ -362,17 +367,7 @@ respawn
 */
 void respawn( gentity_t *ent ) {
 
-	if (Q_stricmpn(level.mapname,"_holo",5)) {
-		gi.SendConsoleCommand("load *respawn\n");	// special case
-	}
-	else {//we're on the holodeck
-		int			flags;
-
-		// toggle the teleport bit so the client knows to not lerp
-		flags = ent->client->ps.eFlags;
-		ClientSpawn(ent, eNO/*qfalse*/);	// SavedGameJustLoaded_e
-		ent->client->ps.eFlags = flags ^ EF_TELEPORT_BIT;
-	}
+	gi.SendConsoleCommand("load *respawn\n");	// special case
 }
 
 /*
@@ -845,48 +840,6 @@ static void Player_RestoreFromPrevLevel(gentity_t *ent, SavedGameJustLoaded_e eS
 
 			client->ps.forceGripEntityNum = client->ps.forceDrainEntityNum = ENTITYNUM_NONE;
 		}
-
-
-		// if we're in DEMO mode read in the forcepowers from the
-		// demo cvar, even though we already might have read in something from above
-		if(eSavedGameJustLoaded == eNO && gi.Cvar_VariableIntegerValue("com_demo") )
-		{
-			// the new JK2 stuff - force powers, etc...
-			//
-			gi.Cvar_VariableStringBuffer( "demo_playerfplvl", s, sizeof(s) );
-			int j=0;
-			var = strtok( s, " " );
-			while( var != NULL )
-			{
-				/* While there are tokens in "s" */
-				client->ps.forcePowerLevel[j] = atoi(var);
-				if( client->ps.forcePowerLevel[j] )
-				{
-					client->ps.forcePowersKnown |= (1 << j );
-				}
-				j++;
-			  /* Get next token: */
-			  var = strtok( NULL, " " );
-			}
-			assert (j==NUM_FORCE_POWERS);
-
-			client->ps.forceGripEntityNum = client->ps.forceDrainEntityNum = ENTITYNUM_NONE;
-
-			// now do weapons
-			gi.Cvar_VariableStringBuffer( "demo_playerwpns", s, sizeof(s) );
-			
-			client->ps.stats[STAT_WEAPONS] = atoi(s);
-
-			for(j=0 ; j<WP_NUM_WEAPONS ; j++ )
-			{
-				// if I've got the weapon
-				if( client->ps.stats[STAT_WEAPONS] & (1<<j) )
-				{	// give them max ammo
-					client->ps.ammo[weaponData[j].ammoIndex] = ammoData[weaponData[j].ammoIndex].max;
-				}
-			}
-
-		}
 	}
 }
 
@@ -1269,6 +1222,11 @@ qboolean G_SetG2PlayerModelInfo( gentity_t *ent, const char *modelName, const ch
 				{
 					Com_sprintf( strTemp, 128, "*muzzle%d", i + 1 );
 					ent->m_pVehicle->m_iMuzzleTag[i] = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], strTemp );
+					if ( ent->m_pVehicle->m_iMuzzleTag[i] == -1 )
+					{//ergh, try *flash?
+						Com_sprintf( strTemp, 128, "*flash%d", i + 1 );
+						ent->m_pVehicle->m_iMuzzleTag[i] = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], strTemp );
+					}
 				}
 			}
 			else if ( ent->client->NPC_class == CLASS_HOWLER )
@@ -1797,7 +1755,6 @@ void G_SetG2PlayerModel( gentity_t * const ent, const char *modelName, const cha
 		}
 	}
 	int skin = gi.RE_RegisterSkin( skinName );
-	assert(skin);
 	//now generate the ghoul2 model this client should be.
 	if ( ent->client->NPC_class == CLASS_VEHICLE )
 	{//vehicles actually grab their model from the appropriate vehicle data entry
@@ -1818,7 +1775,6 @@ void G_SetG2PlayerModel( gentity_t * const ent, const char *modelName, const cha
 		modelName = "stormtrooper";
 		Com_sprintf( skinName, sizeof( skinName ), "models/players/%s/model_default.skin", modelName );
 		skin = gi.RE_RegisterSkin( skinName );
-		assert(skin);
 		ent->playerModel = gi.G2API_InitGhoul2Model( ent->ghoul2, va("models/players/%s/model.glm", modelName), G_ModelIndex( va("models/players/%s/model.glm", modelName) ), NULL_HANDLE, NULL_HANDLE, 0, 0 );
 	}
 	if (ent->playerModel == -1)

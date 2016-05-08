@@ -1,20 +1,24 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // RAVEN SOFTWARE - STAR WARS: JK II
@@ -81,6 +85,7 @@ enum
 	SPEECH_PUSHED
 };
 extern void G_AddVoiceEvent( gentity_t *self, int event, int speakDebounceTime );
+extern void CG_DrawEdge( vec3_t start, vec3_t end, int type );
 static void HT_Speech( gentity_t *self, int speechType, float failChance )
 {
 	if ( random() < failChance )
@@ -294,7 +299,7 @@ public:
 		assert(actor->NPC->troop==mTroopHandle);
 		int		bestNewLeader=-1;
 		int		numEnts = mActors.size();
-		bool	found = false;
+		//bool	found = false;
 		mTroopReform = true;
 
 		// Find The Actor
@@ -303,7 +308,7 @@ public:
 		{
 			if (mActors[i]==actor)
 			{
-				found = true;
+				//found = true;
 				mActors.erase_swap(i);
 				numEnts --;
 				if (i==0 && !mActors.empty())
@@ -322,19 +327,9 @@ public:
 			MakeActorLeader(bestNewLeader);
 		}
 
-		assert(found);
+		//assert(found);
 		actor->NPC->troop = 0;
 	}
-
-	
-
-
-
-
-
-
-
-
 
 private:
 	////////////////////////////////////////////////////////////////////////////////////
@@ -441,8 +436,6 @@ private:
 		}
 		return ClampScale(Scale);
 	}
-
-
 
 	////////////////////////////////////////////////////////////////////////////////////
 	// Scan For Enemies
@@ -712,8 +705,6 @@ private:
 
 // PHASE II - COMPUTE THE NEW FORMATION HEAD, FORWARD, AND RIGHT VECTORS
 //=======================================================================
-		CVec3	PreviousFwd = mFormFwd;
-
 		mFormHead	= leader->currentOrigin;
 		mFormFwd	= (NAV::HasPath(leader))?(NAV::NextPosition(leader)):(mTargetLastKnownPosition);
 		mFormFwd	-= mFormHead;

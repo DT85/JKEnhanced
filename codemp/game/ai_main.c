@@ -1,5 +1,25 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
 
 /*****************************************************************************
  * name:		ai_main.c
@@ -534,11 +554,10 @@ void BotInputToUserCommand(bot_input_t *bi, usercmd_t *ucmd, int delta_angles[3]
 	vec3_t angles, forward, right;
 	short temp;
 	int j;
+	float f, r, u, m;
 
 	//clear the whole structure
 	memset(ucmd, 0, sizeof(usercmd_t));
-	//
-	//Com_Printf("dir = %f %f %f speed = %f\n", bi->dir[0], bi->dir[1], bi->dir[2], bi->speed);
 	//the duration for the user command in milli seconds
 	ucmd->serverTime = time;
 	//
@@ -604,21 +623,37 @@ void BotInputToUserCommand(bot_input_t *bi, usercmd_t *ucmd, int delta_angles[3]
 	//bot input speed is in the range [0, 400]
 	bi->speed = bi->speed * 127 / 400;
 	//set the view independent movement
-	ucmd->forwardmove = DotProduct(forward, bi->dir) * bi->speed;
-	ucmd->rightmove = DotProduct(right, bi->dir) * bi->speed;
-	ucmd->upmove = abs((int)(forward[2])) * bi->dir[2] * bi->speed;
+	f = DotProduct(forward, bi->dir);
+	r = DotProduct(right, bi->dir);
+	u = abs(forward[2]) * bi->dir[2];
+	m = fabs(f);
+
+	if (fabs(r) > m) {
+		m = fabs(r);
+	}
+
+	if (fabs(u) > m) {
+		m = fabs(u);
+	}
+
+	if (m > 0) {
+		f *= bi->speed / m;
+		r *= bi->speed / m;
+		u *= bi->speed / m;
+	}
+
+	ucmd->forwardmove = f;
+	ucmd->rightmove = r;
+	ucmd->upmove = u;
 	//normal keyboard movement
-	if (bi->actionflags & ACTION_MOVEFORWARD) ucmd->forwardmove += 127;
-	if (bi->actionflags & ACTION_MOVEBACK) ucmd->forwardmove -= 127;
-	if (bi->actionflags & ACTION_MOVELEFT) ucmd->rightmove -= 127;
-	if (bi->actionflags & ACTION_MOVERIGHT) ucmd->rightmove += 127;
+	if (bi->actionflags & ACTION_MOVEFORWARD) ucmd->forwardmove = 127;
+	if (bi->actionflags & ACTION_MOVEBACK) ucmd->forwardmove = -127;
+	if (bi->actionflags & ACTION_MOVELEFT) ucmd->rightmove = -127;
+	if (bi->actionflags & ACTION_MOVERIGHT) ucmd->rightmove = 127;
 	//jump/moveup
-	if (bi->actionflags & ACTION_JUMP) ucmd->upmove += 127;
+	if (bi->actionflags & ACTION_JUMP) ucmd->upmove = 127;
 	//crouch/movedown
-	if (bi->actionflags & ACTION_CROUCH) ucmd->upmove -= 127;
-	//
-	//Com_Printf("forward = %d right = %d up = %d\n", ucmd.forwardmove, ucmd.rightmove, ucmd.upmove);
-	//Com_Printf("ucmd->serverTime = %d\n", ucmd->serverTime);
+	if (bi->actionflags & ACTION_CROUCH) ucmd->upmove = -127;
 }
 
 /*
@@ -2436,6 +2471,30 @@ gentity_t *GetNearestBadThing(bot_state_t *bs)
 				(ent->r.ownerNum > 0 && ent->r.ownerNum < MAX_CLIENTS &&
 				g_entities[ent->r.ownerNum].client && OnSameTeam(&g_entities[bs->client], &g_entities[ent->r.ownerNum]))) )
 			{ //don't be afraid of your own rockets or your teammates' rockets
+				factor = 0;
+			}
+
+			if (ent->s.weapon == WP_DET_PACK &&
+				(ent->r.ownerNum == bs->client ||
+				(ent->r.ownerNum > 0 && ent->r.ownerNum < MAX_CLIENTS &&
+				g_entities[ent->r.ownerNum].client && OnSameTeam(&g_entities[bs->client], &g_entities[ent->r.ownerNum]))) )
+			{ //don't be afraid of your own detpacks or your teammates' detpacks
+				factor = 0;
+			}
+
+			if (ent->s.weapon == WP_TRIP_MINE &&
+				(ent->r.ownerNum == bs->client ||
+				(ent->r.ownerNum > 0 && ent->r.ownerNum < MAX_CLIENTS &&
+				g_entities[ent->r.ownerNum].client && OnSameTeam(&g_entities[bs->client], &g_entities[ent->r.ownerNum]))) )
+			{ //don't be afraid of your own trip mines or your teammates' trip mines
+				factor = 0;
+			}
+
+			if (ent->s.weapon == WP_THERMAL &&
+				(ent->r.ownerNum == bs->client ||
+				(ent->r.ownerNum > 0 && ent->r.ownerNum < MAX_CLIENTS &&
+				g_entities[ent->r.ownerNum].client && OnSameTeam(&g_entities[bs->client], &g_entities[ent->r.ownerNum]))) )
+			{ //don't be afraid of your own thermals or your teammates' thermals
 				factor = 0;
 			}
 

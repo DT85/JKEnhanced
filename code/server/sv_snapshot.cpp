@@ -1,30 +1,30 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
-
-
 
 #include "../client/vmachine.h"
 #include "server.h"
-
 
 /*
 =============================================================================
@@ -173,7 +173,7 @@ static void SV_WriteSnapshotToClient( client_t *client, msg_t *msg ) {
 	MSG_WriteByte (msg, lastframe);				// what we are delta'ing from
 	MSG_WriteLong (msg, client->cmdNum);		// we have executed up to here
 
-	snapFlags = client->rateDelayed | ( client->droppedCommands << 1 );
+	snapFlags = client->droppedCommands << 1;
 	client->droppedCommands = 0;
 
 	MSG_WriteByte (msg, snapFlags);
@@ -626,43 +626,12 @@ Called by SV_SendClientSnapshot and SV_SendClientGameState
 */
 #define	HEADER_RATE_BYTES	48		// include our header, IP header, and some overhead
 void SV_SendMessageToClient( msg_t *msg, client_t *client ) {
-	int			rateMsec;
-
 	// record information about the message
 	client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSize = msg->cursize;
 	client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSent = sv.time;
 
 	// send the datagram
 	Netchan_Transmit( &client->netchan, msg->cursize, msg->data );
-
-	// set nextSnapshotTime based on rate and requested number of updates
-
-	// local clients get snapshots every frame (FIXME: also treat LAN clients)
-	if ( client->netchan.remoteAddress.type == NA_LOOPBACK ) {
-		client->nextSnapshotTime = sv.time - 1;
-		return;
-	}
-
-	// normal rate / snapshotMsec calculation
-	rateMsec = ( msg->cursize + HEADER_RATE_BYTES ) * 1000 / client->rate;
-	if ( rateMsec < client->snapshotMsec ) {
-		rateMsec = client->snapshotMsec;
-		client->rateDelayed = qfalse;
-	} else {
-		client->rateDelayed = qtrue;
-	}
-
-	client->nextSnapshotTime = sv.time + rateMsec;
-
-	// if we haven't gotten a message from the client in over a second, we will
-	// drop to only sending one snapshot a second until they timeout
-	if ( sv.time - client->lastPacketTime > 1000 || client->state != CS_ACTIVE ) {
-		if ( client->nextSnapshotTime < sv.time + 1000 ) {
-			client->nextSnapshotTime = sv.time + 1000;
-		}
-		return;
-	}
-
 }
 
 /*
@@ -732,10 +701,6 @@ void SV_SendClientMessages( void ) {
 	for (i=0, c = svs.clients ; i < 1 ; i++, c++) {
 		if (!c->state) {
 			continue;		// not connected
-		}
-
-		if ( sv.time < c->nextSnapshotTime ) {
-			continue;		// not time yet
 		}
 
 		if ( c->state != CS_ACTIVE ) {

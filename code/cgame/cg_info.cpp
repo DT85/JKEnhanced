@@ -1,22 +1,26 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
-// this line must stay at top so the whole PCH thing works...
 #include "cg_headers.h"
 
 #include "cg_media.h"
@@ -69,14 +73,8 @@ static void ObjectivePrint_Line(const int color, const int objectIndex, int &mis
 
 	int iYPixelsPerLine = cgi_R_Font_HeightPixels(cgs.media.qhFontMedium, 1.0f);
 
-	if( gi.Cvar_VariableIntegerValue("com_demo") )
-	{
-		cgi_SP_GetStringTextString( va("OBJECTIVES_DEMO_%s",objectiveTable[objectIndex].name) , finalText, sizeof(finalText) );
-	}
-	else
-	{
-		cgi_SP_GetStringTextString( va("OBJECTIVES_%s",objectiveTable[objectIndex].name) , finalText, sizeof(finalText) );
-	}
+	cgi_SP_GetStringTextString( va("OBJECTIVES_%s",objectiveTable[objectIndex].name) , finalText, sizeof(finalText) );
+
 	// A hack to be able to count prisoners 
 	if (objectIndex==T2_RANCOR_OBJ5)
 	{
@@ -439,7 +437,6 @@ int CG_WeaponCheck( int weaponIndex );
 // For printing load screen icons
 const int	MAXLOADICONSPERROW = 8;		// Max icons displayed per row
 const int	MAXLOADWEAPONS = 16;
-const int	MAXLOADFORCEPOWERS = 12;	
 const int	MAXLOAD_FORCEICONSIZE = 40;	// Size of force power icons
 const int	MAXLOAD_FORCEICONPAD = 12;	// Padding space between icons
 
@@ -695,59 +692,19 @@ static void CG_GetLoadScreenInfo(int *weaponBits,int *forceBits)
 
 				);
 	}
-	else
+
+	// the new JK2 stuff - force powers, etc...
+	//
+	gi.Cvar_VariableStringBuffer( "playerfplvl", s, sizeof(s) );
+	i=0;
+	var = strtok( s, " " );
+	while( var != NULL )
 	{
-		// will also need to do this for weapons
-		if( gi.Cvar_VariableIntegerValue("com_demo") )
-		{
-			gi.Cvar_VariableStringBuffer( "demo_playerwpns", s, sizeof(s) );
-			
-			*weaponBits = atoi(s);
-
-		}
-
+		/* While there are tokens in "s" */
+		loadForcePowerLevel[i++] = atoi(var);
+		/* Get next token: */
+		var = strtok( NULL, " " );
 	}
-
-    if( gi.Cvar_VariableIntegerValue("com_demo") )
-	{
-		// le Demo stuff...
-		// the new JK2 stuff - force powers, etc...
-		//
-		*forceBits = 0; // need to zero it out it might have already been set above if coming from a true
-						// map transition in the demo
-		gi.Cvar_VariableStringBuffer( "demo_playerfplvl", s, sizeof(s) );
-		int j=0;
-		var = strtok( s, " " );
-		while( var != NULL )
-		{
-			/* While there are tokens in "s" */
-			loadForcePowerLevel[j] = atoi(var);
-			if( loadForcePowerLevel[j] )
-			{
-				*forceBits |= (1<<j);
-			}
-			j++;
-			/* Get next token: */
-			var = strtok( NULL, " " );
-		}
-
-	}
-	else
-	{
-		// the new JK2 stuff - force powers, etc...
-		//
-		gi.Cvar_VariableStringBuffer( "playerfplvl", s, sizeof(s) );
-		i=0;
-		var = strtok( s, " " );
-		while( var != NULL )
-		{
-			/* While there are tokens in "s" */
-			loadForcePowerLevel[i++] = atoi(var);
-			/* Get next token: */
-			var = strtok( NULL, " " );
-		}
-	}
-
 }
 
 /*
@@ -863,7 +820,7 @@ void CG_DrawInformation( void ) {
 		}
 	}
 
-	if ( g_eSavedGameJustLoaded != eFULL && (!strcmp(s,"yavin1") || !strcmp(s,"demo")) )//special case for first map!
+	if ( g_eSavedGameJustLoaded != eFULL && !strcmp(s,"yavin1") )//special case for first map!
 	{
 		char	text[1024]={0};
 
@@ -879,7 +836,8 @@ void CG_DrawInformation( void ) {
 	else
 	{
 		CG_DrawLoadingScreen(levelshot, s);
-		cgi_UI_MenuPaintAll();
+		cgi_UI_Menu_Paint( cgi_UI_GetMenuByName( "loadscreen" ), qtrue );
+		//cgi_UI_MenuPaintAll();
 	}
 
 	CG_LoadBar();

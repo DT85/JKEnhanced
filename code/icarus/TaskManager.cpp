@@ -1,20 +1,24 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // Task Manager 
 //
@@ -584,7 +588,7 @@ int CTaskManager::Get( int entID, CBlock *block, int &memberNum, char **value, C
 					return false;
 				}
 
-				sprintf( (char *) tempBuffer, "%f", temp );
+				Com_sprintf( tempBuffer, sizeof(tempBuffer), "%f", temp );
 				*value = (char *) tempBuffer;
 			}
 			
@@ -601,7 +605,7 @@ int CTaskManager::Get( int entID, CBlock *block, int &memberNum, char **value, C
 					return false;
 				}
 
-				sprintf( (char *) tempBuffer, "%f %f %f", vval[0], vval[1], vval[2] );
+				Com_sprintf( tempBuffer, sizeof(tempBuffer), "%f %f %f", vval[0], vval[1], vval[2] );
 				*value = (char *) tempBuffer;
 			}
 			
@@ -627,7 +631,7 @@ int CTaskManager::Get( int entID, CBlock *block, int &memberNum, char **value, C
 
 		ret = icarus->GetGame()->Random( min, max );
 
-		sprintf( (char *) tempBuffer, "%f", ret );
+		Com_sprintf( tempBuffer, sizeof(tempBuffer), "%f", ret );
 		*value = (char *) tempBuffer;
 
 		return true;
@@ -647,7 +651,7 @@ int CTaskManager::Get( int entID, CBlock *block, int &memberNum, char **value, C
 			return false;
 		}
 
-		sprintf( (char *) tempBuffer, "%f %f %f", vector[0], vector[1], vector[2] );
+		Com_sprintf( tempBuffer, sizeof(tempBuffer), "%f %f %f", vector[0], vector[1], vector[2] );
 		*value = (char *) tempBuffer;
 
 		return true;
@@ -660,7 +664,7 @@ int CTaskManager::Get( int entID, CBlock *block, int &memberNum, char **value, C
 	if ( bm->GetID() == CIcarus::TK_INT )
 	{
 		float fval = (float) (*(int *) block->GetMemberData( memberNum++ ));
-		sprintf( (char *) tempBuffer, "%f", fval );
+		Com_sprintf( tempBuffer, sizeof(tempBuffer), "%f", fval );
 		*value = (char *) tempBuffer;
 
 		return true;
@@ -668,7 +672,7 @@ int CTaskManager::Get( int entID, CBlock *block, int &memberNum, char **value, C
 	else if ( bm->GetID() == CIcarus::TK_FLOAT )
 	{
 		float fval = *(float *) block->GetMemberData( memberNum++ );
-		sprintf( (char *) tempBuffer, "%f", fval );
+		Com_sprintf( tempBuffer, sizeof(tempBuffer), "%f", fval );
 		*value = (char *) tempBuffer;
 
 		return true;
@@ -683,11 +687,11 @@ int CTaskManager::Get( int entID, CBlock *block, int &memberNum, char **value, C
 		{
 			if ( GetFloat( entID, block, memberNum, vval[i], icarus ) == false )
 				return false;
-
-			sprintf( (char *) tempBuffer, "%f %f %f", vval[0], vval[1], vval[2] );
-			*value = (char *) tempBuffer;
 		}
-		
+
+		Com_sprintf( tempBuffer, sizeof(tempBuffer), "%f %f %f", vval[0], vval[1], vval[2] );
+		*value = (char *) tempBuffer;
+
 		return true;
 	}
 	else if ( ( bm->GetID() == CIcarus::TK_STRING ) || ( bm->GetID() == CIcarus::TK_IDENTIFIER ) )

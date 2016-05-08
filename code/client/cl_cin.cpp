@@ -1,23 +1,27 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
 
 /*****************************************************************************
@@ -38,9 +42,7 @@ This file is part of Jedi Academy.
 #include "client.h"
 #include "client_ui.h"	// CHC
 #include "snd_local.h"
-#ifndef _WIN32
-#include <cmath>
-#endif
+#include "qcommon/stringed_ingame.h"
 
 #define MAXSIZE				8
 #define MINSIZE				4
@@ -1860,35 +1862,20 @@ static void PlayCinematic(const char *arg, const char *s, qboolean qbInGame)
 		if (!Q_stricmp(arg,"video/jk0101_sw.roq"))
 		{
 			psAudioFile = "music/cinematic_1";
-			if ( Cvar_VariableIntegerValue("com_demo") )
+#ifdef JK2_MODE
+			hCrawl = re.RegisterShaderNoMip( va("menu/video/tc_%d", sp_language->integer) );
+			if(!hCrawl)
 			{
-				hCrawl = re.RegisterShaderNoMip( "menu/video/tc_demo" );//demo version of text crawl
+				// failed, so go back to english
+				hCrawl = re.RegisterShaderNoMip( "menu/video/tc_0" );
 			}
-			else
+#else
+			hCrawl = re.RegisterShaderNoMip( va("menu/video/tc_%s",se_language->string) );
+			if (!hCrawl)
 			{
-#ifndef __NO_JK2
-				if(com_jk2 && com_jk2->integer)
-				{
-					hCrawl = re.RegisterShaderNoMip( va("menu/video/tc_%d", sp_language->string) );
-					if(!hCrawl)
-					{
-						// failed, so go back to english
-						hCrawl = re.RegisterShaderNoMip( "menu/video/tc_0" );
-					}
-				}
-				else
-				{
-#endif
-				hCrawl = re.RegisterShaderNoMip( va("menu/video/tc_%s",se_language->string) );
-				if (!hCrawl)
-				{
-					hCrawl = re.RegisterShaderNoMip( "menu/video/tc_english" );//failed, so go back to english
-				}
-#ifndef __NO_JK2
-				}
-#endif
-
+				hCrawl = re.RegisterShaderNoMip( "menu/video/tc_english" );//failed, so go back to english
 			}
+#endif
 			bits |= CIN_hold;
 		}
 		else
@@ -1968,6 +1955,15 @@ qboolean CL_CheckPendingCinematic(void)
 	return qfalse;
 }
 
+/*
+==================
+CL_CompleteCinematic
+==================
+*/
+void CL_CompleteCinematic( char *args, int argNum ) {
+	if ( argNum == 2 )
+		Field_CompleteFilename( "video", "roq", qtrue, qfalse );
+}
 
 void CL_PlayCinematic_f(void) 
 {

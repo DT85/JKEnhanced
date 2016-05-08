@@ -1,29 +1,31 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 /**********************************************************************
 	UI_ATOMS.C
 
 	User interface building blocks and support functions.
 **********************************************************************/
-
-// leave this at the top of all UI_xxxx files for PCH reasons...
-//
 
 #include "../server/exe_headers.h"
 
@@ -102,7 +104,7 @@ void UI_SetActiveMenu( const char* menuname,const char *menuID )
 		UI_DataPadMenu();
 		return;
 	}
-
+#ifndef JK2_MODE
 	if ( Q_stricmp (menuname, "missionfailed_menu") == 0 ) 
 	{
 		Menus_CloseAll();
@@ -110,7 +112,7 @@ void UI_SetActiveMenu( const char* menuname,const char *menuID )
 		ui.Key_SetCatcher( KEYCATCH_UI );
 		return;
 	}
-
+#endif
 }
 
 
@@ -150,18 +152,16 @@ UI_Cache
 */
 static void UI_Cache_f( void ) 
 {
- int index;
 	Menu_Cache();
-
+#ifndef JK2_MODE
 extern const char *lukeForceStatusSounds[];
 extern const char *kyleForceStatusSounds[];
-
-	for (index = 0; index < 5; index++)
+	for (int index = 0; index < 5; index++)
 	{
 		DC->registerSound(lukeForceStatusSounds[index], qfalse);
 		DC->registerSound(kyleForceStatusSounds[index], qfalse);
 	}
-	for (index = 1; index <= 18; index++)
+	for (int index = 1; index <= 18; index++)
 	{
 		DC->registerSound(va("sound/chars/storyinfo/%d",index), qfalse);
 	}
@@ -186,6 +186,7 @@ extern const char *kyleForceStatusSounds[];
 	Menus_ActivateByName("ingameMissionSelect1");
 	Menus_ActivateByName("ingameMissionSelect2");
 	Menus_ActivateByName("ingameMissionSelect3");
+#endif
 }
 
 
@@ -194,7 +195,9 @@ extern const char *kyleForceStatusSounds[];
 UI_ConsoleCommand
 =================
 */
+#ifndef JK2_MODE
 void UI_Load(void);	//in UI_main.cpp
+#endif
 
 qboolean UI_ConsoleCommand( void ) 
 {
@@ -234,11 +237,13 @@ qboolean UI_ConsoleCommand( void )
 		return qtrue;
 	}
 	
+#ifndef JK2_MODE
 	if ( Q_stricmp (cmd, "ui_load") == 0 ) 
 	{
 		UI_Load();
 		return qtrue;
 	}
+#endif
 
 	return qfalse;
 }
@@ -268,6 +273,7 @@ void UI_Init( int apiVersion, uiimport_t *uiimport, qboolean inGameLoad )
 	ui.Cvar_Create( "cg_drawCrosshair", "1", CVAR_ARCHIVE );
 	ui.Cvar_Create( "cg_marks", "1", CVAR_ARCHIVE );
 	ui.Cvar_Create ("s_language",			"english",	CVAR_ARCHIVE | CVAR_NORESTART);
+#ifndef JK2_MODE
 	ui.Cvar_Create( "g_char_model",			"jedi_tf",	CVAR_ARCHIVE|CVAR_SAVEGAME|CVAR_NORESTART );
 	ui.Cvar_Create( "g_char_skin_head",		"head_a1",	CVAR_ARCHIVE|CVAR_SAVEGAME|CVAR_NORESTART );
 	ui.Cvar_Create( "g_char_skin_torso",	"torso_a1",	CVAR_ARCHIVE|CVAR_SAVEGAME|CVAR_NORESTART );
@@ -302,6 +308,7 @@ void UI_Init( int apiVersion, uiimport_t *uiimport, qboolean inGameLoad )
 	ui.Cvar_Create( "cg_bobroll", "0.002", CVAR_ARCHIVE );
 
 	ui.Cvar_Create( "ui_disableWeaponSway", "0", CVAR_ARCHIVE );
+#endif
 
 	
 
@@ -402,7 +409,9 @@ UI_SaveMenu_f
 */
 static void UI_SaveMenu_f( void ) 
 {
-//	ui.PrecacheScreenshot();
+#ifdef JK2_MODE
+	ui.PrecacheScreenshot();
+#endif
 
 	trap_Key_SetCatcher( KEYCATCH_UI );
 	Menus_ActivateByName("ingamesaveMenu");

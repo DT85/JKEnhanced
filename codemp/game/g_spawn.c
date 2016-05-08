@@ -1,5 +1,25 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
 
 #include "g_local.h"
 
@@ -97,8 +117,8 @@ typedef enum {
 } fieldtype_t;
 
 typedef struct field_s {
-	char	*name;
-	int		ofs;
+	const char	*name;
+	size_t		ofs;
 	fieldtype_t	type;
 } field_t;
 
@@ -330,6 +350,8 @@ void SP_reference_tag ( gentity_t *ent );
 
 void SP_misc_weapon_shooter( gentity_t *self );
 
+void SP_misc_cubemap( gentity_t *ent );
+
 void SP_NPC_spawner( gentity_t *self );
 
 void SP_NPC_Vehicle( gentity_t *self);
@@ -350,6 +372,7 @@ void SP_NPC_MorganKatarn( gentity_t *self );
 void SP_NPC_Jedi( gentity_t *self );
 void SP_NPC_Prisoner( gentity_t *self );
 void SP_NPC_Rebel( gentity_t *self );
+void SP_NPC_Human_Merc( gentity_t *self );
 void SP_NPC_Stormtrooper( gentity_t *self );
 void SP_NPC_StormtrooperOfficer( gentity_t *self );
 void SP_NPC_Snowtrooper( gentity_t *self);
@@ -408,6 +431,7 @@ void SP_waypoint_navgoal_4 (gentity_t *ent);
 void SP_waypoint_navgoal_2 (gentity_t *ent);
 void SP_waypoint_navgoal_1 (gentity_t *ent);
 
+void SP_CreateWind( gentity_t *ent );
 void SP_CreateSpaceDust( gentity_t *ent );
 void SP_CreateSnow( gentity_t *ent );
 void SP_CreateRain( gentity_t *ent );
@@ -512,6 +536,7 @@ spawn_t	spawns[] = {
 	{ "fx_runner",							SP_fx_runner },
 	{ "fx_snow",							SP_CreateSnow },
 	{ "fx_spacedust",						SP_CreateSpaceDust },
+	{ "fx_wind",							SP_CreateWind },
 	{ "gametype_item",						SP_gametype_item },
 	{ "info_camp",							SP_info_camp },
 	{ "info_jedimaster_start",				SP_info_jedimaster_start },
@@ -536,6 +561,7 @@ spawn_t	spawns[] = {
 	{ "light",								SP_light },
 	{ "misc_ammo_floor_unit",				SP_misc_ammo_floor_unit },
 	{ "misc_bsp",							SP_misc_bsp },
+	{ "misc_cubemap",						SP_misc_cubemap },
 	{ "misc_faller",						SP_misc_faller },
 	{ "misc_G2model",						SP_misc_G2model },
 	{ "misc_holocron",						SP_misc_holocron },
@@ -584,6 +610,7 @@ spawn_t	spawns[] = {
 	{ "npc_droid_sentry",					SP_NPC_Droid_Sentry },
 	{ "npc_galak",							SP_NPC_Galak },
 	{ "npc_gran",							SP_NPC_Gran },
+	{ "npc_human_merc",						SP_NPC_Human_Merc },
 	{ "npc_imperial",						SP_NPC_Imperial },
 	{ "npc_impworker",						SP_NPC_ImpWorker },
 	{ "npc_jan",							SP_NPC_Jan },
@@ -1475,20 +1502,26 @@ void SP_worldspawn( void )
 
 	G_SpawnString( "gravity", "800", &text );
 	trap->Cvar_Set( "g_gravity", text );
+	trap->Cvar_Update( &g_gravity );
 
 	G_SpawnString( "enableBreath", "0", &text );
-	trap->Cvar_Set( "g_enableBreath", text );
 
 	G_SpawnString( "soundSet", "default", &text );
 	trap->SetConfigstring( CS_GLOBAL_AMBIENT_SET, text );
 
 	g_entities[ENTITYNUM_WORLD].s.number = ENTITYNUM_WORLD;
+	g_entities[ENTITYNUM_WORLD].r.ownerNum = ENTITYNUM_NONE;
 	g_entities[ENTITYNUM_WORLD].classname = "worldspawn";
+
+	g_entities[ENTITYNUM_NONE].s.number = ENTITYNUM_NONE;
+	g_entities[ENTITYNUM_NONE].r.ownerNum = ENTITYNUM_NONE;
+	g_entities[ENTITYNUM_NONE].classname = "nothing";
 
 	// see if we want a warmup time
 	trap->SetConfigstring( CS_WARMUP, "" );
 	if ( g_restarted.integer ) {
 		trap->Cvar_Set( "g_restarted", "0" );
+		trap->Cvar_Update( &g_restarted );
 		level.warmupTime = 0;
 	}
 	else if ( g_doWarmup.integer && level.gametype != GT_DUEL && level.gametype != GT_POWERDUEL && level.gametype != GT_SIEGE ) { // Turn it on
@@ -1555,6 +1588,24 @@ void G_PrecacheSoundsets( void )
 	}
 }
 
+void G_LinkLocations( void ) {
+	int i, n;
+
+	if ( level.locations.linked ) 
+		return;
+
+	level.locations.linked = qtrue;
+
+	trap->SetConfigstring( CS_LOCATIONS, "unknown" );
+
+	for ( i=0, n=1; i<level.locations.num; i++ ) {
+		level.locations.data[i].cs_index = n;
+		trap->SetConfigstring( CS_LOCATIONS + n, level.locations.data[i].message );
+		n++;
+	}
+	// All linked together now
+}
+
 /*
 ==============
 G_SpawnEntitiesFromString
@@ -1614,6 +1665,8 @@ void G_SpawnEntitiesFromString( qboolean inSubBSP ) {
 	{
 		level.spawning = qfalse;			// any future calls to G_Spawn*() will be errors
 	}
+
+	G_LinkLocations();
 
 	G_PrecacheSoundsets();
 }

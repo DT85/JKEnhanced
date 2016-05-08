@@ -1,5 +1,26 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // cg_event.c -- handle entity events at snapshot or playerstate transitions
 
 #include "cg_local.h"
@@ -2268,7 +2289,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		{
 			if (es->eventParm)
 			{ //saber block
-				qboolean cullPass = qfalse;
 				int			blockFXID = cgs.effects.mSaberBlock;
 				qhandle_t	blockSound = trap->S_RegisterSound(va( "sound/weapons/saber/saberblock%d.wav", Q_irand(1, 9) ));
 				qboolean	noFlare = qfalse;
@@ -2317,29 +2337,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 						}
 					}
 				}
-				if (cg.mInRMG)
-				{
-					trace_t tr;
-					vec3_t vecSub;
 
-					VectorSubtract(cg.refdef.vieworg, es->origin, vecSub);
-
-					if (VectorLength(vecSub) < 5000)
-					{
-						CG_Trace(&tr, cg.refdef.vieworg, NULL, NULL, es->origin, ENTITYNUM_NONE, CONTENTS_TERRAIN|CONTENTS_SOLID);
-
-						if (tr.fraction == 1.0 || tr.entityNum < MAX_CLIENTS)
-						{
-							cullPass = qtrue;
-						}
-					}
-				}
-				else
-				{
-					cullPass = qtrue;
-				}
-
-				if (cullPass)
 				{
 					vec3_t fxDir;
 
@@ -2374,35 +2372,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_SABER_CLASHFLARE:
 		DEBUGNAME("EV_SABER_CLASHFLARE");
 		{
-			qboolean cullPass = qfalse;
-
-			if (cg.mInRMG)
-			{
-				trace_t tr;
-				vec3_t vecSub;
-
-				VectorSubtract(cg.refdef.vieworg, es->origin, vecSub);
-
-				if (VectorLength(vecSub) < 5000)
-				{
-					CG_Trace(&tr, cg.refdef.vieworg, NULL, NULL, es->origin, ENTITYNUM_NONE, CONTENTS_TERRAIN|CONTENTS_SOLID);
-
-					if (tr.fraction == 1.0 || tr.entityNum < MAX_CLIENTS)
-					{
-						cullPass = qtrue;
-					}
-				}
-			}
-			else
-			{
-				cullPass = qtrue;
-			}
-
-			if (cullPass)
-			{
-				cg_saberFlashTime = cg.time-50;
-				VectorCopy( es->origin, cg_saberFlashPos );
-			}
+			cg_saberFlashTime = cg.time-50;
+			VectorCopy( es->origin, cg_saberFlashPos );
 			trap->S_StartSound ( es->origin, -1, CHAN_WEAPON, trap->S_RegisterSound( va("sound/weapons/saber/saberhitwall%i", Q_irand(1, 3)) ) );
 		}
 		break;

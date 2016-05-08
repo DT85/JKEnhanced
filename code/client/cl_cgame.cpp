@@ -1,20 +1,25 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // cl_cgame.c  -- client system interaction with client game
 
@@ -23,10 +28,10 @@ This file is part of Jedi Academy.
 #include "../server/exe_headers.h"
 #include "../ui/ui_shared.h"
 
-#include "../RMG/RM_Headers.h"
-
 #include "client.h"
 #include "vmachine.h"
+#include "qcommon/stringed_ingame.h"
+#include "sys/sys_loadlib.h"
 
 vm_t	cgvm;
 /*
@@ -52,6 +57,31 @@ extern menuDef_t *Menus_FindByName(const char *p);
 extern qboolean R_inPVS( vec3_t p1, vec3_t p2 );
 
 void UI_SetActiveMenu( const char* menuname,const char *menuID );
+
+qboolean CL_InitCGameVM( void *gameLibrary )
+{
+	typedef intptr_t SyscallProc( intptr_t, ... );
+	typedef void DllEntryProc( SyscallProc * );
+
+	DllEntryProc *dllEntry = (DllEntryProc *)Sys_LoadFunction( gameLibrary, "dllEntry" ); 
+	cgvm.entryPoint = (intptr_t (*)(int,...))Sys_LoadFunction( gameLibrary, "vmMain" );
+
+	if ( !cgvm.entryPoint || !dllEntry ) {
+#ifdef JK2_MODE
+		const char *gamename = "jospgame";
+#else
+		const char *gamename = "jagame";
+#endif
+
+		Com_Printf( "CL_InitCGameVM: client game entry point not found in %s" ARCH_STRING DLL_EXT ": %s\n",
+					gamename, Sys_LibraryError() );
+		return qfalse;
+	}
+
+	dllEntry( VM_DllSyscall );
+
+	return qtrue;
+}
 
 /*
 ====================
@@ -167,7 +197,6 @@ qboolean	CL_GetSnapshot( int snapshotNumber, snapshot_t *snapshot ) {
 	// write the snapshot
 	snapshot->snapFlags = clSnap->snapFlags;
 	snapshot->serverCommandSequence = clSnap->serverCommandNum;
-	snapshot->ping = clSnap->ping;
 	snapshot->serverTime = clSnap->serverTime;
 	memcpy( snapshot->areamask, clSnap->areamask, sizeof( snapshot->areamask ) );
 	snapshot->cmdNum = clSnap->cmdNum;
@@ -241,11 +270,6 @@ void CL_SetUserCmdAngles( float pitchOverride, float yawOverride, float rollOver
 void CL_AddCgameCommand( const char *cmdName ) {
 	Cmd_AddCommand( cmdName, NULL );
 }
-
-void CL_CgameError( const char *string ) {
-	Com_Error( ERR_DROP, "%s", string );
-}
-
 
 /*
 =====================
@@ -401,17 +425,12 @@ void CL_ShutdownCGame( void ) {
 		return;
 	}
 	VM_Call( CG_SHUTDOWN );
-	RM_ShutdownTerrain();
 
 //	VM_Free( cgvm );
 //	cgvm = NULL;
 }
 
-//RMG
-CCMLandScape *CM_RegisterTerrain(const char *config, bool server);
-//RMG
-
-#ifndef __NO_JK2
+#ifdef JK2_MODE
 /*
 ====================
 CL_ConvertJK2SysCall
@@ -782,16 +801,12 @@ CL_CgameSystemCalls
 The cgame module is making a system call
 ====================
 */
-void *VM_ArgPtr( int intValue );
 void CM_SnapPVS(vec3_t origin,byte *buffer);
 extern void		Menu_Paint(menuDef_t *menu, qboolean forcePaint);
 extern menuDef_t *Menus_FindByName(const char *p);
 intptr_t CL_CgameSystemCalls( intptr_t *args ) {
-#ifndef __NO_JK2
-	if( com_jk2 && com_jk2->integer )
-	{
-		args[0] = (intptr_t)CL_ConvertJK2SysCall((cgameJK2Import_t)args[0]);
-	}
+#ifdef JK2_MODE
+	args[0] = (intptr_t)CL_ConvertJK2SysCall((cgameJK2Import_t)args[0]);
 #endif
 	switch( args[0] ) {
 	case CG_PRINT:
@@ -845,30 +860,11 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		SCR_UpdateScreen();
 		return 0;
 	case CG_RMG_INIT:
-		/*
-		if (!com_sv_running->integer)
-		{	// don't do this if we are connected locally
-			if (!TheRandomMissionManager)
-			{
-				TheRandomMissionManager = new CRMManager;
-			}
-			TheRandomMissionManager->SetLandScape( cmg.landScapes[args[1]] );
-			TheRandomMissionManager->LoadMission(qfalse);
-			TheRandomMissionManager->SpawnMission(qfalse);
-			cmg.landScapes[args[1]]->UpdatePatches();
-		}
-		*/ //this is SP.. I guess we're always the client and server.
-//		cl.mRMGChecksum = cm.landScapes[args[1]]->get_rand_seed();
-		RM_CreateRandomModels(args[1], (const char *)VMA(2));
-		//cmg.landScapes[args[1]]->rand_seed(cl.mRMGChecksum);		// restore it, in case we do a vid restart
-		cmg.landScape->rand_seed(cmg.landScape->get_rand_seed());
-//		TheRandomMissionManager->CreateMap();
 		return 0;
 	case CG_CM_REGISTER_TERRAIN:
-		return CM_RegisterTerrain((const char *)VMA(1), false)->GetTerrainId();
+		return 0;
 
 	case CG_RE_INIT_RENDERER_TERRAIN:
-		re.InitRendererTerrain((const char *)VMA(1));
 		return 0;
 
 	case CG_CM_LOADMAP:
@@ -902,7 +898,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_S_STARTSOUND:
 		// stops an ERR_DROP internally if called illegally from game side, but note that it also gets here 
 		//	legally during level start where normally the internal s_soundStarted check would return. So ok to hit this.
-		if (!cls.cgameStarted){
+		if (!cls.cgameStarted) {
 			return 0;	
 		}
 		S_StartSound( (float *) VMA(1), args[2], (soundChannel_t)args[3], args[4] );
@@ -910,7 +906,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_S_UPDATEAMBIENTSET:
 		// stops an ERR_DROP internally if called illegally from game side, but note that it also gets here 
 		//	legally during level start where normally the internal s_soundStarted check would return. So ok to hit this.
-		if (!cls.cgameStarted){
+		if (!cls.cgameStarted) {
 			return 0;
 		}
 		S_UpdateAmbientSet( (const char *) VMA(1), (float *) VMA(2) );
@@ -928,7 +924,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_S_STARTLOCALSOUND:
 		// stops an ERR_DROP internally if called illegally from game side, but note that it also gets here 
 		//	legally during level start where normally the internal s_soundStarted check would return. So ok to hit this.
-		if (!cls.cgameStarted){
+		if (!cls.cgameStarted) {
 			return 0;
 		}
 		S_StartLocalSound( args[1], args[2] );
@@ -939,7 +935,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_S_ADDLOOPINGSOUND:
 		// stops an ERR_DROP internally if called illegally from game side, but note that it also gets here 
 		//	legally during level start where normally the internal s_soundStarted check would return. So ok to hit this.
-		if (!cls.cgameStarted){
+		if (!cls.cgameStarted) {
 			return 0;
 		}
 		S_AddLoopingSound( args[1], (const float *) VMA(2), (const float *) VMA(3), args[4], (soundChannel_t)args[5] );
@@ -1037,16 +1033,6 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
 		return 0;
 	case CG_R_SETRANGEFOG:
-		// FIXME: Figure out if this is how it's done in MP :S --eez
-		/*if (tr.rangedFog <= 0.0f)
-		{
-			g_oldRangedFog = tr.rangedFog;
-		}
-		tr.rangedFog = VMF(1);
-		if (tr.rangedFog == 0.0f && g_oldRangedFog)
-		{ //restore to previous state if applicable
-			tr.rangedFog = g_oldRangedFog;
-		}*/
 		re.SetRangedFog( VMF( 1 ) );
 		return 0;
 	case CG_R_LA_GOGGLES:
@@ -1217,11 +1203,7 @@ Ghoul2 Insert End
 	case CG_UI_GETMENUINFO:
 		menuDef_t *menu;
 		int		*xPos,*yPos,*w,*h,result;
-#ifndef __NO_JK2
-		if(com_jk2 && !com_jk2->integer)
-		{
-#endif
-
+#ifndef JK2_MODE
 		menu = Menus_FindByName((char *) VMA(1));	// Get menu 
 		if (menu)
 		{
@@ -1241,26 +1223,22 @@ Ghoul2 Insert End
 		}
 
 		return result;
-#ifndef __NO_JK2
+#else
+		menu = Menus_FindByName((char *) VMA(1));	// Get menu 
+		if (menu)
+		{
+			xPos = (int *) VMA(2);
+			*xPos = (int) menu->window.rect.x;
+			yPos = (int *) VMA(3);
+			*yPos = (int) menu->window.rect.y;
+			result = qtrue;
 		}
 		else
 		{
-			menu = Menus_FindByName((char *) VMA(1));	// Get menu 
-			if (menu)
-			{
-				xPos = (int *) VMA(2);
-				*xPos = (int) menu->window.rect.x;
-				yPos = (int *) VMA(3);
-				*yPos = (int) menu->window.rect.y;
-				result = qtrue;
-			}
-			else
-			{
-				result = qfalse;
-			}
-
-			return result;
+			result = qfalse;
 		}
+
+		return result;
 #endif
 		break;
 
@@ -1340,41 +1318,40 @@ Ghoul2 Insert End
 
 		return result;
 		
+#ifdef JK2_MODE
 	case CG_SP_GETSTRINGTEXTSTRING:
-#ifndef __NO_JK2
 	case CG_SP_GETSTRINGTEXT:
-		if(com_jk2 && com_jk2->integer)
+		const char* text;
+
+		assert(VMA(1));	
+//		assert(VMA(2));	// can now pass in NULL to just query the size
+
+		if (args[0] == CG_SP_GETSTRINGTEXT)
 		{
-			const char* text;
-
-			assert(VMA(1));	
-	//		assert(VMA(2));	// can now pass in NULL to just query the size
-
-			if (args[0] == CG_SP_GETSTRINGTEXT)
-			{
-				text = JK2SP_GetStringText( args[1] );
-			}
-			else
-			{
-				text = JK2SP_GetStringTextString( (const char *) VMA(1) );
-			}
-
-			if (VMA(2))	// only if dest buffer supplied...
-			{
-				if ( text[0] )
-				{
-					Q_strncpyz( (char *) VMA(2), text, args[3] );				
-				}
-				else 
-				{
-					Q_strncpyz( (char *) VMA(2), "??", args[3] );			
-				}
-			}
-			return strlen(text);
+			text = JK2SP_GetStringText( args[1] );
 		}
 		else
 		{
-#endif
+			text = JK2SP_GetStringTextString( (const char *) VMA(1) );
+		}
+
+		if (VMA(2))	// only if dest buffer supplied...
+		{
+			if ( text[0] )
+			{
+				Q_strncpyz( (char *) VMA(2), text, args[3] );				
+			}
+			else 
+			{
+				Q_strncpyz( (char *) VMA(2), "??", args[3] );			
+			}
+		}
+		return strlen(text);
+
+	case CG_SP_REGISTER:
+		return JK2SP_Register((const char *)VMA(1), args[2] ? (SP_REGISTER_MENU | SP_REGISTER_REQUIRED) : SP_REGISTER_CLIENT);
+#else
+	case CG_SP_GETSTRINGTEXTSTRING:
 		const char* text;
 
 		assert(VMA(1));	
@@ -1392,13 +1369,8 @@ Ghoul2 Insert End
 			}
 		}
 		return strlen(text);
-#ifndef __NO_JK2
-		}
-		//break;
-
-	case CG_SP_REGISTER:
-		return JK2SP_Register( (const char *) VMA(1), args[2]?(SP_REGISTER_MENU|SP_REGISTER_REQUIRED):SP_REGISTER_CLIENT );
 #endif
+
 	default:
 		Com_Error( ERR_DROP, "Bad cgame system trap: %ld", (long int) args[0] );
 	}
@@ -1618,8 +1590,6 @@ void CL_FirstSnapshot( void ) {
 		Cbuf_AddText( cl_activeAction->string );
 		Cvar_Set( "activeAction", "" );
 	}
-	
-	Sys_BeginProfiling();
 }
 
 /*

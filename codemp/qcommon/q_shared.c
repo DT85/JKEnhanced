@@ -1,5 +1,27 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // q_shared.c -- stateless support routines that are included in each code dll
 #include "q_shared.h"
 
@@ -214,6 +236,24 @@ float	BigFloat (const float *l) {return _BigFloat(l);}
 float	LittleFloat (const float *l) {return _LittleFloat(l);}
 */
 
+void CopyShortSwap( void *dest, void *src )
+{
+	byte *to = (byte *)dest, *from = (byte *)src;
+
+	to[0] = from[1];
+	to[1] = from[0];
+}
+
+void CopyLongSwap( void *dest, void *src )
+{
+	byte *to = (byte *)dest, *from = (byte *)src;
+
+	to[0] = from[3];
+	to[1] = from[2];
+	to[2] = from[1];
+	to[3] = from[0];
+}
+
 short   ShortSwap (short l)
 {
 	byte    b1,b2;
@@ -371,7 +411,7 @@ void COM_ParseWarning( char *format, ... )
 	static char string[4096];
 
 	va_start (argptr, format);
-	Q_vsnprintf (string, sizeof( string ), format, argptr);
+	Q_vsnprintf (string, sizeof(string), format, argptr);
 	va_end (argptr);
 
 	Com_Printf("WARNING: %s, line %d: %s\n", com_parsename, COM_GetCurrentParseLine(), string);
@@ -587,61 +627,6 @@ char *COM_ParseExt( const char **data_p, qboolean allowLineBreaks )
 	return com_token;
 }
 
-
-#if 0
-// no longer used
-/*
-===============
-COM_ParseInfos
-===============
-*/
-int COM_ParseInfos( char *buf, int max, char infos[][MAX_INFO_STRING] ) {
-	char	*token;
-	int		count;
-	char	key[MAX_TOKEN_CHARS];
-
-	count = 0;
-
-	while ( 1 ) {
-		token = COM_Parse( &buf );
-		if ( !token[0] ) {
-			break;
-		}
-		if ( strcmp( token, "{" ) ) {
-			Com_Printf( "Missing { in info file\n" );
-			break;
-		}
-
-		if ( count == max ) {
-			Com_Printf( "Max infos exceeded\n" );
-			break;
-		}
-
-		infos[count][0] = 0;
-		while ( 1 ) {
-			token = COM_ParseExt( &buf, qtrue );
-			if ( !token[0] ) {
-				Com_Printf( "Unexpected end of info file\n" );
-				break;
-			}
-			if ( !strcmp( token, "}" ) ) {
-				break;
-			}
-			Q_strncpyz( key, token, sizeof( key ) );
-
-			token = COM_ParseExt( &buf, qfalse );
-			if ( !token[0] ) {
-				strcpy( token, "<NULL>" );
-			}
-			Info_SetValueForKey( infos[count], key, token );
-		}
-		count++;
-	}
-
-	return count;
-}
-#endif
-
 /*
 ===============
 COM_ParseString
@@ -653,7 +638,7 @@ qboolean COM_ParseString( const char **data, const char **s )
 	*s = COM_ParseExt( data, qfalse );
 	if ( s[0] == 0 )
 	{
-		Com_Printf("unexpected EOF\n");
+		COM_ParseWarning( "COM_ParseString: unexpected EOF" );
 		return qtrue;
 	}
 	return qfalse;
@@ -671,7 +656,7 @@ qboolean COM_ParseInt( const char **data, int *i )
 	token = COM_ParseExt( data, qfalse );
 	if ( token[0] == 0 )
 	{
-		Com_Printf( "unexpected EOF\n" );
+		COM_ParseWarning( "COM_ParseInt: unexpected EOF" );
 		return qtrue;
 	}
 
@@ -691,7 +676,7 @@ qboolean COM_ParseFloat( const char **data, float *f )
 	token = COM_ParseExt( data, qfalse );
 	if ( token[0] == 0 )
 	{
-		Com_Printf( "unexpected EOF\n" );
+		COM_ParseWarning( "COM_ParseFloat: unexpected EOF" );
 		return qtrue;
 	}
 
@@ -739,16 +724,14 @@ void COM_MatchToken( const char **buf_p, char *match ) {
 =================
 SkipBracedSection
 
-The next token should be an open brace.
+The next token should be an open brace or set depth to 1 if already parsed it.
 Skips until a matching close brace is found.
 Internal brace depths are properly skipped.
 =================
 */
-void SkipBracedSection (const char **program) {
+qboolean SkipBracedSection (const char **program, int depth) {
 	char			*token;
-	int				depth;
 
-	depth = 0;
 	do {
 		token = COM_ParseExt( program, qtrue );
 		if( token[1] == 0 ) {
@@ -760,6 +743,8 @@ void SkipBracedSection (const char **program) {
 			}
 		}
 	} while( depth && *program );
+
+	return (qboolean)( depth == 0 );
 }
 
 /*
@@ -799,6 +784,10 @@ void SkipRestOfLine ( const char **data ) {
 	int		c;
 
 	p = *data;
+
+	if ( !*p )
+		return;
+
 	while ( (c = *p++) != 0 ) {
 		if ( c == '\n' ) {
 			com_lines++;
@@ -903,6 +892,24 @@ int Q_isprint( int c )
 	return ( 0 );
 }
 
+int Q_isprintext( int c )
+{
+	if ( c >= 0x20 && c <= 0x7E )
+		return (1);
+	if ( c >= 0x80 && c <= 0xFE )
+		return (1);
+	return (0);
+}
+
+int Q_isgraph( int c )
+{
+	if ( c >= 0x21 && c <= 0x7E )
+		return (1);
+	if ( c >= 0x80 && c <= 0xFE )
+		return (1);
+	return (0);
+}
+
 int Q_islower( int c )
 {
 	if (c >= 'a' && c <= 'z')
@@ -973,7 +980,6 @@ Safe strncpy that ensures a trailing zero
 =============
 */
 void Q_strncpyz( char *dest, const char *src, int destsize ) {
-	// bk001129 - also NULL dest
 	if ( !dest ) {
 		Com_Error( ERR_FATAL, "Q_strncpyz: NULL dest" );
 		return;
@@ -994,17 +1000,14 @@ void Q_strncpyz( char *dest, const char *src, int destsize ) {
 int Q_stricmpn (const char *s1, const char *s2, int n) {
 	int		c1, c2;
 
-	// bk001129 - moved in 1.17 fix not in id codebase
-        if ( s1 == NULL ) {
-           if ( s2 == NULL )
-             return 0;
-           else
-             return -1;
-        }
-        else if ( s2==NULL )
-          return 1;
-
-
+	if ( s1 == NULL ) {
+		if ( s2 == NULL )
+			return 0;
+		else
+			return -1;
+	}
+	else if ( s2==NULL )
+		return 1;
 
 	do {
 		c1 = *s1++;
@@ -1053,7 +1056,6 @@ int Q_stricmp (const char *s1, const char *s2) {
 	return (s1 && s2) ? Q_stricmpn (s1, s2, 99999) : -1;
 }
 
-
 char *Q_strlwr( char *s1 ) {
     char	*s;
 
@@ -1091,33 +1093,32 @@ void Q_strcat( char *dest, int size, const char *src ) {
 /*
 * Find the first occurrence of find in s.
 */
-const char *Q_stristr( const char *s, const char *find)
-{
-  char c, sc;
-  size_t len;
+const char *Q_stristr( const char *s, const char *find ) {
+	char c, sc;
+	size_t len;
 
-  if ((c = *find++) != 0)
-  {
-    if (c >= 'a' && c <= 'z')
-    {
-      c -= ('a' - 'A');
-    }
-    len = strlen(find);
-    do
-    {
-      do
-      {
-        if ((sc = *s++) == 0)
-          return NULL;
-        if (sc >= 'a' && sc <= 'z')
-        {
-          sc -= ('a' - 'A');
-        }
-      } while (sc != c);
-    } while (Q_stricmpn(s, find, len) != 0);
-    s--;
-  }
-  return s;
+	if ((c = *find++) != 0)
+	{
+		if (c >= 'a' && c <= 'z')
+		{
+			c -= ('a' - 'A');
+		}
+		len = strlen(find);
+		do
+		{
+			do
+			{
+				if ((sc = *s++) == 0)
+					return NULL;
+				if (sc >= 'a' && sc <= 'z')
+				{
+					sc -= ('a' - 'A');
+				}
+			} while (sc != c);
+		} while (Q_stricmpn(s, find, len) != 0);
+		s--;
+	}
+	return s;
 }
 
 int Q_PrintStrlen( const char *string ) {
@@ -1143,6 +1144,7 @@ int Q_PrintStrlen( const char *string ) {
 }
 
 
+/* This function modifies INPUT (is mutable) */
 char *Q_CleanStr( char *string ) {
 	char*	d;
 	char*	s;
@@ -1169,6 +1171,8 @@ char *Q_CleanStr( char *string ) {
 Q_StripColor
 
 Strips coloured strings in-place using multiple passes: "fgs^^56fds" -> "fgs^6fds" -> "fgsfds"
+
+This function modifies INPUT (is mutable)
 
 (Also strips ^8 and ^9)
 ==================
@@ -1226,22 +1230,25 @@ void Q_strstrip( char *string, const char *strip, const char *repl )
 	char		*out=string, *p=string, c;
 	const char	*s=strip;
 	int			replaceLen = repl?strlen( repl ):0, offset=0;
+	qboolean	recordChar = qtrue;
 
 	while ( (c = *p++) != '\0' )
 	{
+		recordChar = qtrue;
 		for ( s=strip; *s; s++ )
 		{
 			offset = s-strip;
 			if ( c == *s )
 			{
 				if ( !repl || offset >= replaceLen )
-					c = *p++;
+					recordChar = qfalse;
 				else
 					c = repl[offset];
 				break;
 			}
 		}
-		*out++ = c;
+		if ( recordChar )
+			*out++ = c;
 	}
 	*out = '\0';
 }
@@ -1317,6 +1324,12 @@ int QDECL Com_sprintf( char *dest, int size, const char *fmt, ...) {
 		Com_Printf("Com_sprintf: Output length %d too short, require %d bytes.\n", size, len + 1);
 
 	return len;
+}
+
+int FloatAsInt( float f ) {
+	byteAlias_t fi;
+	fi.f = f;
+	return fi.i;
 }
 
 /*
@@ -1754,4 +1767,16 @@ char *Com_SkipTokens( char *s, int numTokens, char *sep ) {
 		return p;
 	else
 		return s;
+}
+
+qboolean Q_InBitflags( const uint32_t *bits, int index, uint32_t bitsPerByte ) {
+	return ( bits[index / bitsPerByte] & (1 << (index % bitsPerByte)) ) ? qtrue : qfalse;
+}
+
+void Q_AddToBitflags( uint32_t *bits, int index, uint32_t bitsPerByte ) {
+	bits[index / bitsPerByte] |= (1 << (index % bitsPerByte));
+}
+
+void Q_RemoveFromBitflags( uint32_t *bits, int index, uint32_t bitsPerByte ) {
+	bits[index / bitsPerByte] &= ~(1 << (index % bitsPerByte));
 }

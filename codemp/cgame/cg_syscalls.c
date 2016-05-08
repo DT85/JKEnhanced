@@ -1,7 +1,28 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // cg_syscalls.c -- this file is only included when building a dll
-// cg_syscalls.asm is included instead when building a qvm
 #include "cg_local.h"
 
 static intptr_t (QDECL *Q_syscall)( intptr_t arg, ... ) = (intptr_t (QDECL *)( intptr_t, ...))-1;
@@ -656,15 +677,6 @@ void trap_G2API_GetSurfaceName(void *ghoul2, int surfNumber, int modelIndex, cha
 void trap_CG_RegisterSharedMemory(char *memory) {
 	Q_syscall(CG_SET_SHARED_BUFFER, memory);
 }
-int trap_CM_RegisterTerrain(const char *config) {
-	return Q_syscall(CG_CM_REGISTER_TERRAIN, config);
-}
-void trap_RMG_Init(int terrainID, const char *terrainInfo) {
-	Q_syscall(CG_RMG_INIT, terrainID, terrainInfo);
-}
-void trap_RE_InitRendererTerrain( const char *info ) {
-	Q_syscall(CG_RE_INIT_RENDERER_TERRAIN, info);
-}
 void trap_R_WeatherContentsOverride( int contents ) {
 	Q_syscall(CG_R_WEATHER_CONTENTS_OVERRIDE, contents);
 }
@@ -755,12 +767,10 @@ static void TranslateSyscalls( void ) {
 	trap->CM_LoadMap						= trap_CM_LoadMap;
 	trap->CM_NumInlineModels				= trap_CM_NumInlineModels;
 	trap->CM_PointContents					= trap_CM_PointContents;
-	trap->CM_RegisterTerrain				= trap_CM_RegisterTerrain;
 	trap->CM_TempModel						= CGSyscall_CM_TempModel;
 	trap->CM_Trace							= CGSyscall_CM_Trace;
 	trap->CM_TransformedPointContents		= trap_CM_TransformedPointContents;
 	trap->CM_TransformedTrace				= CGSyscall_CM_TransformedTrace;
-	trap->RMG_Init							= trap_RMG_Init;
 	trap->S_AddLocalSet						= trap_S_AddLocalSet;
 	trap->S_AddLoopingSound					= trap_S_AddLoopingSound;
 	trap->S_ClearLoopingSounds				= trap_S_ClearLoopingSounds;
@@ -821,7 +831,6 @@ static void TranslateSyscalls( void ) {
 	trap->R_SetRangedFog					= trap_R_SetRangeFog;
 	trap->R_SetRefractionProperties			= trap_R_SetRefractProp;
 	trap->R_WorldEffectCommand				= trap_R_WorldEffectCommand;
-	trap->RE_InitRendererTerrain			= trap_RE_InitRendererTerrain;
 	trap->WE_AddWeatherZone					= trap_WE_AddWeatherZone;
 	trap->GetCurrentSnapshotNumber			= trap_GetCurrentSnapshotNumber;
 	trap->GetCurrentCmdNumber				= trap_GetCurrentCmdNumber;

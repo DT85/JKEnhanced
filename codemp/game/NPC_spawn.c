@@ -1,3 +1,25 @@
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 //b_spawn.cpp
 //added by MCG
 #include "b_local.h"
@@ -1397,7 +1419,7 @@ gentity_t *NPC_Spawn_Do( gentity_t *ent )
 
 	if ( newent == NULL )
 	{
-		Com_Printf ( S_COLOR_RED"ERROR: NPC G_Spawn failed\n" );
+		Com_Printf ( S_COLOR_RED "ERROR: NPC G_Spawn failed\n" );
 		return NULL;
 	}
 
@@ -1406,7 +1428,7 @@ gentity_t *NPC_Spawn_Do( gentity_t *ent )
 	newent->NPC = New_NPC_t(newent->s.number);
 	if ( newent->NPC == NULL )
 	{
-		Com_Printf ( S_COLOR_RED"ERROR: NPC G_Alloc NPC failed\n" );
+		Com_Printf ( S_COLOR_RED "ERROR: NPC G_Alloc NPC failed\n" );
 		goto finish;
 	//	return NULL;
 	}
@@ -1429,7 +1451,7 @@ gentity_t *NPC_Spawn_Do( gentity_t *ent )
 
 	if ( newent->client == NULL )
 	{
-		Com_Printf ( S_COLOR_RED"ERROR: NPC BG_Alloc client failed\n" );
+		Com_Printf ( S_COLOR_RED "ERROR: NPC BG_Alloc client failed\n" );
 		goto finish;
 	//	return NULL;
 	}
@@ -1653,7 +1675,7 @@ gentity_t *NPC_Spawn_Do( gentity_t *ent )
 
 		for ( parmNum = 0; parmNum < MAX_PARMS; parmNum++ )
 		{
-			if ( ent->parms->parm[parmNum] && ent->parms->parm[parmNum][0] )
+			if ( ent->parms->parm[parmNum][0] )
 			{
 				Q3_SetParm( newent->s.number, parmNum, ent->parms->parm[parmNum] );
 			}
@@ -2820,8 +2842,10 @@ void SP_NPC_MorganKatarn( gentity_t *self)
 //ALLIES
 //=============================================================================================
 
-/*QUAKED NPC_Jedi(1 0 0) (-16 -16 -24) (16 16 40) TRAINER x x x CEILING CINEMATIC NOTSOLID STARTINSOLID SHY
+/*QUAKED NPC_Jedi(1 0 0) (-16 -16 -24) (16 16 40) TRAINER MASTER RANDOM x CEILING CINEMATIC NOTSOLID STARTINSOLID SHY
 TRAINER - Special Jedi- instructor
+MASTER - Special Jedi- master
+RANDOM - creates a random Jedi student using the available player models/skins
 CEILING - Sticks to the ceiling until he sees an enemy or takes pain
 CINEMATIC - Will spawn with no default AI (BS_CINEMATIC)
 NOTSOLID - Starts not solid
@@ -2834,7 +2858,54 @@ void SP_NPC_Jedi( gentity_t *self)
 {
 	if(!self->NPC_type)
 	{
-		if ( self->spawnflags & 1 )
+		if ( self->spawnflags & 4 )
+		{//random!
+			switch ( Q_irand( 0, 11 ) )
+			{
+			case 0:
+				self->NPC_type = "jedi_hf1";
+				break;
+			case 1:
+				self->NPC_type = "jedi_hf2";
+				break;
+			case 2:
+				self->NPC_type = "jedi_hm1";
+				break;
+			case 3:
+				self->NPC_type = "jedi_hm2";
+				break;
+			case 4:
+				self->NPC_type = "jedi_kdm1";
+				break;
+			case 5:
+				self->NPC_type = "jedi_kdm2";
+				break;
+			case 6:
+				self->NPC_type = "jedi_rm1";
+				break;
+			case 7:
+				self->NPC_type = "jedi_rm2";
+				break;
+			case 8:
+				self->NPC_type = "jedi_tf1";
+				break;
+			case 9:
+				self->NPC_type = "jedi_tf2";
+				break;
+			case 10:
+				self->NPC_type = "jedi_zf1";
+				break;
+			case 11:
+			default://just in case
+				self->NPC_type = "jedi_zf2";
+				break;
+			}
+		}
+		else if ( self->spawnflags & 2 )
+		{
+			self->NPC_type = "jedimaster";
+		}
+		else if ( self->spawnflags & 1 )
 		{
 			self->NPC_type = "jeditrainer";
 		}
@@ -2913,6 +2984,56 @@ void SP_NPC_Rebel( gentity_t *self)
 //=============================================================================================
 //ENEMIES
 //=============================================================================================
+
+/*QUAKED NPC_Human_Merc(1 0 0) (-16 -16 -24) (16 16 40) BOWCASTER REPEATER FLECHETTE CONCUSSION DROPTOFLOOR CINEMATIC NOTSOLID STARTINSOLID SHY
+100 health, blaster rifle
+
+BOWCASTER - Starts with a Bowcaster
+REPEATER - Starts with a Repeater
+FLECHETTE - Starts with a Flechette gun
+CONCUSSION - Starts with a Concussion Rifle
+
+If you want them to start with any other kind of weapon, make a spawnscript for them that sets their weapon.
+
+"message" - turns on his key surface.  This is the name of the key you get when you walk over his body.  This must match the "message" field of the func_security_panel you want this key to open.  Set to "goodie" to have him carrying a goodie key that player can use to operate doors with "GOODIE" spawnflag.  NOTE: this overrides all the weapon spawnflags
+
+DROPTOFLOOR - NPC can be in air, but will spawn on the closest floor surface below it
+CINEMATIC - Will spawn with no default AI (BS_CINEMATIC)
+NOTSOLID - Starts not solid
+STARTINSOLID - Don't try to fix if spawn in solid
+SHY - Spawner is shy
+*/
+void SP_NPC_Human_Merc( gentity_t *self )
+{
+	if ( !self->NPC_type )
+	{
+		/*if ( self->message )
+		{
+			self->NPC_type = "human_merc_key";
+		}
+		else */if ( (self->spawnflags & 1) )
+		{
+			self->NPC_type = "human_merc_bow";
+		}
+		else if ( (self->spawnflags & 2) )
+		{
+			self->NPC_type = "human_merc_rep";
+		}
+		else if ( (self->spawnflags & 4) )
+		{
+			self->NPC_type = "human_merc_flc";
+		}
+		else if ( (self->spawnflags & 8) )
+		{
+			self->NPC_type = "human_merc_cnc";
+		}
+		else
+		{
+			self->NPC_type = "human_merc";
+		}
+	}
+	SP_NPC_spawner( self );
+}
 
 /*QUAKED NPC_Stormtrooper(1 0 0) (-16 -16 -24) (16 16 40) OFFICER COMMANDER ALTOFFICER ROCKET DROPTOFLOOR CINEMATIC NOTSOLID STARTINSOLID SHY
 30 health, blaster

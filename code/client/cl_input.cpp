@@ -1,27 +1,29 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // cl.input.c  -- builds an intended movement command to send to the server
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
-
 
 #include "client.h"
 #include "client_ui.h"
@@ -477,55 +479,45 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		return;
 	}
 
-	if( in_joystick->integer == 2 )
-	{
-		if(abs(cl.joystickAxis[AXIS_FORWARD]) >= 30) cmd->forwardmove = cl.joystickAxis[AXIS_FORWARD];
-		if(abs(cl.joystickAxis[AXIS_SIDE]) >= 30) cmd->rightmove = cl.joystickAxis[AXIS_SIDE];
+	if ( !(in_speed.active ^ cl_run->integer) ) {
+		cmd->buttons |= BUTTON_WALKING;
+	}
+
+	if ( in_speed.active ) {
 		anglespeed = 0.001 * cls.frametime * cl_anglespeedkey->value;
-		cl.viewangles[YAW] -= (cl_yawspeed->value / 100.0f) * (cl.joystickAxis[AXIS_YAW]/1024.0f);
-		cl.viewangles[PITCH] += (cl_pitchspeed->value / 100.0f) * (cl.joystickAxis[AXIS_PITCH]/1024.0f);
+	} else {
+		anglespeed = 0.001 * cls.frametime;
+	}
+
+	if ( !in_strafe.active ) {
+		if ( cl_mYawOverride )
+		{
+			cl.viewangles[YAW] += 5.0f * cl_mYawOverride * cl.joystickAxis[AXIS_SIDE];
+		}
+		else
+		{
+			cl.viewangles[YAW] += anglespeed * (cl_yawspeed->value / 100.0f) * cl.joystickAxis[AXIS_SIDE];
+		}
 	}
 	else
 	{
-		if ( !(in_speed.active ^ cl_run->integer) ) {
-			cmd->buttons |= BUTTON_WALKING;
-		}
-
-		if ( in_speed.active ) {
-			anglespeed = 0.001 * cls.frametime * cl_anglespeedkey->value;
-		} else {
-			anglespeed = 0.001 * cls.frametime;
-		}
-
-		if ( !in_strafe.active ) {
-			if ( cl_mYawOverride )
-			{
-				cl.viewangles[YAW] += 5.0f * cl_mYawOverride * cl.joystickAxis[AXIS_SIDE];
-			}
-			else
-			{
-				cl.viewangles[YAW] += anglespeed * (cl_yawspeed->value / 100.0f) * cl.joystickAxis[AXIS_SIDE];
-			}
-		} else
-		{
-			cmd->rightmove = ClampChar( cmd->rightmove + cl.joystickAxis[AXIS_SIDE] );
-		}
-
-		if ( in_mlooking ) {
-			if ( cl_mPitchOverride )
-			{
-				cl.viewangles[PITCH] += 5.0f * cl_mPitchOverride * cl.joystickAxis[AXIS_FORWARD];
-			}
-			else
-			{
-				cl.viewangles[PITCH] += anglespeed * (cl_pitchspeed->value / 100.0f) * cl.joystickAxis[AXIS_FORWARD];
-			}
-		} else {
-			cmd->forwardmove = ClampChar( cmd->forwardmove + cl.joystickAxis[AXIS_FORWARD] );
-		}
-
-		cmd->upmove = ClampChar( cmd->upmove + cl.joystickAxis[AXIS_UP] );
+		cmd->rightmove = ClampChar( cmd->rightmove + cl.joystickAxis[AXIS_SIDE] );
 	}
+
+	if ( in_mlooking ) {
+		if ( cl_mPitchOverride )
+		{
+			cl.viewangles[PITCH] += 5.0f * cl_mPitchOverride * cl.joystickAxis[AXIS_FORWARD];
+		}
+		else
+		{
+			cl.viewangles[PITCH] += anglespeed * (cl_pitchspeed->value / 100.0f) * cl.joystickAxis[AXIS_FORWARD];
+		}
+	} else {
+		cmd->forwardmove = ClampChar( cmd->forwardmove + cl.joystickAxis[AXIS_FORWARD] );
+	}
+
+	cmd->upmove = ClampChar( cmd->upmove + cl.joystickAxis[AXIS_UP] );
 }
 
 /*
@@ -973,15 +965,9 @@ void CL_InitInput( void ) {
 	Cmd_AddCommand ("-force_lightning", IN_Button1Up);
 	Cmd_AddCommand ("+useforce", IN_Button2Down);	//use current force power
 	Cmd_AddCommand ("-useforce", IN_Button2Up);
-#ifndef __NO_JK2
-	if ( com_jk2 && com_jk2->integer ) {
-		Cmd_AddCommand ("+block", IN_Button3Down);//manual blocking
-		Cmd_AddCommand ("-block", IN_Button3Up);
-	}
-	else {
-		Cmd_AddCommand ("+force_drain", IN_Button3Down);//force drain
-		Cmd_AddCommand ("-force_drain", IN_Button3Up);
-	}
+#ifdef JK2_MODE
+	Cmd_AddCommand ("+block", IN_Button3Down);//manual blocking
+	Cmd_AddCommand ("-block", IN_Button3Up);
 #else
 	Cmd_AddCommand ("+force_drain", IN_Button3Down);//force drain
 	Cmd_AddCommand ("-force_drain", IN_Button3Up);
@@ -994,14 +980,7 @@ void CL_InitInput( void ) {
 	Cmd_AddCommand ("-force_grip", IN_Button6Up);
 	Cmd_AddCommand ("+altattack", IN_Button7Down);//altattack
 	Cmd_AddCommand ("-altattack", IN_Button7Up);
-#ifndef __NO_JK2
-	if ( !com_jk2 || !com_jk2->integer ) {
-		Cmd_AddCommand ("+forcefocus", IN_Button8Down);//special saber attacks
-		Cmd_AddCommand ("-forcefocus", IN_Button8Up);
-		Cmd_AddCommand ("+block", IN_Button8Down);//manual blocking
-		Cmd_AddCommand ("-block", IN_Button8Up);
-	}
-#else
+#ifndef JK2_MODE
 	Cmd_AddCommand ("+forcefocus", IN_Button8Down);//special saber attacks
 	Cmd_AddCommand ("-forcefocus", IN_Button8Up);
 	Cmd_AddCommand ("+block", IN_Button8Down);//manual blocking

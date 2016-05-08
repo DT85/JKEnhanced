@@ -1,5 +1,28 @@
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
+#include "qcommon/qcommon.h"
 
 #ifdef _WIN32
 	#include <winsock.h>
@@ -464,7 +487,6 @@ NET_OpenSocks
 */
 void NET_OpenSocks( int port ) {
 	struct sockaddr_in	address;
-	int					err;
 	struct hostent		*h;
 	int					len;
 	qboolean			rfc1929;
@@ -475,14 +497,12 @@ void NET_OpenSocks( int port ) {
 	Com_Printf( "Opening connection to SOCKS server.\n" );
 
 	if ( ( socks_socket = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP ) ) == INVALID_SOCKET ) {
-		err = socketError;
 		Com_Printf( "WARNING: NET_OpenSocks: socket: %s\n", NET_ErrorString() );
 		return;
 	}
 
 	h = gethostbyname( net_socksServer->string );
 	if ( h == NULL ) {
-		err = socketError;
 		Com_Printf( "WARNING: NET_OpenSocks: gethostbyname: %s\n", NET_ErrorString() );
 		return;
 	}
@@ -496,7 +516,6 @@ void NET_OpenSocks( int port ) {
 	address.sin_port = htons( (short)net_socksPort->integer );
 
 	if ( connect( socks_socket, (struct sockaddr *)&address, sizeof( address ) ) == SOCKET_ERROR ) {
-		err = socketError;
 		Com_Printf( "NET_OpenSocks: connect: %s\n", NET_ErrorString() );
 		return;
 	}
@@ -524,7 +543,6 @@ void NET_OpenSocks( int port ) {
 		buf[2] = 2;		// method #2 - method id #02: username/password
 	}
 	if ( send( socks_socket, (const char *)buf, len, 0 ) == SOCKET_ERROR ) {
-		err = socketError;
 		Com_Printf( "NET_OpenSocks: send: %s\n", NET_ErrorString() );
 		return;
 	}
@@ -532,7 +550,6 @@ void NET_OpenSocks( int port ) {
 	// get the response
 	len = recv( socks_socket, (char *)buf, 64, 0 );
 	if ( len == SOCKET_ERROR ) {
-		err = socketError;
 		Com_Printf( "NET_OpenSocks: recv: %s\n", NET_ErrorString() );
 		return;
 	}
@@ -571,7 +588,6 @@ void NET_OpenSocks( int port ) {
 
 		// send it
 		if ( send( socks_socket, (const char *)buf, 3 + ulen + plen, 0 ) == SOCKET_ERROR ) {
-			err = socketError;
 			Com_Printf( "NET_OpenSocks: send: %s\n", NET_ErrorString() );
 			return;
 		}
@@ -579,7 +595,6 @@ void NET_OpenSocks( int port ) {
 		// get the response
 		len = recv( socks_socket, (char *)buf, 64, 0 );
 		if ( len == SOCKET_ERROR ) {
-			err = socketError;
 			Com_Printf( "NET_OpenSocks: recv: %s\n", NET_ErrorString() );
 			return;
 		}
@@ -601,7 +616,6 @@ void NET_OpenSocks( int port ) {
 	*(int *)&buf[4] = INADDR_ANY;
 	*(short *)&buf[8] = htons( (short)port );		// port
 	if ( send( socks_socket, (const char *)buf, 10, 0 ) == SOCKET_ERROR ) {
-		err = socketError;
 		Com_Printf( "NET_OpenSocks: send: %s\n", NET_ErrorString() );
 		return;
 	}
@@ -609,7 +623,6 @@ void NET_OpenSocks( int port ) {
 	// get the response
 	len = recv( socks_socket, (char *)buf, 64, 0 );
 	if( len == SOCKET_ERROR ) {
-		err = socketError;
 		Com_Printf( "NET_OpenSocks: recv: %s\n", NET_ErrorString() );
 		return;
 	}
@@ -652,7 +665,7 @@ NET_GetLocalAddress
 	// tjw: assume that once upon a time some version did have sa_len
 	#define IFR_NEXT(ifr)	\
 	((struct ifreq *) ((char *) (ifr) + sizeof(*(ifr)) + \
-	max(0, (int) (ifr)->ifr_addr.sa_len - (int) sizeof((ifr)->ifr_addr))))
+	Q_max(0, (int) (ifr)->ifr_addr.sa_len - (int) sizeof((ifr)->ifr_addr))))
 #endif
 
 
@@ -756,7 +769,6 @@ void NET_GetLocalAddress( void )
 {
 	char				hostname[256];
 	struct hostent		*hostInfo;
-	int					error;
 	char				*p;
 	int					ip;
 	int					n;
@@ -765,13 +777,11 @@ void NET_GetLocalAddress( void )
 	numIP = 0;
 
 	if( gethostname( hostname, 256 ) == SOCKET_ERROR ) {
-		error = socketError;
 		return;
 	}
 
 	hostInfo = gethostbyname( hostname );
 	if( !hostInfo ) {
-		error = socketError;
 		return;
 	}
 
@@ -959,10 +969,9 @@ void NET_Init( void ) {
 	Com_Printf( "Winsock Initialized\n" );
 #endif
 
-	// this is really just to get the cvars registered
-	NET_GetCvars();
-
 	NET_Config( qtrue );
+
+	Cmd_AddCommand ("net_restart", NET_Restart_f );
 }
 
 /*
@@ -998,7 +1007,7 @@ void NET_Sleep( int msec ) {
 	if ( !com_dedicated->integer )
 		return; // we're not a server, just run full speed
 
-	if ( ip_socket == -1 )
+	if ( ip_socket == INVALID_SOCKET )
 		return;
 
 	FD_ZERO(&fdset);
@@ -1016,6 +1025,6 @@ void NET_Sleep( int msec ) {
 NET_Restart_f
 ====================
 */
-void NET_Restart( void ) {
+void NET_Restart_f( void ) {
 	NET_Config( qtrue );
 }

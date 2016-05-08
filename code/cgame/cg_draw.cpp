@@ -1,25 +1,29 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // cg_draw.c -- draw all of the graphical elements during
 // active (after loading) gameplay
 
-// this line must stay at top so the whole PCH thing works...
 #include "cg_headers.h"
 
 #include "cg_media.h"
@@ -1643,17 +1647,204 @@ static void CG_DrawBatteryCharge( void )
 	}
 }
 
+#define SimpleHud_DrawString( x, y, str, color ) cgi_R_Font_DrawString( x, y, str, color, (int)0x80000000 | cgs.media.qhFontSmall, -1, 1.0f )
+
+static void CG_DrawSimpleSaberStyle( const centity_t *cent )
+{
+	uint32_t	calcColor;
+	char		num[7] = { 0 };
+	int			weapX = 16;
+
+	if ( !cent->currentState.weapon ) // We don't have a weapon right now
+	{
+		return;
+	}
+
+	if ( cent->currentState.weapon != WP_SABER || !cent->gent )
+	{
+		return;
+	}
+
+	if ( !cg.saberAnimLevelPending && cent->gent && cent->gent->client )
+	{//uninitialized after a loadgame, cheat across and get it
+		cg.saberAnimLevelPending = cent->gent->client->ps.saberAnimLevel;
+	}
+
+	switch ( cg.saberAnimLevelPending )
+	{
+	default:
+	case SS_FAST:
+		Com_sprintf( num, sizeof( num ), "FAST" );
+		calcColor = CT_ICON_BLUE;
+		weapX = 0;
+		break;
+	case SS_MEDIUM:
+		Com_sprintf( num, sizeof( num ), "MEDIUM" );
+		calcColor = CT_YELLOW;
+		break;
+	case SS_STRONG:
+		Com_sprintf( num, sizeof( num ), "STRONG" );
+		calcColor = CT_HUD_RED;
+		break;
+	case SS_DESANN:
+		Com_sprintf( num, sizeof( num ), "DESANN" );
+		calcColor = CT_HUD_RED;
+		break;
+	case SS_TAVION:
+		Com_sprintf( num, sizeof( num ), "TAVION" );
+		calcColor = CT_ICON_BLUE;
+		break;
+	case SS_DUAL:
+		Com_sprintf( num, sizeof( num ), "AKIMBO" );
+		calcColor = CT_HUD_ORANGE;
+		break;
+	case SS_STAFF:
+		Com_sprintf( num, sizeof( num ), "STAFF" );
+		calcColor = CT_HUD_ORANGE;
+		break;
+	}
+
+	SimpleHud_DrawString( SCREEN_WIDTH - (weapX + 16 + 32), (SCREEN_HEIGHT - 80) + 40, num, colorTable[calcColor] );
+}
+
+static void CG_DrawSimpleAmmo( const centity_t *cent )
+{
+	playerState_t	*ps;
+	uint32_t	calcColor;
+	int			currValue = 0;
+	char		num[16] = { 0 };
+
+	if ( !cent->currentState.weapon ) // We don't have a weapon right now
+	{
+		return;
+	}
+
+	ps = &cg.snap->ps;
+
+	currValue = ps->ammo[weaponData[cent->currentState.weapon].ammoIndex];
+
+	// No ammo
+	if ( currValue < 0 || (weaponData[cent->currentState.weapon].energyPerShot == 0 && weaponData[cent->currentState.weapon].altEnergyPerShot == 0) )
+	{
+		SimpleHud_DrawString( SCREEN_WIDTH - (16 + 32), (SCREEN_HEIGHT - 80) + 40, "--", colorTable[CT_HUD_ORANGE] );
+		return;
+	}
+
+	//
+	// ammo
+	//
+	if ( cg.oldammo < currValue )
+	{
+		cg.oldAmmoTime = cg.time + 200;
+	}
+
+	cg.oldammo = currValue;
+
+
+	// Determine the color of the numeric field
+
+	// Firing or reloading?
+	if ( (cg.predicted_player_state.weaponstate == WEAPON_FIRING
+		&& cg.predicted_player_state.weaponTime > 100) )
+	{
+		calcColor = CT_LTGREY;
+	}
+	else
+	{
+		if ( currValue > 0 )
+		{
+			if ( cg.oldAmmoTime > cg.time )
+			{
+				calcColor = CT_YELLOW;
+			}
+			else
+			{
+				calcColor = CT_HUD_ORANGE;
+			}
+		}
+		else
+		{
+			calcColor = CT_RED;
+		}
+	}
+
+	Com_sprintf( num, sizeof( num ), "%i", currValue );
+
+	SimpleHud_DrawString( SCREEN_WIDTH - (16 + 32), (SCREEN_HEIGHT - 80) + 40, num, colorTable[calcColor] );
+}
+
+static void CG_DrawSimpleForcePower( const centity_t *cent )
+{
+	uint32_t	calcColor;
+	char		num[16] = { 0 };
+	qboolean	flash = qfalse;
+
+	if ( !cent->gent || !cent->gent->client->ps.forcePowersKnown )
+	{
+		return;
+	}
+
+	// Make the hud flash by setting forceHUDTotalFlashTime above cg.time
+	if ( cg.forceHUDTotalFlashTime > cg.time )
+	{
+		flash = qtrue;
+		if ( cg.forceHUDNextFlashTime < cg.time )
+		{
+			cg.forceHUDNextFlashTime = cg.time + 400;
+			cgi_S_StartSound( NULL, 0, CHAN_AUTO, cgs.media.noforceSound );
+			if ( cg.forceHUDActive )
+			{
+				cg.forceHUDActive = qfalse;
+			}
+			else
+			{
+				cg.forceHUDActive = qtrue;
+			}
+
+		}
+	}
+	else	// turn HUD back on if it had just finished flashing time.
+	{
+		cg.forceHUDNextFlashTime = 0;
+		cg.forceHUDActive = qtrue;
+	}
+
+	// Determine the color of the numeric field
+	calcColor = flash ? CT_RED : CT_ICON_BLUE;
+
+	Com_sprintf( num, sizeof( num ), "%i", cent->gent->client->ps.forcePower );
+
+	SimpleHud_DrawString( SCREEN_WIDTH - (16 + 32), (SCREEN_HEIGHT - 80) + 40 + 14, num, colorTable[calcColor] );
+}
+
 /*
 ================
 CG_DrawHUD
 ================
 */
-extern void *cgi_UI_GetMenuByName( const char *menu );
-extern void cgi_UI_Menu_Paint( void *menu, qboolean force );
 static void CG_DrawHUD( centity_t *cent )
 {
 	int value;
 	int	sectionXPos,sectionYPos,sectionWidth,sectionHeight;
+
+	if ( cg_hudFiles.integer )
+	{
+		int x = 0;
+		int y = SCREEN_HEIGHT - 80;
+
+		SimpleHud_DrawString( x + 16, y + 40, va( "%i", cg.snap->ps.stats[STAT_HEALTH] ), colorTable[CT_HUD_RED] );
+
+		SimpleHud_DrawString( x + 18 + 14, y + 40 + 14, va( "%i", cg.snap->ps.stats[STAT_ARMOR] ), colorTable[CT_HUD_GREEN] );
+
+		CG_DrawSimpleForcePower( cent );
+
+		if ( cent->currentState.weapon == WP_SABER )
+			CG_DrawSimpleSaberStyle( cent );
+		else
+			CG_DrawSimpleAmmo( cent );
+
+		return;
+	}
 
 	// Draw the lower left section of the HUD
 	if (cgi_UI_GetMenuInfo("lefthud",&sectionXPos,&sectionYPos,&sectionWidth,&sectionHeight))
@@ -2157,14 +2348,12 @@ CG_DrawStats
 static void CG_DrawStats( void ) 
 {
 	centity_t		*cent;
-	playerState_t	*ps;
 
 	if ( cg_drawStatus.integer == 0 ) {
 		return;
 	}
 
 	cent = &cg_entities[cg.snap->ps.clientNum];
-	ps = &cg.snap->ps;
 
 	if ((cg.snap->ps.viewEntity>0&&cg.snap->ps.viewEntity<ENTITYNUM_WORLD))
 	{
@@ -2252,7 +2441,6 @@ void CG_DrawCredits(void)
 void CG_DrawHealthBar(centity_t *cent, float chX, float chY, float chW, float chH)
 {
 	vec4_t aColor;
-	vec4_t bColor;
 	vec4_t cColor;
 	float x = chX-(chW/2);
 	float y = chY-chH;
@@ -2274,12 +2462,6 @@ void CG_DrawHealthBar(centity_t *cent, float chX, float chY, float chW, float ch
 	aColor[1] = 0.0f;
 	aColor[2] = 0.0f;
 	aColor[3] = 0.4f;
-
-	//color of the border
-	bColor[0] = 0.0f;
-	bColor[1] = 0.0f;
-	bColor[2] = 0.0f;
-	bColor[3] = 0.3f;
 
 	//color of greyed out "missing health"
 	cColor[0] = 0.5f;
@@ -2558,6 +2740,7 @@ static void CG_DrawCrosshair( vec3_t worldPoint )
 	{
 		if ( !CG_WorldCoordToScreenCoordFloat( worldPoint, &x, &y ) )
 		{//off screen, don't draw it
+			cgi_R_SetColor( NULL );
 			return;
 		}
 		x -= 320;//????
@@ -2604,6 +2787,8 @@ static void CG_DrawCrosshair( vec3_t worldPoint )
 								0, 0, 1, 1, 
 								cgs.media.forceCoronaShader ); 
 	}
+
+	cgi_R_SetColor( NULL );
 }
 
 /*
@@ -2613,45 +2798,40 @@ qboolean CG_WorldCoordToScreenCoord(vec3_t worldCoord, int *x, int *y)
 */
 qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y)
 {
-	float	xcenter, ycenter;
-	vec3_t	local, transformed;
+    vec3_t trans;
+    float xc, yc;
+    float px, py;
+    float z;
 
-//	xcenter = cg.refdef.width / 2;//gives screen coords adjusted for resolution
-//	ycenter = cg.refdef.height / 2;//gives screen coords adjusted for resolution
-	
-	//NOTE: did it this way because most draw functions expect virtual 640x480 coords
-	//	and adjust them for current resolution
-	xcenter = 640.0f / 2.0f;//gives screen coords in virtual 640x480, to be adjusted when drawn
-	ycenter = 480.0f / 2.0f;//gives screen coords in virtual 640x480, to be adjusted when drawn
+    px = tan(cg.refdef.fov_x * (M_PI / 360) );
+    py = tan(cg.refdef.fov_y * (M_PI / 360) );
 
-	VectorSubtract (worldCoord, cg.refdef.vieworg, local);
+    VectorSubtract(worldCoord, cg.refdef.vieworg, trans);
 
-	transformed[0] = DotProduct(local,vright);
-	transformed[1] = DotProduct(local,vup);
-	transformed[2] = DotProduct(local,vfwd);		
+    xc = 640 / 2.0;
+    yc = 480 / 2.0;
 
-	// Make sure Z is not negative.
-	if(transformed[2] < 0.01f)
-	{
-		return qfalse;
-	}
-	// Simple convert to screen coords.
-	float xzi = xcenter / transformed[2] * (100.0f/cg.refdef.fov_x);
-	float yzi = ycenter / transformed[2] * (100.0f/cg.refdef.fov_y);
+	// z = how far is the object in our forward direction
+    z = DotProduct(trans, cg.refdef.viewaxis[0]);
+    if (z <= 0.001)
+        return qfalse;
 
-	*x = xcenter + xzi * transformed[0];
-	*y = ycenter - yzi * transformed[1];
+    *x = xc - DotProduct(trans, cg.refdef.viewaxis[1])*xc/(z*px);
+    *y = yc - DotProduct(trans, cg.refdef.viewaxis[2])*yc/(z*py);
 
-	return qtrue;
+    return qtrue;
 }
 
-qboolean CG_WorldCoordToScreenCoord( vec3_t worldCoord, int *x, int *y )
-{
-	float	xF, yF;
-	qboolean retVal = CG_WorldCoordToScreenCoordFloat( worldCoord, &xF, &yF );
-	*x = (int)xF;
-	*y = (int)yF;
-	return retVal;
+qboolean CG_WorldCoordToScreenCoord( vec3_t worldCoord, int *x, int *y ) {
+	float xF, yF;
+
+	if ( CG_WorldCoordToScreenCoordFloat( worldCoord, &xF, &yF ) ) {
+		*x = (int)xF;
+		*y = (int)yF;
+		return qtrue;
+	}
+
+	return qfalse;
 }
 
 // I'm keeping the rocket tracking code separate for now since I may want to do different logic...but it still uses trace info from scanCrosshairEnt
@@ -3934,6 +4114,11 @@ void CG_DrawIconBackground(void)
 	int				backgroundWidth,backgroundHeight;
 	qhandle_t		background;
 	const float		shutdownTime = 130.0f;
+
+	if ( cg_hudFiles.integer )
+	{ //simple hud
+		return;
+	}
 
 	// Are we in zoom mode or the HUD is turned off?
 	if (( cg.zoomMode != 0 ) || !( cg_drawHUD.integer ))

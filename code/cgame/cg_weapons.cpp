@@ -1,22 +1,26 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
-// this line must stay at top so the whole PCH thing works...
 #include "cg_headers.h"
 
 #include "cg_media.h"
@@ -1774,7 +1778,7 @@ void CG_DrawWeaponSelect( void )
 	int		holdX,x,y,x2,y2,w2,h2,pad;
 	int		sideLeftIconCnt,sideRightIconCnt;
 	int		sideMax,holdCount,iconCnt;
-	int		height;
+	//int		height;
 	vec4_t	calcColor;
 	vec4_t	textColor = { .875f, .718f, .121f, 1.0f };
 	int		yOffset = 0;
@@ -1869,7 +1873,7 @@ void CG_DrawWeaponSelect( void )
 	cgi_R_SetColor( calcColor);					
 	// Work backwards from current icon
 	holdX = x - ((bigIconSize/2) + pad + smallIconSize);
-	height = smallIconSize * cg.iconHUDPercent;
+	//height = smallIconSize * cg.iconHUDPercent;
 	drewConc = qfalse;
 
 	for (iconCnt=1;iconCnt<(sideLeftIconCnt+1);i--)
@@ -1936,7 +1940,7 @@ void CG_DrawWeaponSelect( void )
 	}
 
 	// Current Center Icon
-	height = bigIconSize * cg.iconHUDPercent;
+	//height = bigIconSize * cg.iconHUDPercent;
 	cgi_R_SetColor(NULL);
 	if (weaponData[cg.weaponSelect].weaponIcon[0])
 	{
@@ -1971,7 +1975,7 @@ void CG_DrawWeaponSelect( void )
 	// Work forwards from current icon
 	cgi_R_SetColor( calcColor);					
 	holdX = x + (bigIconSize/2) + pad;
-	height = smallIconSize * cg.iconHUDPercent;
+	//height = smallIconSize * cg.iconHUDPercent;
 	drewConc = qfalse;
 	for (iconCnt=1;iconCnt<(sideRightIconCnt+1);i++)
 	{
@@ -2080,7 +2084,7 @@ qboolean CG_WeaponSelectable( int i, int original, qboolean dpMode )
 
 	//FIXME: this doesn't work below, can still cycle too fast!
 	if ( original == WP_SABER && cg.weaponSelectTime + 500 > cg.time )
-	{//when sqitch to lightsaber, have to stay there for at least half a second!
+	{//when switch to lightsaber, have to stay there for at least half a second!
 		return qfalse;
 	}
 
@@ -2738,7 +2742,7 @@ Caused by an EV_FIRE_WEAPON event
 void CG_FireWeapon( centity_t *cent, qboolean alt_fire ) 
 {
 	entityState_t *ent;
-	weaponInfo_t	*weap;
+	//weaponInfo_t	*weap;
 
 	ent = &cent->currentState;
 	if ( ent->weapon == WP_NONE ) {
@@ -2759,7 +2763,7 @@ void CG_FireWeapon( centity_t *cent, qboolean alt_fire )
 		}
 	}
 
-	weap = &cg_weapons[ ent->weapon ];
+	//weap = &cg_weapons[ ent->weapon ];
 
 	// mark the entity as muzzle flashing, so when it is added it will
 	// append the flash to the weapon model
@@ -2889,6 +2893,17 @@ void CG_MissileStick( centity_t *cent, int weapon, vec3_t position )
 	{
 		cgi_S_StartSound( NULL, cent->currentState.number, CHAN_AUTO, snd );
 	}
+}
+
+qboolean CG_VehicleWeaponImpact( centity_t *cent )
+{//see if this is a missile entity that's owned by a vehicle and should do a special, overridden impact effect
+	if (cent->currentState.otherEntityNum2
+		&& g_vehWeaponInfo[cent->currentState.otherEntityNum2].iImpactFX)
+	{//missile is from a special vehWeapon
+		CG_PlayEffectID(g_vehWeaponInfo[cent->currentState.otherEntityNum2].iImpactFX, cent->lerpOrigin, cent->gent->pos1);
+		return qtrue;
+	}
+	return qfalse;
 }
 
 /*

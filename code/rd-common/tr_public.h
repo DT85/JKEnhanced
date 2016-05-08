@@ -1,23 +1,28 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
-#ifndef __TR_PUBLIC_H
-#define __TR_PUBLIC_H
+#pragma once
 
 #include "tr_types.h"
 #include "../qcommon/qcommon.h"
@@ -25,16 +30,8 @@ This file is part of Jedi Academy.
 #include "../ghoul2/G2.h"
 #include "../ghoul2/ghoul2_gore.h"
 
-// suck it
-#include "../qcommon/cm_landscape.h"
-#ifdef _WIN32
-// down
-#include "../win32/win_local.h"
-#endif
+#define	REF_API_VERSION		15
 
-#define	REF_API_VERSION		10
-
-// Had to add this one too '>_< --eez
 typedef struct {
 	void				(QDECL *Printf)						( int printLevel, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 	void				(QDECL *Error)						( int errorLevel, const char *fmt, ...) __attribute__ ((noreturn, format (printf, 2, 3)));
@@ -66,16 +63,16 @@ typedef struct {
 
 
 	qboolean			(*LowPhysicalMemory)				( void );
-	const char*			(*SE_GetString)						( const char *reference );						// this has to be ultrahacked for JK2 support
+	const char*			(*SE_GetString)						( const char *reference );
 
 
 	void				(*FS_FreeFile)						( void *buffer );
 	void				(*FS_FreeFileList)					( char **fileList );
 	int					(*FS_Read)							( void *buffer, int len, fileHandle_t f );
-	int					(*FS_ReadFile)						( const char *qpath, void **buffer );
+	long					(*FS_ReadFile)						( const char *qpath, void **buffer );
 	void				(*FS_FCloseFile)					( fileHandle_t f );
-	int					(*FS_FOpenFileRead)					( const char *qpath, fileHandle_t *file, qboolean uniqueFILE );
-	fileHandle_t		(*FS_FOpenFileWrite)				( const char *qpath );
+	long					(*FS_FOpenFileRead)					( const char *qpath, fileHandle_t *file, qboolean uniqueFILE );
+	fileHandle_t		(*FS_FOpenFileWrite)				( const char *qpath, qboolean safe );
 	int					(*FS_FOpenFileByMode)				( const char *qpath, fileHandle_t *f, fsMode_t mode );
 	qboolean			(*FS_FileExists)					( const char *file );
 	int					(*FS_FileIsInPAK)					( const char *filename );
@@ -85,10 +82,6 @@ typedef struct {
 
 	void				(*CM_DrawDebugSurface)				( void (*drawPoly)( int color, int numPoints, float *points ) );
 	bool				(*CM_CullWorldBox)					( const cplane_t *frustrum, const vec3pair_t bounds );
-	void				(*CM_TerrainPatchIterate)			( const class CCMLandScape *landscape, void (*IterateFunc)( CCMPatch *, void * ),
-															void *userdata );
-	CCMLandScape *		(*CM_RegisterTerrain)				( const char *config, bool server );
-	void				(*CM_ShutdownTerrain)				( thandle_t terrainId );
 	byte*				(*CM_ClusterPVS)					( int cluster );
 	int					(*CM_PointContents)					( const vec3_t p, clipHandle_t model );
 	void				(*S_RestartMusic)					( void );
@@ -99,19 +92,20 @@ typedef struct {
 															int bits, const char *psAudioFile /* = NULL */ );
 	void				(*CIN_UploadCinematic)				( int handle );
 
-	void				(*SV_GetConfigstring)				( int index, char *buffer, int bufferSize );
-	void				(*SV_SetConfigstring)				( int index, const char *value );
+	// window handling
+	window_t		(*WIN_Init)                         ( const windowDesc_t *desc, glconfig_t *glConfig );
+	void			(*WIN_SetGamma)						( glconfig_t *glConfig, byte red[256], byte green[256], byte blue[256] );
+	void			(*WIN_Present)						( window_t *window );
+	void            (*WIN_Shutdown)                     ( void );
 
-#ifdef _WIN32
-	WinVars_t *			(*GetWinVars)						( void ); //g_wv
-#endif
-
-    // input event handling
-	void            (*IN_Init)                          ( void *windowData );
-	void            (*IN_Shutdown)                      ( void );
-	void            (*IN_Restart)                       ( void );
+	// OpenGL-specific
+	void *			(*GL_GetProcAddress)				( const char *name );
 
 	CMiniHeap *			(*GetG2VertSpaceServer)				( void );
+
+	// Persistent data store
+	bool			(*PD_Store)							( const char *name, const void *data, size_t size );
+	const void *	(*PD_Load)							( const char *name, size_t *size );
 
 	// ============= NOT IN MP BEYOND THIS POINT
 	void				(*SV_Trace)							( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, 
@@ -122,7 +116,6 @@ typedef struct {
 
 	int					(*SV_PointContents)					( const vec3_t p, clipHandle_t model );
 
-	void				(*CM_ShaderTableCleanup)			( void );					// FIXME: port to renderer	// NOT IN MP
 	qboolean			(*CM_DeleteCachedMap)				( qboolean bGuaranteedOkToDelete );	// NOT IN MP
 
 	qboolean			(*CL_IsRunningInGameCinematic)		( void );
@@ -144,7 +137,7 @@ typedef struct {
 	// called before the library is unloaded
 	// if the system is just reconfiguring, pass destroyWindow = qfalse,
 	// which will keep the screen from flashing to the desktop.
-	void	(*Shutdown)( qboolean destroyWindow );
+	void	(*Shutdown)( qboolean destroyWindow, qboolean restarting );
 
 	// All data that will be used in a level should be
 	// registered before rendering any frames to prevent disk hits,
@@ -214,6 +207,11 @@ typedef struct {
 
 	// for use with save-games mainly...
 	void	(*GetScreenShot)(byte *data, int w, int h);
+	
+#ifdef JK2_MODE
+	size_t	(*SaveJPGToBuffer)(byte *buffer, size_t bufSize, int quality, int image_width, int image_height, byte *image_buffer, int padding );
+	void	(*LoadJPGFromBuffer)( byte *inputBuffer, size_t len, byte **pic, int *width, int *height );
+#endif
 
 	// this is so you can get access to raw pixels from a graphics format (TGA/JPG/BMP etc), 
 	//	currently only the save game uses it (to make raw shots for the autosaves)
@@ -249,20 +247,11 @@ typedef struct {
 	unsigned int (*AnyLanguage_ReadCharFromString2)( char **psText, qboolean *pbIsTrailingPunctuation /* = NULL */);
 
 	// Misc
-	void	(*R_Resample)(byte *source, int swidth, int sheight, byte *dest, int dwidth, int dheight, int components);
-	void	(*R_LoadDataImage)(const char *name, byte **pic, int *width, int *height);
-	void	(*R_InvertImage)(byte *data, int width, int height, int depth);
-	int		(*SavePNG)( const char *filename, byte *buf, size_t width, size_t height, int byteDepth );
 	void	(*R_InitWorldEffects)(void);
-	void	(*R_CreateAutomapImage)( const char *name, const byte *pic, int width, int height,
-		qboolean mipmap, qboolean allowPicmip, qboolean allowTC, qboolean glWrapClampMode );
 	void	(*R_ClearStuffToStopGhoul2CrashingThings)(void);
 	qboolean (*R_inPVS)(vec3_t p1, vec3_t p2);
 
 	void	(*SVModelInit)(void);
-
-	// RMG
-	void	(*InitRendererTerrain)( const char *info );
 
 	// Distortion effects
 	float*		(*tr_distortionAlpha)( void );
@@ -387,11 +376,8 @@ typedef struct {
 	void		(*G2Time_ReportTimers)(void);
 } refexport_t;
 
-
 // this is the only function actually exported at the linker level
 // If the module can't init to a valid rendering state, NULL will be
 // returned.
 
 typedef	refexport_t* (QDECL *GetRefAPI_t) (int apiVersion, refimport_t *rimp);
-
-#endif	// __TR_PUBLIC_H

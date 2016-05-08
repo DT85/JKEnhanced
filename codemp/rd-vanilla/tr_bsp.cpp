@@ -1,3 +1,26 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // tr_map.c
 #include "tr_local.h"
 
@@ -16,8 +39,6 @@ static	byte		*fileBase;
 
 int			c_subdivisions;
 int			c_gridVerts;
-
-void R_RMGInit(void);
 
 //===============================================================================
 
@@ -81,7 +102,7 @@ void R_ColorShiftLightingBytes( byte in[4], byte out[4] ) {
 	int shift, r, g, b;
 
 	// shift the color data based on overbright range
-	shift = r_mapOverBrightBits->integer - tr.overbrightBits;
+	shift = Q_max( 0, r_mapOverBrightBits->integer - tr.overbrightBits );
 
 	// shift the data based on overbright range
 	r = in[0] << shift;
@@ -115,7 +136,7 @@ void R_ColorShiftLightingBytes( byte in[3] ) {
 	int shift, r, g, b;
 
 	// shift the color data based on overbright range
-	shift = r_mapOverBrightBits->integer - tr.overbrightBits;
+	shift = Q_max( 0, r_mapOverBrightBits->integer - tr.overbrightBits );
 
 	// shift the data based on overbright range
 	r = in[0] << shift;
@@ -195,7 +216,7 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName, world_t &worldDat
 				float g = buf_p[j*3+1];
 				float b = buf_p[j*3+2];
 				float intensity;
-				float out[3];
+				float out[3] = {0.0f, 0.0f, 0.0f};
 
 				intensity = 0.33f * r + 0.685f * g + 0.063f * b;
 
@@ -281,19 +302,6 @@ static	void R_LoadVisibility( lump_t *l, world_t &worldData ) {
 }
 
 //===============================================================================
-
-qhandle_t R_GetShaderByNum(int shaderNum, world_t &worldData)
-{
-	qhandle_t	shader;
-
-	if ( (shaderNum < 0) || (shaderNum >= worldData.numShaders) )
-	{
-		ri->Printf( PRINT_ALL, "Warning: Bad index for R_GetShaderByNum - %i", shaderNum );
-		return(0);
-	}
-	shader = RE_RegisterShader(worldData.shaders[ shaderNum ].shader);
-	return(shader);
-}
 
 /*
 ===============
@@ -1842,6 +1850,9 @@ R_LoadLightGridArray
 */
 void R_LoadLightGridArray( lump_t *l, world_t &worldData ) {
 	world_t	*w;
+#ifdef Q3_BIG_ENDIAN
+	int		i;
+#endif
 
 	w = &worldData;
 
@@ -1855,6 +1866,11 @@ void R_LoadLightGridArray( lump_t *l, world_t &worldData ) {
 
 	w->lightGridArray = (unsigned short *)Hunk_Alloc( l->filelen, h_low );
 	memcpy( w->lightGridArray, (void *)(fileBase + l->fileofs), l->filelen );
+#ifdef Q3_BIG_ENDIAN
+	for ( i = 0 ; i < w->numGridArrayElements ; i++ ) {
+		w->lightGridArray[i] = LittleShort(w->lightGridArray[i]);
+	}
+#endif
 }
 
 /*
@@ -2036,9 +2052,11 @@ void RE_LoadWorldMap_Actual( const char *name, world_t &worldData, int index )
 
 	memset( &worldData, 0, sizeof( worldData ) );
 	Q_strncpyz( worldData.name, name, sizeof( worldData.name ) );
+	Q_strncpyz( tr.worldDir, name, sizeof( tr.worldDir ) );
 	Q_strncpyz( worldData.baseName, COM_SkipPath( worldData.name ), sizeof( worldData.name ) );
 
 	COM_StripExtension( worldData.baseName, worldData.baseName, sizeof( worldData.baseName ) );
+	COM_StripExtension( tr.worldDir, tr.worldDir, sizeof( tr.worldDir ) );
 
 	startMarker = (byte *)Hunk_Alloc(0, h_low);
 	c_gridVerts = 0;
@@ -2078,11 +2096,6 @@ void RE_LoadWorldMap_Actual( const char *name, world_t &worldData, int index )
 
 		// only set tr.world now that we know the entire level has loaded properly
 		tr.world = &worldData;
-
-		if ( ri->Cvar_VariableIntegerValue( "com_RMG" ) )
-		{
-			R_RMGInit();
-		}
 	}
 
 	if (ri->CM_GetCachedMapDiskImage())

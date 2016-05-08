@@ -1,21 +1,35 @@
-// leave this as first line for PCH reasons...
-//
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
- #include "client/client.h"	//FIXME!! EVIL - just include the definitions needed
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
+#include "client/client.h"	//FIXME!! EVIL - just include the definitions needed
 #include "tr_local.h"
 #include "qcommon/matcomp.h"
 #include "qcommon/qcommon.h"
 #include "ghoul2/G2.h"
-#include "G2_local.h"
+#include "ghoul2/g2_local.h"
 #ifdef _G2_GORE
 #include "ghoul2/G2_gore.h"
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4512)	//default assignment operator could not be gened
-#endif
 #include "qcommon/disablewarnings.h"
 
 #define	LL(x) x=LittleLong(x)
@@ -93,6 +107,7 @@ qboolean G2_SetupModelPointers(CGhoul2Info_v &ghoul2);
 extern cvar_t	*r_Ghoul2AnimSmooth;
 extern cvar_t	*r_Ghoul2UnSqashAfterSmooth;
 
+#if 0
 static inline int G2_Find_Bone_ByNum(const model_t *mod, boneInfo_v &blist, const int boneNum)
 {
 	size_t i = 0;
@@ -108,6 +123,7 @@ static inline int G2_Find_Bone_ByNum(const model_t *mod, boneInfo_v &blist, cons
 
 	return -1;
 }
+#endif
 
 const static mdxaBone_t		identityMatrix =
 {
@@ -300,10 +316,10 @@ public:
 	const model_t		*mod;
 
 	// these are split for better cpu cache behavior
-	vector<SBoneCalc> mBones;
-	vector<CTransformBone> mFinalBones;
+	std::vector<SBoneCalc> mBones;
+	std::vector<CTransformBone> mFinalBones;
 
-	vector<CTransformBone> mSmoothBones; // for render smoothing
+	std::vector<CTransformBone> mSmoothBones; // for render smoothing
 	//vector<mdxaSkel_t *>   mSkels;
 
 	boneInfo_v		*rootBoneList;
@@ -1188,7 +1204,7 @@ void G2_RagGetAnimMatrix(CGhoul2Info &ghoul2, const int boneNum, mdxaBone_t &mat
 	skel = (mdxaSkel_t *)((byte *)ghoul2.mBoneCache->header + sizeof(mdxaHeader_t) + offsets->offsets[boneNum]);
 
 	//find/add the bone in the list
-	if (!skel->name || !skel->name[0])
+	if (!skel->name[0])
 	{
 		bListIndex = -1;
 	}
@@ -1227,7 +1243,7 @@ void G2_RagGetAnimMatrix(CGhoul2Info &ghoul2, const int boneNum, mdxaBone_t &mat
 		pskel = (mdxaSkel_t *)((byte *)ghoul2.mBoneCache->header + sizeof(mdxaHeader_t) + offsets->offsets[parent]);
 
 		//taking bone matrix for the skeleton frame and parent's animFrameMatrix into account, determine our final animFrameMatrix
-		if (!pskel->name || !pskel->name[0])
+		if (!pskel->name[0])
 		{
 			parentBlistIndex = -1;
 		}
@@ -2819,6 +2835,7 @@ static void RootMatrix(CGhoul2Info_v &ghoul2,int time,const vec3_t scale,mdxaBon
 	retMatrix=identityMatrix;
 }
 
+#if 0
 extern cvar_t	*r_shadowRange;
 static inline bool bInShadowRange(vec3_t location)
 {
@@ -2828,6 +2845,7 @@ static inline bool bInShadowRange(vec3_t location)
 //	return (dist < tr.distanceCull/1.5f);
 	return (dist < r_shadowRange->value);
 }
+#endif
 
 /*
 ==============
@@ -2838,7 +2856,7 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 }
 
 #ifdef _G2_LISTEN_SERVER_OPT
-qboolean G2API_OverrideServerWithClientData(CGhoul2Info *serverInstance);
+qboolean G2API_OverrideServerWithClientData(CGhoul2Info_v& ghoul2, int modelIndex);
 #endif
 
 bool G2_NeedsRecalc(CGhoul2Info *ghlInfo,int frameNum)

@@ -1,3 +1,25 @@
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 ////////////////////////////////////////////////////////////////////////////////////////
 // RAVEN SOFTWARE - STAR WARS: JK II
 //  (c) 2002 Activision
@@ -17,9 +39,7 @@
 #include "Ratl/vector_vs.h"
 #include "Ratl/bits_vs.h"
 
-#ifdef _WIN32
 #include "glext.h"
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Defines
@@ -50,10 +70,6 @@ int			mParticlesRendered;
 ////////////////////////////////////////////////////////////////////////////////////////
 // Handy Functions
 ////////////////////////////////////////////////////////////////////////////////////////
-#ifdef _MSC_VER
-#pragma warning( disable : 4512 )
-#endif
-
 // Returns a float min <= x < max (exclusive; will get max - 0.00001; but never max)
 inline float WE_flrand(float min, float max) {
 	return ((rand() * (max - min)) / (RAND_MAX)) + min;
@@ -1207,48 +1223,20 @@ public:
 
 		// Enable And Disable Things
 		//---------------------------
-		/*
-		if (mGLModeEnum==GL_POINTS && qglPointParameteriNV)
-		{
-			qglEnable(GL_POINT_SPRITE_NV);
+		qglEnable(GL_TEXTURE_2D);
+		//qglDisable(GL_CULL_FACE);
+		//naughty, you are making the assumption that culling is on when you get here. -rww
+		GL_Cull(CT_TWO_SIDED);
 
-			qglPointSize(mWidth);
-			qglPointParameterfEXT( GL_POINT_SIZE_MIN_EXT, 4.0f );
-			qglPointParameterfEXT( GL_POINT_SIZE_MAX_EXT, 2047.0f );
-
-			qglTexEnvi(GL_POINT_SPRITE_NV, GL_COORD_REPLACE_NV, GL_TRUE);
-		}
-		else
-		*/
-		//FIXME use this extension?
-		const float	attenuation[3] =
-		{
-			1, 0.0, 0.0004
-		};
-		if (mGLModeEnum == GL_POINTS && qglPointParameterfEXT)
-		{ //fixme use custom parameters but gotta make sure it expects them on same scale first
-			qglPointSize(10.0);
-			qglPointParameterfEXT(GL_POINT_SIZE_MIN_EXT, 1.0);
-			qglPointParameterfEXT(GL_POINT_SIZE_MAX_EXT, 4.0);
-			qglPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, (float *)attenuation);
-		}
-		else
-		{
-			qglEnable(GL_TEXTURE_2D);
-			//qglDisable(GL_CULL_FACE);
-			//naughty, you are making the assumption that culling is on when you get here. -rww
-			GL_Cull(CT_TWO_SIDED);
-
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (mFilterMode==0)?(GL_LINEAR):(GL_NEAREST));
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (mFilterMode==0)?(GL_LINEAR):(GL_NEAREST));
+		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (mFilterMode==0)?(GL_LINEAR):(GL_NEAREST));
+		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (mFilterMode==0)?(GL_LINEAR):(GL_NEAREST));
 
 
-			// Setup Matrix Mode And Translation
-			//-----------------------------------
-			qglMatrixMode(GL_MODELVIEW);
-			qglPushMatrix();
+		// Setup Matrix Mode And Translation
+		//-----------------------------------
+		qglMatrixMode(GL_MODELVIEW);
+		qglPushMatrix();
 
-		}
 
 		// Begin
 		//-------
@@ -1275,16 +1263,9 @@ public:
 				qglColor4f(mColor[0]*part->mAlpha, mColor[1]*part->mAlpha, mColor[2]*part->mAlpha, mColor[3]*part->mAlpha);
 			}
 
-			// Render A Point
-			//----------------
-			if (mGLModeEnum==GL_POINTS)
-			{
-				qglVertex3fv(part->mPosition.v);
-			}
-
 			// Render A Triangle
 			//-------------------
-			else if (mVertexCount==3)
+			if (mVertexCount==3)
 			{
  				qglTexCoord2f(1.0, 0.0);
 				qglVertex3f(part->mPosition[0],
@@ -1333,17 +1314,9 @@ public:
 		}
 		qglEnd();
 
-		if (mGLModeEnum==GL_POINTS)
-		{
-			//qglDisable(GL_POINT_SPRITE_NV);
-			//qglTexEnvi(GL_POINT_SPRITE_NV, GL_COORD_REPLACE_NV, GL_FALSE);
-		}
-		else
-		{
-			//qglEnable(GL_CULL_FACE);
-			//you don't need to do this when you are properly setting cull state.
-			qglPopMatrix();
-		}
+		//qglEnable(GL_CULL_FACE);
+		//you don't need to do this when you are properly setting cull state.
+		qglPopMatrix();
 
 		mParticlesRendered += mParticleCountRender;
 	}
@@ -1858,13 +1831,14 @@ void RE_WorldEffectCommand(const char *command)
 	else
 	{
 		ri->Printf( PRINT_ALL, "Weather Effect: Please enter a valid command.\n" );
+		ri->Printf( PRINT_ALL, "	die\n" );
 		ri->Printf( PRINT_ALL, "	clear\n" );
 		ri->Printf( PRINT_ALL, "	freeze\n" );
 		ri->Printf( PRINT_ALL, "	zone (mins) (maxs)\n" );
 		ri->Printf( PRINT_ALL, "	wind\n" );
 		ri->Printf( PRINT_ALL, "	constantwind (velocity)\n" );
 		ri->Printf( PRINT_ALL, "	gustingwind\n" );
-		ri->Printf( PRINT_ALL, "	windzone (mins) (maxs) (velocity)\n" );
+		//ri->Printf( PRINT_ALL, "	windzone (mins) (maxs) (velocity)\n" );
 		ri->Printf( PRINT_ALL, "	lightrain\n" );
 		ri->Printf( PRINT_ALL, "	rain\n" );
 		ri->Printf( PRINT_ALL, "	acidrain\n" );
@@ -1910,6 +1884,3 @@ bool R_IsPuffing()
 { //Eh? Don't want surfacesprites to know this?
 	return false;
 }
-
-
-

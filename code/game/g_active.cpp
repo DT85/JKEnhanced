@@ -1,20 +1,25 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 #include "g_local.h"
 #include "g_functions.h"
@@ -669,11 +674,6 @@ void P_WorldEffects( gentity_t *ent ) {
 						//play the choking sound
 						G_SoundOnEnt( ent, CHAN_VOICE, va( "*choke%d.wav", Q_irand( 1, 3 ) ) );
 
-						int anim = BOTH_CHOKE3; //left-handed choke
-						if ( ent->client->ps.weapon == WP_NONE || ent->client->ps.weapon == WP_MELEE )
-						{
-							anim = BOTH_CHOKE1; //two-handed choke
-						}
 						//make them grasp their throat
 						NPC_SetAnim( ent, SETANIM_BOTH, BOTH_CHOKE1, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
 					}
@@ -835,25 +835,19 @@ void DoImpact( gentity_t *self, gentity_t *other, qboolean damageSelf, trace_t *
 		//	float		minLockingSpeed = maxMoveSpeed * 0.75;
 
 			vec3_t		attackerMoveDir;
-			float		attackerMoveSpeed;
 
 			vec3_t		victimMoveDir;
-			float		victimMoveSpeed;
 			vec3_t		victimTowardAttacker;
-			float		victimTowardAttackerDistance;
 			vec3_t		victimRight;
 			float		victimRightAccuracy;
 
 			VectorCopy(attacker->client->ps.velocity,	attackerMoveDir);
 			VectorCopy(victim->client->ps.velocity,		victimMoveDir);
 
-			attackerMoveSpeed	= VectorNormalize(attackerMoveDir);
-			victimMoveSpeed		= VectorNormalize(victimMoveDir);
-
 			AngleVectors(victim->currentAngles, 0, victimRight, 0);
 
 			VectorSubtract(victim->currentOrigin, attacker->currentOrigin, victimTowardAttacker);
-			victimTowardAttackerDistance = VectorNormalize(victimTowardAttacker);
+			/*victimTowardAttackerDistance = */VectorNormalize(victimTowardAttacker);
 
 			victimRightAccuracy = DotProduct(victimTowardAttacker, victimRight);
 
@@ -1301,25 +1295,7 @@ void DoImpact( gentity_t *self, gentity_t *other, qboolean damageSelf, trace_t *
 						magnitude = 0;
 					}
 
-					if( (!Q_stricmp(self->NPC_type, "rosh_penin") ||
-						!Q_stricmp(self->NPC_type, "rosh_penin_noforce")) &&
-						!Q_stricmp(level.mapname, "yavin1b") )
-					{
-						// This is a small little fix I implemented over a matter of 3 commits due to bugs/etc.
-						// There is an EXTREMELY frustrating bug on yavin1b where Rosh can take enough damage from howlers to the point
-						// where, during one section where he jumps over a stream, he can suffer falling damage and die. So the player
-						// would be forced to repeat the level over and over again.
-						// Despite it being clearly a jump, the scripters for the level somehow forgot to add a cushion brush on
-						// the landing zone where Rosh would be, (fucking woglodytes that Raven outsourced the levels to, I swear...)
-						// resulting in a very weird and unnatural death. So it didn't make any sense. So I did the nasty thing and did
-						// it through code.
-						// This could also probably explain why Rosh suddenly dies for NO reason whatsoever in rare occasions on Jedi
-						// Master/Jedi Knight mode at the start of the level. --eezstreet
-					}
-					else
-					{
-						G_Damage( self, NULL, NULL, NULL, self->currentOrigin, magnitude/2, DAMAGE_NO_ARMOR, MOD_FALLING );//FIXME: MOD_IMPACT
-					}
+					G_Damage( self, NULL, NULL, NULL, self->currentOrigin, magnitude/2, DAMAGE_NO_ARMOR, MOD_FALLING );//FIXME: MOD_IMPACT
 				}
 			}
 		}
@@ -1786,11 +1762,11 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	int		event;
 	gclient_t *client;
 	//int		damage;
-	qboolean	fired;
+#ifndef FINAL_BUILD
+	qboolean	fired = qfalse;
+#endif
 
 	client = ent->client;
-
-	fired = qfalse;
 
 	for ( i = oldEventSequence ; i < client->ps.eventSequence ; i++ ) {
 		event = client->ps.events[ i & (MAX_PS_EVENTS-1) ];
@@ -1821,8 +1797,8 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			if ( fired ) {
 				gi.Printf( "DOUBLE EV_FIRE_WEAPON AND-OR EV_ALT_FIRE!!\n" );
 			}
-#endif
 			fired = qtrue;
+#endif
 			FireWeapon( ent, qfalse );
 			break;
 
@@ -1831,8 +1807,8 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			if ( fired ) {
 				gi.Printf( "DOUBLE EV_FIRE_WEAPON AND-OR EV_ALT_FIRE!!\n" );
 			}
-#endif
 			fired = qtrue;
+#endif
 			FireWeapon( ent, qtrue );
 			break;
 
@@ -4748,16 +4724,16 @@ extern void ForceHeal(gentity_t *ent);
 static void ProcessGenericCmd(gentity_t *ent, byte cmd)
 {
 	switch(cmd) {
-	case 0:
+	default:
 		break;
-	case GENCMD_FORCE_DRAIN:
-		ForceDrain2(ent);
+	case GENCMD_FORCE_HEAL:
+		ForceHeal( ent );
+		break;
+	case GENCMD_FORCE_SPEED:
+		ForceSpeed( ent );
 		break;
 	case GENCMD_FORCE_THROW:
 		ForceThrow(ent, qfalse);
-		break;
-	case GENCMD_FORCE_SPEED:
-		ForceSpeed(ent);
 		break;
 	case GENCMD_FORCE_PULL:
 		ForceThrow(ent, qtrue);
@@ -4780,11 +4756,11 @@ static void ProcessGenericCmd(gentity_t *ent, byte cmd)
 	case GENCMD_FORCE_ABSORB:
 		ForceAbsorb(ent);
 		break;
+	case GENCMD_FORCE_DRAIN:
+		ForceDrain2( ent );
+		break;
 	case GENCMD_FORCE_SEEING:
 		ForceSeeing(ent);
-		break;
-	case GENCMD_FORCE_HEAL:
-		ForceHeal(ent);
 		break;
 	}
 }
@@ -4912,9 +4888,7 @@ extern cvar_t	*g_skippingcin;
 			}
 			if ( ent->client->ps.pm_type == PM_DEAD && cg.missionStatusDeadTime < level.time )
 			{//mission status screen is up because player is dead, stop all scripts
-				if (Q_stricmpn(level.mapname,"_holo",5)) {
-					stop_icarus = qtrue;
-				}
+				stop_icarus = qtrue;
 			}
 		}
 

@@ -1,27 +1,30 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // tr_map.c
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
-
 
 #include "tr_local.h"
 
@@ -41,7 +44,6 @@ static	byte		*fileBase;
 int			c_subdivisions;
 int			c_gridVerts;
 
-void R_RMGInit(void);
 //===============================================================================
 
 static void HSVtoRGB( float h, float s, float v, float rgb[3] )
@@ -104,7 +106,7 @@ void R_ColorShiftLightingBytes( byte in[4], byte out[4] ) {
 	int shift, r, g, b;
 
 	// shift the color data based on overbright range
-	shift = r_mapOverBrightBits->integer - tr.overbrightBits;
+	shift = Q_max( 0, r_mapOverBrightBits->integer - tr.overbrightBits );
 
 	// shift the data based on overbright range
 	r = in[0] << shift;
@@ -138,7 +140,7 @@ void R_ColorShiftLightingBytes( byte in[3] ) {
 	int shift, r, g, b;
 
 	// shift the color data based on overbright range
-	shift = r_mapOverBrightBits->integer - tr.overbrightBits;
+	shift = Q_max( 0, r_mapOverBrightBits->integer - tr.overbrightBits );
 
 	// shift the data based on overbright range
 	r = in[0] << shift;
@@ -190,7 +192,7 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName, world_t &worldDat
 	buf = fileBase + l->fileofs;
 
 	// we are about to upload textures
-	//R_SyncRenderThread();
+	R_IssuePendingRenderCommands(); //
 
 	// create all the lightmaps
 	worldData.startLightMapIndex = tr.numLightmaps;
@@ -217,7 +219,7 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName, world_t &worldDat
 				float g = buf_p[j*3+1];
 				float b = buf_p[j*3+2];
 				float intensity;
-				float out[3];
+				float out[3] = {0.0f, 0.0f, 0.0f};
 
 				intensity = 0.33f * r + 0.685f * g + 0.063f * b;
 
@@ -304,19 +306,6 @@ static	void R_LoadVisibility( lump_t *l, world_t &worldData ) {
 }
 
 //===============================================================================
-
-qhandle_t R_GetShaderByNum(int shaderNum, world_t &worldData)
-{
-	qhandle_t	shader;
-
-	if ( (shaderNum < 0) || (shaderNum >= worldData.numShaders) ) 
-	{
-		Com_Printf( "Warning: Bad index for R_GetShaderByNum - %i", shaderNum );
-		return(0);
-	}
-	shader = RE_RegisterShader(worldData.shaders[ shaderNum ].shader);
-	return(shader);
-}
 
 /*
 ===============
@@ -759,6 +748,9 @@ static	void R_LoadSubmodels( lump_t *l, world_t &worldData, int index  ) {
 		model = R_AllocModel();
 
 		assert( model != NULL );			// this should never happen
+		if ( model == NULL ) {
+			ri.Error(ERR_DROP, "R_LoadSubmodels: R_AllocModel() failed");
+		}
 
 		model->type = MOD_BRUSH;
 		model->bmodel = out;
@@ -842,7 +834,7 @@ static	void R_LoadNodesAndLeafs (lump_t *nodeLump, lump_t *leafLump, world_t &wo
 			out->mins[j] = LittleLong (in->mins[j]);
 			out->maxs[j] = LittleLong (in->maxs[j]);
 		}
-	
+
 		p = LittleLong(in->planeNum);
 		out->plane = worldData.planes + p;
 
@@ -857,7 +849,7 @@ static	void R_LoadNodesAndLeafs (lump_t *nodeLump, lump_t *leafLump, world_t &wo
 				out->children[j] = worldData.nodes + numNodes + (-1 - p);
 		}
 	}
-	
+
 	// load leafs
 	inLeaf = (dleaf_t *)(fileBase + leafLump->fileofs);
 	for ( i=0 ; i<numLeafs ; i++, inLeaf++, out++)
@@ -878,7 +870,7 @@ static	void R_LoadNodesAndLeafs (lump_t *nodeLump, lump_t *leafLump, world_t &wo
 		out->firstmarksurface = worldData.marksurfaces +
 			LittleLong(inLeaf->firstLeafSurface);
 		out->nummarksurfaces = LittleLong(inLeaf->numLeafSurfaces);
-	}	
+	}
 
 	// chain decendants
 	R_SetParent (worldData.nodes, NULL);
@@ -894,7 +886,7 @@ R_LoadShaders
 static	void R_LoadShaders( lump_t *l, world_t &worldData ) {	
 	int		i, count;
 	dshader_t	*in, *out;
-	
+
 	in = (dshader_t *)(fileBase + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Com_Error (ERR_DROP, "LoadMap: funny lump size in %s",worldData.name);
@@ -919,11 +911,11 @@ R_LoadMarksurfaces
 =================
 */
 static	void R_LoadMarksurfaces (lump_t *l, world_t &worldData)
-{	
+{
 	int		i, j, count;
 	int		*in;
 	msurface_t **out;
-	
+
 	in = (int *)(fileBase + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Com_Error (ERR_DROP, "LoadMap: funny lump size in %s",worldData.name);
@@ -952,13 +944,13 @@ static	void R_LoadPlanes( lump_t *l, world_t &worldData ) {
 	dplane_t 	*in;
 	int			count;
 	int			bits;
-	
+
 	in = (dplane_t *)(fileBase + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Com_Error (ERR_DROP, "LoadMap: funny lump size in %s",worldData.name);
 	count = l->filelen / sizeof(*in);
 	out = (struct cplane_s *) Hunk_Alloc ( count*2*sizeof(*out), qtrue );	
-	
+
 	worldData.planes = out;
 	worldData.numplanes = count;
 
@@ -1101,7 +1093,7 @@ static	void R_LoadFogs( lump_t *l, lump_t *brushesLump, lump_t *sidesLump, world
 		}
 		else
 		{
-		out->parms = *shader->fogParms;
+			out->parms = *shader->fogParms;
 		}
 		out->colorInt = ColorBytes4 ( out->parms.color[0], 
 			out->parms.color[1], 
@@ -1172,7 +1164,7 @@ void R_LoadLightGrid( lump_t *l, world_t &worldData ) {
 	}
 
 	int numGridDataElements = l->filelen / sizeof(*w->lightGridData);
-	
+
 	w->lightGridData = (mgrid_t *)Hunk_Alloc( l->filelen, qfalse );
 	memcpy( w->lightGridData, (void *)(fileBase + l->fileofs), l->filelen );
 
@@ -1194,6 +1186,9 @@ R_LoadLightGridArray
 */
 void R_LoadLightGridArray( lump_t *l, world_t &worldData ) {
 	world_t	*w;
+#ifdef Q3_BIG_ENDIAN
+	int i;
+#endif
 
 	w = &worldData;
 
@@ -1208,6 +1203,11 @@ void R_LoadLightGridArray( lump_t *l, world_t &worldData ) {
 
 	w->lightGridArray = (unsigned short *)Hunk_Alloc( l->filelen, qfalse );
 	memcpy( w->lightGridArray, (void *)(fileBase + l->fileofs), l->filelen );
+#ifdef Q3_BIG_ENDIAN
+	for ( i = 0 ; i < w->numGridArrayElements ; i++ ) {
+		w->lightGridArray[i] = LittleShort(w->lightGridArray[i]);
+	}
+#endif
 }
 
 

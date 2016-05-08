@@ -1,12 +1,38 @@
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
 
 // sv_client.c -- server code for dealing with clients
 
 #include "server.h"
 #include "qcommon/stringed_ingame.h"
-#include "RMG/RM_Headers.h"
+
+#ifdef USE_INTERNAL_ZLIB
 #include "zlib/zlib.h"
+#else
+#include <zlib.h>
+#endif
+
 #include "server/sv_gameapi.h"
 
 static void SV_CloseDownload( client_t *cl );
@@ -116,6 +142,44 @@ void SV_GetChallenge( netadr_t from ) {
 
 /*
 ==================
+SV_IsBanned
+
+Check whether a certain address is banned
+==================
+*/
+
+static qboolean SV_IsBanned( netadr_t *from, qboolean isexception )
+{
+	int index;
+	serverBan_t *curban;
+
+	if ( !serverBansCount ) {
+		return qfalse;
+	}
+
+	if ( !isexception )
+	{
+		// If this is a query for a ban, first check whether the client is excepted
+		if ( SV_IsBanned( from, qtrue ) )
+			return qfalse;
+	}
+
+	for ( index = 0; index < serverBansCount; index++ )
+	{
+		curban = &serverBans[index];
+
+		if ( curban->isexception == isexception )
+		{
+			if ( NET_CompareBaseAdrMask( curban->ip, *from, curban->subnet ) )
+				return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
+/*
+==================
 SV_DirectConnect
 
 A "connect" OOB command has been received
@@ -138,6 +202,14 @@ void SV_DirectConnect( netadr_t from ) {
 	char		*ip;
 
 	Com_DPrintf ("SVC_DirectConnect ()\n");
+
+	// Check whether this client is banned.
+	if ( SV_IsBanned( &from, qfalse ) )
+	{
+		NET_OutOfBandPrint( NS_SERVER, from, "print\nYou are banned from this server.\n" );
+		Com_DPrintf( "    rejected connect from %s (banned)\n", NET_AdrToString(from) );
+		return;
+	}
 
 	Q_strncpyz( userinfo, Cmd_Argv(1), sizeof(userinfo) );
 
@@ -425,7 +497,7 @@ void SV_DropClient( client_t *drop, const char *reason ) {
 	GVM_ClientDisconnect( drop - svs.clients );
 
 	// add the disconnect command
-	SV_SendServerCommand( drop, va("disconnect \"%s\"", reason ) );
+	SV_SendServerCommand( drop, "disconnect \"%s\"", reason );
 
 	if ( isBot ) {
 		SV_BotFreeClient( drop - svs.clients );
@@ -442,6 +514,10 @@ void SV_DropClient( client_t *drop, const char *reason ) {
 		drop->state = CS_ZOMBIE;		// become free in a few seconds
 	}
 
+	if ( drop->demo.demorecording ) {
+		SV_StopRecordDemo( drop );
+	}
+
 	// if this was the last client on the server, send a heartbeat
 	// to the master so it is known the server is empty
 	// send a heartbeat now so the master will get up to date info
@@ -456,25 +532,7 @@ void SV_DropClient( client_t *drop, const char *reason ) {
 	}
 }
 
-void SV_WriteRMGAutomapSymbols ( msg_t* msg )
-{
-	int count = TheRandomMissionManager->GetAutomapSymbolCount ( );
-	int i;
-
-	MSG_WriteShort ( msg, count );
-
-	for ( i = 0; i < count; i ++ )
-	{
-		rmAutomapSymbol_t* symbol = TheRandomMissionManager->GetAutomapSymbol ( i );
-
-		MSG_WriteByte ( msg, symbol->mType );
-		MSG_WriteByte ( msg, symbol->mSide );
-		MSG_WriteLong ( msg, (long)symbol->mOrigin[0] );
-		MSG_WriteLong ( msg, (long)symbol->mOrigin[1] );
-	}
-}
-
-void SV_CreateClientGameStateMessage( client_t *client, msg_t *msg, qboolean updateServerCommands ) {
+void SV_CreateClientGameStateMessage( client_t *client, msg_t *msg ) {
 	int			start;
 	entityState_t	*base, nullstate;
 
@@ -482,13 +540,11 @@ void SV_CreateClientGameStateMessage( client_t *client, msg_t *msg, qboolean upd
 	// let the client know which reliable clientCommands we have received
 	MSG_WriteLong( msg, client->lastClientCommand );
 
-	if ( updateServerCommands ) {
-		// send any server commands waiting to be sent first.
-		// we have to do this cause we send the client->reliableSequence
-		// with a gamestate and it sets the clc.serverCommandSequence at
-		// the client side
-		SV_UpdateServerCommandsToClient( client, msg );
-	}
+	// send any server commands waiting to be sent first.
+	// we have to do this cause we send the client->reliableSequence
+	// with a gamestate and it sets the clc.serverCommandSequence at
+	// the client side
+	SV_UpdateServerCommandsToClient( client, msg );
 
 	// send the gamestate
 	MSG_WriteByte( msg, svc_gamestate );
@@ -521,53 +577,8 @@ void SV_CreateClientGameStateMessage( client_t *client, msg_t *msg, qboolean upd
 	// write the checksum feed
 	MSG_WriteLong( msg, sv.checksumFeed);
 
-	//rwwRMG - send info for the terrain
-	if ( TheRandomMissionManager )
-	{
-		z_stream zdata;
-
-		// Send the height map
-		memset(&zdata, 0, sizeof(z_stream));
-		deflateInit ( &zdata, Z_BEST_COMPRESSION );
-
-		unsigned char heightmap[15000];
-		zdata.next_out = (unsigned char*)heightmap;
-		zdata.avail_out = 15000;
-		zdata.next_in = TheRandomMissionManager->GetLandScape()->GetHeightMap();
-		zdata.avail_in = TheRandomMissionManager->GetLandScape()->GetRealArea();
-		deflate(&zdata, Z_SYNC_FLUSH);
-
-		MSG_WriteShort ( msg, (unsigned short)zdata.total_out );
-		MSG_WriteBits ( msg, 1, 1 );
-		MSG_WriteData ( msg, heightmap, zdata.total_out);
-
-		deflateEnd(&zdata);
-
-		// Send the flatten map
-		memset(&zdata, 0, sizeof(z_stream));
-		deflateInit ( &zdata, Z_BEST_COMPRESSION );
-
-		zdata.next_out = (unsigned char*)heightmap;
-		zdata.avail_out = 15000;
-		zdata.next_in = TheRandomMissionManager->GetLandScape()->GetFlattenMap();
-		zdata.avail_in = TheRandomMissionManager->GetLandScape()->GetRealArea();
-		deflate(&zdata, Z_SYNC_FLUSH);
-
-		MSG_WriteShort ( msg, (unsigned short)zdata.total_out );
-		MSG_WriteBits ( msg, 1, 1 );
-		MSG_WriteData ( msg, heightmap, zdata.total_out);
-
-		deflateEnd(&zdata);
-
-		// Seed is needed for misc ents and noise
-		MSG_WriteLong ( msg, TheRandomMissionManager->GetLandScape()->get_rand_seed ( ) );
-
-		SV_WriteRMGAutomapSymbols ( msg );
-	}
-	else
-	{
-		MSG_WriteShort ( msg, 0 );
-	}
+	// For old RMG system.
+	MSG_WriteShort ( msg, 0 );
 }
 
 /*
@@ -610,7 +621,7 @@ void SV_SendClientGameState( client_t *client ) {
 	// gamestate message was not just sent, forcing a retransmit
 	client->gamestateMessageNum = client->netchan.outgoingSequence;
 
-	SV_CreateClientGameStateMessage( client, &msg, qtrue );
+	SV_CreateClientGameStateMessage( client, &msg );
 
 	// deliver this to the client
 	SV_SendMessageToClient( &msg, client );
@@ -675,7 +686,9 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd ) {
 		memset(&client->lastUsercmd, '\0', sizeof(client->lastUsercmd));
 
 	// call the game begin function
-	GVM_ClientBegin( client - svs.clients, qfalse );
+	GVM_ClientBegin( client - svs.clients );
+
+	SV_BeginAutoRecordDemos();
 }
 
 /*
@@ -720,7 +733,7 @@ SV_StopDownload_f
 Abort a download if in progress
 ==================
 */
-void SV_StopDownload_f( client_t *cl ) {
+static void SV_StopDownload_f( client_t *cl ) {
 	if ( cl->state == CS_ACTIVE )
 		return;
 
@@ -737,7 +750,7 @@ SV_DoneDownload_f
 Downloads are finished
 ==================
 */
-void SV_DoneDownload_f( client_t *cl ) {
+static void SV_DoneDownload_f( client_t *cl ) {
 	if ( cl->state == CS_ACTIVE )
 		return;
 
@@ -754,7 +767,7 @@ The argument will be the last acknowledged block from the client, it should be
 the same as cl->downloadClientBlock
 ==================
 */
-void SV_NextDownload_f( client_t *cl )
+static void SV_NextDownload_f( client_t *cl )
 {
 	int block = atoi( Cmd_Argv(1) );
 
@@ -786,7 +799,7 @@ void SV_NextDownload_f( client_t *cl )
 SV_BeginDownload_f
 ==================
 */
-void SV_BeginDownload_f( client_t *cl ) {
+static void SV_BeginDownload_f( client_t *cl ) {
 	if ( cl->state == CS_ACTIVE )
 		return;
 
@@ -852,7 +865,7 @@ void SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
 						// check whether it's legal to download it.
 						missionPack = FS_idPak(pakbuf, "missionpack");
 						idPack = missionPack;
-						idPack = (qboolean)(idPack || FS_idPak(pakbuf, "base"));
+						idPack = (qboolean)(idPack || FS_idPak(pakbuf, BASEGAME));
 
 						break;
 					}
@@ -1018,7 +1031,7 @@ void SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
 			MSG_WriteData( msg, cl->downloadBlocks[curindex], cl->downloadBlockSize[curindex] );
 		}
 
-		Com_DPrintf( "clientDownload: %d : writing block %d\n", cl - svs.clients, cl->downloadXmitBlock );
+		Com_DPrintf( "clientDownload: %d : writing block %d\n", (int) (cl - svs.clients), cl->downloadXmitBlock );
 
 		// Move on to the next block
 		// It will get sent with next snap shot.  The rate will keep us in line.
@@ -1239,11 +1252,17 @@ void SV_UserinfoChanged( client_t *cl ) {
 	// snaps command
 	//Note: cl->snapshotMsec is also validated in sv_main.cpp -> SV_CheckCvars if sv_fps, sv_snapsMin or sv_snapsMax is changed
 	int minSnaps = Com_Clampi( 1, sv_snapsMax->integer, sv_snapsMin->integer ); // between 1 and sv_snapsMax ( 1 <-> 40 )
-	int maxSnaps = min( sv_fps->integer, sv_snapsMax->integer ); // can't produce more than sv_fps snapshots/sec, but can send less than sv_fps snapshots/sec
+	int maxSnaps = Q_min( sv_fps->integer, sv_snapsMax->integer ); // can't produce more than sv_fps snapshots/sec, but can send less than sv_fps snapshots/sec
 	val = Info_ValueForKey( cl->userinfo, "snaps" );
 	cl->wishSnaps = atoi( val );
-	i = Com_Clampi( minSnaps, maxSnaps, cl->wishSnaps );
-	cl->snapshotMsec = 1000/i;
+	if ( !cl->wishSnaps )
+		cl->wishSnaps = maxSnaps;
+	i = 1000/Com_Clampi( minSnaps, maxSnaps, cl->wishSnaps );
+	if( i != cl->snapshotMsec ) {
+		// Reset next snapshot so we avoid desync between server frame time and snapshot send time
+		cl->nextSnapshotTime = -1;
+		cl->snapshotMsec = i;
+	}
 
 	// TTimo
 	// maintain the IP information
@@ -1274,7 +1293,13 @@ SV_UpdateUserinfo_f
 ==================
 */
 static void SV_UpdateUserinfo_f( client_t *cl ) {
-	Q_strncpyz( cl->userinfo, Cmd_Argv(1), sizeof(cl->userinfo) );
+	char *arg = Cmd_Argv(1);
+
+	// Stop random empty /userinfo calls without hurting anything
+	if( !arg || !*arg )
+		return;
+
+	Q_strncpyz( cl->userinfo, arg, sizeof(cl->userinfo) );
 
 #ifdef FINAL_BUILD
 	if (cl->lastUserInfoChange > svs.time)
@@ -1504,8 +1529,9 @@ static void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta ) {
 		SV_ClientEnterWorld( cl, &cmds[0] );
 		// the moves can be processed normaly
 	}
-	//
-	if (sv_pure->integer != 0 && cl->pureAuthentic == 0) {
+
+	// a bad cp command was sent, drop the client
+	if (sv_pure->integer != 0 && cl->pureAuthentic == 0) {		
 		SV_DropClient( cl, "Cannot validate pure client!");
 		return;
 	}
@@ -1609,7 +1635,7 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg ) {
 
 	// this client has acknowledged the new gamestate so it's
 	// safe to start sending it the real time again
-	if( cl->oldServerTime && serverId == sv.serverId ){
+	if( cl->oldServerTime && serverId == sv.serverId ) {
 		Com_DPrintf( "%s acknowledged gamestate\n", cl->name );
 		cl->oldServerTime = 0;
 	}

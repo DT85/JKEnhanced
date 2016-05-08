@@ -1,28 +1,30 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // tr_marks.c -- polygon projection on the world polygons
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
-
-
 
 #include "tr_local.h"
 
@@ -43,8 +45,8 @@ Out must have space for two more vertexes than in
 static void R_ChopPolyBehindPlane( int numInPoints, vec3_t inPoints[MAX_VERTS_ON_POLY],
 								   int *numOutPoints, vec3_t outPoints[MAX_VERTS_ON_POLY], 
 							vec3_t normal, vec_t dist, vec_t epsilon) {
-	float		dists[MAX_VERTS_ON_POLY+4];
-	int			sides[MAX_VERTS_ON_POLY+4];
+	float		dists[MAX_VERTS_ON_POLY+4] = { 0 };
+	int			sides[MAX_VERTS_ON_POLY+4] = { 0 };
 	int			counts[3];
 	float		dot;
 	int			i, j;
@@ -404,13 +406,6 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 				continue;
 			}
 
-			/*
-			VectorSubtract(clipPoints[0][0], clipPoints[0][1], v1);
-			VectorSubtract(clipPoints[0][2], clipPoints[0][1], v2);
-			CrossProduct(v1, v2, normal);
-			VectorNormalize(normal);
-			if (DotProduct(normal, projectionDir) > -0.5) continue;
-			*/
 			const int * const indexes = (int *)( (byte *)surf + surf->ofsIndices );
 
 			for ( k = 0 ; k < surf->numIndices ; k += 3 ) {

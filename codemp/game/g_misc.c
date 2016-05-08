@@ -1,5 +1,26 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // g_misc.c
 
 #include "g_local.h"
@@ -657,151 +678,7 @@ void AddSpawnField(char *field, char *value);
 #define MAX_INSTANCE_TYPES		16
 void SP_terrain(gentity_t *ent)
 {
-	char				temp[MAX_INFO_STRING];
-	char				final[MAX_QPATH];
-	char				seed[MAX_QPATH];
-	char				missionType[MAX_QPATH];
-	//char				soundSet[MAX_QPATH];
-	int					shaderNum, i;
-	char				*value;
-	int					terrainID;
-
-	//Force it to 1 when there is terrain on the level.
-	trap->Cvar_Set("RMG", "1");
-	RMG.integer = 1;
-
-	VectorClear (ent->s.angles);
-	trap->SetBrushModel( (sharedEntity_t *)ent, ent->model );
-
-	// Get the shader from the top of the brush
-//	shaderNum = trap->CM_GetShaderNum(s.modelindex);
-	shaderNum = 0;
-
-	if (RMG.integer)
-	{
-		/*
-		// Grab the default terrain file from the RMG cvar
-		trap->Cvar_VariableStringBuffer("RMG_terrain", temp, MAX_QPATH);
-		Com_sprintf(final, MAX_QPATH, "%s", temp);
-		AddSpawnField("terrainDef", temp);
-
-		trap->Cvar_VariableStringBuffer("RMG_instances", temp, MAX_QPATH);
-		Com_sprintf(final, MAX_QPATH, "%s", temp);
-		AddSpawnField("instanceDef", temp);
-
-		trap->Cvar_VariableStringBuffer("RMG_miscents", temp, MAX_QPATH);
-		Com_sprintf(final, MAX_QPATH, "%s", temp);
-		AddSpawnField("miscentDef", temp);
-		*/
-		//rww - disabled for now, don't want cvar overrides.
-
-		trap->Cvar_VariableStringBuffer("RMG_seed", seed, MAX_QPATH);
-		trap->Cvar_VariableStringBuffer("RMG_mission", missionType, MAX_QPATH);
-
-		//rww - May want to implement these at some point.
-		//trap->Cvar_VariableStringBuffer("RMG_soundset", soundSet, MAX_QPATH);
-		//trap->SetConfigstring(CS_AMBIENT_SOUNDSETS, soundSet );
-	}
-
-	// Get info required for the common init
-	temp[0] = 0;
-	G_SpawnString("heightmap", "", &value);
-	Info_SetValueForKey(temp, "heightMap", value);
-
-	G_SpawnString("numpatches", "400", &value);
-	Info_SetValueForKey(temp, "numPatches", va("%d", atoi(value)));
-
-	G_SpawnString("terxels", "4", &value);
-	Info_SetValueForKey(temp, "terxels", va("%d", atoi(value)));
-
-	Info_SetValueForKey(temp, "seed", seed);
-	Info_SetValueForKey(temp, "minx", va("%f", ent->r.mins[0]));
-	Info_SetValueForKey(temp, "miny", va("%f", ent->r.mins[1]));
-	Info_SetValueForKey(temp, "minz", va("%f", ent->r.mins[2]));
-	Info_SetValueForKey(temp, "maxx", va("%f", ent->r.maxs[0]));
-	Info_SetValueForKey(temp, "maxy", va("%f", ent->r.maxs[1]));
-	Info_SetValueForKey(temp, "maxz", va("%f", ent->r.maxs[2]));
-
-	Info_SetValueForKey(temp, "modelIndex", va("%d", ent->s.modelindex));
-
-	G_SpawnString("terraindef", "grassyhills", &value);
-	Info_SetValueForKey(temp, "terrainDef", value);
-
-	G_SpawnString("instancedef", "", &value);
-	Info_SetValueForKey(temp, "instanceDef", value);
-
-	G_SpawnString("miscentdef", "", &value);
-	Info_SetValueForKey(temp, "miscentDef", value);
-
-	Info_SetValueForKey(temp, "missionType", missionType);
-
-	for(i = 0; i < MAX_INSTANCE_TYPES; i++)
-	{
-		trap->Cvar_VariableStringBuffer(va("RMG_instance%d", i), final, MAX_QPATH);
-		if(strlen(final))
-		{
-			Info_SetValueForKey(temp, va("inst%d", i), final);
-		}
-	}
-
-	// Set additional data required on the client only
-	G_SpawnString("densitymap", "", &value);
-	Info_SetValueForKey(temp, "densityMap", value);
-
-	Info_SetValueForKey(temp, "shader", va("%d", shaderNum));
-	G_SpawnString("texturescale", "0.005", &value);
-	Info_SetValueForKey(temp, "texturescale", va("%f", atof(value)));
-
-	// Initialise the common aspects of the terrain
-	terrainID = trap->CM_RegisterTerrain(temp);
-//	SetCommon(common);
-
-	Info_SetValueForKey(temp, "terrainId", va("%d", terrainID));
-
-	// Let the entity know if it is random generated or not
-//	SetIsRandom(common->GetIsRandom());
-
-	// Let the game remember everything
-	//level.landScapes[terrainID] = ent; //rww - also not referenced
-
-	// Send all the data down to the client
-	trap->SetConfigstring(CS_TERRAINS + terrainID, temp);
-
-	// Make sure the contents are properly set
-	ent->r.contents = CONTENTS_TERRAIN;
-	ent->r.svFlags = SVF_NOCLIENT;
-	ent->s.eFlags = EF_PERMANENT;
-	ent->s.eType = ET_TERRAIN;
-
-	// Hook into the world so physics will work
-	trap->LinkEntity((sharedEntity_t *)ent);
-
-	// If running RMG then initialize the terrain and handle team skins
-	if ( RMG.integer )
-	{
-		trap->RMG_Init(/*terrainID*/);
-
-		/*
-		if ( level.gametypeData->teams )
-		{
-			char temp[MAX_QPATH];
-
-			// Red team change from RMG ?
-			trap->GetConfigstring ( CS_GAMETYPE_REDTEAM, temp, MAX_QPATH );
-			if ( Q_stricmp ( temp, level.gametypeTeam[TEAM_RED] ) )
-			{
-				level.gametypeTeam[TEAM_RED] = trap->VM_LocalStringAlloc ( temp );
-			}
-
-			// Blue team change from RMG ?
-			trap->GetConfigstring ( CS_GAMETYPE_BLUETEAM, temp, MAX_QPATH );
-			if ( Q_stricmp ( temp, level.gametypeTeam[TEAM_BLUE] ) )
-			{
-				level.gametypeTeam[TEAM_BLUE] = trap->VM_LocalStringAlloc ( temp );
-			}
-		}
-		*/
-	}
+	G_FreeEntity (ent);
 }
 
 //rww - Called by skyportal entities. This will check through entities and flag them
@@ -2671,6 +2548,71 @@ void SP_fx_runner( gentity_t *ent )
 	trap->LinkEntity( (sharedEntity_t *)ent );
 }
 
+/*QUAKED fx_wind (0 .5 .8) (-16 -16 -16) (16 16 16) NORMAL CONSTANT GUSTING SWIRLING x  FOG LIGHT_FOG
+Generates global wind forces
+
+NORMAL    creates a random light global wind
+CONSTANT  forces all wind to go in a specified direction
+GUSTING   causes random gusts of wind
+SWIRLING  causes random swirls of wind
+
+"angles" the direction for constant wind
+"speed"  the speed for constant wind
+*/
+void SP_CreateWind( gentity_t *ent )
+{
+	char	temp[256];
+
+	// Normal Wind
+	//-------------
+	if ( ent->spawnflags & 1 )
+	{
+		G_EffectIndex( "*wind" );
+	}
+
+	// Constant Wind
+	//---------------
+	if ( ent->spawnflags & 2 )
+	{
+		vec3_t	windDir;
+		AngleVectors( ent->s.angles, windDir, 0, 0 );
+		G_SpawnFloat( "speed", "500", &ent->speed );
+		VectorScale( windDir, ent->speed, windDir );
+
+		Com_sprintf( temp, sizeof(temp), "*constantwind ( %f %f %f )", windDir[0], windDir[1], windDir[2] );
+		G_EffectIndex( temp );
+	}
+
+	// Gusting Wind
+	//--------------
+	if ( ent->spawnflags & 4 )
+	{
+		G_EffectIndex( "*gustingwind" );
+	}
+
+	// Swirling Wind
+	//---------------
+	/*if ( ent->spawnflags & 8 )
+	{
+		G_EffectIndex( "*swirlingwind" );
+	}*/
+
+
+	// MISTY FOG
+	//===========
+	if ( ent->spawnflags & 32 )
+	{
+		G_EffectIndex( "*fog" );
+	}
+
+	// MISTY FOG
+	//===========
+	if ( ent->spawnflags & 64 )
+	{
+		G_EffectIndex( "*light_fog" );
+	}
+}
+
 /*QUAKED fx_spacedust (1 0 0) (-16 -16 -16) (16 16 16)
 This world effect will spawn space dust globally into the level.
 
@@ -2694,18 +2636,58 @@ void SP_CreateSnow( gentity_t *ent )
 {
 	G_EffectIndex("*snow");
 	G_EffectIndex("*fog");
-	G_EffectIndex("*constantwind (100 100 -100)");
+	G_EffectIndex("*constantwind ( 100 100 -100 )");
 }
 
-/*QUAKED fx_rain (1 0 0) (-16 -16 -16) (16 16 16)
+/*QUAKED fx_rain (1 0 0) (-16 -16 -16) (16 16 16) LIGHT MEDIUM HEAVY ACID x MISTY_FOG
 This world effect will spawn rain globally into the level.
 
-"count" the number of rain particles (default of 500)
+LIGHT   create light drizzle
+MEDIUM  create average medium rain
+HEAVY   create heavy downpour (with fog)
+ACID    create acid rain
+
+MISTY_FOG      causes clouds of misty fog to float through the level
 */
 //----------------------------------------------------------
 void SP_CreateRain( gentity_t *ent )
 {
-	G_EffectIndex(va("*rain init %i", ent->count));
+	if ( ent->spawnflags == 0 )
+	{
+		G_EffectIndex( "*rain" );
+		return;
+	}
+
+	// Different Types Of Rain
+	//-------------------------
+	if ( ent->spawnflags & 1 )
+	{
+		G_EffectIndex( "*lightrain" );
+	}
+	else if ( ent->spawnflags & 2 )
+	{
+		G_EffectIndex( "*rain" );
+	}
+	else if ( ent->spawnflags & 4 )
+	{
+		G_EffectIndex( "*heavyrain" );
+
+		// Automatically Get Heavy Fog
+		//-----------------------------
+		G_EffectIndex( "*heavyrainfog" );
+	}
+	else if ( ent->spawnflags & 8 )
+	{
+		G_EffectIndex( "world/acid_fizz" );
+		G_EffectIndex( "*acidrain" );
+	}
+
+	// MISTY FOG
+	//===========
+	if ( ent->spawnflags & 32 )
+	{
+		G_EffectIndex( "*fog" );
+	}
 }
 
 qboolean gEscaping = qfalse;
@@ -3658,4 +3640,9 @@ Determines a region to check for weather contents - will significantly reduce lo
 void SP_misc_weather_zone( gentity_t *ent )
 {
 	G_FreeEntity(ent);
+}
+
+void SP_misc_cubemap( gentity_t *ent )
+{
+	G_FreeEntity( ent );
 }

@@ -1,39 +1,37 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // cl_main.c  -- client main loop
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
-
 
 #include "client.h"
 #include "client_ui.h"
 #include <limits.h>
 #include "../ghoul2/G2.h"
-
-#include "../RMG/RM_Headers.h"
-
-#ifndef _WIN32
-#include "../sys/sys_loadlib.h"
-#include "../sys/sys_local.h"
-#endif
+#include "qcommon/stringed_ingame.h"
+#include "sys/sys_loadlib.h"
 
 #define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits
 
@@ -45,7 +43,6 @@ cvar_t	*cl_debugMove;
 cvar_t	*cl_noprint;
 
 cvar_t	*cl_timeout;
-cvar_t	*cl_maxpackets;
 cvar_t	*cl_packetdup;
 cvar_t	*cl_timeNudge;
 cvar_t	*cl_showTimeDelta;
@@ -77,11 +74,7 @@ cvar_t	*cl_activeAction;
 
 cvar_t	*cl_inGameVideo;
 
-cvar_t	*cl_thumbStickMode;
-
-#ifndef _WIN32
 cvar_t	*cl_consoleKeys;
-#endif
 
 clientActive_t		cl;
 clientConnection_t	clc;
@@ -96,9 +89,7 @@ IGhoul2InfoArray &_TheGhoul2InfoArray( void ) {
 	return re.TheGhoul2InfoArray();
 }
 
-ping_t	cl_pinglist[MAX_PINGREQUESTS];
-
-void CL_ShutdownRef( void );
+static void CL_ShutdownRef( qboolean restarting );
 void CL_InitRef( void );
 void CL_CheckForResend( void );
 
@@ -137,32 +128,6 @@ void CL_AddReliableCommand( const char *cmd ) {
 //======================================================================
 
 /*
-==================
-CL_NextDemo
-
-Called when a demo or cinematic finishes
-If the "nextdemo" cvar is set, that command will be issued
-==================
-*/
-void CL_NextDemo( void ) {
-	char	v[MAX_STRING_CHARS];
-
-	Q_strncpyz( v, Cvar_VariableString ("nextdemo"), sizeof(v) );
-	v[MAX_STRING_CHARS-1] = 0;
-	Com_DPrintf("CL_NextDemo: %s\n", v );
-	if (!v[0]) {
-		return;
-	}
-
-	Cvar_Set ("nextdemo","");
-	Cbuf_AddText (v);
-	Cbuf_AddText ("\n");
-	Cbuf_Execute();
-}
-
-//======================================================================
-
-/*
 =================
 CL_FlushMemory
 
@@ -182,7 +147,7 @@ void CL_FlushMemory( void ) {
 	CL_ShutdownUI();
 
 	if ( re.Shutdown ) {
-		re.Shutdown( qfalse );		// don't destroy window or context
+		re.Shutdown( qfalse, qfalse );		// don't destroy window or context
 	}
 
 	//rwwFIXMEFIXME: The game server appears to continue running, so clearing common bsp data causes crashing and other bad things
@@ -407,7 +372,7 @@ Restart the video subsystem
 void CL_Vid_Restart_f( void ) {
 	S_StopAllSounds();		// don't let them loop during the restart
 	S_BeginRegistration();	// all sound handles are now invalid
-	CL_ShutdownRef();
+	CL_ShutdownRef(qtrue);
 	CL_ShutdownUI();
 	CL_ShutdownCGame();
 
@@ -920,9 +885,9 @@ void CL_Frame ( int msec,float fractionMsec ) {
 CL_ShutdownRef
 ============
 */
-void CL_ShutdownRef( void ) {
+static void CL_ShutdownRef( qboolean restarting ) {
 	if ( re.Shutdown ) {
-		re.Shutdown( qtrue );
+		re.Shutdown( qtrue, restarting );
 	}
 
 	memset( &re, 0, sizeof( re ) );
@@ -954,6 +919,23 @@ void CL_StartSound( void ) {
 }
 
 /*
+============
+CL_InitRenderer
+============
+*/
+void CL_InitRenderer( void ) {
+	// this sets up the renderer and calls R_Init
+	re.BeginRegistration( &cls.glconfig );
+
+	// load character sets
+	cls.charSetShader = re.RegisterShaderNoMip("gfx/2d/charsgrid_med");
+	cls.whiteShader = re.RegisterShader( "white" );
+	cls.consoleShader = re.RegisterShader( "console" );
+	g_console_field_width = cls.glconfig.vidWidth / SMALLCHAR_WIDTH - 2;
+	g_consoleField.widthInChars = g_console_field_width;
+}
+
+/*
 ============================
 CL_StartHunkUsers
 
@@ -968,14 +950,7 @@ void CL_StartHunkUsers( void ) {
 
 	if ( !cls.rendererStarted ) {
 		cls.rendererStarted = qtrue;
-		re.BeginRegistration( &cls.glconfig );
-
-		// load character sets
-		cls.charSetShader = re.RegisterShaderNoMip( "gfx/2d/charsgrid_med" );
-		cls.whiteShader = re.RegisterShader( "white" );
-		cls.consoleShader = re.RegisterShader( "console" );
-		g_console_field_width = cls.glconfig.vidWidth / SMALLCHAR_WIDTH - 2;
-		g_consoleField.widthInChars = g_console_field_width;
+		CL_InitRenderer();
 	}
 
 	if ( !cls.soundStarted ) {
@@ -1009,7 +984,6 @@ CL_RefPrintf
 DLL glue
 ================
 */
-#define	MAXPRINTMSG	4096
 void QDECL CL_RefPrintf( int print_level, const char *fmt, ...) {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
@@ -1035,33 +1009,14 @@ DLL glue, but highly reusuable DLL glue at that
 ============
 */
 
-#ifndef __NO_JK2
-extern cStringsSingle *JK2SP_GetString(const char *Reference);
-#endif
 const char *String_GetStringValue( const char *reference )
 {
-#ifdef __NO_JK2
+#ifndef JK2_MODE
 	return SE_GetString(reference);
 #else
-	if( com_jk2 && com_jk2->integer )
-	{
-		return const_cast<const char *>(JK2SP_GetString( reference )->GetText());
-	}
-	else
-	{
-		return const_cast<const char *>(SE_GetString(reference));
-	}
+	return JK2SP_GetStringTextString(reference);
 #endif
 }
-
-#ifdef _WIN32
-// DLL glue --eez
-WinVars_t *GetWindowsVariables( void )
-{
-	extern WinVars_t g_wv;
-	return &g_wv;
-}
-#endif
 
 extern qboolean gbAlreadyDoingLoad;
 extern void *gpvCachedMapDiskImage;
@@ -1100,17 +1055,19 @@ CL_InitRef
 */
 extern qboolean S_FileExists( const char *psFilename );
 extern bool CM_CullWorldBox (const cplane_t *frustum, const vec3pair_t bounds);
-extern void ShaderTableCleanup();
-extern void CM_ShutdownTerrain( thandle_t terrainId);
 extern qboolean SND_RegisterAudio_LevelLoadEnd(qboolean bDeleteEverythingNotUsedThisLevel /* 99% qfalse */);
-extern CCMLandScape *CM_RegisterTerrain(const char *config, bool server);
 extern cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force);
 extern CMiniHeap *G2VertSpaceServer;
 static CMiniHeap *GetG2VertSpaceServer( void ) {
 	return G2VertSpaceServer;
 }
 
-#define DEFAULT_RENDER_LIBRARY	"rdsp-vanilla"	// NOTENOTE: If you change the output name of rd-vanilla, change this define too!
+// NOTENOTE: If you change the output name of rd-vanilla, change this define too!
+#ifdef JK2_MODE
+#define DEFAULT_RENDER_LIBRARY	"rdjosp-vanilla"	
+#else
+#define DEFAULT_RENDER_LIBRARY	"rdsp-vanilla"	
+#endif
 
 void CL_InitRef( void ) {
 	refexport_t	*ret;
@@ -1136,6 +1093,8 @@ void CL_InitRef( void ) {
 		Com_Error( ERR_FATAL, "Failed to load renderer" );
 	}
 
+	memset( &rit, 0, sizeof( rit ) );
+
 	GetRefAPI = (GetRefAPI_t)Sys_LoadFunction( rendererLib, "GetRefAPI" );
 	if ( !GetRefAPI )
 		Com_Error( ERR_FATAL, "Can't load symbol GetRefAPI: '%s'", Sys_LibraryError() );
@@ -1156,9 +1115,6 @@ void CL_InitRef( void ) {
 	RIT(CM_DeleteCachedMap);
 	RIT(CM_DrawDebugSurface);
 	RIT(CM_PointContents);
-	RIT(CM_RegisterTerrain);
-	RIT(CM_ShutdownTerrain);
-	RIT(CM_TerrainPatchIterate);
 	RIT(Cvar_Get);
 	RIT(Cvar_Set);
 	RIT(Cvar_SetValue);
@@ -1182,9 +1138,7 @@ void CL_InitRef( void ) {
 	RIT(Hunk_ClearToMark);
 	RIT(SG_Append);
 	RIT(SND_RegisterAudio_LevelLoadEnd);
-	RIT(SV_GetConfigstring);
 	//RIT(SV_PointContents);
-	RIT(SV_SetConfigstring);
 	RIT(SV_Trace);
 	RIT(S_RestartMusic);
 	RIT(Z_Free);
@@ -1194,25 +1148,23 @@ void CL_InitRef( void ) {
 
 	RIT(Hunk_ClearToMark);
 
-#ifndef _WIN32
-    RIT(IN_Init);
-    RIT(IN_Shutdown);
-    RIT(IN_Restart);
-#endif
+    rit.WIN_Init = WIN_Init;
+	rit.WIN_SetGamma = WIN_SetGamma;
+    rit.WIN_Shutdown = WIN_Shutdown;
+    rit.WIN_Present = WIN_Present;
+	rit.GL_GetProcAddress = WIN_GL_GetProcAddress;
 
-	// Not-so-nice usage / doesn't go along with my epic macro
+	rit.PD_Load = PD_Load;
+	rit.PD_Store = PD_Store;
+
 	rit.Error = Com_Error;
 	rit.FS_FileExists = S_FileExists;
 	rit.GetG2VertSpaceServer = GetG2VertSpaceServer;
-#ifdef _WIN32
-	rit.GetWinVars = GetWindowsVariables;
-#endif
 	rit.LowPhysicalMemory = Sys_LowPhysicalMemory;
-	rit.Milliseconds = Sys_Milliseconds;
+	rit.Milliseconds = Sys_Milliseconds2;
 	rit.Printf = CL_RefPrintf;
 	rit.SE_GetString = String_GetStringValue;
 
-	rit.CM_ShaderTableCleanup = ShaderTableCleanup;
 	rit.SV_Trace = SV_Trace;
 
 	rit.gpvCachedMapDiskImage = get_gpvCachedMapDiskImage;
@@ -1240,6 +1192,8 @@ void CL_InitRef( void ) {
 
 //===========================================================================================
 
+void CL_CompleteCinematic( char *args, int argNum );
+
 /*
 ====================
 CL_Init
@@ -1248,12 +1202,9 @@ CL_Init
 void CL_Init( void ) {
 	Com_Printf( "----- Client Initialization -----\n" );
 
-#ifndef __NO_JK2
-	if(com_jk2 && com_jk2->integer)
-	{
-		JK2SP_Register("con_text", SP_REGISTER_REQUIRED);	//reference is CON_TEXT
-		JK2SP_Register("keynames", SP_REGISTER_REQUIRED);	// reference is KEYNAMES
-	}
+#ifdef JK2_MODE
+	JK2SP_Register("con_text", SP_REGISTER_REQUIRED);	//reference is CON_TEXT
+	JK2SP_Register("keynames", SP_REGISTER_REQUIRED);	// reference is KEYNAMES
 #endif
 	
 	Con_Init ();
@@ -1266,7 +1217,6 @@ void CL_Init( void ) {
 	cls.realtimeFraction=0.0f;	// fraction of a msec accumulated
 
 	CL_InitInput ();
-	RM_InitTerrain();
 
 	//
 	// register our variables
@@ -1291,7 +1241,6 @@ void CL_Init( void ) {
 	cl_pitchspeed = Cvar_Get ("cl_pitchspeed", "140", CVAR_ARCHIVE);
 	cl_anglespeedkey = Cvar_Get ("cl_anglespeedkey", "1.5", CVAR_ARCHIVE);
 
-	cl_maxpackets = Cvar_Get ("cl_maxpackets", "30", CVAR_ARCHIVE );
 	cl_packetdup = Cvar_Get ("cl_packetdup", "1", CVAR_ARCHIVE );
 
 	cl_run = Cvar_Get ("cl_run", "1", CVAR_ARCHIVE);
@@ -1304,8 +1253,6 @@ void CL_Init( void ) {
 	cl_inGameVideo = Cvar_Get ("cl_inGameVideo", "1", CVAR_ARCHIVE);
 	cl_framerate	= Cvar_Get ("cl_framerate", "0", CVAR_TEMP);
 
-	cl_thumbStickMode = Cvar_Get ("ui_thumbStickMode", "0", CVAR_ARCHIVE);
-
 	// init autoswitch so the ui will have it correctly even
 	// if the cgame hasn't been started
 	Cvar_Get ("cg_autoswitch", "1", CVAR_ARCHIVE);
@@ -1316,18 +1263,26 @@ void CL_Init( void ) {
 	m_side = Cvar_Get ("m_side", "0.25", CVAR_ARCHIVE);
 	m_filter = Cvar_Get ("m_filter", "0", CVAR_ARCHIVE);
 	
-#ifndef _WIN32
 	// ~ and `, as keys and characters
 	cl_consoleKeys = Cvar_Get( "cl_consoleKeys", "~ ` 0x7e 0x60", CVAR_ARCHIVE);
-#endif
 
 	// userinfo
+#ifdef JK2_MODE
+	Cvar_Get ("name", "Kyle", CVAR_USERINFO | CVAR_ARCHIVE );
+#else
 	Cvar_Get ("name", "Jaden", CVAR_USERINFO | CVAR_ARCHIVE );
-	Cvar_Get ("snaps", "20", CVAR_USERINFO | CVAR_ARCHIVE );
-	
+#endif
+
+#ifdef JK2_MODE
+	// this is required for savegame compatibility - not ever actually used
+	Cvar_Get ("snaps", "20", CVAR_USERINFO );
+	Cvar_Get ("sex", "male", CVAR_USERINFO | CVAR_ARCHIVE );
+	Cvar_Get ("handicap", "100", CVAR_USERINFO | CVAR_SAVEGAME );
+#else
 	Cvar_Get ("sex", "f", CVAR_USERINFO | CVAR_ARCHIVE | CVAR_SAVEGAME | CVAR_NORESTART );
 	Cvar_Get ("snd", "jaden_fmle", CVAR_USERINFO | CVAR_ARCHIVE | CVAR_SAVEGAME | CVAR_NORESTART );//UI_SetSexandSoundForModel changes to match sounds.cfg for model
 	Cvar_Get ("handicap", "100", CVAR_USERINFO | CVAR_SAVEGAME | CVAR_NORESTART);
+#endif
 
 	//
 	// register our commands
@@ -1339,6 +1294,7 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("vid_restart", CL_Vid_Restart_f);
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("cinematic", CL_PlayCinematic_f);
+	Cmd_SetCommandCompletionFunc( "cinematic", CL_CompleteCinematic );
 	Cmd_AddCommand ("ingamecinematic", CL_PlayInGameCinematic_f);
 	Cmd_AddCommand ("uimenu", CL_GenericMenu_f);
 	Cmd_AddCommand ("datapad", CL_DataPad_f);
@@ -1374,7 +1330,7 @@ void CL_Shutdown( void ) {
 	Com_Printf( "----- CL_Shutdown -----\n" );
 
 	if ( recursive ) {
-		printf ("recursive shutdown\n");
+		Com_Printf( "WARNING: Recursive shutdown\n" );
 		return;
 	}
 	recursive = qtrue;
@@ -1383,7 +1339,7 @@ void CL_Shutdown( void ) {
 	CL_Disconnect();
 
 	S_Shutdown();
-	CL_ShutdownRef();
+	CL_ShutdownRef(qfalse);
 
 	Cmd_RemoveCommand ("cmd");
 	Cmd_RemoveCommand ("configstrings");
@@ -1393,7 +1349,9 @@ void CL_Shutdown( void ) {
 	Cmd_RemoveCommand ("disconnect");
 	Cmd_RemoveCommand ("cinematic");	
 	Cmd_RemoveCommand ("ingamecinematic");
-	Cmd_RemoveCommand ("pause");
+	Cmd_RemoveCommand ("uimenu");
+	Cmd_RemoveCommand ("datapad");
+	Cmd_RemoveCommand ("endscreendissolve");
 
 	Cvar_Set( "cl_running", "0" );
 
@@ -1404,129 +1362,3 @@ void CL_Shutdown( void ) {
 	Com_Printf( "-----------------------\n" );
 }
 
-
-/*
-==================
-CL_GetPing
-==================
-*/
-void CL_GetPing( int n, char *adrstr, int *pingtime )
-{
-	const char*	str;
-	int		time;
-
-	if (!cl_pinglist[n].adr.port)
-	{
-		// empty slot
-		adrstr[0] = '\0';
-		*pingtime = 0;
-		return;
-	}
-
-	str = NET_AdrToString( cl_pinglist[n].adr );
-	strcpy( adrstr, str );
-
-	time = cl_pinglist[n].time;
-	if (!time)
-	{
-		// check for timeout
-		time = cls.realtime - cl_pinglist[n].start;
-		if (time < 500)
-		{
-			// not timed out yet
-			time = 0;
-		}
-	}
-
-	*pingtime = time;
-}
-
-/*
-==================
-CL_ClearPing
-==================
-*/
-void CL_ClearPing( int n )
-{
-	if (n < 0 || n >= MAX_PINGREQUESTS)
-		return;
-
-	cl_pinglist[n].adr.port = 0;
-}
-
-/*
-==================
-CL_GetPingQueueCount
-==================
-*/
-int CL_GetPingQueueCount( void )
-{
-	int		i;
-	int		count;
-	ping_t*	pingptr;
-
-	count   = 0;
-	pingptr = cl_pinglist;
-	for (i=0; i<MAX_PINGREQUESTS; i++, pingptr++ )
-		if (pingptr->adr.port)
-			count++;
-
-	return (count);
-}
-
-/*
-==================
-CL_GetFreePing
-==================
-*/
-ping_t* CL_GetFreePing( void )
-{
-	ping_t*	pingptr;
-	ping_t*	best;	
-	int		oldest;
-	int		i;
-	int		time;
-
-	pingptr = cl_pinglist;
-	for (i=0; i<MAX_PINGREQUESTS; i++, pingptr++ )
-	{
-		// find free ping slot
-		if (pingptr->adr.port)
-		{
-			if (!pingptr->time)
-			{
-				if (cls.realtime - pingptr->start < 500)
-				{
-					// still waiting for response
-					continue;
-				}
-			}
-			else if (pingptr->time < 500)
-			{
-				// results have not been queried
-				continue;
-			}
-		}
-
-		// clear it
-		pingptr->adr.port = 0;
-		return (pingptr);
-	}
-
-	// use oldest entry
-	pingptr = cl_pinglist;
-	best    = cl_pinglist;
-	oldest  = INT_MIN;
-	for (i=0; i<MAX_PINGREQUESTS; i++, pingptr++ )
-	{
-		// scan for oldest
-		time = cls.realtime - pingptr->start;
-		if (time > oldest)
-		{
-			oldest = time;
-			best   = pingptr;
-		}
-	}
-
-	return (best);
-}

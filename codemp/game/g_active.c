@@ -1,5 +1,26 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
 
 #include "g_local.h"
 #include "bg_saga.h"
@@ -35,7 +56,7 @@ void P_DamageFeedback( gentity_t *player ) {
 	vec3_t	angles;
 
 	client = player->client;
-	if ( client->ps.pm_type == PM_DEAD ) {
+	if ( client->ps.pm_type == PM_DEAD || client->tempSpectate >= level.time ) {
 		return;
 	}
 
@@ -75,7 +96,7 @@ void P_DamageFeedback( gentity_t *player ) {
 	}
 
 	// play an appropriate pain sound
-	if ( (level.time > player->pain_debounce_time) && !(player->flags & FL_GODMODE) && !(player->s.eFlags & EF_DEAD) ) {
+	if ( (level.time > player->pain_debounce_time) && !(player->flags & FL_GODMODE) && !(player->s.eFlags & EF_DEAD) && (player->client->tempSpectate < level.time)) {
 
 		// don't do more than two pain sounds a second
 		// nmckenzie: also don't make him loud and whiny if he's only getting nicked.
@@ -153,7 +174,7 @@ void P_WorldEffects( gentity_t *ent ) {
 		if ( ent->client->airOutTime < level.time) {
 			// drown!
 			ent->client->airOutTime += 1000;
-			if ( ent->health > 0 ) {
+			if ( ent->health > 0 && ent->client->tempSpectate < level.time ) {
 				// take more damage the longer underwater
 				ent->damage += 2;
 				if (ent->damage > 15)
@@ -185,7 +206,7 @@ void P_WorldEffects( gentity_t *ent ) {
 	//
 	if ( waterlevel && (ent->watertype & (CONTENTS_LAVA|CONTENTS_SLIME)) )
 	{
-		if ( ent->health > 0 && ent->pain_debounce_time <= level.time )
+		if ( ent->health > 0 && ent->client->tempSpectate < level.time && ent->pain_debounce_time <= level.time )
 		{
 		#ifdef BASE_COMPAT
 			if ( envirosuit )
@@ -1093,126 +1114,66 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 	}
 }
 
-/*
-==================
-G_UpdateClientBroadcasts
+static const float maxJediMasterDistance = 2500.0f * 2500.0f; // x^2, optimisation
+static const float maxJediMasterFOV = 100.0f;
+static const float maxForceSightDistance = Square( 1500.0f ) * 1500.0f; // x^2, optimisation
+static const float maxForceSightFOV = 100.0f;
 
-Determines whether this client should be broadcast to any other clients.
-A client is broadcast when another client is using force sight or is
-==================
-*/
-#define MAX_JEDIMASTER_DISTANCE	2500
-#define MAX_JEDIMASTER_FOV		100
-
-#define MAX_SIGHT_DISTANCE		1500
-#define MAX_SIGHT_FOV			100
-
-static void G_UpdateForceSightBroadcasts ( gentity_t *self )
-{
+void G_UpdateClientBroadcasts( gentity_t *self ) {
 	int i;
+	gentity_t *other;
 
-	// Any clients with force sight on should see this client
-	for ( i = 0; i < level.numConnectedClients; i ++ )
-	{
-		gentity_t *ent = &g_entities[level.sortedClients[i]];
-		float	  dist;
-		vec3_t	  angles;
+	// we are always sent to ourselves
+	// we are always sent to other clients if we are in their PVS
+	// if we are not in their PVS, we must set the broadcastClients bit field
+	// if we do not wish to be sent to any particular entity, we must set the broadcastClients bit field and the
+	//	SVF_BROADCASTCLIENTS bit flag
+	self->r.broadcastClients[0] = 0u;
+	self->r.broadcastClients[1] = 0u;
 
-		if ( ent == self )
-		{
+	for ( i = 0, other = g_entities; i < MAX_CLIENTS; i++, other++ ) {
+		qboolean send = qfalse;
+		float dist;
+		vec3_t angles;
+
+		if ( !other->inuse || other->client->pers.connected != CON_CONNECTED ) {
+			// no need to compute visibility for non-connected clients
 			continue;
 		}
 
-		// Not using force sight so we shouldnt broadcast to this one
-		if ( !(ent->client->ps.fd.forcePowersActive & (1<<FP_SEE) ) )
-		{
+		if ( other == self ) {
+			// we are always sent to ourselves anyway, this is purely an optimisation
 			continue;
 		}
 
-		VectorSubtract( self->client->ps.origin, ent->client->ps.origin, angles );
-		dist = VectorLengthSquared ( angles );
-		vectoangles ( angles, angles );
+		VectorSubtract( self->client->ps.origin, other->client->ps.origin, angles );
+		dist = VectorLengthSquared( angles );
+		vectoangles( angles, angles );
 
-		// Too far away then just forget it
-		if ( dist > MAX_SIGHT_DISTANCE * MAX_SIGHT_DISTANCE )
-		{
-			continue;
+		// broadcast jedi master to everyone if we are in distance/field of view
+		if ( level.gametype == GT_JEDIMASTER && self->client->ps.isJediMaster ) {
+			if ( dist < maxJediMasterDistance
+				&& InFieldOfVision( other->client->ps.viewangles, maxJediMasterFOV, angles ) )
+			{
+				send = qtrue;
+			}
 		}
 
-		// If not within the field of view then forget it
-		if ( !InFieldOfVision ( ent->client->ps.viewangles, MAX_SIGHT_FOV, angles ) )
-		{
-			break;
+		// broadcast this client to everyone using force sight if we are in distance/field of view
+		if ( (other->client->ps.fd.forcePowersActive & (1 << FP_SEE)) ) {
+			if ( dist < maxForceSightDistance
+				&& InFieldOfVision( other->client->ps.viewangles, maxForceSightFOV, angles ) )
+			{
+				send = qtrue;
+			}
 		}
 
-		// Turn on the broadcast bit for the master and since there is only one
-		// master we are done
-		self->r.broadcastClients[ent->s.clientNum/32] |= (1 << (ent->s.clientNum%32));
-
-		break;
-	}
-}
-
-static void G_UpdateJediMasterBroadcasts ( gentity_t *self )
-{
-	int i;
-
-	// Not jedi master mode then nothing to do
-	if ( level.gametype != GT_JEDIMASTER )
-	{
-		return;
-	}
-
-	// This client isnt the jedi master so it shouldnt broadcast
-	if ( !self->client->ps.isJediMaster )
-	{
-		return;
+		if ( send ) {
+			Q_AddToBitflags( self->r.broadcastClients, i, 32 );
+		}
 	}
 
-	// Broadcast ourself to all clients within range
-	for ( i = 0; i < level.numConnectedClients; i ++ )
-	{
-		gentity_t *ent = &g_entities[level.sortedClients[i]];
-		float	  dist;
-		vec3_t	  angles;
-
-		if ( ent == self )
-		{
-			continue;
-		}
-
-		VectorSubtract( self->client->ps.origin, ent->client->ps.origin, angles );
-		dist = VectorLengthSquared ( angles );
-		vectoangles ( angles, angles );
-
-		// Too far away then just forget it
-		if ( dist > MAX_JEDIMASTER_DISTANCE * MAX_JEDIMASTER_DISTANCE )
-		{
-			continue;
-		}
-
-		// If not within the field of view then forget it
-		if ( !InFieldOfVision ( ent->client->ps.viewangles, MAX_JEDIMASTER_FOV, angles ) )
-		{
-			continue;
-		}
-
-		// Turn on the broadcast bit for the master and since there is only one
-		// master we are done
-		self->r.broadcastClients[ent->s.clientNum/32] |= (1 << (ent->s.clientNum%32));
-	}
-}
-
-void G_UpdateClientBroadcasts ( gentity_t *self )
-{
-	// Clear all the broadcast bits for this client
-	memset ( self->r.broadcastClients, 0, sizeof ( self->r.broadcastClients ) );
-
-	// The jedi master is broadcast to everyone in range
-	G_UpdateJediMasterBroadcasts ( self );
-
-	// Anyone with force sight on should see this client
-	G_UpdateForceSightBroadcasts ( self );
+	trap->LinkEntity( (sharedEntity_t *)self );
 }
 
 void G_AddPushVecToUcmd( gentity_t *self, usercmd_t *ucmd )
@@ -1705,8 +1666,7 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 			{
 				anim = ent->client->saber[0].tauntAnim;
 			}
-			else if ( ent->client->saber[1].model
-					&& ent->client->saber[1].model[0]
+			else if ( ent->client->saber[1].model[0]
 					&& ent->client->saber[1].tauntAnim != -1 )
 			{
 				anim = ent->client->saber[1].tauntAnim;
@@ -1718,7 +1678,6 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 				case SS_FAST:
 				case SS_TAVION:
 					if ( ent->client->ps.saberHolstered == 1
-						&& ent->client->saber[1].model
 						&& ent->client->saber[1].model[0] )
 					{//turn off second saber
 						G_Sound( ent, CHAN_WEAPON, ent->client->saber[1].soundOff );
@@ -1737,7 +1696,6 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 					break;
 				case SS_DUAL:
 					if ( ent->client->ps.saberHolstered == 1
-						&& ent->client->saber[1].model
 						&& ent->client->saber[1].model[0] )
 					{//turn on second saber
 						G_Sound( ent, CHAN_WEAPON, ent->client->saber[1].soundOn );
@@ -1765,8 +1723,7 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 			{
 				anim = ent->client->saber[0].bowAnim;
 			}
-			else if ( ent->client->saber[1].model
-					&& ent->client->saber[1].model[0]
+			else if ( ent->client->saber[1].model[0]
 					&& ent->client->saber[1].bowAnim != -1 )
 			{
 				anim = ent->client->saber[1].bowAnim;
@@ -1776,7 +1733,6 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 				anim = BOTH_BOW;
 			}
 			if ( ent->client->ps.saberHolstered == 1
-				&& ent->client->saber[1].model
 				&& ent->client->saber[1].model[0] )
 			{//turn off second saber
 				G_Sound( ent, CHAN_WEAPON, ent->client->saber[1].soundOff );
@@ -1792,8 +1748,7 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 			{
 				anim = ent->client->saber[0].meditateAnim;
 			}
-			else if ( ent->client->saber[1].model
-					&& ent->client->saber[1].model[0]
+			else if ( ent->client->saber[1].model[0]
 					&& ent->client->saber[1].meditateAnim != -1 )
 			{
 				anim = ent->client->saber[1].meditateAnim;
@@ -1803,7 +1758,6 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 				anim = BOTH_MEDITATE;
 			}
 			if ( ent->client->ps.saberHolstered == 1
-				&& ent->client->saber[1].model
 				&& ent->client->saber[1].model[0] )
 			{//turn off second saber
 				G_Sound( ent, CHAN_WEAPON, ent->client->saber[1].soundOff );
@@ -1818,7 +1772,6 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 			if ( ent->client->ps.weapon == WP_SABER )
 			{
 				if ( ent->client->ps.saberHolstered == 1
-					&& ent->client->saber[1].model
 					&& ent->client->saber[1].model[0] )
 				{//turn on second saber
 					G_Sound( ent, CHAN_WEAPON, ent->client->saber[1].soundOn );
@@ -1832,8 +1785,7 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 				{
 					anim = ent->client->saber[0].flourishAnim;
 				}
-				else if ( ent->client->saber[1].model
-					&& ent->client->saber[1].model[0]
+				else if ( ent->client->saber[1].model[0]
 					&& ent->client->saber[1].flourishAnim != -1 )
 				{
 					anim = ent->client->saber[1].flourishAnim;
@@ -1868,8 +1820,7 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 			{
 				anim = ent->client->saber[0].gloatAnim;
 			}
-			else if ( ent->client->saber[1].model
-					&& ent->client->saber[1].model[0]
+			else if ( ent->client->saber[1].model[0]
 					&& ent->client->saber[1].gloatAnim != -1 )
 			{
 				anim = ent->client->saber[1].gloatAnim;
@@ -1896,7 +1847,6 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 					break;
 				case SS_DUAL:
 					if ( ent->client->ps.saberHolstered == 1
-						&& ent->client->saber[1].model
 						&& ent->client->saber[1].model[0] )
 					{//turn on second saber
 						G_Sound( ent, CHAN_WEAPON, ent->client->saber[1].soundOn );
@@ -2136,7 +2086,7 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 
 	// spectators don't do much
-	if ( client->sess.sessionTeam == TEAM_SPECTATOR || client->tempSpectate > level.time ) {
+	if ( client->sess.sessionTeam == TEAM_SPECTATOR || client->tempSpectate >= level.time ) {
 		if ( client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
 			return;
 		}
@@ -3050,8 +3000,7 @@ void ClientThink_real( gentity_t *ent ) {
 						lockHits -= 1;
 					}
 					lockHits += ent->client->saber[0].lockBonus;
-					if ( ent->client->saber[1].model
-						&& ent->client->saber[1].model[0]
+					if ( ent->client->saber[1].model[0]
 						&& !ent->client->ps.saberHolstered )
 					{
 						lockHits += ent->client->saber[1].lockBonus;

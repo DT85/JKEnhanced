@@ -1,10 +1,29 @@
-// cmodel.c -- model loading
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
+// cmodel.c -- model loading
 #include "cm_local.h"
-#include "cm_landscape.h" //rwwRMG - include
-#include "RMG/RM_Headers.h" //rwwRMG - include
+#include "qcommon/qfiles.h"
 
 #ifdef BSPC
 
@@ -45,6 +64,7 @@ byte		*cmod_base;
 cvar_t		*cm_noAreas;
 cvar_t		*cm_noCurves;
 cvar_t		*cm_playerCurveClip;
+cvar_t		*cm_extraVerbose;
 #endif
 
 cmodel_t	box_model;
@@ -73,7 +93,7 @@ int			NumSubBSP, TotalSubModels;
 CMod_LoadShaders
 =================
 */
-void CMod_LoadShaders( lump_t *l, clipMap_t	&cm )
+static void CMod_LoadShaders( lump_t *l, clipMap_t &cm )
 {
 	dshader_t	*in;
 	int			i, count;
@@ -251,10 +271,6 @@ void CMod_LoadBrushes( lump_t *l, clipMap_t	&cm ) {
 			Com_Error( ERR_DROP, "CMod_LoadBrushes: bad shaderNum: %i", out->shaderNum );
 		}
 		out->contents = cm.shaders[out->shaderNum].contentFlags;
-
-		// Landscapes are set up afterwards in the entity spawning
-		//out->landscape = NULL;	//the memory was cleared already by hunk_alloc
-		//out->checkcount=0;
 
 		CM_BoundBrush( out );
 	}
@@ -439,7 +455,28 @@ void CMod_LoadBrushSides (lump_t *l, clipMap_t &cm)
 CMod_LoadEntityString
 =================
 */
-void CMod_LoadEntityString( lump_t *l, clipMap_t &cm ) {
+void CMod_LoadEntityString( lump_t *l, clipMap_t &cm, const char* name ) {
+	fileHandle_t h;
+	char entName[MAX_QPATH];
+
+	// Attempt to load entities from an external .ent file if available
+	Q_strncpyz(entName, name, sizeof(entName));
+	const int entNameLen = strlen(entName);
+	entName[entNameLen - 3] = 'e';
+	entName[entNameLen - 2] = 'n';
+	entName[entNameLen - 1] = 't';
+	const int iEntityFileLen = FS_FOpenFileRead(entName, &h, qfalse);
+	if (h)
+	{
+		cm.entityString = (char *)Hunk_Alloc(iEntityFileLen + 1, h_high);
+		cm.numEntityChars = iEntityFileLen + 1;
+		FS_Read(cm.entityString, iEntityFileLen, h);
+		FS_FCloseFile(h);
+		cm.entityString[iEntityFileLen] = '\0';
+		Com_Printf("Loaded entities from %s\n", entName);
+		return;
+	}
+	
 	cm.entityString = (char *)Hunk_Alloc( l->filelen, h_high );
 	cm.numEntityChars = l->filelen;
 	Com_Memcpy (cm.entityString, cmod_base + l->fileofs, l->filelen);
@@ -597,6 +634,7 @@ static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *check
 	cm_noAreas = Cvar_Get ("cm_noAreas", "0", CVAR_CHEAT);
 	cm_noCurves = Cvar_Get ("cm_noCurves", "0", CVAR_CHEAT);
 	cm_playerCurveClip = Cvar_Get ("cm_playerCurveClip", "1", CVAR_ARCHIVE|CVAR_CHEAT );
+	cm_extraVerbose = Cvar_Get ("cm_extraVerbose", "0", CVAR_TEMP );
 #endif
 	Com_DPrintf( "CM_LoadMap( %s, %i )\n", name, clientload );
 
@@ -701,7 +739,7 @@ static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *check
 	CMod_LoadBrushes (&header.lumps[LUMP_BRUSHES], cm);
 	CMod_LoadSubmodels (&header.lumps[LUMP_MODELS], cm);
 	CMod_LoadNodes (&header.lumps[LUMP_NODES], cm);
-	CMod_LoadEntityString (&header.lumps[LUMP_ENTITIES], cm);
+	CMod_LoadEntityString (&header.lumps[LUMP_ENTITIES], cm, name);
 	CMod_LoadVisibility( &header.lumps[LUMP_VISIBILITY], cm );
 	CMod_LoadPatches( &header.lumps[LUMP_SURFACES], &header.lumps[LUMP_DRAWVERTS], cm );
 
@@ -710,13 +748,7 @@ static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *check
 	if (&cm == &cmg)
 	{
 		// Load in the shader text - return instantly if already loaded
-#if !defined(BSPC)
-		CM_LoadShaderText(qfalse);
-#endif
 		CM_InitBoxHull ();
-#if !defined(BSPC)
-		CM_SetupShaderProperties();
-#endif
 	}
 
 #ifndef BSPC	// I hope we can lose this crap soon
@@ -772,23 +804,6 @@ CM_ClearMap
 void CM_ClearMap( void )
 {
 	int		i;
-
-#if !defined(BSPC)
-	CM_ShutdownShaderProperties();
-//	MAT_Shutdown();
-#endif
-
-	if (TheRandomMissionManager)
-	{
-		delete TheRandomMissionManager;
-		TheRandomMissionManager = 0;
-	}
-
-	if (cmg.landScape)
-	{
-		delete cmg.landScape;
-		cmg.landScape = NULL;
-	}
 
 	Com_Memset( &cmg, 0, sizeof( cmg ) );
 	CM_ClearLevelPatches();
@@ -1000,61 +1015,6 @@ void CM_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs ) {
 	VectorCopy( cmod->mins, mins );
 	VectorCopy( cmod->maxs, maxs );
 }
-
-/*
-===================
-CM_RegisterTerrain
-
-Allows physics to examine the terrain data.
-===================
-*/
-#if !defined(BSPC)
-CCMLandScape *CM_RegisterTerrain(const char *config, bool server)
-{
-	CCMLandScape	*ls;
-
-	if(cmg.landScape)
-	{
-		// Already spawned so just return
-		ls = cmg.landScape;
-		ls->IncreaseRefCount();
-		return(ls);
-	}
-	// Doesn't exist so create and link in
-	ls = CM_InitTerrain(config, 0, server);
-
-	// Increment for the next instance
-	if (cmg.landScape)
-	{
-		Com_Error(ERR_DROP, "You cannot have more than one terrain brush.\n");
-	}
-	cmg.landScape = ls;
-	return(ls);
-}
-
-/*
-===================
-CM_ShutdownTerrain
-===================
-*/
-
-void CM_ShutdownTerrain( thandle_t terrainId)
-{
-	CCMLandScape	*landscape;
-
-	landscape = cmg.landScape;
-
-	if (landscape)
-	{
-		landscape->DecreaseRefCount();
-		if(landscape->GetRefCount() <= 0)
-		{
-			delete landscape;
-			cmg.landScape = NULL;
-		}
-	}
-}
-#endif
 
 int CM_LoadSubBSP(const char *name, qboolean clientload)
 {

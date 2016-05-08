@@ -1,27 +1,29 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // cmodel.c -- model loading
 
 #include "cm_local.h"
-#include "../RMG/RM_Headers.h"
-
-void CM_LoadShaderText(bool forceReload);
 
 #ifdef BSPC
 void SetPlaneSignbits (cplane_t *out) {
@@ -265,9 +267,9 @@ void CMod_LoadBrushes( lump_t *l, clipMap_t &cm ) {
 			Com_Error( ERR_DROP, "CMod_LoadBrushes: bad shaderNum: %i", out->shaderNum );
 		}
 		out->contents = cm.shaders[out->shaderNum].contentFlags;
-#ifndef __NO_JK2
+#ifdef JK2_MODE
 		//JK2 HACK: for water that cuts vis but is not solid!!! (used on yavin swamp)
-		if ( com_jk2->integer && cm.shaders[out->shaderNum].surfaceFlags & SURF_SLICK )
+		if ( cm.shaders[out->shaderNum].surfaceFlags & SURF_SLICK )
 		{
 			out->contents &= ~CONTENTS_SOLID;
 		}
@@ -787,14 +789,7 @@ static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *check
 
 		if (&cm == &cmg)
 		{
-#if !defined(BSPC)
-			CM_LoadShaderText(false);
-//			MAT_Init((bool)(!clientload));
-#endif
 			CM_InitBoxHull ();
-#if !defined(BSPC)
-			CM_SetupShaderProperties();
-#endif
 
 			Q_strncpyz( gsCachedMapDiskImage, name, sizeof(gsCachedMapDiskImage) );	// so the renderer can check it
 		}
@@ -855,16 +850,6 @@ qboolean CM_SameMap(const char *server)
 	return qtrue;
 }
 
-qboolean CM_HasTerrain(void)
-{
-	if (cmg.landScape)
-	{
-		return qtrue;
-	}
-
-	return qfalse;
-}
-
 /*
 ==================
 CM_ClearMap
@@ -875,23 +860,6 @@ void CM_ClearMap( void )
 	int		i;
 
 	CM_OrOfAllContentsFlagsInMap = CONTENTS_BODY;
-
-#if !defined(BSPC)
-	CM_ShutdownShaderProperties();
-//	MAT_Shutdown();
-#endif
-
-	if (TheRandomMissionManager)
-	{
-		delete TheRandomMissionManager;
-		TheRandomMissionManager = 0;
-	}
-
-	if (cmg.landScape)
-	{
-		delete cmg.landScape;
-		cmg.landScape = 0;
-	}
 
 	memset( &cmg, 0, sizeof( cmg ) );
 	CM_ClearLevelPatches();
@@ -1106,63 +1074,6 @@ void CM_ModelBounds( clipMap_t &cm, clipHandle_t model, vec3_t mins, vec3_t maxs
 	VectorCopy( cmod->mins, mins );
 	VectorCopy( cmod->maxs, maxs );
 }
-
-/*
-===================
-CM_RegisterTerrain
-
-Allows physics to examine the terrain data.
-===================
-*/
-#if !defined(BSPC)
-CCMLandScape *CM_RegisterTerrain(const char *config, bool server)
-{
-	thandle_t		terrainId;
-	CCMLandScape	*ls;
-
-	terrainId = atol(Info_ValueForKey(config, "terrainId"));
-	if(terrainId && cmg.landScape)
-	{
-		// Already spawned so just return
-		ls = cmg.landScape;
-		ls->IncreaseRefCount();
-		return(ls);
-	}
-	// Doesn't exist so create and link in
-	//cmg.numTerrains++;
-	ls = CM_InitTerrain(config, 1, server);
-
-	// Increment for the next instance
-	if (cmg.landScape)
-	{
-		Com_Error(ERR_DROP, "You can't have more than one terrain brush.");
-	}
-	cmg.landScape = ls;
-	return(ls);
-}
-
-/*
-===================
-CM_ShutdownTerrain
-===================
-*/
-
-void CM_ShutdownTerrain( thandle_t terrainId)
-{
-	CCMLandScape	*landscape;
-
-	landscape = cmg.landScape;
-	if (landscape)
-	{
-		landscape->DecreaseRefCount();
-		if(landscape->GetRefCount() <= 0)
-		{
-			delete landscape;
-			cmg.landScape = NULL;
-		}
-	}
-}
-#endif
 
 int CM_LoadSubBSP(const char *name, qboolean clientload)
 {

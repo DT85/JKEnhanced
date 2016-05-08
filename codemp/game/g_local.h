@@ -1,7 +1,29 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
 
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
 // g_local.h -- local definitions for game module
 
 #include "qcommon/q_shared.h"
@@ -845,6 +867,13 @@ typedef struct waypointData_s {
 	int		nodeID;
 } waypointData_t;
 
+typedef struct {
+	char	message[MAX_SPAWN_VARS_CHARS];
+	int		count;
+	int		cs_index;
+	vec3_t	origin;
+} locationData_t;
+
 typedef struct level_locals_s {
 	struct gclient_s	*clients;		// [maxclients]
 
@@ -929,8 +958,6 @@ typedef struct level_locals_s {
 	vec3_t		intermission_origin;	// also used for spectator spawns
 	vec3_t		intermission_angle;
 
-	qboolean	locationLinked;			// target_locations get linked
-	gentity_t	*locationHead;			// head of the location list
 	int			bodyQueIndex;			// dead bodies
 	gentity_t	*bodyQue[BODY_QUEUE_SIZE];
 	int			portalSequence;
@@ -972,7 +999,15 @@ typedef struct level_locals_s {
 		char *infos[MAX_ARENAS];
 	} arenas;
 
+	struct {
+		int num;
+		qboolean linked;
+		locationData_t data[MAX_LOCATIONS];
+	} locations;
+
 	gametype_t	gametype;
+	char		mapname[MAX_QPATH];
+	char		rawmapname[MAX_QPATH];
 } level_locals_t;
 
 
@@ -1000,8 +1035,6 @@ void Cmd_SaberAttackCycle_f(gentity_t *ent);
 int G_ItemUsable(playerState_t *ps, int forcedUse);
 void Cmd_ToggleSaber_f(gentity_t *ent);
 void Cmd_EngageDuel_f(gentity_t *ent);
-
-gentity_t *G_GetDuelWinner(gclient_t *client);
 
 //
 // g_items.c
@@ -1484,6 +1517,7 @@ typedef enum userinfoValidationBits_e {
 } userinfoValidationBits_t;
 
 void Svcmd_ToggleUserinfoValidation_f( void );
+void Svcmd_ToggleAllowVote_f( void );
 
 // g_cvar.c
 #define XCVAR_PROTO

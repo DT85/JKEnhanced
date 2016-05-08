@@ -1,26 +1,29 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 #include "q_shared.h"
 #include "qcommon.h"
 #include "../server/server.h"
-
-
 
 /*
 ==============================================================================
@@ -418,20 +421,22 @@ int	MSG_ReadDelta( msg_t *msg, int oldV, int bits ) {
 }
 
 void MSG_WriteDeltaFloat( msg_t *msg, float oldV, float newV ) {
+	byteAlias_t fi;
 	if ( oldV == newV ) {
 		MSG_WriteBits( msg, 0, 1 );
 		return;
 	}
+	fi.f = newV;
 	MSG_WriteBits( msg, 1, 1 );
-	MSG_WriteBits( msg, *(int *)&newV, 32 );
+	MSG_WriteBits( msg, fi.i, 32 );
 }
 
 float MSG_ReadDeltaFloat( msg_t *msg, float oldV ) {
 	if ( MSG_ReadBits( msg, 1 ) ) {
-		float	newV;
+		byteAlias_t fi;
 
-		*(int *)&newV = MSG_ReadBits( msg, 32 );
-		return newV;
+		fi.i = MSG_ReadBits( msg, 32 );
+		return fi.f;
 	}
 	return oldV;
 }
@@ -502,7 +507,7 @@ entityState_t communication
 
 typedef struct {
 	const char	*name;
-	int		offset;
+	size_t		offset;
 	int		bits;		// 0 = float
 } netField_t;
 
@@ -990,7 +995,7 @@ static const netField_t	playerStateFields[] =
 { PSF(damageYaw), 8 },
 { PSF(damagePitch), -8 },
 { PSF(damageCount), 8 },
-#ifndef __NO_JK2
+#ifdef JK2_MODE
 { PSF(saberColor), 8 },
 { PSF(saberActive), 8 },
 { PSF(saberLength), 32 },
@@ -998,7 +1003,7 @@ static const netField_t	playerStateFields[] =
 #endif
 { PSF(forcePowersActive), 32},
 { PSF(saberInFlight), 8 },
-#ifndef __NO_JK2
+#ifdef JK2_MODE
 { PSF(vehicleModel), 32 },
 #endif
 
