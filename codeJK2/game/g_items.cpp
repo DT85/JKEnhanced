@@ -497,8 +497,7 @@ qboolean CheckItemCanBePickedUpByNPC( gentity_t *item, gentity_t *pickerupper )
 	if ( !item->item ) {
 		return qfalse;
 	}
-	if ( item->item->giType == IT_HOLDABLE &&
-		item->item->giTag == INV_SECURITY_KEY ) {
+	if ( item->item->giType == IT_HOLDABLE ) {
 		return qfalse;
 	}
 	if ( (item->flags&FL_DROPPED_ITEM)
