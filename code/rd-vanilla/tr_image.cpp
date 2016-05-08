@@ -128,7 +128,7 @@ void GL_TextureMode( const char *string ) {
 	if ( i == numTextureModes ) {
 		ri->Printf (PRINT_ALL, "bad filter name\n");
 		for ( i = 0; i < numTextureModes ; i++ ) {
-			ri.Printf( PRINT_ALL, "%s\n", modes[i].name);
+			ri->Printf( PRINT_ALL, "%s\n", modes[i].name);
 		}
 		return;
 	}
@@ -139,7 +139,7 @@ void GL_TextureMode( const char *string ) {
 	// If the level they requested is less than possible, set the max possible...
 	if ( r_ext_texture_filter_anisotropic->value > glConfig.maxTextureFilterAnisotropy )
 	{
-		ri.Cvar_SetValue( "r_ext_texture_filter_anisotropic", glConfig.maxTextureFilterAnisotropy );
+		ri->Cvar_SetValue( "r_ext_texture_filter_anisotropic", glConfig.maxTextureFilterAnisotropy );
 	}
 
 	// change all the existing mipmap texture objects
@@ -919,7 +919,7 @@ qboolean RE_RegisterImages_LevelLoadEnd(void)
 		}
 	}
 
-	//ri.Printf( PRINT_DEVELOPER, "RE_RegisterImages_LevelLoadEnd(): Ok\n");
+	//ri->Printf( PRINT_DEVELOPER, "RE_RegisterImages_LevelLoadEnd(): Ok\n");
 
 	GL_ResetBinds();
 
@@ -1469,7 +1469,7 @@ void R_SetColorMappings( void ) {
 
 	if ( glConfig.deviceSupportsGamma )
 	{
-		ri.WIN_SetGamma( &glConfig, s_gammatable, s_gammatable, s_gammatable );
+		ri->WIN_SetGamma( &glConfig, s_gammatable, s_gammatable, s_gammatable );
 	}
 }
 

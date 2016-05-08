@@ -708,7 +708,6 @@ qboolean g_qbLoadTransition = qfalse;
 #ifndef FINAL_BUILD
 extern int fatalErrors;
 #endif
-extern void G_InitAngelscript();
 void InitGame(  const char *mapname, const char *spawntarget, int checkSum, const char *entities, int levelTime, int randomSeed, int globalTime, SavedGameJustLoaded_e eSavedGameJustLoaded, qboolean qbLoadTransition )
 {
 	giMapChecksum = checkSum;
@@ -724,8 +723,6 @@ void InitGame(  const char *mapname, const char *spawntarget, int checkSum, cons
 	G_InitCvars();
 
 	G_InitMemory();
-
-	G_InitAngelscript();
 
 	// set some level globals
 	memset( &level, 0, sizeof( level ) );
@@ -833,7 +830,6 @@ void InitGame(  const char *mapname, const char *spawntarget, int checkSum, cons
 ShutdownGame
 =================
 */
-void G_ShutdownAngelscript();
 void ShutdownGame( void ) {
 	gi.Printf ("==== ShutdownGame ====\n");
 
@@ -848,8 +844,6 @@ void ShutdownGame( void ) {
 
 	// write all the client session data so we can get it back
 	G_WriteSessionData();
-
-	G_ShutdownAngelscript();
 
 /*
 Ghoul2 Insert Start

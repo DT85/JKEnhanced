@@ -1059,12 +1059,12 @@ void R_Modellist_f( void ) {
 
 			case MOD_MDXA:
 
-				ri.Printf( PRINT_ALL, "%8i : (%i) %s\n", mod->dataSize, mod->numLods, mod->name );
+				ri->Printf( PRINT_ALL, "%8i : (%i) %s\n", mod->dataSize, mod->numLods, mod->name );
 				break;
 
 			case MOD_MDXM:
 
-				ri.Printf( PRINT_ALL, "%8i : (%i) %s\n", mod->dataSize, mod->numLods, mod->name );
+				ri->Printf( PRINT_ALL, "%8i : (%i) %s\n", mod->dataSize, mod->numLods, mod->name );
 				break;
 
 			case MOD_MESH:

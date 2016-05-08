@@ -2172,7 +2172,7 @@ static qboolean ParseShader( const char  **text )
 		else if ( token[0] == '{' )
 		{
 			if ( s >= MAX_SHADER_STAGES ) {
-				ri.Printf( PRINT_WARNING, "WARNING: too many stages in shader %s (max is %i)\n", shader.name, MAX_SHADER_STAGES );
+				ri->Printf( PRINT_WARNING, "WARNING: too many stages in shader %s (max is %i)\n", shader.name, MAX_SHADER_STAGES );
 				COM_EndParseSession();
 				return qfalse;
 			}
@@ -3725,11 +3725,11 @@ static void ScanAndLoadShaderFiles( void )
 	long sum = 0, summand;
 
 	// scan for shader files
-	shaderFiles = ri.FS_ListFiles( "shaders", ".shader", &numShaderFiles );
+	shaderFiles = ri->FS_ListFiles( "shaders", ".shader", &numShaderFiles );
 
 	if ( !shaderFiles || !numShaderFiles )
 	{
-		ri.Error( ERR_FATAL, "WARNING: no shader files found\n" );
+		ri->Error( ERR_FATAL, "WARNING: no shader files found\n" );
 		return;
 	}
 
@@ -3745,9 +3745,9 @@ static void ScanAndLoadShaderFiles( void )
 		Com_sprintf( filename, sizeof( filename ), "shaders/%s", shaderFiles[i] );
 		//ri->Printf( PRINT_DEVELOPER, "...loading '%s'\n", filename );
 		// Looks like stripping out crap in the shaders will save about 200k
-		summand = ri.FS_ReadFile( filename, (void **)&buffers[i] );
+		summand = ri->FS_ReadFile( filename, (void **)&buffers[i] );
 		if ( !buffers[i] )
-			ri.Error( ERR_DROP, "Couldn't load %s", filename );
+			ri->Error( ERR_DROP, "Couldn't load %s", filename );
 
 		if ( buffers[i] )
 			sum += summand;
@@ -3767,13 +3767,13 @@ static void ScanAndLoadShaderFiles( void )
 		strcat( textEnd, buffers[i] );
 		strcat( textEnd, "\n" );
 		textEnd += strlen( textEnd );
-		ri.FS_FreeFile( buffers[i] );
+		ri->FS_FreeFile( buffers[i] );
 	}
 
 	COM_Compress( s_shaderText );
 
 	// free up memory
-	ri.FS_FreeFileList( shaderFiles );
+	ri->FS_FreeFileList( shaderFiles );
 
 	#ifdef USE_STL_FOR_SHADER_LOOKUPS
 	SetupShaderEntryPtrs();

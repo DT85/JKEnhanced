@@ -243,11 +243,6 @@ static void CG_ScrollText_f( void ) {
 
 static void CG_LCARSText_f( void ) {
 	CG_Printf( "CG_LCARSText() being called. Tell Ste\n" "String: \"%s\"\n", CG_Argv( 1 ) );
-	}
-
-	// Cinematic text (out of cinematic)
-	if ( !strcmp( cmd, "ctooc" ) )
-	{
 }
 
 static void CG_ClientLevelShot_f( void ) {

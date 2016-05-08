@@ -1571,7 +1571,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 
     GLimp_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
 
-	ri.WIN_Present(&window);
+	ri->WIN_Present(&window);
 
 	backEnd.projection2D = qfalse;
 

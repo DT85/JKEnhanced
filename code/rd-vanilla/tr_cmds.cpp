@@ -57,7 +57,7 @@ void R_PerformanceCounters( void ) {
 		ri->Printf (PRINT_ALL, "viewcluster: %i\n", tr.viewCluster );
 	} else if (r_speeds->integer == 4) {
 		if ( backEnd.pc.c_dlightVertexes ) {
-			ri.Printf (PRINT_ALL, "dlight srf:%i  culled:%i  verts:%i  tris:%i\n",
+			ri->Printf (PRINT_ALL, "dlight srf:%i  culled:%i  verts:%i  tris:%i\n",
 				tr.pc.c_dlightSurfaces, tr.pc.c_dlightSurfacesCulled,
 				backEnd.pc.c_dlightVertexes, backEnd.pc.c_dlightIndexes / 3 );
 		}
@@ -68,7 +68,7 @@ void R_PerformanceCounters( void ) {
 	}
 	else if (r_speeds->integer == 6 )
 	{
-		ri.Printf( PRINT_ALL, "flare adds:%i tests:%i renders:%i\n",
+		ri->Printf( PRINT_ALL, "flare adds:%i tests:%i renders:%i\n",
 			backEnd.pc.c_flareAdds, backEnd.pc.c_flareTests, backEnd.pc.c_flareRenders );
 	}
 	else if (r_speeds->integer == 7) {

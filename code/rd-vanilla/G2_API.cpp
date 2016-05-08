@@ -719,7 +719,7 @@ void RestoreGhoul2InfoArray()
 		TheGhoul2InfoArray();
 
 		size_t size;
-		const void *data = ri.PD_Load (PERSISTENT_G2DATA, &size);
+		const void *data = ri->PD_Load (PERSISTENT_G2DATA, &size);
 		if ( data == NULL )
 		{
 			return;
@@ -746,7 +746,7 @@ void SaveGhoul2InfoArray()
 
 	assert (written == size);
 
-	if ( !ri.PD_Store (PERSISTENT_G2DATA, data, size) )
+	if ( !ri->PD_Store (PERSISTENT_G2DATA, data, size) )
 	{
 		Com_Printf (S_COLOR_RED "ERROR: Failed to store persistent renderer data.\n");
 	}

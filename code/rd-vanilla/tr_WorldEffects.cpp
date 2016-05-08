@@ -638,7 +638,7 @@ public:
 
 	fileHandle_t WriteCachedWeatherFile( void )
 	{
-		fileHandle_t f = ri.FS_FOpenFileWrite( GenCachedWeatherFilename(), qtrue );
+		fileHandle_t f = ri->FS_FOpenFileWrite( GenCachedWeatherFilename(), qtrue );
 		if (f)
 		{
 			WeatherFileHeader_t WeatherFileHeader;
@@ -1597,7 +1597,7 @@ void RB_RenderWorldEffects(void)
 		(tr.refdef.rdflags & RDF_NOWORLDMODEL) ||
 		(backEnd.refdef.rdflags & RDF_SKYBOXPORTAL) ||
 		!mParticleClouds.size() ||
-		ri.CL_IsRunningInGameCinematic())
+		ri->CL_IsRunningInGameCinematic())
 	{	//  no world rendering or no world or no particle clouds
 		return;
 	}

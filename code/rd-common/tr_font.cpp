@@ -1627,7 +1627,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 	if(iFontHandle & STYLE_BLINK)
 	{
-		if((ri.Milliseconds() >> 7) & 1)
+		if((ri->Milliseconds() >> 7) & 1)
 		{
 			return;
 		}

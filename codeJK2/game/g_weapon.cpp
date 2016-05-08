@@ -31,8 +31,6 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "anims.h"
 #include "b_local.h"
 #include "w_local.h"
-#include <angelscript.h>
-#include <scriptbuilder.h>
 
 vec3_t	wpFwd, wpVright, wpUp;
 vec3_t	wpMuzzle;
@@ -459,16 +457,11 @@ void CalcMuzzlePoint( gentity_t *const ent, vec3_t wpFwd, vec3_t right, vec3_t w
 	AddLeanOfs(ent, muzzlePoint);
 }
 
-extern bool TryNewDempRoutine(gentity_t *ent);
 //---------------------------------------------------------
 void FireWeapon( gentity_t *ent, qboolean alt_fire )
 //---------------------------------------------------------
 {
 	float alert = 256;
-	if(ent->s.weapon == WP_DEMP2) {
-		TryNewDempRoutine(ent);
-		return;
-	}
 
 	// track shots taken for accuracy tracking.
 	ent->client->ps.persistant[PERS_ACCURACY_SHOTS]++;

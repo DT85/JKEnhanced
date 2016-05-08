@@ -299,7 +299,7 @@ static void PARSE_NoHandModel(cJSON* json, weaponData_t* wp) {
 }
 
 // -----------------------------------------------
-
+using namespace std;
 static unordered_map<string, int> weapons;
 
 #define SPAIR(x)	make_pair(#x "", x)
@@ -420,7 +420,7 @@ void WP_LoadWeaponParms (void)
 {
 	char *buffer;
 
-	len = gi.FS_ReadFile(g_weaponFile->string,(void **) &buffer);
+	int len = gi.FS_ReadFile(g_weaponFile->string,(void **) &buffer);
 
 	// initialize the data area
 	memset(weaponData, 0, WP_NUM_WEAPONS * sizeof(weaponData_t));	
