@@ -64,6 +64,7 @@ void NPC_Sentry_Precache(void)
 	G_SoundIndex( "sound/chars/sentry/misc/sentry_shield_close" );
 	G_SoundIndex( "sound/chars/sentry/misc/sentry_hover_1_lp" );
 	G_SoundIndex( "sound/chars/sentry/misc/sentry_hover_2_lp" );
+	G_SoundIndex( "sound/chars/sentry/misc/hover" );
 
 	for ( int i = 1; i < 4; i++)
 	{
@@ -378,6 +379,11 @@ void Sentry_Strafe( void )
 		// Set the strafe start time so we can do a controlled roll
 		NPC->fx_time = level.time;
 		NPCInfo->standTime = level.time + 3000 + random() * 500;
+
+		// Play the hover sound effect (but only sometimes)
+		if (Q_irand(1, 2) == 1) {
+			G_SoundOnEnt(NPC, CHAN_AUTO, "sound/chars/sentry/misc/hover");
+		}
 	}
 }
 
