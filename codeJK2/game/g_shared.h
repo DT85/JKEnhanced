@@ -482,6 +482,8 @@ struct gclient_s {
 	int			poisonTime;					// When to apply poison damage
 	int			slopeRecalcTime;			// debouncer for slope-foot-height-diff calcing
 
+	int			minigunChargeTime;			// for the AT-ST main cannon
+
 	vec3_t		pushVec;
 	int			pushVecTime;
 };
