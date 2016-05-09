@@ -278,10 +278,11 @@ void G_CreateG2AttachedWeaponModel( gentity_t *ent, const char *psWeaponModel )
 	char weaponModel[MAX_QPATH];
 	Q_strncpyz(weaponModel, psWeaponModel, sizeof(weaponModel));
 	if (char *spot = (char*)Q_stristr(weaponModel, ".md3") ) {
+		*spot = 0;
 		spot = (char*)Q_stristr(weaponModel, "_w");//i'm using the in view weapon array instead of scanning the item list, so put the _w back on
-		if (!spot&&!Q_stristr(weaponModel, "noweap")) 
+		if (!spot&&!Q_stristr(weaponModel, "noweap"))
 		{
-			Q_strcat (weaponModel, sizeof(weaponModel), "_w");
+			Q_strcat(weaponModel, sizeof(weaponModel), "_w");
 		}
 		Q_strcat (weaponModel, sizeof(weaponModel), ".glm");	//and change to ghoul2
 	}

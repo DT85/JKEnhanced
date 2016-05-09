@@ -329,6 +329,10 @@ vmCvar_t	cg_smoothPlayerPlat;
 vmCvar_t	cg_smoothPlayerPlatAccel;
 
 vmCvar_t	cg_sfxSabers;
+vmCvar_t	cg_SFXSabersGlowSize;
+vmCvar_t	cg_SFXSabersCoreSize;
+
+vmCvar_t	cg_ignitionFlare;
 
 typedef struct {
 	vmCvar_t	*vmCvar;
@@ -440,6 +444,10 @@ Ghoul2 Insert End
 	{ &cg_smoothPlayerPlatAccel, "cg_smoothPlayerPlatAccel", "3.25", 0},
 
 	{ &cg_sfxSabers, "cg_sfxSabers", "0", CVAR_ARCHIVE },
+	{ &cg_SFXSabersGlowSize, "cg_SFXSabersGlowSize", "1.0", CVAR_ARCHIVE },
+	{ &cg_SFXSabersCoreSize, "cg_SFXSabersCoreSize", "1.0", CVAR_ARCHIVE },
+
+	{ &cg_ignitionFlare, "cg_ignitionFlare", "1", CVAR_ARCHIVE },
 };
 
 static const size_t cvarTableSize = ARRAY_LEN( cvarTable );
@@ -691,6 +699,11 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.watrInSound = cgi_S_RegisterSound ("sound/player/watr_in.wav");
 	cgs.media.watrOutSound = cgi_S_RegisterSound ("sound/player/watr_out.wav");
 	cgs.media.watrUnSound = cgi_S_RegisterSound ("sound/player/watr_un.wav");
+
+	cgs.media.atstWaterInSound[0] = cgi_S_RegisterSound("sound/chars/atst/atst_water_in1.wav");
+	cgs.media.atstWaterInSound[1] = cgi_S_RegisterSound("sound/chars/atst/atst_water_in2.wav");
+	cgs.media.atstWaterOutSound[0] = cgi_S_RegisterSound("sound/chars/atst/atst_water_out1.wav");
+	cgs.media.atstWaterOutSound[1] = cgi_S_RegisterSound("sound/chars/atst/atst_water_out2.wav");
 
 	// Zoom
 	cgs.media.zoomStart = cgi_S_RegisterSound( "sound/interface/zoomstart.wav" );

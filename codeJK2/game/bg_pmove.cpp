@@ -5684,7 +5684,7 @@ static void PM_FinishWeaponChange( void ) {
 				pm->gent->weaponModel = -1;
 			}
 			if (weaponData[weapon].weaponMdl[0]) {	//might be NONE, so check if it has a model
-				G_CreateG2AttachedWeaponModel( pm->gent, weaponData[weapon].weaponMdl );
+				G_CreateG2AttachedWeaponModel(pm->gent, weaponData[weapon].weaponMdl);
 			}
 		}
 

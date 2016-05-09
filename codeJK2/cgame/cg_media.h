@@ -140,6 +140,8 @@ typedef struct {
 	qhandle_t	purpleSaberGlowShader;
 	qhandle_t	purpleSaberCoreShader;
 
+	qhandle_t	ignitionFlare;
+
 	qhandle_t	explosionModel;
 	qhandle_t	surfaceExplosionShader;
 
@@ -274,6 +276,8 @@ typedef struct {
 	sfxHandle_t watrOutSound;
 	sfxHandle_t watrUnSound;
 
+	sfxHandle_t atstWaterInSound[2];
+	sfxHandle_t atstWaterOutSound[2];
 	// Zoom
 	sfxHandle_t	zoomStart;
 	sfxHandle_t	zoomLoop;

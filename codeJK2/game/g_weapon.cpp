@@ -498,6 +498,21 @@ void FireWeapon( gentity_t *ent, qboolean alt_fire )
 				{
 					bolt = ent->handLBolt;
 				}
+
+				// Don't allow us to fire the other weapon while we are charging the minigun
+				if (ent->alt_fire && ent->client->minigunChargeTime >= level.time) {
+					return;
+				}
+
+				if (!ent->alt_fire && ent->client->minigunChargeTime < level.time) {
+					// Thanks for playing - you need to charge your weapon first!
+					ent->client->minigunChargeTime = level.time + 750;
+					ent->client->ps.weaponTime += 500;
+					G_Sound(ent, G_SoundIndex("sound/weapons/overchargeend.wav"));
+					return;
+				}
+
+				ent->client->minigunChargeTime += weaponData[WP_ATST_MAIN].fireTime;
 			}
 			else
 			{// ATST SIDE weapons

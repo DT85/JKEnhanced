@@ -643,6 +643,10 @@ extern	vmCvar_t		cg_smoothPlayerPlat;
 extern	vmCvar_t		cg_smoothPlayerPlatAccel;
 
 extern	vmCvar_t		cg_sfxSabers;
+extern	vmCvar_t		cg_SFXSabersGlowSize;
+extern	vmCvar_t		cg_SFXSabersCoreSize;
+
+extern	vmCvar_t		cg_ignitionFlare;
 
 void CG_NewClientinfo( int clientNum );
 //
