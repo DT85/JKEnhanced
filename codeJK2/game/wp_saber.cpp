@@ -6745,7 +6745,7 @@ void ForceTelepathy( gentity_t *self )
 		switch ( traceEnt->client->NPC_class )
 		{
 		case CLASS_GALAKMECH://cant grip him, he's in armor
-		case CLASS_ATST://much too big to grip!
+		//case CLASS_ATST://much too big to grip!	// still being piloted by something
 		//no droids either
 		case CLASS_PROBE:
 		case CLASS_GONK:
