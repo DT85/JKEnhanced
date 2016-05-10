@@ -3695,10 +3695,6 @@ extern void RunEmplacedWeapon( gentity_t *ent, usercmd_t **ucmd );
 	{
 		G_ClearViewEntity( self );
 	}
-	else if ( !self->s.number && self->client->ps.viewEntity > 0 && self->client->ps.viewEntity < ENTITYNUM_NONE )
-	{
-		G_ClearViewEntity( self );
-	}
 
 	self->s.loopSound = 0;
 

@@ -40,7 +40,7 @@ void charge_stick( gentity_t *self, gentity_t *other, trace_t *trace )
 
 	// make us so we can take damage
 	self->clipmask = MASK_SHOT;
-	self->contents = CONTENTS_SHOTCLIP;
+	self->contents = CONTENTS_SHOTCLIP|CONTENTS_PLAYERCLIP;
 	self->takedamage = qtrue;
 	self->health = 25;
 
@@ -52,11 +52,22 @@ void charge_stick( gentity_t *self, gentity_t *other, trace_t *trace )
 	self->activator = self->owner;
 	self->owner = NULL;
 
+	self->svFlags |= SVF_PLAYER_USABLE;
 	self->e_TouchFunc = touchF_NULL;
 	self->e_ThinkFunc = thinkF_NULL;
+	self->e_UseFunc = useF_detpack_use;
 	self->nextthink = -1;
 
 	WP_Stick( self, trace, 1.0f );
+
+	VectorSet(self->mins, -1, -1, 0);
+	VectorSet(self->maxs, 1, 1, 1);
+
+	self->spawnflags |= 2;
+}
+
+void detpack_use(gentity_t* self, gentity_t* other, gentity_t* activator) {
+	Touch_Item(self, other, nullptr);
 }
 
 //---------------------------------------------------------

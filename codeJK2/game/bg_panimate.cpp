@@ -3124,6 +3124,21 @@ void PM_TorsoAnimation( void )
 		}
 		return;
 	}
+	else {
+		// *********************************************************
+		// WEAPON_READY
+		// *********************************************************
+		if (pm->ps->forcePowersActive&(1 << FP_GRIP) && pm->ps->forcePowerLevel[FP_GRIP] > FORCE_LEVEL_1)
+		{//holding an enemy aloft with force-grip
+			//PM_SetAnim( pm, SETANIM_TORSO, BOTH_FORCEGRIP_HOLD, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
+			return;
+		}
+		if (pm->ps->forcePowersActive&(1 << FP_LIGHTNING) && pm->ps->forcePowerLevel[FP_LIGHTNING] > FORCE_LEVEL_1)
+		{//holding an enemy aloft with force-grip
+			//PM_SetAnim( pm, SETANIM_TORSO, BOTH_FORCELIGHTNING_HOLD, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
+			return;
+		}
+	}
 
 
 	qboolean weaponBusy = qfalse;

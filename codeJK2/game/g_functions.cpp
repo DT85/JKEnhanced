@@ -320,6 +320,8 @@ void GEntity_UseFunc(gentity_t *self, gentity_t *other, gentity_t *activator)
 	USECASE( misc_use )
 	USECASE( pas_use )
 	USECASE( item_spawn_use )
+	USECASE( detpack_use )
+	USECASE( tripmine_use )
 
 	default:
 		Com_Error(ERR_DROP, "GEntity_UseFunc: case %d not handled!\n",self->e_UseFunc);

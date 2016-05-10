@@ -6973,12 +6973,12 @@ void ForceGrip( gentity_t *self )
 				VectorMA(self->client->renderInfo.eyePoint, 512.0f, forward, traceend);
 
 				trace_t tr2;
-				gi.trace(&tr2, self->client->renderInfo.eyePoint, vec3_origin, vec3_origin, traceend, self->s.number, MASK_OPAQUE|CONTENTS_SOLID|CONTENTS_BODY|CONTENTS_ITEM|CONTENTS_CORPSE, G2_NOCOLLIDE, 0 );
+				gi.trace(&tr2, self->client->renderInfo.eyePoint, vec3_origin, vec3_origin, traceend, self->s.number, MASK_OPAQUE|CONTENTS_SOLID|CONTENTS_BODY|CONTENTS_ITEM|CONTENTS_CORPSE|MASK_SHOT, G2_NOCOLLIDE, 0 );
 				gentity_t *fwdEnt = &g_entities[tr2.entityNum];
 				qboolean fwdEntIsCorrect = qfalse;
 				for(int i = 0; i < numListedEntities; i++) {
 					gentity_t *targEnt = entlist[i];
-					if(targEnt->s.eType == ET_ITEM) {
+					if(targEnt->s.eType == ET_ITEM || targEnt->s.eType == ET_MISSILE || targEnt->s.eType == ET_GENERAL) {
 						if(targEnt != fwdEnt)
 							continue;
 						else
@@ -7067,7 +7067,7 @@ void ForceGrip( gentity_t *self )
 	}
 	else
 	{//can't grip non-clients... right?
-		if(g_gripitems->integer && traceEnt->s.eType == ET_ITEM)
+		if(g_gripitems->integer && (traceEnt->s.eType == ET_ITEM || traceEnt->s.eType == ET_MISSILE || traceEnt->s.eType == ET_GENERAL))
 		{ /* WRONG! */ }
 		else
 			return;
@@ -7100,10 +7100,10 @@ void ForceGrip( gentity_t *self )
 	}
 	else
 	{
-		VectorCopy( traceEnt->currentOrigin, self->client->ps.forceGripOrg );
+		VectorCopy(traceEnt->currentOrigin, self->client->ps.forceGripOrg );
 		traceEnt->s.pos.trTime = level.time;
-		traceEnt->s.pos.trType = TR_LINEAR;
-		VectorCopy(traceEnt->s.pos.trBase, self->client->ps.forceGripOrg);
+		traceEnt->s.pos.trType = TR_STATIONARY;
+		VectorCopy(self->client->ps.forceGripOrg, traceEnt->s.pos.trBase );
 	}
 
 	self->client->ps.forceGripOrg[2] += 48;//FIXME: define?
@@ -7935,7 +7935,7 @@ void WP_ForcePowerStop( gentity_t *self, forcePowers_t forcePower )
 				else
 				{
 					gripEnt->s.eFlags &= ~EF_FORCE_GRIPPED;
-					if ( gripEnt->s.eType == ET_MISSILE )
+					if ( gripEnt->s.eType == ET_MISSILE && gripEnt->s.weapon != WP_TRIP_MINE)
 					{//continue normal movement
 						if ( gripEnt->s.weapon == WP_THERMAL )
 						{
@@ -8109,7 +8109,7 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 		{
 			gripEnt = &g_entities[self->client->ps.forceGripEntityNum];
 
-			if ( !gripEnt || (gripEnt->health <= 0&&gripEnt->takedamage) )//FIXME: what about things that never had health or lose takedamage when they die?
+			if ( !gripEnt )
 			{//either invalid ent, or dead ent
 				WP_ForcePowerStop( self, FP_GRIP );
 				return;
@@ -8145,6 +8145,12 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 				else
 				{
 					VectorCopy( gripEnt->currentOrigin, gripEntOrg );
+					VectorCopy(gripEnt->currentOrigin, gripEnt->s.pos.trDelta);
+					if (gripEnt->s.weapon == WP_TRIP_MINE) {
+						gripEnt->s.eType = ET_MISSILE;
+						gripEnt->e_TouchFunc = touchF_touchLaserTrap;
+						gripEnt->e_ThinkFunc = thinkF_NULL;
+					}
 				}
 
 				//how far are they
@@ -8253,7 +8259,7 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 				//AddSightEvent( self, gripOrg, 128, AEL_DANGER, 20 );
 				AddSightEvent( self, gripOrg, 128, AEL_DISCOVERED, 20 );
 
-				if ( self->client->ps.forcePowerDebounce[FP_GRIP] < level.time )
+				if ( self->client->ps.forcePowerDebounce[FP_GRIP] < level.time && gripEnt->client )
 				{
 					//GEntity_PainFunc( gripEnt, self, self, gripOrg, 0, MOD_CRUSH );
 					gripEnt->painDebounceTime = 0;
@@ -8273,7 +8279,7 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 					{//player takes damage faster
 						self->client->ps.forcePowerDebounce[FP_GRIP] = level.time + Q_irand( 100, 600 );
 					}
-					if ( forceGripDamage[self->client->ps.forcePowerLevel[FP_GRIP]] > 0 )
+					if ( forceGripDamage[self->client->ps.forcePowerLevel[FP_GRIP]] > 0)
 					{//no damage at level 1
 						WP_ForcePowerDrain( self, FP_GRIP, 3 );
 					}

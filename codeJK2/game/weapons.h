@@ -339,7 +339,7 @@ typedef struct ammoData_s
 
 #define PROX_MINE_RADIUS_CHECK		190
 
-#define LT_SIZE				3.0f
+#define LT_SIZE				5.0f
 #define LT_ALT_TIME			2000
 #define	LT_ACTIVATION_DELAY	1000
 #define	LT_DELAY_TIME		50

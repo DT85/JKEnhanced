@@ -1466,6 +1466,7 @@ void SP_PAS( gentity_t *base )
 	base->damage = 0; // start animation flag
 
 	base->contents = CONTENTS_SHOTCLIP|CONTENTS_CORPSE;//for certain traces
+	base->svFlags |= SVF_PLAYER_USABLE;
 	VectorSet( base->mins, -8, -8, 0 );
 	VectorSet( base->maxs, 8, 8, 18 );
 
@@ -1549,8 +1550,6 @@ qboolean place_portable_assault_sentry( gentity_t *self, vec3_t origin, vec3_t a
 			SP_PAS( pas );
 
 			pas->contents |= CONTENTS_PLAYERCLIP; // player placed ones can block players but not npcs
-
-			pas->e_UseFunc = useF_NULL; // placeable ones never need to be used
 
 			// we don't hurt us or anyone who belongs to the same team as us.
 			if ( self->client )

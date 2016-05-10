@@ -408,7 +408,8 @@ typedef enum
 	useF_misc_use,
 	useF_pas_use,
 	useF_item_spawn_use,
-
+	useF_detpack_use,
+	useF_tripmine_use
 } useFunc_t;
 
 // USE functions...
@@ -486,6 +487,8 @@ extern void jabba_cam_use			( gentity_t *self, gentity_t *other, gentity_t *acti
 extern void misc_use				( gentity_t *self, gentity_t *other, gentity_t *activator );
 extern void pas_use					( gentity_t *self, gentity_t *other, gentity_t *activator );
 extern void item_spawn_use			( gentity_t *self, gentity_t *other, gentity_t *activator );
+extern void detpack_use				( gentity_t* self, gentity_t* other, gentity_t* activator );
+extern void tripmine_use			( gentity_t *self, gentity_t* other, gentity_t* activator );
 
 //	void		(*pain)(gentity_t *self, gentity_t *attacker, int damage,int mod,int hitLoc);
 typedef enum
