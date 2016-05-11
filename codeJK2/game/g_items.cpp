@@ -491,6 +491,80 @@ RespawnItem
 void RespawnItem( gentity_t *ent ) {
 }
 
+qboolean BetterWeaponForMe(gentity_t* item, gentity_t* pickerupper) {
+	if (item->item->giTag == pickerupper->s.weapon) {
+		return qfalse;
+	}
+	else if (item->item->giTag == WP_TRIP_MINE || item->item->giTag == WP_DET_PACK) {
+		// Don't bother with these.
+		return qfalse;
+	}
+	else if (pickerupper->s.weapon == WP_NONE || pickerupper->s.weapon == WP_MELEE) {
+		// Always.
+		return qtrue;
+	}
+	else if (pickerupper->s.weapon == WP_SABER || pickerupper->s.weapon == WP_ATST_MAIN || pickerupper->s.weapon == WP_ATST_SIDE) {
+		// Never.
+		return qfalse;
+	}
+	else if (item->item->giType != IT_WEAPON) {
+		return qfalse;
+	}
+	else if (item->item->giTag == WP_THERMAL) {
+		// We should only be picking up thermals if we're using WP_NONE or WP_MELEE to begin with
+		return qfalse;
+	}
+
+	// Special case for the DEMP2 - we should use it if we're 
+	if (item->item->giTag == WP_DEMP2) {
+		if (pickerupper->s.weapon == WP_BLASTER_PISTOL) {
+			return qtrue;
+		}
+		else if (pickerupper->s.weapon < item->item->giTag && pickerupper->s.weapon != WP_REPEATER) {
+			return qtrue;
+		}
+		else {
+			return qfalse;
+		}
+	}
+
+	if (item->item->giTag == WP_BOWCASTER || item->item->giTag == WP_BLASTER || item->item->giTag == WP_FLECHETTE || item->item->giTag == WP_REPEATER) {
+		// These are fairly straightforward. We don't need to worry about distance
+		if (pickerupper->s.weapon == WP_BLASTER_PISTOL) {
+			return qtrue;
+		}
+		else if (pickerupper->s.weapon < item->item->giTag) {
+			// A weapon with a higher giTag will always be better
+			return qtrue;
+		}
+		else {
+			// This weapon is strictly worse
+			return qfalse;
+		}
+	}
+
+	float distance = (int)DistanceHorizontalSquared(item->currentOrigin, pickerupper->enemy->currentOrigin);
+
+	if (item->item->giTag == WP_DISRUPTOR) { // extremely long distance so we can snipe
+		if (distance >= 1024.0f) {
+			return qtrue;
+		}
+		else {
+			return qfalse;
+		}
+	}
+	else if (item->item->giTag == WP_ROCKET_LAUNCHER) { // pretty long distance
+		if (distance >= 256.0f) {
+			return qtrue;
+		}
+		else {
+			return qfalse;
+		}
+	}
+	else {
+		return qfalse;
+	}
+}
 
 qboolean CheckItemCanBePickedUpByNPC( gentity_t *item, gentity_t *pickerupper )
 {
@@ -500,10 +574,13 @@ qboolean CheckItemCanBePickedUpByNPC( gentity_t *item, gentity_t *pickerupper )
 	if ( item->item->giType == IT_HOLDABLE ) {
 		return qfalse;
 	}
-	if ( (item->flags&FL_DROPPED_ITEM)
-		&& item->activator != &g_entities[0]
+	if (item->item->giType == IT_HEALTH && pickerupper->health < (pickerupper->max_health / 2)) {
+		// The AI can pick up health packs too!
+		return qtrue;
+	}
+	if ( item->activator != &g_entities[0]
 		&& pickerupper->s.number
-		&& pickerupper->s.weapon == WP_NONE
+		&& BetterWeaponForMe(item, pickerupper)
 		&& pickerupper->enemy
 		&& pickerupper->painDebounceTime < level.time
 		&& pickerupper->NPC && pickerupper->NPC->surrenderTime < level.time //not surrendering

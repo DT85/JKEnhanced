@@ -2832,7 +2832,7 @@ gentity_t *NPC_SearchForWeapons( void )
 		{
 			continue;
 		}
-		if ( found->item->giType != IT_WEAPON )
+		if ( found->item->giType != IT_WEAPON || found->item->giType != IT_HEALTH )
 		{
 			continue;
 		}
@@ -2845,6 +2845,12 @@ gentity_t *NPC_SearchForWeapons( void )
 			if ( gi.inPVS( found->currentOrigin, NPC->currentOrigin ) )
 			{
 				dist = DistanceSquared( found->currentOrigin, NPC->currentOrigin );
+
+				float enemyDist = DistanceHorizontalSquared(NPC->enemy->currentOrigin, found->currentOrigin);
+				if (NPC->enemy->s.weapon == WP_SABER || NPC->enemy->s.weapon == WP_ROCKET_LAUNCHER && enemyDist < bestDist) {
+					// If our enemy is closer to the item than we are and he's dangerous, we shouldn't be anywhere near him
+					continue;
+				}
 				if ( dist < bestDist )
 				{
 					if ( !navigator.GetBestPathBetweenEnts( NPC, found, NF_CLEAR_PATH ) 
