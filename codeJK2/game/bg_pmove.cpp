@@ -2640,11 +2640,13 @@ static void PM_CrashLand( void )
 		}
 	}
 
-	// create a local entity event to play the sound
-
-	if ( pm->gent && pm->gent->client && pm->gent->client->respawnTime >= level.time - 500 )
-	{//just spawned in, don't make a noise
-		return;
+	if (pm->gent && pm->gent->client) {
+		if (pm->gent->client->NPC_class == CLASS_INTERROGATOR) {
+			delta *= 3;
+		}
+		else if (pm->gent->client->NPC_class == CLASS_SENTRY) {
+			delta *= 2;
+		}
 	}
 
 	if ( delta >= 75 )
@@ -2675,6 +2677,12 @@ static void PM_CrashLand( void )
 				AddSoundEvent( pm->gent->enemy, pm->ps->origin, 256, AEL_DISCOVERED );
 			}
 		}
+	}
+	else if (pm->gent->client &&
+		(pm->gent->client->NPC_class == CLASS_PROBE ||
+		pm->gent->client->NPC_class == CLASS_INTERROGATOR ||
+		pm->gent->client->NPC_class == CLASS_SENTRY)) {
+		return;
 	}
 	else if ( delta >= 50 )
 	{
@@ -3297,6 +3305,9 @@ static void PM_SetWaterLevelAtPoint( vec3_t org, int *waterlevel, int *watertype
 	point[0] = org[0];
 	point[1] = org[1];
 	point[2] = org[2] + DEFAULT_MINS_2 + 1;
+	if (!pm->pointcontents) {
+		return;
+	}
 	cont = pm->pointcontents( point, pm->ps->clientNum );
 
 	if ( cont & (MASK_WATER|CONTENTS_LADDER) )
@@ -6309,6 +6320,10 @@ void PM_SaberLockBreak( gentity_t *gent, gentity_t *genemy, saberLockResult_t re
 	int	winAnim = -1, loseAnim = -1;
 
 	winAnim = PM_SaberLockWinAnim( result );
+	if (!genemy->client) {
+		// No! This should never happen...!
+		return;
+	}
 	if ( genemy && genemy->client )
 	{
 		loseAnim = PM_SaberLockLoseAnim( genemy, result );

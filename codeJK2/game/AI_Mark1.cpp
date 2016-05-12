@@ -59,7 +59,7 @@ enum
 qboolean NPC_CheckPlayerTeamStealth( void );
 gentity_t *CreateMissile( vec3_t org, vec3_t dir, float vel, int life, gentity_t *owner, qboolean altFire = qfalse );
 void Mark1_BlasterAttack(qboolean advance);
-void DeathFX( gentity_t *ent );
+void DeathFX( gentity_t *ent, int meansOfDeath );
 extern gitem_t	*FindItemForAmmo( ammo_t ammo );
 
 /*
@@ -223,27 +223,6 @@ Mark1_die
 */
 void Mark1_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod,int dFlags,int hitLoc )
 {
-	/*
-	int	anim;
-
-	// Is he dead already?
-	anim = self->client->ps.legsAnim;
-	if (((anim==BOTH_DEATH1) || (anim==BOTH_DEATH2)) && (self->client->ps.torsoAnimTimer==0)) 
-	{	// This is because self->health keeps getting zeroed out. HL_NONE acts as health in this case.
-		self->locationDamage[HL_NONE] += damage;
-		if (self->locationDamage[HL_NONE] > 50)
-		{
-			DeathFX(self);
-			self->client->ps.eFlags |= EF_NODRAW;
-			self->contents = CONTENTS_CORPSE;
-			// G_FreeEntity( self ); // Is this safe?  I can't see why we'd mark it nodraw and then just leave it around??
-			self->e_ThinkFunc = thinkF_G_FreeEntity;
-			self->nextthink = level.time + FRAMETIME;
-		}
-		return;
-	}
-	*/
-
 	G_Sound( self, G_SoundIndex(va("sound/chars/mark1/misc/death%d.wav",Q_irand( 1, 2))));
 
 	// Choose a death anim

@@ -523,6 +523,40 @@ void G_DeathAlert( gentity_t *victim, gentity_t *attacker )
 
 /*
 ----------------------------------------
+ExplosiveMOD
+
+Is the way that this creature died, could it be considered an explosive means of death?
+----------------------------------------
+*/
+qboolean ExplosiveMOD(int meansOfDeath) {
+	switch (meansOfDeath) {
+	case MOD_ROCKET:
+	case MOD_ROCKET_ALT:
+	case MOD_REPEATER_ALT:
+	case MOD_FLECHETTE_ALT:
+	case MOD_CRUSH:
+	case MOD_DEMP2:
+	case MOD_DEMP2_ALT:
+	case MOD_DETPACK:
+	case MOD_ELECTROCUTE:
+	case MOD_DISRUPTOR:
+	case MOD_EXPLOSIVE:
+	case MOD_EXPLOSIVE_SPLASH:
+	case MOD_IMPACT:
+	case MOD_LASERTRIP:
+	case MOD_LASERTRIP_ALT:
+	case MOD_SNIPER:
+	case MOD_THERMAL:
+	case MOD_THERMAL_ALT:
+	case MOD_FALLING:
+		return qtrue;
+	default:
+		return qfalse;
+	}
+}
+
+/*
+----------------------------------------
 DeathFX
 
 Applies appropriate special effects that occur while the entity is dying
@@ -530,49 +564,11 @@ Not to be confused with NPC_RemoveBodyEffects (NPC.cpp), which only applies effe
 ----------------------------------------
 */
 
-void DeathFX( gentity_t *ent )
+void DeathFX( gentity_t *ent, int meansOfDeath )
 {
 	if ( !ent || !ent->client )
 		return;
-/*
-	switch( ent->client->playerTeam )
-	{
-	case TEAM_BOTS:
-		if (!Q_stricmp( ent->NPC_type, "mouse" ))
-		{
-			vec3_t		effectPos;
-			VectorCopy( ent->currentOrigin, effectPos );
-			effectPos[2] -= 20;
 
-			G_PlayEffect( "mouseexplosion1", effectPos );
-			G_PlayEffect( "smaller_chunks", effectPos );
-
-		}
-		else if (!Q_stricmp( ent->NPC_type, "probe" ))
-		{
-			vec3_t		effectPos;
-			VectorCopy( ent->currentOrigin, effectPos );
-			effectPos[2] += 50;
-
-			G_PlayEffect( "probeexplosion1", effectPos );
-			G_PlayEffect( "small_chunks", effectPos );
-		}
-		else
-		{
-			vec3_t		effectPos;
-			VectorCopy( ent->currentOrigin, effectPos );
-			effectPos[2] -= 15;
-			G_PlayEffect( "droidexplosion1", effectPos );
-			G_PlayEffect( "small_chunks", effectPos );
-		}
-
-		break;
-
-	default:
-		break;
-	}
-*/
-	// team no longer indicates species/race.  NPC_class should be used to identify certain npc types
 	vec3_t		effectPos, right;
 	switch(ent->client->NPC_class)
 	{
@@ -584,23 +580,35 @@ void DeathFX( gentity_t *ent )
 		break;
 
 	case CLASS_PROBE:
-		VectorCopy( ent->currentOrigin, effectPos );
-		effectPos[2] += 50;
-		G_PlayEffect( "probeexplosion1", effectPos );
+		VectorCopy(ent->currentOrigin, effectPos);
+		if (ExplosiveMOD(meansOfDeath)) {
+			effectPos[2] += 50;
+			G_PlayEffect("probeexplosion1", effectPos);
+			NPC_RemoveBody(ent);
+			if (meansOfDeath != MOD_FALLING) {
+				G_FreeEntity(ent);
+			}
+		}
+		else {
+			G_PlayEffect("env/small_explode", effectPos);
+			NPC_SetAnim(ent, SETANIM_BOTH, BOTH_STAND1, SETANIM_FLAG_HOLD);
+		}
 		break;
 
 	case CLASS_ATST:
-		AngleVectors( ent->currentAngles, NULL, right, NULL );
-		VectorMA( ent->currentOrigin, 20, right, effectPos );
-		effectPos[2] += 180;
-		G_PlayEffect( "droidexplosion1", effectPos );
-		VectorMA( effectPos, -40, right, effectPos );
-		G_PlayEffect( "droidexplosion1", effectPos );
+		if (ExplosiveMOD(meansOfDeath)) {
+			AngleVectors(ent->currentAngles, NULL, right, NULL);
+			VectorMA(ent->currentOrigin, 20, right, effectPos);
+			effectPos[2] += 180;
+			G_PlayEffect("droidexplosion1", effectPos);
+			VectorMA(effectPos, -40, right, effectPos);
+			G_PlayEffect("droidexplosion1", effectPos);
+		}
 		break;
 
 	case CLASS_SEEKER:
 	case CLASS_REMOTE:
-		G_PlayEffect( "env/small_explode", ent->currentOrigin );
+		G_PlayEffect("env/small_explode", ent->currentOrigin);
 		break;
 
 	case CLASS_GONK:
@@ -635,10 +643,20 @@ void DeathFX( gentity_t *ent )
 		break;
 
 	case CLASS_INTERROGATOR:
-		VectorCopy( ent->currentOrigin, effectPos );
-		effectPos[2] -= 15;
-		G_PlayEffect( "droidexplosion1", effectPos );
-		G_SoundOnEnt( ent, CHAN_AUTO, "sound/chars/interrogator/misc/int_droid_explo" );
+		VectorCopy(ent->currentOrigin, effectPos);
+		if (ExplosiveMOD(meansOfDeath) || Q_irand(0, 10) > 3) {
+			// It's pretty rare that these guys will actually not explode, because they are so small
+			effectPos[2] -= 15;
+			G_PlayEffect("droidexplosion1", effectPos);
+			G_SoundOnEnt(ent, CHAN_AUTO, "sound/chars/interrogator/misc/int_droid_explo");
+			NPC_RemoveBody(ent);
+			if (meansOfDeath != MOD_FALLING) {
+				G_FreeEntity(ent);
+			}
+		}
+		else {
+			G_PlayEffect("env/small_explode", effectPos);
+		}
 		break;
 
 	case CLASS_MARK1:
@@ -654,9 +672,19 @@ void DeathFX( gentity_t *ent )
 		break;
 
 	case CLASS_SENTRY:
-		G_SoundOnEnt( ent, CHAN_AUTO, "sound/chars/sentry/misc/sentry_explo" );
-		VectorCopy( ent->currentOrigin, effectPos );
-		G_PlayEffect( "env/med_explode", effectPos );
+		VectorCopy(ent->currentOrigin, effectPos);
+		if (ExplosiveMOD(meansOfDeath)) {
+			G_SoundOnEnt(ent, CHAN_AUTO, "sound/chars/sentry/misc/sentry_explo");
+			G_PlayEffect("env/med_explode", effectPos);
+			NPC_RemoveBody(ent);
+			if (meansOfDeath != MOD_FALLING) {
+				G_FreeEntity(ent);
+			}
+		}
+		else {
+			G_PlayEffect("env/small_explode", effectPos);
+			NPC_SetAnim(ent, SETANIM_BOTH, BOTH_SLEEP1, SETANIM_FLAG_HOLD);
+		}
 		break;
 
 	default:
@@ -3353,7 +3381,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	{//do dismemberment/twitching
 		if ( self->client->NPC_class == CLASS_MARK1 )
 		{
-			DeathFX(self);
+			DeathFX(self, meansOfDeath);
 			self->takedamage = qfalse;
 			self->client->ps.eFlags |= EF_NODRAW;
 			self->contents = 0;
@@ -4174,7 +4202,7 @@ extern void RunEmplacedWeapon( gentity_t *ent, usercmd_t **ucmd );
 	}
 
 	// Start any necessary death fx for this entity
-	DeathFX( self );
+	DeathFX( self, meansOfDeath );
 }
 
 qboolean G_CheckForStrongAttackMomentum( gentity_t *self )
@@ -4805,6 +4833,17 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 	{	// allow corpses to be disintegrated
 		if( mod != MOD_SNIPER || (targ->flags & FL_DISINTEGRATED) )
 		return;
+	}
+
+	if (targ->health <= 0 && targ->client) {
+		// possibly a dead droid
+		if ((ExplosiveMOD(mod) || mod == MOD_FALLING) &&
+			(targ->client->NPC_class == CLASS_INTERROGATOR ||
+			targ->client->NPC_class == CLASS_PROBE ||
+			targ->client->NPC_class == CLASS_SENTRY)) {
+			DeathFX(targ, mod);
+			return;
+		}
 	}
 
 	// if we are the player and we are locked to an emplaced gun, we have to reroute damage to the gun....sigh.

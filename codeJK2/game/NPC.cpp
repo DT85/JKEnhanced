@@ -93,6 +93,10 @@ void CorpsePhysics( gentity_t *self )
 	ClientThink( self->s.number, &ucmd );
 	VectorCopy( self->s.origin, self->s.origin2 );
 
+	if (self->client == nullptr) {
+		return;
+	}
+
 	if ( self->client->NPC_class == CLASS_GALAKMECH )
 	{
 		GM_Dying( self );
@@ -145,12 +149,12 @@ NPC_RemoveBody
 Determines when it's ok to ditch the corpse
 ----------------------------------------
 */
-#define REMOVE_DISTANCE		128
+#define REMOVE_DISTANCE		512
 #define REMOVE_DISTANCE_SQR (REMOVE_DISTANCE * REMOVE_DISTANCE)
 
 void NPC_RemoveBody( gentity_t *self )
 {
-	CorpsePhysics( self );
+	//CorpsePhysics( self );
 
 	self->nextthink = level.time + FRAMETIME;
 
@@ -168,6 +172,9 @@ void NPC_RemoveBody( gentity_t *self )
 		return;
 	}
 
+	self->e_ThinkFunc = thinkF_G_FreeEntity;
+	self->nextthink = level.time + 1; // we want to kill it as soon as possible
+
 	// I don't consider this a hack, it's creative coding . . .
 	// I agree, very creative... need something like this for ATST and GALAKMECH too!
 	if (self->client->NPC_class == CLASS_MARK1)
@@ -177,10 +184,6 @@ void NPC_RemoveBody( gentity_t *self )
 
 	// Since these blow up, remove the bounding box.
 	if ( self->client->NPC_class == CLASS_REMOTE
-		|| self->client->NPC_class == CLASS_SENTRY
-		|| self->client->NPC_class == CLASS_PROBE
-		|| self->client->NPC_class == CLASS_INTERROGATOR
-		|| self->client->NPC_class == CLASS_PROBE
 		|| self->client->NPC_class == CLASS_MARK2 )
 	{
 		if ( !self->taskManager || !self->taskManager->IsRunning() )
@@ -275,18 +278,15 @@ int BodyRemovalPadTime( gentity_t *ent )
 	//case CLASS_PROTOCOL:
 	case CLASS_MARK1:
 	case CLASS_MARK2:
-	case CLASS_PROBE:
 	case CLASS_SEEKER:
 	case CLASS_REMOTE:
-	case CLASS_SENTRY:
-	case CLASS_INTERROGATOR:
 		time = 0;
 		break;
 	default:
 		// never go away
 	//	time = Q3_INFINITE;
 		// for now I'm making default 10000
-		time = 10000;
+		time = 180000;
 		break;
 
 	}

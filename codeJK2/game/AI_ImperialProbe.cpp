@@ -35,7 +35,8 @@ enum
 	LSTATE_BACKINGUP,
 	LSTATE_SPINNING,
 	LSTATE_PAIN,
-	LSTATE_DROP
+	LSTATE_DROP,
+	LSTATE_DEAD
 };
 
 void ImperialProbe_Idle( void );

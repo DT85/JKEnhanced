@@ -25,7 +25,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_nav.h"
 
 void Interrogator_Idle( void );
-void DeathFX( gentity_t *ent );
+void DeathFX( gentity_t *ent, int meansOfDeath );
 extern void G_SoundOnEnt( gentity_t *ent, soundChannel_t channel, const char *soundPath );
 
 enum
@@ -57,25 +57,12 @@ Interrogator_die
 void Interrogator_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod,int dFlags,int hitLoc )
 {
 	self->client->ps.velocity[2] = -100;
-	/*
-	self->locationDamage[HL_NONE] += damage;
-	if (self->locationDamage[HL_NONE] > 40)
-	{
-		DeathFX(self);
-		self->client->ps.eFlags |= EF_NODRAW;
-		self->contents = CONTENTS_CORPSE;
-	}
-	else
-	*/
 	{
 		self->NPC->stats.moveType = MT_WALK;
 		self->client->ps.velocity[0] = Q_irand( -20, -10 );
 		self->client->ps.velocity[1] = Q_irand( -20, -10 );
 		self->client->ps.velocity[2] = -100;
 	}
-	//self->takedamage = qfalse;
-	//self->client->ps.eFlags |= EF_NODRAW;
-	//self->contents = 0;
 	return;
 }
 

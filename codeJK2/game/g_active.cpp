@@ -478,6 +478,9 @@ Check for lava / slime contents and drowning
 void P_WorldEffects( gentity_t *ent ) {
 	int			mouthContents = 0;
 
+	if (!ent->client) {
+		return;
+	}
 	if ( ent->client->noclip ) 
 	{
 		ent->client->airOutTime = level.time + 12000;	// don't need air
@@ -2774,6 +2777,10 @@ extern cvar_t	*g_skippingcin;
 
 	// perform a pmove
 	Pmove( &pm );
+
+	if (ent->client == nullptr) {
+		return;
+	}
 
 	// save results of pmove
 	if ( ent->client->ps.eventSequence != oldEventSequence ) 
