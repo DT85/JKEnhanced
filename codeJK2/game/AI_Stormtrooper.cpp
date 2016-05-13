@@ -1878,8 +1878,7 @@ void ST_Commander( void )
 			continue;
 		}
 
-		if ( NPC->s.weapon == WP_NONE
-			&& NPCInfo->goalEntity
+		if ( NPCInfo->goalEntity
 			&& NPCInfo->goalEntity == NPCInfo->tempGoal
 			&& NPCInfo->goalEntity->enemy
 			&& NPCInfo->goalEntity->enemy->s.eType == ET_ITEM )

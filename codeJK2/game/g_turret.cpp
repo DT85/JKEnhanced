@@ -1376,7 +1376,7 @@ void pas_think( gentity_t *ent )
 		else
 			ent->count--;
 
-		if(ent->activator->s.number == 0) {
+		if(ent->activator && ent->activator->s.number == 0) {
 			if(g_sentryrate->integer)
 				ent->attackDebounceTime = level.time + 200;
 		}

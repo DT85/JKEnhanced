@@ -805,7 +805,11 @@ inline float Q_crandom( int *seed ) {
 
 // Returns an integer min <= x <= max (ie inclusive)
 inline int Q_irand(int min, int max) {
-	assert(min <= max);
+	if (min > max) {
+		int swap = min;
+		min = max;
+		max = swap;
+	}
 	return (rand() % (max - min + 1)) + min;
 }
 

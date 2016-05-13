@@ -2832,7 +2832,7 @@ gentity_t *NPC_SearchForWeapons( void )
 		{
 			continue;
 		}
-		if ( found->item->giType != IT_WEAPON || found->item->giType != IT_HEALTH )
+		if ( found->item->giType != IT_WEAPON && found->item->giType != IT_HEALTH )
 		{
 			continue;
 		}
@@ -2888,9 +2888,10 @@ void NPC_SetPickUpGoal( gentity_t *foundWeap )
 	NPCInfo->squadState = SQUAD_TRANSITION;
 }
 
+extern qboolean BetterWeaponForMe(gentity_t* item, gentity_t* pickerupper);
 void NPC_CheckGetNewWeapon( void )
 {
-	if ( NPC->s.weapon == WP_NONE && NPC->enemy )
+	if ( NPC->enemy )
 	{//if running away because dropped weapon...
 		if ( NPCInfo->goalEntity 
 			&& NPCInfo->goalEntity == NPCInfo->tempGoal
@@ -2904,20 +2905,6 @@ void NPC_CheckGetNewWeapon( void )
 			gentity_t *foundWeap = NPC_SearchForWeapons();
 			if ( foundWeap )
 			{//try to nav to it
-				/*
-				if ( !navigator.GetBestPathBetweenEnts( NPC, foundWeap, NF_CLEAR_PATH ) 
-					|| navigator.GetBestNodeAltRoute( NPC->waypoint, foundWeap->waypoint ) == WAYPOINT_NONE )
-				{//can't possibly have a route to any OR can't possibly have a route to this one OR don't have a route to this one
-					if ( !NAV_ClearPathToPoint( NPC, NPC->mins, NPC->maxs, foundWeap->currentOrigin, NPC->clipmask, ENTITYNUM_NONE ) )
-					{//don't even have a clear straight path to this one
-					}
-					else
-					{
-						NPC_SetPickUpGoal( foundWeap );
-					}
-				}
-				else
-				*/
 				{
 					NPC_SetPickUpGoal( foundWeap );
 				}

@@ -319,7 +319,7 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other)
 
 	if ( other->s.number )
 	{//NPC
-		if ( other->s.weapon == WP_NONE )
+		//if ( other->s.weapon == WP_NONE )
 		{//NPC with no weapon picked up a weapon, change to this weapon
 			//FIXME: clear/set the alt-fire flag based on the picked up weapon and my class?
 			other->client->ps.weapon = ent->item->giTag;
@@ -586,7 +586,7 @@ qboolean CheckItemCanBePickedUpByNPC( gentity_t *item, gentity_t *pickerupper )
 		&& pickerupper->NPC && pickerupper->NPC->surrenderTime < level.time //not surrendering
 		&& !(pickerupper->NPC->scriptFlags&SCF_FORCED_MARCH) ) // not being forced to march
 	{//non-player, in combat, picking up a dropped item that does NOT belong to the player and it *not* a security key
-		if ( level.time - item->s.time < 3000 )//was 5000
+		if ( level.time - item->s.time < 5000 )//was 5000
 		{
 			return qfalse;
 		}
@@ -660,6 +660,9 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 			return;
 		}
 	}
+	else if (other->client && other->s.number != 0) {
+		return;
+	}
 
 	// the same pickup rules are used for client side and server side
 	if ( !BG_CanItemBeGrabbed( &ent->s, &other->client->ps ) ) {
@@ -686,7 +689,7 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	switch( ent->item->giType )
 	{
 	case IT_WEAPON:
-		if ( other->NPC && other->s.weapon == WP_NONE )
+		if ( other->NPC )
 		{//Make them duck and sit here for a few seconds
 			int pickUpTime = Q_irand( 1000, 3000 );
 			TIMER_Set( other, "duck", pickUpTime );

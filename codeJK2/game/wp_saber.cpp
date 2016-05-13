@@ -132,7 +132,7 @@ int forcePowerNeeded[NUM_FORCE_POWERS] =
 	15,//FP_PULL,//hold/duration
 	20,//FP_TELEPATHY,//instant
 	1,//FP_GRIP,//hold/duration - FIXME: 30?
-	1,//FP_LIGHTNING,//hold/duration
+	2,//FP_LIGHTNING,//hold/duration
 	20,//FP_SABERTHROW,
 	1,//FP_SABER_DEFENSE,
 	0,//FP_SABER_OFFENSE,
@@ -3078,12 +3078,18 @@ void WP_SaberDamageTrace( gentity_t *ent )
 				else if ( entAttacking && hitOwnerDefending )
 				{//I'm attacking hit, they're parrying
 					qboolean activeDefense = (hitOwner->s.number||g_saberAutoBlocking->integer||hitOwner->client->ps.saberBlockingTime > level.time);
+					int powerLevel = PM_PowerLevelForSaberAnim(&ent->client->ps);
+					int hitOwnerDefense = hitOwner->client->ps.forcePowerLevel[FP_SABER_DEFENSE];
+					int powerDiff = powerLevel - hitOwnerDefense;
+					if (powerDiff < 0) {
+						powerDiff = 0;
+					}
 					if ( !Q_irand( 0, 2 )
 						&& activeDefense
-						&& (hitOwner->client->ps.saberMove != LS_READY || (entPowerLevel-hitOwner->client->ps.forcePowerLevel[FP_SABER_DEFENSE]) < Q_irand( -6, 0 ) )
-						&& ( ( entPowerLevel < FORCE_LEVEL_3 && hitOwner->client->ps.forcePowerLevel[FP_SABER_DEFENSE] > FORCE_LEVEL_2 )
-							|| ( entPowerLevel < FORCE_LEVEL_2 && hitOwner->client->ps.forcePowerLevel[FP_SABER_DEFENSE] > FORCE_LEVEL_1 )
-							|| ( entPowerLevel < FORCE_LEVEL_3 && hitOwner->client->ps.forcePowerLevel[FP_SABER_DEFENSE] > FORCE_LEVEL_0 && !Q_irand( 0, (entPowerLevel-hitOwner->client->ps.forcePowerLevel[FP_SABER_DEFENSE]+1)*2 )) )
+						&& (hitOwner->client->ps.saberMove != LS_READY || (entPowerLevel-hitOwnerDefense) < Q_irand( -6, 0 ) )
+						&& ( ( entPowerLevel < FORCE_LEVEL_3 && hitOwnerDefense > FORCE_LEVEL_2 )
+							|| ( entPowerLevel < FORCE_LEVEL_2 && hitOwnerDefense > FORCE_LEVEL_1 )
+							|| ( entPowerLevel < FORCE_LEVEL_3 && hitOwnerDefense > FORCE_LEVEL_0 && !Q_irand( 0, (entPowerLevel-hitOwnerDefense+1)*2 )) )
 						&& WP_SabersCheckLock( ent, hitOwner ) )
 					{
 						collisionResolved = qtrue;
@@ -3102,7 +3108,7 @@ void WP_SaberDamageTrace( gentity_t *ent )
 							//&& ent->client->ps.forcePowerLevel[FP_SABER_OFFENSE] < FORCE_LEVEL_3//if you have high saber offense, you cannot have your attack knocked away, regardless of what style you're using?
 							&& hitOwner->client->ps.saberAnimLevel != FORCE_LEVEL_5
 							&& activeDefense
-							&& (hitOwnerPowerLevel > FORCE_LEVEL_2||(hitOwner->client->ps.forcePowerLevel[FP_SABER_DEFENSE]>FORCE_LEVEL_2&&Q_irand(0,hitOwner->client->ps.saberAnimLevel))) )
+							&& (hitOwnerPowerLevel > FORCE_LEVEL_2||(hitOwnerDefense>FORCE_LEVEL_2&&Q_irand(0,hitOwner->client->ps.saberAnimLevel))) )
 						{//knockaways can make fast-attacker go into a broken parry anim if the ent is using fast or med (but not Tavion)
 							//make me parry
 							WP_SaberParry( hitOwner, ent );
@@ -3133,7 +3139,7 @@ void WP_SaberDamageTrace( gentity_t *ent )
 						}
 						else if ( entPowerLevel > FORCE_LEVEL_2
 							|| !activeDefense
-							|| (!deflected && Q_irand( 0, PM_PowerLevelForSaberAnim( &ent->client->ps ) - hitOwner->client->ps.forcePowerLevel[FP_SABER_DEFENSE]/*PM_PowerLevelForSaberAnim( &hitOwner->client->ps )*/ ) > 0 ) )
+							|| (!deflected && Q_irand( 0, powerDiff ) > 0 ) )
 						{//broke their parry altogether
 							if ( entPowerLevel > FORCE_LEVEL_2 || Q_irand( 0, ent->client->ps.forcePowerLevel[FP_SABER_OFFENSE] - hitOwner->client->ps.forcePowerLevel[FP_SABER_DEFENSE] ) )
 							{//chance of continuing with the attack (not bouncing back)
@@ -5792,7 +5798,7 @@ void ForceThrow( gentity_t *self, qboolean pull )
 									{//not a limb
 										if ( ent->s.weapon == WP_TURRET && !Q_stricmp( "PAS", ent->classname ) && ent->s.apos.trType == TR_STATIONARY )
 										{//can knock over placed turrets
-											if ( !self->s.number && ((g_sentrycheat->integer != 0 && g_sentrycheat->integer != 1)||(!ent->activator->s.number)) )
+											if ( !self->s.number && ((g_sentrycheat->integer != 0 && g_sentrycheat->integer != 1)|| (ent->activator && !ent->activator->s.number)) )
 												continue; // Players can't knock over turrets in certain settings, and they can't knock over their own
 											if( g_sentrycheat->integer != 1 && g_sentrycheat->integer != 2 )
 												continue; // NPCs can't knock over turrets in certain settings
@@ -7200,27 +7206,27 @@ void ForceLightningDamage( gentity_t *self, gentity_t *traceEnt, vec3_t dir, flo
 			int	dmg;
 			if ( self->client->ps.forcePowerLevel[FP_LIGHTNING] > FORCE_LEVEL_2 )
 			{//more damage if closer and more in front
-				dmg = 1;
+				dmg = 2;
 				if ( dist < 100 )
 				{
-					dmg += 2;
+					dmg += 4;
 				}
 				else if ( dist < 200 )
 				{
-					dmg += 1;
+					dmg += 2;
 				}
 				if ( dot > 0.9f )
 				{
-					dmg += 2;
+					dmg += 4;
 				}
 				else if ( dot > 0.7f )
 				{
-					dmg += 1;
+					dmg += 2;
 				}
 			}
 			else
 			{
-				dmg = Q_irand( 1, 3 );//*self->client->ps.forcePowerLevel[FP_LIGHTNING];
+				dmg = Q_irand( 2, 6 );//*self->client->ps.forcePowerLevel[FP_LIGHTNING];
 			}
 			if ( traceEnt->client && traceEnt->health > 0 && ( traceEnt->client->NPC_class == CLASS_DESANN || traceEnt->client->NPC_class == CLASS_LUKE ) )
 			{//Luke and Desann can shield themselves from the attack
@@ -7246,7 +7252,7 @@ void ForceLightningDamage( gentity_t *self, gentity_t *traceEnt, vec3_t dir, flo
 				}
 				else
 				{
-					dmg = 1;
+					dmg = 2;
 				}
 			}
 			if ( traceEnt && traceEnt->client && traceEnt->client->NPC_class == CLASS_GALAK )
@@ -7256,7 +7262,7 @@ void ForceLightningDamage( gentity_t *self, gentity_t *traceEnt, vec3_t dir, flo
 					dmg = 0;
 				}
 			}
-			G_Damage( traceEnt, self, self, dir, impactPoint, dmg, 0, MOD_ELECTROCUTE );
+			G_Damage( traceEnt, self, self, dir, impactPoint, dmg, DAMAGE_NO_KNOCKBACK, MOD_ELECTROCUTE );
 			if ( traceEnt->client )
 			{
 				if ( !Q_irand( 0, 2 ) )
@@ -7303,7 +7309,7 @@ void ForceShootLightning( gentity_t *self )
 	VectorNormalize( forward );
 
 	//FIXME: if lightning hits water, do water-only-flagged radius damage from that point
-	if ( self->client->ps.forcePowerLevel[FP_LIGHTNING] > FORCE_LEVEL_2 )
+	if ( self->client->ps.forcePowerLevel[FP_LIGHTNING] >= FORCE_LEVEL_2 )
 	{//arc
 		vec3_t	center, mins, maxs, dir, ent_org, size, v;
 		float	radius = 512, dot, dist;
@@ -8313,27 +8319,8 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 		}
 		break;
 	case FP_LIGHTNING:
-		if ( self->client->ps.forcePowerLevel[FP_LIGHTNING] > FORCE_LEVEL_1 )
-		{//higher than level 1
-			if ( cmd->buttons & BUTTON_FORCE_LIGHTNING )
-			{//holding it keeps it going
-				self->client->ps.forcePowerDuration[FP_LIGHTNING] = level.time + 500;
-				if ( self->client->ps.torsoAnim == BOTH_FORCELIGHTNING_START )
-				{
-					if ( !self->client->ps.torsoAnimTimer )
-					{
-						NPC_SetAnim( self, SETANIM_TORSO, BOTH_FORCELIGHTNING_HOLD, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
-					}
-					else
-					{
-						NPC_SetAnim( self, SETANIM_TORSO, BOTH_FORCELIGHTNING_START, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
-					}
-				}
-				else
-				{
-					NPC_SetAnim( self, SETANIM_TORSO, BOTH_FORCELIGHTNING_HOLD, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
-				}
-			}
+		if (self->client->ps.forcePowerDuration[FP_LIGHTNING] > level.time && self->client->ps.forcePowerLevel[FP_LIGHTNING] > FORCE_LEVEL_1) {
+			return;
 		}
 		if ( !WP_ForcePowerAvailable( self, forcePower, 0 ) )
 		{
@@ -8343,6 +8330,28 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 		{
 			ForceShootLightning( self );
 			WP_ForcePowerDrain( self, forcePower, 0 );
+		}
+		if (self->client->ps.forcePowerLevel[FP_LIGHTNING] > FORCE_LEVEL_1)
+		{//higher than level 1
+			if (cmd->buttons & BUTTON_FORCE_LIGHTNING)
+			{//holding it keeps it going
+				self->client->ps.forcePowerDuration[FP_LIGHTNING] = level.time + 50;
+				if (self->client->ps.torsoAnim == BOTH_FORCELIGHTNING_START)
+				{
+					if (!self->client->ps.torsoAnimTimer)
+					{
+						NPC_SetAnim(self, SETANIM_TORSO, BOTH_FORCELIGHTNING_HOLD, SETANIM_FLAG_OVERRIDE | SETANIM_FLAG_HOLD);
+					}
+					else
+					{
+						NPC_SetAnim(self, SETANIM_TORSO, BOTH_FORCELIGHTNING_START, SETANIM_FLAG_OVERRIDE | SETANIM_FLAG_HOLD);
+					}
+				}
+				else
+				{
+					NPC_SetAnim(self, SETANIM_TORSO, BOTH_FORCELIGHTNING_HOLD, SETANIM_FLAG_OVERRIDE | SETANIM_FLAG_HOLD);
+				}
+			}
 		}
 		break;
 	default:
