@@ -135,42 +135,44 @@ void Droid_Patrol( void )
 		ucmd.buttons |= BUTTON_WALKING;
 		NPC_MoveToGoal( qtrue );
 
-		if( NPC->client && NPC->client->NPC_class == CLASS_MOUSE )
-		{
-			NPCInfo->desiredYaw += sin(level.time*.5) * 25; // Weaves side to side a little
-
-			if (TIMER_Done(NPC,"patrolNoise"))
+		if (!in_camera) {
+			if (NPC->client && NPC->client->NPC_class == CLASS_MOUSE)
 			{
-				G_SoundOnEnt( NPC, CHAN_AUTO, va("sound/chars/mouse/misc/mousego%d.wav", Q_irand(1, 3)) );
+				NPCInfo->desiredYaw += sin(level.time*.5) * 25; // Weaves side to side a little
 
-				TIMER_Set( NPC, "patrolNoise", Q_irand( 2000, 4000 ) );
+				if (TIMER_Done(NPC, "patrolNoise"))
+				{
+					G_SoundOnEnt(NPC, CHAN_AUTO, va("sound/chars/mouse/misc/mousego%d.wav", Q_irand(1, 3)));
+
+					TIMER_Set(NPC, "patrolNoise", Q_irand(2000, 4000));
+				}
 			}
-		}
-		else if( NPC->client && NPC->client->NPC_class == CLASS_R2D2 )
-		{
-			if (TIMER_Done(NPC,"patrolNoise"))
+			else if (NPC->client && NPC->client->NPC_class == CLASS_R2D2)
 			{
-				G_SoundOnEnt( NPC, CHAN_AUTO, va("sound/chars/r2d2/misc/r2d2talk0%d.wav",	Q_irand(1, 3)) );
+				if (TIMER_Done(NPC, "patrolNoise"))
+				{
+					G_SoundOnEnt(NPC, CHAN_AUTO, va("sound/chars/r2d2/misc/r2d2talk0%d.wav", Q_irand(1, 3)));
 
-				TIMER_Set( NPC, "patrolNoise", Q_irand( 2000, 4000 ) );
+					TIMER_Set(NPC, "patrolNoise", Q_irand(10000, 30000));
+				}
 			}
-		}
-		else if( NPC->client && NPC->client->NPC_class == CLASS_R5D2 )
-		{
-			if (TIMER_Done(NPC,"patrolNoise"))
+			else if (NPC->client && NPC->client->NPC_class == CLASS_R5D2)
 			{
-				G_SoundOnEnt( NPC, CHAN_AUTO, va("sound/chars/r5d2/misc/r5talk%d.wav", Q_irand(1, 4)) );
+				if (TIMER_Done(NPC, "patrolNoise"))
+				{
+					G_SoundOnEnt(NPC, CHAN_AUTO, va("sound/chars/r5d2/misc/r5talk%d.wav", Q_irand(1, 4)));
 
-				TIMER_Set( NPC, "patrolNoise", Q_irand( 2000, 4000 ) );
+					TIMER_Set(NPC, "patrolNoise", Q_irand(10000, 30000));
+				}
 			}
-		}
-		if( NPC->client && NPC->client->NPC_class == CLASS_GONK )
-		{
-			if (TIMER_Done(NPC,"patrolNoise"))
+			if (NPC->client && NPC->client->NPC_class == CLASS_GONK)
 			{
-				G_SoundOnEnt( NPC, CHAN_AUTO, va("sound/chars/gonk/misc/gonktalk%d.wav", Q_irand(1, 2)) );
+				if (TIMER_Done(NPC, "patrolNoise"))
+				{
+					G_SoundOnEnt(NPC, CHAN_AUTO, va("sound/chars/gonk/misc/gonktalk%d.wav", Q_irand(1, 2)));
 
-				TIMER_Set( NPC, "patrolNoise", Q_irand( 2000, 4000 ) );
+					TIMER_Set(NPC, "patrolNoise", Q_irand(8000, 12000));
+				}
 			}
 		}
 //		else
