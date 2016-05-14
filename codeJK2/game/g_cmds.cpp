@@ -1150,6 +1150,33 @@ void ClientCommand( int clientNum ) {
 	else if (Q_stricmp(cmd, "workshop_list_scriptflags") == 0) {
 		Workshop_List_Scriptflags_f(ent);
 	}
+	else if (Q_stricmp(cmd, "workshop_list_teams") == 0) {
+		Workshop_List_Team_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_list_aiflags") == 0) {
+		Workshop_List_AIFlags_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_list_classes") == 0) {
+		Workshop_List_Classes_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_list_ranks") == 0) {
+		Workshop_List_Ranks_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_aiflags") == 0) {
+		Workshop_Set_Aiflags_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_class") == 0) {
+		Workshop_Set_Class_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_rank") == 0) {
+		Workshop_Set_Rank_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_team") == 0) {
+		Workshop_Set_Team_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_enemyteam") == 0) {
+		Workshop_Set_Enemyteam_f(ent);
+	}
 	else if (Q_stricmp(cmd, "workshop_set_timer") == 0) {
 		Workshop_Set_Timer_f(ent);
 	}
@@ -1167,6 +1194,27 @@ void ClientCommand( int clientNum ) {
 	}
 	else if (Q_stricmp(cmd, "workshop_set_weapon") == 0) {
 		Workshop_Set_Weapon_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_list_movetypes") == 0) {
+		Workshop_List_Movetypes_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_list_forcepowers") == 0) {
+		Workshop_List_ForcePowers_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_leader") == 0) {
+		Workshop_Set_Leader_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_movetype") == 0) {
+		Workshop_Set_Movetype_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_forcepower") == 0) {
+		Workshop_Set_Forcepower_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_god") == 0) {
+		Workshop_God_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_notarget") == 0) {
+		Workshop_Notarget_f(ent);
 	}
 	else
 	{

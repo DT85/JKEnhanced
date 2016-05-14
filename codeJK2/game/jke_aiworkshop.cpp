@@ -11,34 +11,75 @@ int drawBoxesTime = 0;
 int selectedAI = ENTITYNUM_NONE;
 
 extern stringID_table_t BSTable[];
+extern stringID_table_t teamTable[];
+extern stringID_table_t NPCClassTable[];
+extern stringID_table_t RankTable[];
+extern stringID_table_t MoveTypeTable[];
+extern stringID_table_t FPTable[];
 
 static void WorkshopDrawEntityInformation(gentity_t* ent, int x, const char* title) {
-	int add = 5;
+	int add = 6;
 	vec4_t textcolor = { 0.4f, 0.4f, 0.8f, 1.0f };
 
-	cgi_R_Font_DrawString(x, 30, title, textcolor, cgs.media.qhFontSmall, -1, 0.4f);
+	cgi_R_Font_DrawString(x, 30, title, textcolor, cgs.media.qhFontSmall, -1, 0.5f);
 	if (ent->NPC->goalEntity) {
-		cgi_R_Font_DrawString(x, 30 + add, va("goalEnt = %i", ent->NPC->goalEntity->s.number), textcolor, cgs.media.qhFontSmall, -1, 0.4f);
-		add += 5;
+		cgi_R_Font_DrawString(x, 30 + add, va("goalEnt = %i", ent->NPC->goalEntity->s.number), textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+		add += 6;
 	}
-	cgi_R_Font_DrawString(x, 30 + add, va("bs = %s", BSTable[ent->NPC->behaviorState].name), textcolor, cgs.media.qhFontSmall, -1, 0.4f);
-	add += 5;
+	cgi_R_Font_DrawString(x, 30 + add, va("bs = %s", BSTable[ent->NPC->behaviorState].name), textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+	add += 6;
 	if (ent->NPC->combatMove) {
-		cgi_R_Font_DrawString(x, 30 + add, "-- in combat move --", textcolor, cgs.media.qhFontSmall, -1, 0.4f);
-		add += 5;
+		cgi_R_Font_DrawString(x, 30 + add, "-- in combat move --", textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+		add += 6;
 	}
+	
+	cgi_R_Font_DrawString(x, 30 + add, va("class = %s", NPCClassTable[ent->client->NPC_class].name), textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+	add += 6;
+	cgi_R_Font_DrawString(x, 30 + add, va("rank = %s (%i)", RankTable[ent->NPC->rank].name, ent->NPC->rank), textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+	add += 6;
+
 	if (ent->NPC->scriptFlags) {
-		cgi_R_Font_DrawString(x, 30 + add, va("scriptFlags: %i", ent->NPC->scriptFlags), textcolor, cgs.media.qhFontSmall, -1, 0.4f);
-		add += 5;
+		cgi_R_Font_DrawString(x, 30 + add, va("scriptFlags: %i", ent->NPC->scriptFlags), textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+		add += 6;
+	}
+	if (ent->NPC->aiFlags) {
+		cgi_R_Font_DrawString(x, 30 + add, va("aiFlags: %i", ent->NPC->aiFlags), textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+		add += 6;
 	}
 
-	cgi_R_Font_DrawString(x, 30 + add, "-- currently active timers --", textcolor, cgs.media.qhFontSmall, -1, 0.4f);
-	add += 5;
+	if (ent->client->noclip) {
+		cgi_R_Font_DrawString(x, 30 + add, "cheat: NOCLIP", textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+		add += 6;
+	}
+
+	if (ent->flags & FL_GODMODE) {
+		cgi_R_Font_DrawString(x, 30 + add, "cheat: GODMODE", textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+		add += 6;
+	}
+
+	if (ent->flags & FL_NOTARGET) {
+		cgi_R_Font_DrawString(x, 30 + add, "cheat: NOTARGET", textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+		add += 6;
+	}
+
+	if (ent->flags & FL_UNDYING) {
+		cgi_R_Font_DrawString(x, 30 + add, "cheat: UNDEAD", textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+		add += 6;
+	}
+
+	cgi_R_Font_DrawString(x, 30 + add, va("playerTeam: %s", teamTable[ent->client->playerTeam].name), textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+	add += 6;
+
+	cgi_R_Font_DrawString(x, 30 + add, va("enemyTeam: %s", teamTable[ent->client->enemyTeam].name), textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+	add += 6;
+
+	cgi_R_Font_DrawString(x, 30 + add, "-- currently active timers --", textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+	add += 6;
 	auto timers = TIMER_List(ent);
 	for (auto it = timers.begin(); it != timers.end(); ++it) {
 		if (it->second >= 0) {
-			cgi_R_Font_DrawString(x, 30 + add, va("%s : %i", it->first.c_str(), it->second), textcolor, cgs.media.qhFontSmall, -1, 0.4f);
-			add += 5;
+			cgi_R_Font_DrawString(x, 30 + add, va("%s : %i", it->first.c_str(), it->second), textcolor, cgs.media.qhFontSmall, -1, 0.5f);
+			add += 6;
 		}
 	}
 }
@@ -214,6 +255,15 @@ void WorkshopSelect_f(gentity_t* ent) {
 	}
 }
 
+// Deselect currently selected NPC
+void WorkshopDeselect_f(gentity_t* ent) {
+	if (!inAIWorkshop) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	selectedAI = ENTITYNUM_NONE;
+}
+
 // View all behavior states
 void Workshop_List_BehaviorState_f(gentity_t* ent) {
 	if (inAIWorkshop == qfalse) {
@@ -225,38 +275,120 @@ void Workshop_List_BehaviorState_f(gentity_t* ent) {
 	}
 }
 
+// View all teams
+void Workshop_List_Team_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	for (int i = 0; i < TEAM_NUM_TEAMS; i++) {
+		gi.Printf(va("%s\n", teamTable[i].name));
+	}
+}
+
+// View all ranks
+void Workshop_List_Ranks_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	for (int i = 0; i < RANK_MAX; i++) {
+		gi.Printf(va("%s\n", RankTable[i].name));
+	}
+}
+
+// View all classes
+void Workshop_List_Classes_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	for (int i = 0; i < CLASS_NUM_CLASSES; i++) {
+		gi.Printf(va("%s\n", NPCClassTable[i].name));
+	}
+}
+
+// View all movetypes
+void Workshop_List_Movetypes_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	for (int i = 0; i <= MT_FLYSWIM; i++) {
+		gi.Printf(va("%s\n", MoveTypeTable[i].name));
+	}
+}
+
+// View all forcepowers
+void Workshop_List_ForcePowers_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	for (int i = 0; i <= FP_SABER_OFFENSE; i++) {
+		gi.Printf(va("%s\n", FPTable[i].name));
+	}
+}
+
 // List all scriptflags
+#define PRINTFLAG(x) gi.Printf("" #x " = %i\n", #x)
 void Workshop_List_Scriptflags_f(gentity_t* ent) {
 	if (inAIWorkshop == qfalse) {
 		gi.Printf("You need to be in the AI workshop to use this command.\n");
 		return;
 	}
-	gi.Printf("SCF_CROUCHED = 1\n");
-	gi.Printf("SCF_WALKING = 2\n");
-	gi.Printf("SCF_MORELIGHT = 4\n");
-	gi.Printf("SCF_LEAN_RIGHT = 8\n");
-	gi.Printf("SCF_LEAN_LEFT = 16\n");
-	gi.Printf("SCF_RUNNING = 32\n");
-	gi.Printf("SCF_ALT_FIRE = 64\n");
-	gi.Printf("SCF_NO_RESPONSE = 128\n");
-	gi.Printf("SCF_FFDEATH = 256\n");
-	gi.Printf("SCF_NO_COMBAT_TALK = 512\n");
-	gi.Printf("SCF_CHASE_ENEMIES = 1024\n");
-	gi.Printf("SCF_LOOK_FOR_ENEMIES = 2048\n");
-	gi.Printf("SCF_FACE_MOVE_DIR = 4096\n");
-	gi.Printf("SCF_IGNORE_ALERTS = 8192\n");
-	gi.Printf("SCF_DONT_FIRE = 16384\n");
-	gi.Printf("SCF_DONT_FLEE = 32768\n");
-	gi.Printf("SCF_FORCED_MARCH = 65536\n");
-	gi.Printf("SCF_NO_GROUPS = 131072\n");
-	gi.Printf("SCF_FIRE_WEAPON = 262144\n");
-	gi.Printf("SCF_NO_MIND_TRICK = 524288\n");
-	gi.Printf("SCF_USE_CP_NEAREST = 1048576\n");
-	gi.Printf("SCF_NO_FORCE = 2097152\n");
-	gi.Printf("SCF_NO_FALLTODEATH = 4194304\n");
-	gi.Printf("SCF_NO_ACROBATICS = 8388608\n");
-	gi.Printf("SCF_USE_SUBTITLES = 16777216\n");
-	gi.Printf("SCF_NO_ALERT_TALK = 33554432\n");
+	PRINTFLAG(SCF_CROUCHED);
+	PRINTFLAG(SCF_WALKING);
+	PRINTFLAG(SCF_MORELIGHT);
+	PRINTFLAG(SCF_LEAN_RIGHT);
+	PRINTFLAG(SCF_LEAN_LEFT);
+	PRINTFLAG(SCF_RUNNING);
+	PRINTFLAG(SCF_ALT_FIRE);
+	PRINTFLAG(SCF_NO_RESPONSE);
+	PRINTFLAG(SCF_FFDEATH);
+	PRINTFLAG(SCF_NO_COMBAT_TALK);
+	PRINTFLAG(SCF_CHASE_ENEMIES);
+	PRINTFLAG(SCF_LOOK_FOR_ENEMIES);
+	PRINTFLAG(SCF_FACE_MOVE_DIR);
+	PRINTFLAG(SCF_IGNORE_ALERTS);
+	PRINTFLAG(SCF_DONT_FIRE);
+	PRINTFLAG(SCF_DONT_FLEE);
+	PRINTFLAG(SCF_FORCED_MARCH);
+	PRINTFLAG(SCF_NO_GROUPS);
+	PRINTFLAG(SCF_FIRE_WEAPON);
+	PRINTFLAG(SCF_NO_MIND_TRICK);
+	PRINTFLAG(SCF_USE_CP_NEAREST);
+	PRINTFLAG(SCF_NO_FORCE);
+	PRINTFLAG(SCF_NO_FALLTODEATH);
+	PRINTFLAG(SCF_NO_ACROBATICS);
+	PRINTFLAG(SCF_USE_SUBTITLES);
+	PRINTFLAG(SCF_NO_ALERT_TALK);
+}
+
+// List all aiflags
+void Workshop_List_AIFlags_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	PRINTFLAG(NPCAI_CHECK_WEAPON);
+	PRINTFLAG(NPCAI_BURST_WEAPON);
+	PRINTFLAG(NPCAI_MOVING);
+	PRINTFLAG(NPCAI_TOUCHED_GOAL);
+	PRINTFLAG(NPCAI_PUSHED);
+	PRINTFLAG(NPCAI_NO_COLL_AVOID);
+	PRINTFLAG(NPCAI_BLOCKED);
+	PRINTFLAG(NPCAI_OFF_PATH);
+	PRINTFLAG(NPCAI_IN_SQUADPOINT);
+	PRINTFLAG(NPCAI_STRAIGHT_TO_DESTPOS);
+	PRINTFLAG(NPCAI_NO_SLOWDOWN);
+	PRINTFLAG(NPCAI_LOST);
+	PRINTFLAG(NPCAI_SHIELDS);
+	PRINTFLAG(NPCAI_GREET_ALLIES);
+	PRINTFLAG(NPCAI_FORM_TELE_NAV);
+	PRINTFLAG(NPCAI_ENROUTE_TO_HOMEWP);
+	PRINTFLAG(NPCAI_MATCHPLAYERWEAPON);
+	PRINTFLAG(NPCAI_DIE_ON_IMPACT);
 }
 
 // Set a raw timer
@@ -326,6 +458,24 @@ void Workshop_Set_GoalEntity_f(gentity_t* ent) {
 		gi.Printf("You need to select an NPC first with workshop_select\n");
 		return;
 	}
+
+	if (gi.argc() == 2) {
+		// There's a second argument. Use that.
+		if (!Q_stricmp(gi.argv(1), "me")) {
+			g_entities[selectedAI].NPC->goalEntity = g_entities;
+			return;
+		}
+		else {
+			g_entities[selectedAI].NPC->goalEntity = &g_entities[atoi(gi.argv(1))];
+		}
+		if (g_entities[selectedAI].NPC->lastGoalEntity != nullptr) {
+			gi.Printf("New goal entity: %i (last goal entity was %i)\n", g_entities[selectedAI].NPC->goalEntity->s.number, g_entities[selectedAI].NPC->lastGoalEntity->s.number);
+		}
+		else {
+			gi.Printf("New goal entity: %i\n", g_entities[selectedAI].NPC->goalEntity->s.number);
+		}
+	}
+
 	vec3_t		src, dest, vf;
 	trace_t		trace;
 	VectorCopy(ent->client->renderInfo.eyePoint, src);
@@ -375,8 +525,32 @@ void Workshop_Set_Scriptflags_f(gentity_t* ent) {
 	g_entities[selectedAI].NPC->scriptFlags = scriptFlags;
 }
 
+// Set aiflags
+void Workshop_Set_Aiflags_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	if (selectedAI == ENTITYNUM_NONE) {
+		gi.Printf("You need to select an NPC first with workshop_select\n");
+		return;
+	}
+	if (gi.argc() != 2) {
+		gi.Printf("usage: workshop_set_aiflags <ai flags>\n");
+		return;
+	}
+	int scriptFlags = atoi(gi.argv(1));
+	if (scriptFlags < 0) {
+		gi.Printf("Invalid scriptflags.\n");
+		return;
+	}
+	g_entities[selectedAI].NPC->aiFlags = scriptFlags;
+}
+
 // Set weapon
 extern stringID_table_t WPTable[];
+extern void ChangeWeapon(gentity_t *ent, int newWeapon);
+extern void G_CreateG2AttachedWeaponModel(gentity_t *ent, const char *psWeaponModel);
 void Workshop_Set_Weapon_f(gentity_t* ent) {
 	if (inAIWorkshop == qfalse) {
 		gi.Printf("You need to be in the AI workshop to use this command.\n");
@@ -387,26 +561,299 @@ void Workshop_Set_Weapon_f(gentity_t* ent) {
 		return;
 	}
 	if (gi.argc() != 2) {
-		gi.Printf("usage: workshop_set_weapon <weapon name>\n");
+		gi.Printf("usage: workshop_set_weapon <weapon name or 'me'>\n");
 		return;
 	}
-	int weaponNum = GetIDForString(WPTable, gi.argv(1));
-	if (weaponNum == -1) {
-		gi.Printf("Invalid weapon number. Maybe try WP_NONE, or WP_BLASTER for instance?\n");
+	int weaponNum;
+	if (!Q_stricmp(gi.argv(1), "me")) {
+		weaponNum = g_entities[0].s.weapon;
 	}
-	g_entities[selectedAI].s.weapon = weaponNum;
+	else {
+		weaponNum = GetIDForString(WPTable, gi.argv(1));
+		if (weaponNum == -1) {
+			gi.Printf("Invalid weapon number. Maybe try WP_NONE, or WP_BLASTER for instance?\n");
+		}
+	}
+	gentity_t* selected = &g_entities[selectedAI];
+	selected->client->ps.weapon = weaponNum;
+	selected->client->ps.weaponstate = WEAPON_RAISING;
+	ChangeWeapon(selected, weaponNum);
+	if (weaponNum == WP_SABER)
+	{
+		selected->client->ps.saberActive = qfalse;
+		selected->client->ps.saberModel = "models/weapons2/saber/saber_w.glm";
+		if (selected->client->NPC_class == CLASS_DESANN)
+		{//longer saber
+			selected->client->ps.saberLengthMax = 48;
+		}
+		else if (selected->client->NPC_class == CLASS_REBORN)
+		{//shorter saber
+			selected->client->ps.saberLengthMax = 32;
+		}
+		else
+		{//standard saber length
+			selected->client->ps.saberLengthMax = 40;
+		}
+		G_CreateG2AttachedWeaponModel(selected, selected->client->ps.saberModel);
+	}
+	else
+	{
+		G_CreateG2AttachedWeaponModel(selected, weaponData[weaponNum].weaponMdl);
+	}
+}
+
+// Set team
+void Workshop_Set_Team_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	if (selectedAI == ENTITYNUM_NONE) {
+		gi.Printf("You need to select an NPC first with workshop_select\n");
+		return;
+	}
+	if (gi.argc() != 2) {
+		gi.Printf("usage: workshop_set_team <team name>\n");
+		return;
+	}
+	int team = GetIDForString(teamTable, gi.argv(1));
+	if (team == -1) {
+		gi.Printf("invalid team\n");
+	}
+	g_entities[selectedAI].client->playerTeam = (team_t)team;
+}
+
+// Set enemyteam
+void Workshop_Set_Enemyteam_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	if (selectedAI == ENTITYNUM_NONE) {
+		gi.Printf("You need to select an NPC first with workshop_select\n");
+		return;
+	}
+	if (gi.argc() != 2) {
+		gi.Printf("usage: workshop_set_enemyteam <team name>\n");
+		return;
+	}
+	int team = GetIDForString(teamTable, gi.argv(1));
+	if (team == -1) {
+		gi.Printf("invalid team\n");
+	}
+	g_entities[selectedAI].client->enemyTeam = (team_t)team;
+}
+
+// Set class
+void Workshop_Set_Class_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	if (selectedAI == ENTITYNUM_NONE) {
+		gi.Printf("You need to select an NPC first with workshop_select\n");
+		return;
+	}
+	if (gi.argc() != 2) {
+		gi.Printf("usage: workshop_set_class <class name>\n");
+		return;
+	}
+	int team = GetIDForString(NPCClassTable, gi.argv(1));
+	if (team == -1) {
+		gi.Printf("invalid class\n");
+	}
+	g_entities[selectedAI].client->NPC_class = (class_t)team;
+}
+
+// Set rank
+void Workshop_Set_Rank_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	if (selectedAI == ENTITYNUM_NONE) {
+		gi.Printf("You need to select an NPC first with workshop_select\n");
+		return;
+	}
+	if (gi.argc() != 2) {
+		gi.Printf("usage: workshop_set_rank <rank name>\n");
+		return;
+	}
+	int team = GetIDForString(RankTable, gi.argv(1));
+	if (team == -1) {
+		gi.Printf("invalid rank\n");
+	}
+	g_entities[selectedAI].NPC->rank = (rank_t)team;
+}
+
+// Set leader
+void Workshop_Set_Leader_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	if (selectedAI == ENTITYNUM_NONE) {
+		gi.Printf("You need to select an NPC first with workshop_select\n");
+		return;
+	}
+
+	if (gi.argc() == 2) {
+		// There's a second argument. Use that.
+		if (!Q_stricmp(gi.argv(1), "me")) {
+			g_entities[selectedAI].client->leader = g_entities;
+			g_entities[selectedAI].client->team_leader = g_entities;
+			return;
+		}
+		else {
+			g_entities[selectedAI].client->leader = &g_entities[atoi(gi.argv(1))];
+			g_entities[selectedAI].client->team_leader = &g_entities[atoi(gi.argv(1))];
+		}
+	}
+
+	vec3_t		src, dest, vf;
+	trace_t		trace;
+	VectorCopy(ent->client->renderInfo.eyePoint, src);
+	AngleVectors(ent->client->ps.viewangles, vf, NULL, NULL);//ent->client->renderInfo.eyeAngles was cg.refdef.viewangles, basically
+	//extend to find end of use trace
+	VectorMA(src, 32967.0f, vf, dest);
+
+	//Trace ahead to find a valid target
+	gi.trace(&trace, src, vec3_origin, vec3_origin, dest, ent->s.number, MASK_OPAQUE | CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_ITEM | CONTENTS_CORPSE, G2_NOCOLLIDE, 0);
+	if (trace.fraction == 1.0f || trace.entityNum < 1 || trace.entityNum == ENTITYNUM_NONE || trace.entityNum == ENTITYNUM_WORLD)
+	{
+		gi.Printf("Invalid entity\n");
+		return;
+	}
+
+	gentity_t* target = &g_entities[trace.entityNum];
+	gentity_t* selected = &g_entities[selectedAI];
+	selected->client->leader = target;
+}
+
+// Set movetype
+void Workshop_Set_Movetype_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	if (selectedAI == ENTITYNUM_NONE) {
+		gi.Printf("You need to select an NPC first with workshop_select\n");
+		return;
+	}
+	if (gi.argc() != 2) {
+		gi.Printf("usage: workshop_set_movetype <move type>\n");
+		return;
+	}
+	int team = GetIDForString(MoveTypeTable, gi.argv(1));
+	if (team == -1) {
+		gi.Printf("invalid movetype\n");
+	}
+	g_entities[selectedAI].NPC->stats.moveType = (movetype_t)team;
+}
+
+// Set forcepower
+void Workshop_Set_Forcepower_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	if (selectedAI == ENTITYNUM_NONE) {
+		gi.Printf("You need to select an NPC first with workshop_select\n");
+		return;
+	}
+	if (gi.argc() != 3) {
+		gi.Printf("usage: workshop_set_forcepower <force power> <rank>\n");
+		return;
+	}
+	int power = GetIDForString(FPTable, gi.argv(1));
+	if (power == -1) {
+		gi.Printf("invalid force power\n");
+	}
+	int rank = atoi(gi.argv(2));
+	if (rank < 0) {
+		gi.Printf("invalid rank\n");
+	}
+
+	gentity_t* selected = &g_entities[selectedAI];
+	if (rank == 0) {
+		selected->client->ps.forcePowersKnown ^= (1 << power);
+	}
+	else {
+		selected->client->ps.forcePowersKnown |= (1 << power);
+	}
+	selected->client->ps.forcePowerLevel[power] = rank;
+}
+
+// Godmode for the NPC
+void Workshop_God_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	if (selectedAI == ENTITYNUM_NONE) {
+		gi.Printf("You need to select an NPC first with workshop_select\n");
+		return;
+	}
+	gentity_t* selected = &g_entities[selectedAI];
+	if (selected->flags & FL_GODMODE) {
+		gi.Printf("godmode OFF\n");
+		selected->flags ^= FL_GODMODE;
+	}
+	else {
+		gi.Printf("godmode ON\n");
+		selected->flags |= FL_GODMODE;
+	}
+}
+
+// Notarget mode for the NPC
+void Workshop_Notarget_f(gentity_t* ent) {
+	if (inAIWorkshop == qfalse) {
+		gi.Printf("You need to be in the AI workshop to use this command.\n");
+		return;
+	}
+	if (selectedAI == ENTITYNUM_NONE) {
+		gi.Printf("You need to select an NPC first with workshop_select\n");
+		return;
+	}
+	gentity_t* selected = &g_entities[selectedAI];
+	if (selected->flags & FL_NOTARGET) {
+		gi.Printf("notarget OFF\n");
+		selected->flags ^= FL_NOTARGET;
+	}
+	else {
+		gi.Printf("notarget ON\n");
+		selected->flags |= FL_NOTARGET;
+	}
 }
 
 void Workshop_Commands_f(gentity_t* ent) {
 	gi.Printf("aiworkshop\n");
 	gi.Printf("workshop_commands\n");
 	gi.Printf("workshop_select\n");
+	gi.Printf("workshop_deselect\n");
 	gi.Printf("workshop_list_bstates\n");
 	gi.Printf("workshop_list_scriptflags\n");
-	gi.Printf("workshop_set_timer\n");
+	gi.Printf("workshop_list_teams\n");
+	gi.Printf("workshop_list_aiflags\n");
+	gi.Printf("workshop_list_classes\n");
+	gi.Printf("workshop_list_ranks\n");
+	gi.Printf("workshop_list_movetypes\n");
+	gi.Printf("workshop_list_forcepowers\n");
 	gi.Printf("workshop_view_timers\n");
+	gi.Printf("workshop_set_timer\n");
 	gi.Printf("workshop_set_bstate\n");
 	gi.Printf("workshop_set_goalent\n");
 	gi.Printf("workshop_set_scriptflags\n");
 	gi.Printf("workshop_set_weapon\n");
+	gi.Printf("workshop_set_team\n");
+	gi.Printf("workshop_set_enemyteam\n");
+	gi.Printf("workshop_set_aiflags\n");
+	gi.Printf("workshop_set_class\n");
+	gi.Printf("workshop_set_rank\n");
+	gi.Printf("workshop_set_leader\n");
+	gi.Printf("workshop_set_movetype\n");
+	gi.Printf("workshop_set_forcepower\n");
+	gi.Printf("workshop_god\n");
+	gi.Printf("workshop_notarget\n");
+	
 }
