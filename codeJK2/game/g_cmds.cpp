@@ -1135,6 +1135,39 @@ void ClientCommand( int clientNum ) {
 			gi.SetConfigstring( CS_MUSIC, cmd2 );
 		}
 	}
+	else if (Q_stricmp(cmd, "aiworkshop") == 0) {
+		WorkshopToggle();
+	}
+	else if (Q_stricmp(cmd, "workshop_select") == 0) {
+		WorkshopSelect_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_commands") == 0) {
+		Workshop_Commands_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_list_bstates") == 0) {
+		Workshop_List_BehaviorState_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_list_scriptflags") == 0) {
+		Workshop_List_Scriptflags_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_timer") == 0) {
+		Workshop_Set_Timer_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_view_timers") == 0) {
+		Workshop_View_Timers_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_bstate") == 0) {
+		Workshop_Set_BehaviorState_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_goalent") == 0) {
+		Workshop_Set_GoalEntity_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_scriptflags") == 0) {
+		Workshop_Set_Scriptflags_f(ent);
+	}
+	else if (Q_stricmp(cmd, "workshop_set_weapon") == 0) {
+		Workshop_Set_Weapon_f(ent);
+	}
 	else
 	{
 		gi.SendServerCommand( clientNum, va("print \"Unknown command %s\n\"", cmd ) );

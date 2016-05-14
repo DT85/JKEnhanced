@@ -504,6 +504,22 @@ void G_InitSessionData( gclient_t *client, char *userinfo );
 void G_InitWorldSession( void );
 void G_WriteSessionData( void );
 
+//
+// jke_aiworkshop.cpp
+//
+extern qboolean inAIWorkshop;
+void WorkshopToggle();
+void WorkshopThink();
+void WorkshopSelect_f(gentity_t* ent);
+void Workshop_List_BehaviorState_f(gentity_t* ent);
+void Workshop_List_Scriptflags_f(gentity_t* ent);
+void Workshop_Set_Timer_f(gentity_t* ent);
+void Workshop_View_Timers_f(gentity_t* ent);
+void Workshop_Set_BehaviorState_f(gentity_t* ent);
+void Workshop_Set_GoalEntity_f(gentity_t* ent);
+void Workshop_Set_Scriptflags_f(gentity_t* ent);
+void Workshop_Set_Weapon_f(gentity_t* ent);
+void Workshop_Commands_f(gentity_t* ent);
 
 //
 // NPC_senses.cpp
@@ -584,6 +600,7 @@ qboolean	TIMER_Start( gentity_t *self, const char *identifier, int duration );
 qboolean	TIMER_Done2( gentity_t *ent, const char *identifier, qboolean remove = qfalse );
 qboolean	TIMER_Exists( gentity_t *ent, const char *identifier );
 void		TIMER_Remove( gentity_t *ent, const char *identifier );
+std::vector<std::pair<std::string, int>> TIMER_List(gentity_t* ent);
 
 float NPC_GetHFOVPercentage( vec3_t spot, vec3_t from, vec3_t facing, float hFOV );
 float NPC_GetVFOVPercentage( vec3_t spot, vec3_t from, vec3_t facing, float vFOV );

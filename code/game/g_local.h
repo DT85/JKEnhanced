@@ -34,6 +34,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "anims.h"
 #include "dmstates.h"
 
+#include <vector>
+#include <string>
+
 //==================================================================
 
 // the "gameversion" client command will print this plus compile date
@@ -608,6 +611,7 @@ qboolean	TIMER_Start( gentity_t *self, const char *identifier, int duration );
 qboolean	TIMER_Done2( gentity_t *ent, const char *identifier, qboolean remove = qfalse );
 qboolean	TIMER_Exists( gentity_t *ent, const char *identifier );
 void		TIMER_Remove( gentity_t *ent, const char *identifier );
+std::vector<std::pair<std::string, int>> TIMER_List(gentity_t* ent);
 
 float NPC_GetHFOVPercentage( vec3_t spot, vec3_t from, vec3_t facing, float hFOV );
 float NPC_GetVFOVPercentage( vec3_t spot, vec3_t from, vec3_t facing, float vFOV );

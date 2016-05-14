@@ -745,9 +745,12 @@ CG_DrawHUD
 */
 extern void *cgi_UI_GetMenuByName( const char *menu );
 extern void cgi_UI_Menu_Paint( void *menu, qboolean force );
+extern void WorkshopDrawClientsideInformation();
 static void CG_DrawHUD( centity_t *cent )
 {
 	int x,y,value;
+
+	WorkshopDrawClientsideInformation();
 	
 	if (cgi_UI_GetMenuInfo("lefthud",&x,&y))
 	{

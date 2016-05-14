@@ -1298,6 +1298,8 @@ void G_RunFrame( int levelTime ) {
 	}
 	navigator.ClearCheckedNodes();
 
+	WorkshopThink();
+
 	//remember last waypoint, clear current one
 //	for ( i = 0, ent = &g_entities[0]; i < globals.num_entities ; i++, ent++)
 	for ( i = 0; i < globals.num_entities ; i++)
