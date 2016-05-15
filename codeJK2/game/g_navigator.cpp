@@ -2637,6 +2637,83 @@ int CNavigator::GetProjectedNode( vec3_t origin, int nodeID )
 	return bestNode;
 }
 
+/*
+-------------------------
+NearMe
+-------------------------
+*/
+void CNavigator::NearMe()
+{
+	gentity_t* me = g_entities;
+	int nodeID = this->GetNearestNode(me, me->waypoint, NF_CLEAR_PATH, WAYPOINT_NONE);
+	if (nodeID == NODE_NONE) {
+		Com_Printf("No nearest node\n");
+		return;
+	}
+	CNode* pNode = m_nodes[nodeID];
+	vec3_t pos;
+	pNode->GetPosition(pos);
+	if (nodeID == m_selectedNode) {
+		Com_Printf("[SELECTED] ");
+	}
+
+	Com_Printf("node %i (flags: %i, radius: %i, edges: %i) @ %.2f %.2f %.2f\n", 
+		nodeID, pNode->GetFlags(), pNode->GetRadius(), pNode->GetNumEdges(), pos[0], pos[1], pos[2]);
+	for (int i = 0; i < pNode->GetNumEdges(); i++) {
+		Com_Printf("...with edge %i to node %i (flags: %i, cost: %i)\n",
+			pNode->GetEdge(i), pNode->GetEdgeNumToNode(i), pNode->GetEdgeFlags(i), pNode->GetEdgeCost(i));
+	}
+}
+
+/*
+-------------------------
+SelectNode
+-------------------------
+*/
+void CNavigator::SelectNode(int nodeID)
+{
+	if (nodeID == NODE_NONE) {
+		// Pick the nearest node to me
+		gentity_t* me = g_entities;
+		nodeID = this->GetNearestNode(me, me->waypoint, NF_CLEAR_PATH, WAYPOINT_NONE);
+		if (nodeID == NODE_NONE) {
+			Com_Printf("Couldn't find a node ='(\n");
+			return;
+		}
+	}
+	m_selectedNode = nodeID;
+}
+
+/*
+-------------------------
+SetSelectedNodeRadius
+-------------------------
+*/
+void CNavigator::SetSelectedNodeRadius(int radius)
+{
+	for (auto it = m_nodes.begin(); it != m_nodes.end(); ++it) {
+		auto thisNode = *it;
+		if (thisNode->GetID() == m_selectedNode) {
+			thisNode->SetRadius(radius);
+			return;
+		}
+	}
+}
+
+void CNavigator::ShowSelectedNode()
+{
+	for (auto it = m_nodes.begin(); it != m_nodes.end(); ++it) {
+		auto thisNode = *it;
+		if (thisNode->GetID() == m_selectedNode) {
+			vec3_t origin;
+			thisNode->GetPosition(origin);
+			G_PlayEffect("force/invin", origin);
+			return;
+		}
+	}
+}
+
+
 // This is the PriorityQueue stuff for lists of connections
 // better than linear		(1/21/02 BJG)
 //////////////////////////////////////////////////////////////////

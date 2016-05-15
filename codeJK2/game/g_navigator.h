@@ -114,6 +114,7 @@ public:
 	int	GetFlags( void )				const	{	return m_flags;	}
 	void AddFlag( int newFlag )			{	m_flags |= newFlag;	}
 	void RemoveFlag( int oldFlag )		{	m_flags &= ~oldFlag; }
+	void SetRadius(int newRadius)		{   m_radius = newRadius; }
 
 	int	Save( int numNodes, fileHandle_t file );
 	int Load( int numNodes, fileHandle_t file );
@@ -185,6 +186,12 @@ public:
 	void ShowNodes( void );
 	void ShowEdges( void );
 	void ShowPath( int start, int end );
+	void ShowSelectedNode(void);
+
+	void SelectNode(int node = -1);
+	void NearMe(void);
+	int GetSelectedNode() { return m_selectedNode; }
+	void SetSelectedNodeRadius(int radius);
 
 	int GetNearestNode( gentity_t *ent, int lastID, int flags, int targetID );
 
@@ -257,6 +264,7 @@ protected:
 
 	node_v			m_nodes;
 	EdgeMultimap	m_edgeLookupMap;
+	int				m_selectedNode;
 };
 
 //////////////////////////////////////////////////////////////////////

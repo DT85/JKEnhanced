@@ -1523,7 +1523,7 @@ void SP_waypoint_navgoal_1( gentity_t *ent )
 Svcmd_Nav_f
 -------------------------
 */
-
+extern int giMapChecksum;
 void Svcmd_Nav_f( void )
 {
 	char	*cmd = gi.argv( 1 );
@@ -1583,6 +1583,60 @@ void Svcmd_Nav_f( void )
 			NAVDEBUG_curGoal = navigator.GetNearestNode( &g_entities[0], g_entities[0].waypoint, NF_CLEAR_PATH, WAYPOINT_NONE );
 		}
 	}
+	else if (Q_stricmp(cmd, "nearme") == 0)
+	{
+		navigator.NearMe();
+	}
+	else if (Q_stricmp(cmd, "select") == 0)
+	{
+		int node = -1;
+		if (gi.argc() >= 3) {
+			node = atoi(gi.argv(2));
+		}
+		navigator.SelectNode(node);
+	}
+	else if (Q_stricmp(cmd, "save") == 0)
+	{
+		navigator.CalculatePaths(true);
+		navigator.Save(level.mapname, giMapChecksum);
+		Com_Printf("Saved maps/%s.nav\n", level.mapname);
+	}
+	else if (Q_stricmp(cmd, "add") == 0)
+	{
+		int nodeID = navigator.AddRawPoint(g_entities[0].currentOrigin, 0, 8);
+		Com_Printf("Added new node: %i\n", nodeID);
+		navigator.CalculatePaths(true);
+	}
+	else if (Q_stricmp(cmd, "set_radius") == 0)
+	{
+		int radius = atoi(gi.argv(2));
+		int selectedNode = navigator.GetSelectedNode();
+		if (selectedNode == -1) {
+			Com_Printf("You need to select a node first.\n");
+		}
+		else if (radius <= 0) {
+			Com_Printf("Invalid radius.\n");
+		}
+		else {
+			navigator.SetSelectedNodeRadius(radius);
+		}
+		navigator.CalculatePaths(true);
+	}
+	else if (Q_stricmp(cmd, "link") == 0)
+	{
+		int linkTo = atoi(gi.argv(2));
+		int selected = navigator.GetSelectedNode();
+		if (selected == -1) {
+			Com_Printf("You need to select a node first before you can link\n");
+		}
+		else if (linkTo < 0) {
+			Com_Printf("Invalid node.\n");
+		}
+		else {
+			navigator.HardConnect(selected, linkTo);
+		}
+		navigator.CalculatePaths(true);
+	}
 	else if ( Q_stricmp( cmd, "totals" ) == 0 )
 	{
 		Com_Printf("Navigation Totals:\n");
@@ -1596,6 +1650,12 @@ void Svcmd_Nav_f( void )
 		Com_Printf("nav - valid commands\n---\n" );
 		Com_Printf("show\n - nodes\n - edges\n - testpath\n - enemypath\n - combatpoints\n - navgoals\n---\n");
 		Com_Printf("set\n - testgoal\n---\n" );
+		Com_Printf("nearme\n");
+		Com_Printf("select\n");
+		Com_Printf("save\n");
+		Com_Printf("add\n");
+		Com_Printf("set_radius\n");
+		Com_Printf("link\n");
 	}
 }
 
@@ -1844,6 +1904,7 @@ void NAV_ShowDebugInfo( void )
 	if ( NAVDEBUG_showNodes )
 	{
 		navigator.ShowNodes();
+		navigator.ShowSelectedNode();
 	}
 
 	if ( NAVDEBUG_showEdges )
