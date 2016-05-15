@@ -1105,7 +1105,7 @@ Plays a sound from an entity
 */
 extern void G_SoundOnEnt (gentity_t *ent, soundChannel_t channel, const char *soundPath);
 extern void G_SoundBroadcast( gentity_t *ent, int soundIndex );
-static int Q3_PlaySound( int taskID, int entID, const char *name, const char *channel )
+int Q3_PlaySound( int taskID, int entID, const char *name, const char *channel )
 {
 	gentity_t		*ent = &g_entities[entID];
 	char			finalName[MAX_QPATH];
