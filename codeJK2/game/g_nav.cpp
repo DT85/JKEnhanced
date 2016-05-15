@@ -1637,6 +1637,15 @@ void Svcmd_Nav_f( void )
 		}
 		navigator.CalculatePaths(true);
 	}
+	else if (Q_stricmp(cmd, "daisychain") == 0)
+	{
+		// Adds a node, links this node to the selected node, and then selects the newly added node, all in one step.
+		int newNode = navigator.AddRawPoint(g_entities[0].currentOrigin, 0, 8);
+		int selected = navigator.GetSelectedNode();
+		navigator.HardConnect(newNode, selected);
+		navigator.SelectNode(newNode);
+		navigator.CalculatePaths(true);
+	}
 	else if ( Q_stricmp( cmd, "totals" ) == 0 )
 	{
 		Com_Printf("Navigation Totals:\n");
@@ -1656,6 +1665,7 @@ void Svcmd_Nav_f( void )
 		Com_Printf("add\n");
 		Com_Printf("set_radius\n");
 		Com_Printf("link\n");
+		Com_Printf("daisychain\n");
 	}
 }
 
