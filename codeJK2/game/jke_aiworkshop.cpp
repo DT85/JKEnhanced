@@ -505,6 +505,52 @@ void Workshop_Set_GoalEntity_f(gentity_t* ent) {
 	}
 }
 
+// Set enemy
+void Workshop_Set_Enemy_f(gentity_t* ent) {
+	if (gi.argc() == 2) {
+		// There's a second argument. Use that.
+		if (!Q_stricmp(gi.argv(1), "me")) {
+			g_entities[selectedAI].lastEnemy = g_entities[selectedAI].enemy;
+			g_entities[selectedAI].enemy = g_entities;
+		}
+		else {
+			g_entities[selectedAI].enemy = &g_entities[atoi(gi.argv(1))];
+		}
+		if (g_entities[selectedAI].lastEnemy != nullptr) {
+			gi.Printf("New enemy: %i (last enemy was %i)\n", g_entities[selectedAI].enemy->s.number, g_entities[selectedAI].lastEnemy->s.number);
+		}
+		else {
+			gi.Printf("New enemy: %i\n", g_entities[selectedAI].enemy->s.number);
+		}
+	}
+
+	vec3_t		src, dest, vf;
+	trace_t		trace;
+	VectorCopy(ent->client->renderInfo.eyePoint, src);
+	AngleVectors(ent->client->ps.viewangles, vf, NULL, NULL);//ent->client->renderInfo.eyeAngles was cg.refdef.viewangles, basically
+	//extend to find end of use trace
+	VectorMA(src, 32967.0f, vf, dest);
+
+	//Trace ahead to find a valid target
+	gi.trace(&trace, src, vec3_origin, vec3_origin, dest, ent->s.number, MASK_OPAQUE | CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_ITEM | CONTENTS_CORPSE, G2_NOCOLLIDE, 0);
+	if (trace.fraction == 1.0f || trace.entityNum < 1 || trace.entityNum == ENTITYNUM_NONE || trace.entityNum == ENTITYNUM_WORLD)
+	{
+		gi.Printf("Invalid entity\n");
+		return;
+	}
+
+	gentity_t* target = &g_entities[trace.entityNum];
+	gentity_t* selected = &g_entities[selectedAI];
+	selected->lastEnemy = selected->enemy;
+	selected->enemy = target;
+	if (selected->lastEnemy != nullptr) {
+		gi.Printf("New enemy: %i (last enemy was %i)\n", selected->enemy->s.number, selected->lastEnemy->s.number);
+	}
+	else {
+		gi.Printf("New enemy: %i\n", selected->enemy->s.number);
+	}
+}
+
 // Set scriptflags
 void Workshop_Set_Scriptflags_f(gentity_t* ent) {
 	if (gi.argc() != 2) {
@@ -839,6 +885,7 @@ workshopCmd_t workshopCommands[] = {
 	{ "workshop_set_bstate", "Changes the Behavior State of an NPC", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_BehaviorState_f },
 	{ "workshop_set_goalent", "Sets the NPC's navgoal to be the thing that you are looking at.\nYou can use \"me\" or an entity number as an optional argument.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_GoalEntity_f },
 	{ "workshop_set_leader", "Gives the NPC a leader - the thing you are looking at.\nYou can use \"me\" or an entity number as an optional argument.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Leader_f },
+	{ "workshop_set_enemy", "Gives the NPC an enemy - the thing you are looking at.\nYou can use \"me\" or an entity number as an optional argument.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Enemy_f },
 	{ "workshop_set_scriptflags", "Sets the NPC's scriptflags. Use workshop_list_scriptflags to get a list of these.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Scriptflags_f },
 	{ "workshop_set_weapon", "Sets the NPC's weapon. You can use \"me\" instead of a weapon name to have them change to your weapon.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Weapon_f },
 	{ "workshop_set_team", "Sets the NPC's team. This does not affect who they shoot at, only who shoots at them. Change their enemyteam for that.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Team_f },
