@@ -5969,7 +5969,7 @@ extern vmCvar_t	cg_thirdPersonAlpha;
 			gi.G2API_SetSurfaceOnOff( &cent->gent->ghoul2[cent->gent->playerModel], "l_arm_cap_torso_off", 0x00000002 );
 		}
 
-		if (!cg.renderingThirdPerson && cg_trueguns.integer > 1 && cg.snap->ps.weapon != WP_SABER) {
+		if (!cg.renderingThirdPerson && cg_trueguns.integer > 1 && cg.snap->ps.weapon != WP_SABER && cent->gent == g_entities) {
 			gi.G2API_SetSurfaceOnOff(&cent->gent->ghoul2[cent->gent->playerModel], "r_hand", 0x00000002);
 			gi.G2API_SetSurfaceOnOff(&cent->gent->ghoul2[cent->gent->playerModel], "l_hand", 0x00000002);
 			gi.G2API_SetSurfaceOnOff(&cent->gent->ghoul2[cent->gent->playerModel], "r_arm", 0x00000002);
