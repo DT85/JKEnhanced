@@ -701,7 +701,7 @@ void Player_RestoreFromPrevLevel(gentity_t *ent)
 
 		if (strlen(s))	// actually this would be safe anyway because of the way sscanf() works, but this is clearer
 		{
-			sscanf( s, "%i %i %i %i %i %i %i %f %f %f %i %i %i %i %i %i",
+			sscanf( s, "%i %i %i %i %i %i %f %f %f %f %i %i %i %i %i %i",
 								&client->ps.stats[STAT_HEALTH],
 								&client->ps.stats[STAT_ARMOR],
 								&client->ps.stats[STAT_WEAPONS],
