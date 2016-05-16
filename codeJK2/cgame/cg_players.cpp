@@ -6223,7 +6223,7 @@ extern void CheckCameraLocation(vec3_t origin);
 
 						CG_RGBForSaberColor(cent->gent->client->ps.saberColor, RGB);
 
-						FX_AddSprite(cent->gent->client->renderInfo.muzzlePoint, cent->gent->client->ps.velocity, NULL, 40.0f, 0.0f, 1.0f, 0.7f, RGB, RGB, random() * 360, 0.0f, 100.0f, shader, FX_USE_ALPHA);
+						FX_AddSprite(cent->gent->client->saberTrail.base, cent->gent->client->ps.velocity, NULL, 40.0f, 0.0f, 1.0f, 0.7f, RGB, RGB, random() * 360, 0.0f, 100.0f, shader, FX_USE_ALPHA);
 					}
 				}
 				if ( cg.frametime > 0 )
