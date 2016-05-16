@@ -1620,7 +1620,7 @@ void Svcmd_Nav_f( void )
 	{
 		char* flag = gi.argv(2);
 		int selectedNode = navigator.GetSelectedNode();
-		if (selectedNode == -1 || selectedNode > navigator.GetNumNodes()) {
+		if (selectedNode == -1 || selectedNode >= navigator.GetNumNodes()) {
 			Com_Printf("You need to select a node first\n");
 			return;
 		}
@@ -1637,7 +1637,7 @@ void Svcmd_Nav_f( void )
 	else if (Q_stricmp(cmd, "clearflags") == 0)
 	{
 		int selectedNode = navigator.GetSelectedNode();
-		if (selectedNode == -1 || selectedNode > navigator.GetNumNodes()) {
+		if (selectedNode == -1 || selectedNode >= navigator.GetNumNodes()) {
 			Com_Printf("You need to select a node first\n");
 			return;
 		}
@@ -1645,11 +1645,25 @@ void Svcmd_Nav_f( void )
 	}
 	else if (Q_stricmp(cmd, "delete") == 0)
 	{
-		int selected = navigator.GetSelectedNode();
-		if (selected == -1 || selected > navigator.GetNumNodes()) {
-			return;
+		if (gi.argc() == 3) { // nav delete #
+			int selected = navigator.GetSelectedNode();
+			int num = atoi(gi.argv(2));
+			if (num == -1 || num >= navigator.GetNumNodes()) {
+				return;
+			}
+			navigator.SelectNode(num);
+			navigator.DeleteSelectedNode();
+			if (selected != num) {
+				navigator.SelectNode(selected);
+			}
 		}
-		navigator.DeleteSelectedNode();
+		else { // nav delete (selected)
+			int selected = navigator.GetSelectedNode();
+			if (selected == -1 || selected >= navigator.GetNumNodes()) {
+				return;
+			}
+			navigator.DeleteSelectedNode();
+		}
 		navigator.CalculatePaths(true);
 	}
 	else if (Q_stricmp(cmd, "set_radius") == 0)
@@ -1669,16 +1683,32 @@ void Svcmd_Nav_f( void )
 	}
 	else if (Q_stricmp(cmd, "link") == 0)
 	{
-		int linkTo = atoi(gi.argv(2));
-		int selected = navigator.GetSelectedNode();
-		if (selected == -1 || selected > navigator.GetNumNodes()) {
-			Com_Printf("You need to select a node first before you can link\n");
+		if (gi.argc() == 4) { // nav link # #
+			int linkFrom = atoi(gi.argv(2));
+			int linkTo = atoi(gi.argv(3));
+
+			if (linkFrom == -1 || linkFrom >= navigator.GetNumNodes()) {
+				Com_Printf("Invalid linkFrom node\n");
+			}
+			else if (linkTo == -1 || linkTo >= navigator.GetNumNodes()) {
+				Com_Printf("Invalid linkTo node\n");
+			}
+			else {
+				navigator.HardConnect(linkFrom, linkTo);
+			}
 		}
-		else if (linkTo < 0) {
-			Com_Printf("Invalid node.\n");
-		}
-		else {
-			navigator.HardConnect(selected, linkTo);
+		else { // nav link # (to selected)
+			int linkTo = atoi(gi.argv(2));
+			int selected = navigator.GetSelectedNode();
+			if (selected == -1 || selected >= navigator.GetNumNodes()) {
+				Com_Printf("You need to select a node first before you can link\n");
+			}
+			else if (linkTo < 0) {
+				Com_Printf("Invalid node.\n");
+			}
+			else {
+				navigator.HardConnect(selected, linkTo);
+			}
 		}
 		navigator.CalculatePaths(true);
 	}
@@ -1687,7 +1717,7 @@ void Svcmd_Nav_f( void )
 		// Adds a node, links this node to the selected node, and then selects the newly added node, all in one step.
 		int newNode = navigator.AddRawPoint(g_entities[0].currentOrigin, 0, navigator.GetDefaultRadius());
 		int selected = navigator.GetSelectedNode();
-		if (selected == -1 || newNode == -1 || selected > navigator.GetNumNodes()) {
+		if (selected == -1 || newNode == -1 || selected >= navigator.GetNumNodes()) {
 			return;
 		}
 		navigator.HardConnect(newNode, selected);
