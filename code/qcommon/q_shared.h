@@ -1486,6 +1486,8 @@ typedef struct
 	int		lastTime;	// time a saber segement was last stored
 	vec3_t	base;
 	vec3_t	tip;
+	vec3_t	dualbase;
+	vec3_t	dualtip;
 
 	// Marks stuff
 	qboolean	haveOldPos[2];

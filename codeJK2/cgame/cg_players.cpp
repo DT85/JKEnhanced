@@ -4773,61 +4773,20 @@ void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, in
 /*
 Ghoul2 Insert Start
 */
-
-//	if (scent->gent->ghoul2.size())
-	if(1)
+	if ( !scent ||
+		modelIndex == -1 ||
+		scent->gent->ghoul2.size() <= modelIndex ||
+		scent->gent->ghoul2[modelIndex].mModelindex == -1 )
 	{
-		if ( !scent ||
-			modelIndex == -1 ||
-			scent->gent->ghoul2.size() <= modelIndex ||
-			scent->gent->ghoul2[modelIndex].mModelindex == -1 )
-		{
-			return;
-		}
-		mdxaBone_t	boltMatrix;
-
-		// figure out where the actual model muzzle is
-		gi.G2API_GetBoltMatrix(scent->gent->ghoul2, modelIndex, 0, &boltMatrix, angles, origin, cg.time, cgs.model_draw, scent->currentState.modelScale);
-		// work the matrix axis stuff into the original axis and origins used.
-		gi.G2API_GiveMeVectorFromMatrix(boltMatrix, ORIGIN, org_);
-		gi.G2API_GiveMeVectorFromMatrix(boltMatrix, NEGATIVE_X, axis_[0]);//was NEGATIVE_Y, but the md3->glm exporter screws up this tag somethin' awful
-
-		//Now figure out where this info will be next frame
-		/*
-		{
-			vec3_t	futureOrigin, futureAngles, orgDiff, angDiff;
-			int futuretime;
-
-			//futuretime = (int)((cg.time + 99)/50) * 50;
-			futuretime = cg.time+100;
-
-			VectorCopy( angles, futureAngles );
-			VectorCopy( origin, futureOrigin );
-
-			//note: for a thrown saber, this does nothing, really
-			if ( cent->gent )
-			{
-				VectorSubtract( cent->lerpOrigin, cent->gent->lastOrigin, orgDiff );
-				VectorSubtract( cent->lerpAngles, cent->gent->lastAngles, angDiff );
-				VectorAdd( futureOrigin, orgDiff, futureOrigin );
-				for ( int i = 0; i < 3; i++ )
-				{
-					futureAngles[i] = AngleNormalize360( futureAngles[i]+angDiff[i] );
-				}
-			}
-
-			// figure out where the actual model muzzle will be after next server frame.
-			gi.G2API_GetBoltMatrix(scent->gent->ghoul2, modelIndex, 0, &boltMatrix, futureAngles, futureOrigin, futuretime, cgs.model_draw, scent->currentState.modelScale);
-			// work the matrix axis stuff into the original axis and origins used.
-			gi.G2API_GiveMeVectorFromMatrix(boltMatrix, ORIGIN, org_future);
-			gi.G2API_GiveMeVectorFromMatrix(boltMatrix, NEGATIVE_X, axis_future[0]);//was NEGATIVE_Y, but the md3->glm exporter screws up this tag somethin' awful
-		}
-		*/
+		return;
 	}
-	else
-	{
-		CG_GetTagWorldPosition( saber, "tag_flash", org_, axis_ );
-	}
+	mdxaBone_t	boltMatrix;
+
+	// figure out where the actual model muzzle is
+	gi.G2API_GetBoltMatrix(scent->gent->ghoul2, modelIndex, 0, &boltMatrix, angles, origin, cg.time, cgs.model_draw, scent->currentState.modelScale);
+	// work the matrix axis stuff into the original axis and origins used.
+	gi.G2API_GiveMeVectorFromMatrix(boltMatrix, ORIGIN, org_);
+	gi.G2API_GiveMeVectorFromMatrix(boltMatrix, NEGATIVE_X, axis_[0]);//was NEGATIVE_Y, but the md3->glm exporter screws up this tag somethin' awful
 
 /*
 Ghoul2 Insert End
@@ -4896,11 +4855,6 @@ Ghoul2 Insert End
 			{
 				if ( (trace.contents&CONTENTS_WATER) || (trace.contents&CONTENTS_SLIME) )
 				{
-					/*
-					if ( !(cent->gent->client->ps.saberEventFlags&SEF_INWATER) )
-					{
-					}
-					*/
 					if ( !Q_irand( 0, 10 ) )
 					{//FIXME: don't do this this way.... :)
 						vec3_t	spot;
@@ -4958,135 +4912,279 @@ Ghoul2 Insert End
 			else
 			{
 				cent->gent->client->ps.saberEventFlags &= ~SEF_INWATER;
-				if ( client->saberTrail.haveOldPos[i] )
-				{
-					// Hmmm, no impact this frame, but we have an old point
-					// Let's put the mark there, we should use an endcap mark to close the line, but we
-					//	can probably just get away with a round mark
-					//CG_ImpactMark( cgs.media.rivetMarkShader, client->saberTrail.oldPos[i], client->saberTrail.oldNormal[i],
-					//		0.0f, 1.0f, 1.0f, 1.0f, 1.0f, qfalse, 1.1f, qfalse );
-				}
-
 				// we aren't impacting, so turn off our mark tracking mechanism
 				client->saberTrail.haveOldPos[i] = qfalse;
 			}
 		}
 	}
 
-	saberTrail_t	*saberTrail = &client->saberTrail;
+	if (cg_sfxSabers.integer == 0) {
+		saberTrail_t	*saberTrail = &client->saberTrail;
 
 #define SABER_TRAIL_TIME	40.0f
 
-	// if we happen to be timescaled or running in a high framerate situation, we don't want to flood
-	//	the system with very small trail slices...but perhaps doing it by distance would yield better results?
-	if ( saberTrail->lastTime > cg.time )
-	{//after a pause, cg.time jumps ahead in time for one frame
-	 //and lastTime gets set to that and will freak out, so, since
-	 //it's never valid for saberTrail->lastTime to be > cg.time,
-	 //cap it to cg.time here
-		saberTrail->lastTime = cg.time;
-	}
-	if ( cg.time > saberTrail->lastTime + 2  && saberTrail->inAction ) // 2ms
-	{
-		if ( saberTrail->inAction && cg.time < saberTrail->lastTime + 300 ) // if we have a stale segment, don't draw until we have a fresh one
+		// if we happen to be timescaled or running in a high framerate situation, we don't want to flood
+		//	the system with very small trail slices...but perhaps doing it by distance would yield better results?
+		if (saberTrail->lastTime > cg.time)
+		{//after a pause, cg.time jumps ahead in time for one frame
+			//and lastTime gets set to that and will freak out, so, since
+			//it's never valid for saberTrail->lastTime to be > cg.time,
+			//cap it to cg.time here
+			saberTrail->lastTime = cg.time;
+		}
+		if (cg.time > saberTrail->lastTime + 2 && saberTrail->inAction) // 2ms
 		{
-			vec3_t	rgb1={255,255,255};
-
-			switch( client->ps.saberColor )
+			if (saberTrail->inAction && cg.time < saberTrail->lastTime + 300) // if we have a stale segment, don't draw until we have a fresh one
 			{
+				vec3_t	rgb1 = { 255, 255, 255 };
+
+				switch (client->ps.saberColor)
+				{
 				case SABER_RED:
-					VectorSet( rgb1, 255.0f, 0.0f, 0.0f );
+					VectorSet(rgb1, 255.0f, 0.0f, 0.0f);
 					break;
 				case SABER_ORANGE:
-					VectorSet( rgb1, 255.0f, 64.0f, 0.0f );
+					VectorSet(rgb1, 255.0f, 64.0f, 0.0f);
 					break;
 				case SABER_YELLOW:
-					VectorSet( rgb1, 255.0f, 255.0f, 0.0f );
+					VectorSet(rgb1, 255.0f, 255.0f, 0.0f);
 					break;
 				case SABER_GREEN:
-					VectorSet( rgb1, 0.0f, 255.0f, 0.0f );
+					VectorSet(rgb1, 0.0f, 255.0f, 0.0f);
 					break;
 				case SABER_BLUE:
-					VectorSet( rgb1, 0.0f, 64.0f, 255.0f );
+					VectorSet(rgb1, 0.0f, 64.0f, 255.0f);
 					break;
 				case SABER_PURPLE:
-					VectorSet( rgb1, 220.0f, 0.0f, 255.0f );
+					VectorSet(rgb1, 220.0f, 0.0f, 255.0f);
 					break;
+				}
+
+				float diff = cg.time - saberTrail->lastTime;
+
+				// I'm not sure that clipping this is really the best idea
+				if (diff <= SABER_TRAIL_TIME * 2)
+				{
+					float oldAlpha = 1.0f - (diff / SABER_TRAIL_TIME);
+
+					// build a quad
+					CTrail *fx = new CTrail;
+
+					// Go from new muzzle to new end...then to old end...back down to old muzzle...finally
+					//	connect back to the new muzzle...this is our trail quad
+					VectorCopy(org_, fx->mVerts[0].origin);
+					VectorMA(end, 3.0f, axis_[0], fx->mVerts[1].origin);
+
+					VectorCopy(saberTrail->tip, fx->mVerts[2].origin);
+					VectorCopy(saberTrail->base, fx->mVerts[3].origin);
+
+					// New muzzle
+					VectorCopy(rgb1, fx->mVerts[0].rgb);
+					fx->mVerts[0].alpha = 255.0f;
+
+					fx->mVerts[0].ST[0] = 0.0f;
+					fx->mVerts[0].ST[1] = 0.99f;
+					fx->mVerts[0].destST[0] = 0.99f;
+					fx->mVerts[0].destST[1] = 0.99f;
+
+					// new tip
+					VectorCopy(rgb1, fx->mVerts[1].rgb);
+					fx->mVerts[1].alpha = 255.0f;
+
+					fx->mVerts[1].ST[0] = 0.0f;
+					fx->mVerts[1].ST[1] = 0.0f;
+					fx->mVerts[1].destST[0] = 0.99f;
+					fx->mVerts[1].destST[1] = 0.0f;
+
+					// old tip
+					VectorCopy(rgb1, fx->mVerts[2].rgb);
+					fx->mVerts[2].alpha = 255.0f;
+
+					fx->mVerts[2].ST[0] = 0.99f - oldAlpha; // NOTE: this just happens to contain the value I want
+					fx->mVerts[2].ST[1] = 0.0f;
+					fx->mVerts[2].destST[0] = 0.99f + fx->mVerts[2].ST[0];
+					fx->mVerts[2].destST[1] = 0.0f;
+
+					// old muzzle
+					VectorCopy(rgb1, fx->mVerts[3].rgb);
+					fx->mVerts[3].alpha = 255.0f;
+
+					fx->mVerts[3].ST[0] = 0.99f - oldAlpha; // NOTE: this just happens to contain the value I want
+					fx->mVerts[3].ST[1] = 0.99f;
+					fx->mVerts[3].destST[0] = 0.99f + fx->mVerts[2].ST[0];
+					fx->mVerts[3].destST[1] = 0.99f;
+
+					fx->mShader = cgs.media.saberBlurShader;
+					//				fx->SetFlags( FX_USE_ALPHA );
+					FX_AddPrimitive((CEffect**)&fx, SABER_TRAIL_TIME);
+				}
 			}
 
-			float diff = cg.time - saberTrail->lastTime;
-
-			// I'm not sure that clipping this is really the best idea
-			if ( diff <= SABER_TRAIL_TIME * 2 )
-			{
-				float oldAlpha = 1.0f - ( diff / SABER_TRAIL_TIME );
-
-				// build a quad
-				CTrail *fx = new CTrail;
-
-				// Go from new muzzle to new end...then to old end...back down to old muzzle...finally
-				//	connect back to the new muzzle...this is our trail quad
-				VectorCopy( org_, fx->mVerts[0].origin );
-				VectorMA( end, 3.0f, axis_[0], fx->mVerts[1].origin );
-
-				VectorCopy( saberTrail->tip, fx->mVerts[2].origin );
-				VectorCopy( saberTrail->base, fx->mVerts[3].origin );
-
-				// New muzzle
-				VectorCopy( rgb1, fx->mVerts[0].rgb );
-				fx->mVerts[0].alpha = 255.0f;
-
-				fx->mVerts[0].ST[0] = 0.0f;
-				fx->mVerts[0].ST[1] = 0.99f;
-				fx->mVerts[0].destST[0] = 0.99f;
-				fx->mVerts[0].destST[1] = 0.99f;
-
-				// new tip
-				VectorCopy( rgb1, fx->mVerts[1].rgb );
-				fx->mVerts[1].alpha = 255.0f;
-
-				fx->mVerts[1].ST[0] = 0.0f;
-				fx->mVerts[1].ST[1] = 0.0f;
-				fx->mVerts[1].destST[0] = 0.99f;
-				fx->mVerts[1].destST[1] = 0.0f;
-
-				// old tip
-				VectorCopy( rgb1, fx->mVerts[2].rgb );
-				fx->mVerts[2].alpha = 255.0f;
-
-				fx->mVerts[2].ST[0] = 0.99f - oldAlpha; // NOTE: this just happens to contain the value I want
-				fx->mVerts[2].ST[1] = 0.0f;
-				fx->mVerts[2].destST[0] = 0.99f + fx->mVerts[2].ST[0];
-				fx->mVerts[2].destST[1] = 0.0f;
-
-				// old muzzle
-				VectorCopy( rgb1, fx->mVerts[3].rgb );
-				fx->mVerts[3].alpha = 255.0f;
-
-				fx->mVerts[3].ST[0] = 0.99f - oldAlpha; // NOTE: this just happens to contain the value I want
-				fx->mVerts[3].ST[1] = 0.99f;
-				fx->mVerts[3].destST[0] = 0.99f + fx->mVerts[2].ST[0];
-				fx->mVerts[3].destST[1] = 0.99f;
-
-				fx->mShader = cgs.media.saberBlurShader;
-//				fx->SetFlags( FX_USE_ALPHA );
-				FX_AddPrimitive( (CEffect**)&fx, SABER_TRAIL_TIME );
-			}
+			// we must always do this, even if we aren't active..otherwise we won't know where to pick up from
+			VectorCopy(org_, saberTrail->base);
+			VectorMA(end, 3.0f, axis_[0], saberTrail->tip);
+			saberTrail->lastTime = cg.time;
 		}
 
-		// we must always do this, even if we aren't active..otherwise we won't know where to pick up from
-		VectorCopy( org_, saberTrail->base );
-		VectorMA( end, 3.0f, axis_[0], saberTrail->tip );
-		saberTrail->lastTime = cg.time;
+		// Pass in the renderfx flags attached to the saber weapon model...this is done so that saber glows
+		//	will get rendered properly in a mirror...not sure if this is necessary??
+		CG_DoSaber(org_, axis_[0], length, client->ps.saberLengthMax, client->ps.saberColor, renderfx);
 	}
+	else {
+		saberTrail_t* saberTrail = &client->saberTrail;
+		saberTrail->duration = 0;
 
-	// Pass in the renderfx flags attached to the saber weapon model...this is done so that saber glows
-	//	will get rendered properly in a mirror...not sure if this is necessary??
-	
-	if(cg_sfxSabers.integer)
-		CG_DoSFXSaber(org_, end, org_, end, client->ps.saberLengthMax, 1.5f, client->ps.saberColor, renderfx, true);
-	else
-		CG_DoSaber( org_, axis_[0], length, client->ps.saberLengthMax, client->ps.saberColor, renderfx );
+		if (saberTrail->lastTime > cg.time) {
+			//after a pause, cg.time jumps ahead in time for one frame
+			//and lastTime gets set to that and will freak out, so, since
+			//it's never valid for saberTrail->lastTime to be > cg.time,
+			//cap it to cg.time here
+			saberTrail->lastTime = cg.time;
+		}
+
+		if (!saberTrail->base || !saberTrail->tip || !saberTrail->dualtip || !saberTrail->dualbase || !saberTrail->lastTime)
+		{
+			VectorCopy(org_, saberTrail->base);
+			VectorMA(end, -1.5f, axis_[0], saberTrail->tip);
+			VectorCopy(saberTrail->tip, saberTrail->dualtip);
+			VectorCopy(saberTrail->base, saberTrail->dualbase);
+			saberTrail->lastTime = cg.time;
+			saberTrail->inAction = cg.time;
+			return;
+		}
+		else if (cg.time > saberTrail->lastTime)
+		{
+			float dirlen0, dirlen1, dirlen2, lagscale;
+			vec3_t dir0, dir1, dir2;
+
+			VectorCopy(saberTrail->base, saberTrail->dualbase);
+			VectorCopy(saberTrail->tip, saberTrail->dualtip);
+
+			VectorCopy(org_, saberTrail->base);
+			VectorMA(end, -1.5f, axis_[0], saberTrail->tip);
+
+			VectorSubtract(saberTrail->dualtip, saberTrail->tip, dir0);
+			VectorSubtract(saberTrail->dualbase, saberTrail->base, dir1);
+			VectorSubtract(saberTrail->dualtip, saberTrail->dualbase, dir2);
+
+			dirlen0 = VectorLength(dir0);
+			dirlen1 = VectorLength(dir1);
+			dirlen2 = VectorLength(dir2);
+
+			if (saberMoveData[client->ps.saberMove].trailLength == 0)
+			{
+				dirlen0 *= 0.5;
+				dirlen1 *= 0.3;
+			}
+			else
+			{
+				dirlen0 *= 1.0;
+				dirlen1 *= 0.5;
+			}
+
+			lagscale = (cg.time - saberTrail->lastTime);
+			lagscale = 1 - (lagscale * 3 / 200);
+
+			if (lagscale < 0.1)
+				lagscale = 0.1;
+
+			VectorNormalize(dir0);
+			VectorNormalize(dir1);
+
+			VectorMA(saberTrail->tip, dirlen0*lagscale, dir0, saberTrail->dualtip);
+			VectorMA(saberTrail->base, dirlen1*lagscale, dir1, saberTrail->dualbase);
+			VectorSubtract(saberTrail->dualtip, saberTrail->dualbase, dir1);
+			VectorNormalize(dir1);
+
+			VectorMA(saberTrail->dualbase, dirlen2, dir1, saberTrail->dualtip);
+
+			saberTrail->lastTime = cg.time;
+		}
+
+		vec3_t	rgb1 = { 255.0f, 255.0f, 255.0f };
+
+		switch (client->ps.saberColor)
+		{
+		case SABER_RED:
+			VectorSet(rgb1, 255.0f, 0.0f, 0.0f);
+			break;
+		case SABER_ORANGE:
+			VectorSet(rgb1, 253.0f, 125.0f, 80.0f);
+			break;
+		case SABER_YELLOW:
+			VectorSet(rgb1, 250.0f, 250.0f, 160.0f);
+			break;
+		case SABER_GREEN:
+			VectorSet(rgb1, 100.0f, 240.0f, 100.0f);
+			break;
+		case SABER_PURPLE:
+			VectorSet(rgb1, 196.0f, 0.0f, 196.0f);
+			break;
+		case SABER_BLUE:
+			VectorSet(rgb1, 0.0f, 0.0f, 255.0f);
+			break;
+		default://SABER_RGB
+			VectorSet(rgb1, ((client->ps.saberColor) & 0xff),
+				((client->ps.saberColor >> 8) & 0xff),
+				((client->ps.saberColor >> 16) & 0xff));
+			break;
+		}
+
+		CTrail *fx = new CTrail;
+
+		VectorCopy(saberTrail->base, fx->mVerts[0].origin);
+		VectorCopy(saberTrail->tip, fx->mVerts[1].origin);
+		VectorCopy(saberTrail->dualtip, fx->mVerts[2].origin);
+		VectorCopy(saberTrail->dualbase, fx->mVerts[3].origin);
+
+		CG_DoSFXSaber(saberTrail->base, saberTrail->tip, saberTrail->dualtip, saberTrail->dualbase, client->ps.saberLengthMax, 3.0f, client->ps.saberColor, renderfx, qtrue);
+
+		if (cg.time > saberTrail->inAction)
+		{
+			saberTrail->inAction = cg.time;
+
+			fx->mShader = cgs.media.sfxSaberTrailShader;
+			fx->SetFlags(FX_USE_ALPHA);
+
+			// New muzzle
+			VectorCopy(rgb1, fx->mVerts[0].rgb);
+			fx->mVerts[0].alpha = 255.0f;
+
+			fx->mVerts[0].ST[0] = 0.0f;
+			fx->mVerts[0].ST[1] = 4.0f;
+			fx->mVerts[0].destST[0] = 4.0f;
+			fx->mVerts[0].destST[1] = 4.0f;
+
+			// new tip
+			VectorCopy(rgb1, fx->mVerts[1].rgb);
+			fx->mVerts[1].alpha = 255.0f;
+
+			fx->mVerts[1].ST[0] = 0.0f;
+			fx->mVerts[1].ST[1] = 0.0f;
+			fx->mVerts[1].destST[0] = 4.0f;
+			fx->mVerts[1].destST[1] = 0.0f;
+
+			// old tip
+			VectorCopy(rgb1, fx->mVerts[2].rgb);
+			fx->mVerts[2].alpha = 255.0f;
+
+			fx->mVerts[2].ST[0] = 4.0f;
+			fx->mVerts[2].ST[1] = 0.0f;
+			fx->mVerts[2].destST[0] = 4.0f;
+			fx->mVerts[2].destST[1] = 0.0f;
+
+			// old muzzle
+			VectorCopy(rgb1, fx->mVerts[3].rgb);
+			fx->mVerts[3].alpha = 255.0f;
+
+			fx->mVerts[3].ST[0] = 4.0f;
+			fx->mVerts[3].ST[1] = 4.0f;
+			fx->mVerts[3].destST[0] = 4.0f;
+			fx->mVerts[3].destST[1] = 4.0f;
+
+			FX_AddPrimitive((CEffect**)&fx, 0);
+		}
+	}
 }
 
 //--------------- END SABER STUFF --------
