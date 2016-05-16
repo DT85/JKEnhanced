@@ -1603,8 +1603,53 @@ void Svcmd_Nav_f( void )
 	}
 	else if (Q_stricmp(cmd, "add") == 0)
 	{
-		int nodeID = navigator.AddRawPoint(g_entities[0].currentOrigin, 0, 8);
+		int nodeID = navigator.AddRawPoint(g_entities[0].currentOrigin, 0, navigator.GetDefaultRadius());
 		Com_Printf("Added new node: %i\n", nodeID);
+		navigator.CalculatePaths(true);
+	}
+	else if (Q_stricmp(cmd, "default_radius") == 0)
+	{
+		int defaultRadius = atoi(gi.argv(2));
+		if (defaultRadius <= 0) {
+			Com_Printf("invalid radius\n");
+			return;
+		}
+		navigator.SetDefaultRadius(defaultRadius);
+	}
+	else if (Q_stricmp(cmd, "addflag") == 0)
+	{
+		char* flag = gi.argv(2);
+		int selectedNode = navigator.GetSelectedNode();
+		if (selectedNode == -1 || selectedNode > navigator.GetNumNodes()) {
+			Com_Printf("You need to select a node first\n");
+			return;
+		}
+		if (!Q_stricmp(flag, "clearpath")) {
+			navigator.AddNodeFlag(NF_CLEAR_PATH);
+		}
+		else if (!Q_stricmp(flag, "clearlos")) {
+			navigator.AddNodeFlag(NF_CLEAR_LOS);
+		}
+		else {
+			Com_Printf("invalid flag - the only valid flags are \"clearpath\" and \"clearlos\"\n");
+		}
+	}
+	else if (Q_stricmp(cmd, "clearflags") == 0)
+	{
+		int selectedNode = navigator.GetSelectedNode();
+		if (selectedNode == -1 || selectedNode > navigator.GetNumNodes()) {
+			Com_Printf("You need to select a node first\n");
+			return;
+		}
+		navigator.ClearNodeFlags();
+	}
+	else if (Q_stricmp(cmd, "delete") == 0)
+	{
+		int selected = navigator.GetSelectedNode();
+		if (selected == -1 || selected > navigator.GetNumNodes()) {
+			return;
+		}
+		navigator.DeleteSelectedNode();
 		navigator.CalculatePaths(true);
 	}
 	else if (Q_stricmp(cmd, "set_radius") == 0)
@@ -1626,7 +1671,7 @@ void Svcmd_Nav_f( void )
 	{
 		int linkTo = atoi(gi.argv(2));
 		int selected = navigator.GetSelectedNode();
-		if (selected == -1) {
+		if (selected == -1 || selected > navigator.GetNumNodes()) {
 			Com_Printf("You need to select a node first before you can link\n");
 		}
 		else if (linkTo < 0) {
@@ -1640,11 +1685,16 @@ void Svcmd_Nav_f( void )
 	else if (Q_stricmp(cmd, "daisychain") == 0)
 	{
 		// Adds a node, links this node to the selected node, and then selects the newly added node, all in one step.
-		int newNode = navigator.AddRawPoint(g_entities[0].currentOrigin, 0, 8);
+		int newNode = navigator.AddRawPoint(g_entities[0].currentOrigin, 0, navigator.GetDefaultRadius());
 		int selected = navigator.GetSelectedNode();
+		if (selected == -1 || newNode == -1 || selected > navigator.GetNumNodes()) {
+			return;
+		}
 		navigator.HardConnect(newNode, selected);
 		navigator.SelectNode(newNode);
 		navigator.CalculatePaths(true);
+
+		Com_Printf("Daisychained new node: %i\n", newNode);
 	}
 	else if ( Q_stricmp( cmd, "totals" ) == 0 )
 	{
@@ -1657,15 +1707,19 @@ void Svcmd_Nav_f( void )
 	{
 		//Print the available commands
 		Com_Printf("nav - valid commands\n---\n" );
-		Com_Printf("show\n - nodes\n - edges\n - testpath\n - enemypath\n - combatpoints\n - navgoals\n---\n");
-		Com_Printf("set\n - testgoal\n---\n" );
-		Com_Printf("nearme\n");
-		Com_Printf("select\n");
-		Com_Printf("save\n");
 		Com_Printf("add\n");
-		Com_Printf("set_radius\n");
-		Com_Printf("link\n");
+		Com_Printf("addflag\n");
+		Com_Printf("clearflags\n");
 		Com_Printf("daisychain\n");
+		Com_Printf("default_radius\n");
+		Com_Printf("delete\n");
+		Com_Printf("link\n");
+		Com_Printf("nearme\n");
+		Com_Printf("save\n");
+		Com_Printf("select\n");
+		Com_Printf("set\n - testgoal\n---\n");
+		Com_Printf("set_radius\n");
+		Com_Printf("show\n - nodes\n - edges\n - testpath\n - enemypath\n - combatpoints\n - navgoals\n---\n");
 	}
 }
 

@@ -1209,6 +1209,18 @@ void NPC_BehaviorSet_Charmed( int bState )
 	case BS_FLEE:
 		NPC_BSFlee();
 		break;
+	case BS_HUNT_AND_KILL:
+		NPC_BSHuntAndKill();
+		break;
+	case BS_INVESTIGATE:
+		NPC_BSInvestigate();
+		break;
+	case BS_PATROL:
+		NPC_BSPatrol();
+		break;
+	case BS_STAND_GUARD:
+		NPC_BSStandGuard();
+		break;
 	default:
 	case BS_DEFAULT://whatever
 		NPC_BSDefault();
@@ -1257,6 +1269,18 @@ void NPC_BehaviorSet_Default( int bState )
 		break;
 	case BS_CINEMATIC:
 		NPC_BSCinematic();
+		break;
+	case BS_HUNT_AND_KILL:
+		NPC_BSHuntAndKill();
+		break;
+	case BS_INVESTIGATE:
+		NPC_BSInvestigate();
+		break;
+	case BS_PATROL:
+		NPC_BSPatrol();
+		break;
+	case BS_STAND_GUARD:
+		NPC_BSStandGuard();
 		break;
 	default:
 	case BS_DEFAULT://whatever
