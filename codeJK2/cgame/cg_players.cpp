@@ -6228,7 +6228,18 @@ extern void CheckCameraLocation(vec3_t origin);
 				}
 				if ( cg.frametime > 0 )
 				{
-					cent->gent->client->ps.saberLength += cent->gent->client->ps.saberLengthMax/10 * cg.frametime/100;//= saberLengthMax;
+					switch (cent->gent->client->ps.saberAnimLevel) {
+					case SS_FAST:
+						cent->gent->client->ps.saberLength += cent->gent->client->ps.saberLengthMax / 5 * cg.frametime / 50;
+						break;
+					case SS_STRONG:
+						cent->gent->client->ps.saberLength += cent->gent->client->ps.saberLengthMax / 10 * cg.frametime / 250;
+						break;
+					default:
+					case SS_MEDIUM:
+						cent->gent->client->ps.saberLength += cent->gent->client->ps.saberLengthMax / 10 * cg.frametime / 100;//= saberLengthMax;
+						break;
+					}
 				}
 				if ( cent->gent->client->ps.saberLength > cent->gent->client->ps.saberLengthMax )
 				{
