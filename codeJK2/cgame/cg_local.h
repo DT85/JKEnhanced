@@ -592,6 +592,18 @@ extern	vmCvar_t		cg_fov;
 extern	vmCvar_t		cg_fovAspectAdjust;
 extern	vmCvar_t		cg_fovViewmodel;
 extern	vmCvar_t		cg_fovViewmodelAdjust;
+
+extern	vmCvar_t		cg_trueguns;
+extern	vmCvar_t		cg_trueroll;
+extern	vmCvar_t		cg_trueflip;
+extern	vmCvar_t		cg_truespin;
+extern	vmCvar_t		cg_truemoveroll;
+extern  vmCvar_t		cg_truesaberonly;
+extern	vmCvar_t		cg_trueeyeposition;
+extern	vmCvar_t		cg_trueinvertsaber;
+extern	vmCvar_t		cg_truefov;
+extern	vmCvar_t		cg_truebobbing;
+
 extern	vmCvar_t		cg_missionstatusscreen;
 extern	vmCvar_t		cg_endcredits;
 extern	vmCvar_t		cg_updatedDataPadForcePower1;
@@ -1187,6 +1199,10 @@ void	SetWeaponSelectTime(void);
 void	CG_ClearLightStyles( void );
 void	CG_RunLightStyles( void );
 void	CG_SetLightstyle( int i );
+
+//trueview stuff
+void CG_TrueViewInit(void);
+void CG_AdjustEyePos(const char *modelName);
 
 
 #endif	//__CG_LOCAL_H__

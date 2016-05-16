@@ -215,6 +215,7 @@ set(JK2SPGameCGameFiles
 	"${JK2SPDir}/cgame/cg_snapshot.cpp"
 	"${JK2SPDir}/cgame/cg_syscalls.cpp"
 	"${JK2SPDir}/cgame/cg_text.cpp"
+	"${JK2SPDir}/cgame/cg_trueview.cpp"
 	"${JK2SPDir}/cgame/cg_view.cpp"
 	"${JK2SPDir}/cgame/cg_weapons.cpp"
 	"${JK2SPDir}/cgame/strip_objectives.h"

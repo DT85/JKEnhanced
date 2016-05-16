@@ -1306,24 +1306,33 @@ qboolean CG_CalcFOVFromX( float fov_x )
 	return (inwater);
 }
 
-float CG_ForceSpeedFOV( void )
+float CG_ForceSpeedFOV(void)
 {
 	gentity_t	*player = &g_entities[0];
 	float fov;
 	float timeLeft = player->client->ps.forcePowerDuration[FP_SPEED] - cg.time;
 	float length = FORCE_SPEED_DURATION*forceSpeedValue[player->client->ps.forcePowerLevel[FP_SPEED]];
 	float amt = forceSpeedFOVMod[player->client->ps.forcePowerLevel[FP_SPEED]];
-	if ( timeLeft < 500 )
-	{//start going back
-		fov = cg_fov.value + (timeLeft)/500*amt;
+	if (!cg.renderingThirdPerson && ((!cg.zoomMode && cg_trueguns.integer) || cg.snap->ps.weapon == WP_SABER
+		|| cg.snap->ps.weapon == WP_MELEE) && cg_truefov.value)
+	{
+		fov = cg_truefov.value;
 	}
-	else if ( length - timeLeft < 1000 )
+	else
+	{
+		fov = cg_fov.value;
+	}
+	if (timeLeft < 500)
+	{//start going back
+		fov = fov + (timeLeft) / 500 * amt;
+	}
+	else if (length - timeLeft < 1000)
 	{//start zooming in
-		fov = cg_fov.value + (length - timeLeft)/1000*amt;
+		fov = fov + (length - timeLeft) / 1000 * amt;
 	}
 	else
 	{//stay at this FOV
-		fov = cg_fov.value+amt;
+		fov = fov + amt;
 	}
 	return fov;
 }
@@ -1335,53 +1344,59 @@ Fixed fov at intermissions, otherwise account for fov variable and zooms.
 ====================
 */
 //extern float	g_fov;
-static qboolean	CG_CalcFov( void ) {
+static qboolean	CG_CalcFov(void) {
 	float	fov_x;
 	float	f;
-		gentity_t	*player = &g_entities[0];
+	gentity_t	*player = &g_entities[0];
 
-	if ( cg.predicted_player_state.pm_type == PM_INTERMISSION ) {
+	if (cg.predicted_player_state.pm_type == PM_INTERMISSION) {
 		// if in intermission, use a fixed value
 		fov_x = 80;
 	}
-	else if ( cg.snap 
-		&& cg.snap->ps.viewEntity > 0 
-		&& cg.snap->ps.viewEntity < ENTITYNUM_WORLD 
-		&& (!cg.renderingThirdPerson || g_entities[cg.snap->ps.viewEntity].e_DieFunc == dieF_camera_die) )
+	else if (cg.snap
+		&& cg.snap->ps.viewEntity > 0
+		&& cg.snap->ps.viewEntity < ENTITYNUM_WORLD
+		&& (!cg.renderingThirdPerson || g_entities[cg.snap->ps.viewEntity].e_DieFunc == dieF_camera_die))
 	{
 		// if in entity camera view, use a special FOV
-		if ( &g_entities[cg.snap->ps.viewEntity] &&
-			g_entities[cg.snap->ps.viewEntity].NPC )
+		if (&g_entities[cg.snap->ps.viewEntity] &&
+			g_entities[cg.snap->ps.viewEntity].NPC)
 		{//FIXME: looks bad when take over a jedi... but never really do that, do we?
 			fov_x = g_entities[cg.snap->ps.viewEntity].NPC->stats.hfov;
 			//sanity-cap?
-			if ( fov_x > 120 )
+			if (fov_x > 120)
 			{
 				fov_x = 120;
 			}
-			else if ( fov_x < 10 )
+			else if (fov_x < 10)
 			{
 				fov_x = 10;
 			}
 		}
 		else
 		{
-			if ( cg.overrides.active & CG_OVERRIDE_FOV )
+			if (cg.overrides.active & CG_OVERRIDE_FOV)
 			{
 				fov_x = cg.overrides.fov;
+			}
+			else if (!cg.renderingThirdPerson && ((!cg.zoomMode && cg_trueguns.integer) || cg.snap->ps.weapon == WP_SABER
+				|| cg.snap->ps.weapon == WP_MELEE) && cg_truefov.value)
+			{
+				fov_x = cg_truefov.value;
 			}
 			else
 			{
 				fov_x = 120;//FIXME: read from the NPC's fov stats?
 			}
 		}
-	} 
-	else if ( (!cg.zoomMode || cg.zoomMode > 2) && (cg.snap->ps.forcePowersActive&(1<<FP_SPEED)) && player->client->ps.forcePowerDuration[FP_SPEED] )//cg.renderingThirdPerson && 
+	}
+	else if ((!cg.zoomMode || cg.zoomMode > 2) && (cg.snap->ps.forcePowersActive&(1 << FP_SPEED)) && player->client->ps.forcePowerDuration[FP_SPEED])//cg.renderingThirdPerson && 
 	{
 		fov_x = CG_ForceSpeedFOV();
-	} else {
+	}
+	else {
 		// user selectable
-		if ( cg.overrides.active & CG_OVERRIDE_FOV )
+		if (cg.overrides.active & CG_OVERRIDE_FOV)
 		{
 			fov_x = cg.overrides.fov;
 		}
@@ -1389,18 +1404,19 @@ static qboolean	CG_CalcFov( void ) {
 		{
 			fov_x = cg_fov.value;
 		}
-		if ( fov_x < 1 ) {
+		if (fov_x < 1) {
 			fov_x = 1;
-		} else if ( fov_x > 160 ) {
+		}
+		else if (fov_x > 160) {
 			fov_x = 160;
 		}
 
 		// Disable zooming when in third person
-		if ( cg.zoomMode && cg.zoomMode < 3 )//&& !cg.renderingThirdPerson ) // light amp goggles do none of the zoom silliness
+		if (cg.zoomMode && cg.zoomMode < 3)//&& !cg.renderingThirdPerson ) // light amp goggles do none of the zoom silliness
 		{
-			if ( !cg.zoomLocked )
+			if (!cg.zoomLocked)
 			{
-				if ( cg.zoomMode == 1 )
+				if (cg.zoomMode == 1)
 				{
 					// binoculars zooming either in or out
 					cg_zoomFov += cg.zoomDir * cg.frametime * 0.05f;
@@ -1413,11 +1429,11 @@ static qboolean	CG_CalcFov( void ) {
 
 				// Clamp zoomFov
 				float actualFOV = (cg.overrides.active&CG_OVERRIDE_FOV) ? cg.overrides.fov : cg_fov.value;
-				if ( cg_zoomFov < MAX_ZOOM_FOV )
+				if (cg_zoomFov < MAX_ZOOM_FOV)
 				{
 					cg_zoomFov = MAX_ZOOM_FOV;
 				}
-				else if ( cg_zoomFov > actualFOV )
+				else if (cg_zoomFov > actualFOV)
 				{
 					cg_zoomFov = actualFOV;
 				}
@@ -1425,11 +1441,11 @@ static qboolean	CG_CalcFov( void ) {
 				{//still zooming
 					static int zoomSoundTime = 0;
 
-					if ( zoomSoundTime < cg.time )
+					if (zoomSoundTime < cg.time)
 					{
 						sfxHandle_t snd;
-						
-						if ( cg.zoomMode == 1 )
+
+						if (cg.zoomMode == 1)
 						{
 							snd = cgs.media.zoomLoop;
 						}
@@ -1439,23 +1455,24 @@ static qboolean	CG_CalcFov( void ) {
 						}
 
 						// huh?  This could probably just be added as a looping sound??
-						cgi_S_StartSound( cg.refdef.vieworg, ENTITYNUM_WORLD, CHAN_LOCAL, snd );
-						zoomSoundTime = cg.time + 150; 
+						cgi_S_StartSound(cg.refdef.vieworg, ENTITYNUM_WORLD, CHAN_LOCAL, snd);
+						zoomSoundTime = cg.time + 150;
 					}
 				}
 			}
 
 			fov_x = cg_zoomFov;
-		} else {
-			f = ( cg.time - cg.zoomTime ) / ZOOM_OUT_TIME;
-			if ( f <= 1.0 ) {
-				fov_x = cg_zoomFov + f * ( fov_x - cg_zoomFov );
+		}
+		else {
+			f = (cg.time - cg.zoomTime) / ZOOM_OUT_TIME;
+			if (f <= 1.0) {
+				fov_x = cg_zoomFov + f * (fov_x - cg_zoomFov);
 			}
 		}
 	}
 
-//	g_fov = fov_x;
-	return ( CG_CalcFOVFromX( fov_x ) );
+	//	g_fov = fov_x;
+	return (CG_CalcFOVFromX(fov_x));
 }
 
 
@@ -1653,7 +1670,7 @@ static qboolean CG_CalcViewValues( void ) {
 		}
 	}
 
-	if ( (cg.renderingThirdPerson||cg.snap->ps.weapon == WP_SABER||cg.snap->ps.weapon == WP_MELEE) 
+	if ( (cg.renderingThirdPerson)
 		&& !cg.zoomMode 
 		&& !viewEntIsCam )
 	{
@@ -1665,7 +1682,7 @@ static qboolean CG_CalcViewValues( void ) {
 //		else
 //		{
 		// First person saber
-		if ( !cg.renderingThirdPerson )
+		/*if ( !cg.renderingThirdPerson )
 		{
 			if ( cg.snap->ps.weapon == WP_SABER||cg.snap->ps.weapon == WP_MELEE )
 			{
@@ -1675,7 +1692,7 @@ static qboolean CG_CalcViewValues( void ) {
 				AngleVectors( cg.refdefViewAngles, dir, NULL, NULL );
 				VectorMA( cg.refdef.vieworg, -2, dir, cg.refdef.vieworg );
 			}
-		}
+		}*/
 		CG_OffsetThirdPersonView();
 //		}
 	}  
@@ -1898,7 +1915,43 @@ wasForceSpeed=isForceSpeed;
 	CG_PredictPlayerState();
 
 	// decide on third person view
+	qboolean oldRenderingThirdPerson = cg.renderingThirdPerson;
 	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0) || (g_entities[0].client&&g_entities[0].client->NPC_class==CLASS_ATST);
+
+	if (cg_trueinvertsaber.integer == 2 && (cg.weaponSelect == WP_SABER || cg.weaponSelect == WP_MELEE))
+	{//force thirdperson for sabers/melee if in cg_trueinvertsaber.integer == 2
+		cg.renderingThirdPerson = qtrue;
+	}
+	else if (cg_trueinvertsaber.integer == 1 && !cg_thirdPerson.integer && (cg.weaponSelect == WP_SABER || cg.weaponSelect == WP_MELEE))
+	{
+		cg.renderingThirdPerson = qtrue;
+	}
+	else if (cg_trueinvertsaber.integer == 1 && cg_thirdPerson.integer && (cg.weaponSelect == WP_SABER || cg.weaponSelect == WP_MELEE))
+	{
+		cg.renderingThirdPerson = qfalse;
+	}
+
+extern void G_CreateG2AttachedWeaponModel(gentity_t *ent, const char *psWeaponModel);
+	if (cg_trueguns.integer > 1 && oldRenderingThirdPerson != cg.renderingThirdPerson) {
+		if (cg.renderingThirdPerson == qtrue) {
+			// We switched from rendering in first person to rendering in third person
+			// Attach a G2 model
+			if (cg.snap->ps.weapon == WP_SABER) {
+				G_CreateG2AttachedWeaponModel(cg_entities[0].gent, weaponData[cg.snap->ps.weapon].weaponMdl);
+			}
+			else {
+				G_CreateG2AttachedWeaponModel(cg_entities[0].gent, weaponData[cg.snap->ps.weapon].weaponMdl);
+			}
+		}
+		else {
+			// We switched from rendering in third person to rendering in first person
+			// Kill the G2 model
+			if (cg_entities[0].gent->weaponModel != -1) {
+				gi.G2API_RemoveGhoul2Model(cg_entities[0].gent->ghoul2, cg_entities[0].gent->weaponModel);
+				cg_entities[0].gent->weaponModel = -1;
+			}
+		}
+	}
 
 	if ( cg.zoomMode )
 	{
@@ -2028,3 +2081,15 @@ wasForceSpeed=isForceSpeed;
 	*/
 }
 
+//Checks to see if the current camera position is valid based on the last known safe location.  If it's not safe, place
+//the camera at the last position safe location
+void CheckCameraLocation(vec3_t OldeyeOrigin)
+{
+	trace_t			trace;
+
+	CG_Trace(&trace, OldeyeOrigin, cameramins, cameramaxs, cg.refdef.vieworg, cg.snap->ps.clientNum, MASK_CAMERACLIP);
+	if (trace.fraction <= 1.0)
+	{
+		VectorCopy(trace.endpos, cg.refdef.vieworg);
+	}
+}

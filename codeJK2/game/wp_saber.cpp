@@ -264,6 +264,13 @@ float saberAnimSpeedMod[NUM_FORCE_POWER_LEVELS] =
 
 void G_CreateG2AttachedWeaponModel( gentity_t *ent, const char *psWeaponModel )
 {
+	if (ent == g_entities && !cg.renderingThirdPerson && cg.weaponSelect != WP_SABER && cg_trueguns.integer > 1) {
+		if (ent->weaponModel != -1) {
+			gi.G2API_RemoveGhoul2Model(ent->ghoul2, ent->weaponModel);
+		}
+		ent->weaponModel = -1;
+		return;
+	}
 	if (!psWeaponModel)
 	{
 		assert (psWeaponModel);
