@@ -931,7 +931,7 @@ static void Svcmd_HeadPlayerModel_f(void)
 
 static void Svcmd_NewPlayerTint_f(void)
 {
-	if ( gi.argc() == 5 && ((unsigned int)atoi(gi.argv(1)) < MAX_NEW_ENT_RGB))
+	if ( gi.argc() == 5 && ((unsigned int)atoi(gi.argv(1)) < MAX_CVAR_TINT))
 	{
 		unsigned int tintIndex = atoi(gi.argv(1));
 		g_entities[0].client->renderInfo.newCustomRGBA[tintIndex][0] = atoi(gi.argv(2));
@@ -946,7 +946,7 @@ static void Svcmd_NewPlayerTint_f(void)
 	}
 	else
 	{
-		gi.Printf( S_COLOR_RED"USAGE: newPlayerTint <index 0 - 0> <red 0 - 255> <green 0 - 255> <blue 0 - 255>\n" );
+		gi.Printf( S_COLOR_RED"USAGE: newPlayerTint <index 0 - 2> <red 0 - 255> <green 0 - 255> <blue 0 - 255>\n" );
 	}
 }
 
