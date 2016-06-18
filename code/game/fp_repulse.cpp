@@ -73,7 +73,7 @@ void RepulseDamage( gentity_t *self, gentity_t *enemy, vec3_t location, int dama
 void ForceRepulseThrow( gentity_t *self, int chargeTime )
 {
 	//shove things around you away
-	qboolean fake = false;
+	qboolean fake = qfalse;
 	float		dist;
 	gentity_t	*ent, *forwardEnt = NULL;
 	gentity_t	*entityList[MAX_GENTITIES];
@@ -482,17 +482,17 @@ void ForceRepulseThrow( gentity_t *self, int chargeTime )
 					if ( (push_list[x]->s.number||(cg.renderingThirdPerson&&!cg.zoomMode)) //NPC or 3rd person player
 						&& ((self->client->ps.forcePowerLevel[FP_REPULSE] < FORCE_LEVEL_2 && push_list[x]->client->ps.forcePowerLevel[FP_PUSH] < FORCE_LEVEL_1)) )
 					{//NPC or third person player (without force push/pull skill), and force push/pull level is at 1
-						WP_ForceKnockdown( push_list[x], self, qfalse, (knockback>150), qfalse );
+						WP_ForceKnockdown( push_list[x], self, qfalse, (qboolean)(knockback>150), qfalse );
 						RepulseDamage( self, push_list[x], tr.endpos, damageLevel );
 					}
 					else if ( !push_list[x]->s.number )
 					{//player, have to force an anim on him
-						WP_ForceKnockdown( push_list[x], self, qfalse, (knockback>150), qfalse );
+						WP_ForceKnockdown( push_list[x], self, qfalse, (qboolean)(knockback>150), qfalse );
 						RepulseDamage( self, push_list[x], tr.endpos, damageLevel );
 					}
 					else
 					{//NPC and force-push/pull at level 2 or higher
-						WP_ForceKnockdown( push_list[x], self, qfalse, (knockback>100), qfalse );
+						WP_ForceKnockdown( push_list[x], self, qfalse, (qboolean)(knockback>100), qfalse );
 						RepulseDamage( self, push_list[x], tr.endpos, damageLevel );
 					}
 				}
