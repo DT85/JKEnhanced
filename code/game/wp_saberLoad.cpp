@@ -1944,7 +1944,7 @@ static void Saber_ParseIgnitionFlare( saberInfo_t *saber, const char **p ) {
 		SkipRestOfLine( p );
 		return;
 	}
-	Q_strncpyz( saber->ignitionFlare, value, sizeof( saber->ignitionFlare ), qtrue );
+	Q_strncpyz( saber->ignitionFlare, value, sizeof( saber->ignitionFlare ) );
 	//NOTE: registers this on cgame side where it registers all client assets
 }
 static void Saber_ParseIgnitionFlare2( saberInfo_t *saber, const char **p ) {
@@ -1953,7 +1953,7 @@ static void Saber_ParseIgnitionFlare2( saberInfo_t *saber, const char **p ) {
 		SkipRestOfLine( p );
 		return;
 	}
-	Q_strncpyz( saber->ignitionFlare2, value, sizeof( saber->ignitionFlare2 ), qtrue );
+	Q_strncpyz( saber->ignitionFlare2, value, sizeof( saber->ignitionFlare2 ) );
 	//NOTE: registers this on cgame side where it registers all client assets
 }
 static void Saber_ParseIgnitionFlareBlack( saberInfo_t *saber, const char **p ) {
@@ -1962,7 +1962,7 @@ static void Saber_ParseIgnitionFlareBlack( saberInfo_t *saber, const char **p ) 
 		SkipRestOfLine( p );
 		return;
 	}
-	Q_strncpyz( saber->blackIgnitionFlare, value, sizeof( saber->blackIgnitionFlare ), qtrue );
+	Q_strncpyz( saber->blackIgnitionFlare, value, sizeof( saber->blackIgnitionFlare ) );
 	//NOTE: registers this on cgame side where it registers all client assets
 }
 static void Saber_ParseIgnitionFlareBlack2( saberInfo_t *saber, const char **p ) {
@@ -1971,7 +1971,7 @@ static void Saber_ParseIgnitionFlareBlack2( saberInfo_t *saber, const char **p )
 		SkipRestOfLine( p );
 		return;
 	}
-	Q_strncpyz( saber->blackIgnitionFlare2, value, sizeof( saber->blackIgnitionFlare2 ), qtrue );
+	Q_strncpyz( saber->blackIgnitionFlare2, value, sizeof( saber->blackIgnitionFlare2 ) );
 	//NOTE: registers this on cgame side where it registers all client assets
 }
 
