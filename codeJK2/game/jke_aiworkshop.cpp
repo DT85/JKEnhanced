@@ -84,6 +84,11 @@ static void WorkshopDrawEntityInformation(gentity_t* ent, int x, const char* tit
 		add += OL_H;
 	}
 
+	if (ent->svFlags & SVF_ICARUS_FREEZE) {
+		cgi_R_Font_DrawString(x, OL_Y + add, "<< FROZEN >>", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		add += OL_H;
+	}
+
 	cgi_R_Font_DrawString(x, OL_Y + add, va("playerTeam: %s", teamTable[ent->client->playerTeam].name), textcolor, cgs.media.qhFontSmall, -1, OL_S);
 	add += OL_H;
 
@@ -322,6 +327,19 @@ void WorkshopSelect_f(gentity_t* ent) {
 // Deselect currently selected NPC
 void WorkshopDeselect_f(gentity_t* ent) {
 	selectedAI = ENTITYNUM_NONE;
+}
+
+// Toggles freeze on the current NPC
+void Workshop_Freeze_f(gentity_t* ent) {
+	gentity_t *ai = &g_entities[selectedAI];
+	if (ai->svFlags & SVF_ICARUS_FREEZE) {
+		// Entity is frozen, unfreeze it!
+		ai->svFlags &= ~SVF_ICARUS_FREEZE;
+	}
+	else
+	{
+		ai->svFlags |= SVF_ICARUS_FREEZE;
+	}
 }
 
 // View all behavior states
@@ -874,7 +892,7 @@ workshopCmd_t workshopCommands[] = {
 	{ "workshop_list_bstates", "Lists all of the Behavior States that an NPC can be in.", WSFLAG_ONLYINWS, Workshop_List_BehaviorState_f },
 	{ "workshop_list_scriptflags", "Lists all of the Script Flags that an NPC can have.", WSFLAG_ONLYINWS, Workshop_List_Scriptflags_f },
 	{ "workshop_list_teams", "Lists all of the Teams that an NPC can belong to or fight.", WSFLAG_ONLYINWS, Workshop_List_Team_f },
-	{ "workshop_list_aiflags", "Lists all of the AI Flags that an NPC can posses.", WSFLAG_ONLYINWS, Workshop_List_AIFlags_f },
+	{ "workshop_list_aiflags", "Lists all of the AI Flags that an NPC can possess.", WSFLAG_ONLYINWS, Workshop_List_AIFlags_f },
 	{ "workshop_list_classes", "Lists all of the Classes that an AI can be in.", WSFLAG_ONLYINWS, Workshop_List_Classes_f },
 	{ "workshop_list_ranks", "Lists all of the Ranks that an AI can be.", WSFLAG_ONLYINWS, Workshop_List_Ranks_f },
 	{ "workshop_list_movetypes", "Lists all of the Move Types that an AI can use.", WSFLAG_ONLYINWS, Workshop_List_Movetypes_f },
@@ -899,6 +917,7 @@ workshopCmd_t workshopCommands[] = {
 	{ "workshop_set_parm", "Sets a parm that can be read with ICARUS.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Parm_f },
 	{ "workshop_play_dialogue", "Plays a line of dialogue from the NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Play_Dialogue_f },
 	{ "workshop_activate_bset", "Activates a Behavior Set on an NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Activate_BSet_f },
+	{ "workshop_freeze", "Freezes an NPC", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Freeze_f },
 	{ "workshop_god", "Uses the god cheat (invincibility) on an NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_God_f },
 	{ "workshop_notarget", "Uses the notarget cheat (can't be seen by enemies) on an NPC. Some NPCs have notarget on by default.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Notarget_f },
 	{ "", "", 0, nullptr },
