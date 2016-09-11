@@ -5969,7 +5969,7 @@ extern vmCvar_t	cg_thirdPersonAlpha;
 			gi.G2API_SetSurfaceOnOff( &cent->gent->ghoul2[cent->gent->playerModel], "l_arm_cap_torso_off", 0x00000002 );
 		}
 
-		if (!cg.renderingThirdPerson && cg_trueguns.integer > 1 && cg.snap->ps.weapon != WP_SABER) {
+		if (!cg.renderingThirdPerson && cg_trueguns.integer > 1 && cg.snap->ps.weapon != WP_SABER && cent->gent == g_entities) {
 			gi.G2API_SetSurfaceOnOff(&cent->gent->ghoul2[cent->gent->playerModel], "r_hand", 0x00000002);
 			gi.G2API_SetSurfaceOnOff(&cent->gent->ghoul2[cent->gent->playerModel], "l_hand", 0x00000002);
 			gi.G2API_SetSurfaceOnOff(&cent->gent->ghoul2[cent->gent->playerModel], "r_arm", 0x00000002);
@@ -6223,12 +6223,23 @@ extern void CheckCameraLocation(vec3_t origin);
 
 						CG_RGBForSaberColor(cent->gent->client->ps.saberColor, RGB);
 
-						FX_AddSprite(cent->gent->client->renderInfo.muzzlePoint, cent->gent->client->ps.velocity, NULL, 40.0f, 0.0f, 1.0f, 0.7f, RGB, RGB, random() * 360, 0.0f, 100.0f, shader, FX_USE_ALPHA);
+						FX_AddSprite(cent->gent->client->saberTrail.base, cent->gent->client->ps.velocity, NULL, 40.0f, 0.0f, 1.0f, 0.7f, RGB, RGB, random() * 360, 0.0f, 100.0f, shader, FX_USE_ALPHA);
 					}
 				}
 				if ( cg.frametime > 0 )
 				{
-					cent->gent->client->ps.saberLength += cent->gent->client->ps.saberLengthMax/10 * cg.frametime/100;//= saberLengthMax;
+					switch (cent->gent->client->ps.saberAnimLevel) {
+					case SS_FAST:
+						cent->gent->client->ps.saberLength += cent->gent->client->ps.saberLengthMax / 5 * cg.frametime / 50;
+						break;
+					case SS_STRONG:
+						cent->gent->client->ps.saberLength += cent->gent->client->ps.saberLengthMax / 10 * cg.frametime / 250;
+						break;
+					default:
+					case SS_MEDIUM:
+						cent->gent->client->ps.saberLength += cent->gent->client->ps.saberLengthMax / 10 * cg.frametime / 100;//= saberLengthMax;
+						break;
+					}
 				}
 				if ( cent->gent->client->ps.saberLength > cent->gent->client->ps.saberLengthMax )
 				{
