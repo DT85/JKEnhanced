@@ -18,6 +18,7 @@ extern stringID_table_t NPCClassTable[];
 extern stringID_table_t RankTable[];
 extern stringID_table_t MoveTypeTable[];
 extern stringID_table_t FPTable[];
+extern stringID_table_t animTable[];
 
 #define OL_S	0.5f
 #define OL_Y	30
@@ -30,9 +31,15 @@ static void WorkshopDrawEntityInformation(gentity_t* ent, int x, const char* tit
 
 	cgi_R_Font_DrawString(x, OL_Y + add, va("NPC_type: %s", ent->NPC_type), textcolor, cgs.media.qhFontSmall, -1, OL_S);
 	add += OL_H;
-
-	cgi_R_Font_DrawString(x, OL_Y + add, va("health: %i/%i", ent->health, ent->max_health), textcolor, cgs.media.qhFontSmall, -1, OL_S);
-	add += OL_H;
+	
+	if (ent->client->ps.stats[STAT_ARMOR] > 0) {
+		cgi_R_Font_DrawString(x, OL_Y + add, va("health: %i/%i, armor: %i", ent->health, ent->max_health, ent->client->ps.stats[STAT_ARMOR]), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		add += OL_H;
+	}
+	else {
+		cgi_R_Font_DrawString(x, OL_Y + add, va("health: %i/%i", ent->health, ent->max_health), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		add += OL_H;
+	}
 
 	if (ent->script_targetname) {
 		cgi_R_Font_DrawString(x, OL_Y + add, va("script_targetname: %s", ent->script_targetname), textcolor, cgs.media.qhFontSmall, -1, OL_S);
@@ -81,6 +88,11 @@ static void WorkshopDrawEntityInformation(gentity_t* ent, int x, const char* tit
 
 	if (ent->flags & FL_UNDYING) {
 		cgi_R_Font_DrawString(x, OL_Y + add, "cheat: UNDEAD", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		add += OL_H;
+	}
+
+	if (ent->flags & FL_SHIELDED) {
+		cgi_R_Font_DrawString(x, OL_Y + add, "cheat: SHIELD", textcolor, cgs.media.qhFontSmall, -1, OL_S);
 		add += OL_H;
 	}
 
@@ -389,6 +401,20 @@ void Workshop_List_BehaviorSets_f(gentity_t* ent) {
 	for (int i = BSET_SPAWN; i < NUM_BSETS; i++) {
 		gi.Printf(va("%s\n", BSETTable[i].name));
 	}
+}
+
+// View all animations
+void Workshop_List_Anims_f(gentity_t* ent) {
+	gi.Printf("^5Listing animations....");
+	for (int i = 0; i < MAX_ANIMATIONS; i++) {
+		// Print three animations per line
+		if (i % 3 == 0) {
+			gi.Printf("\n");
+		}
+		gi.Printf("%-.32s\t", animTable[i].name);
+	}
+	gi.Printf("\n");
+	gi.Printf("%i animations listed.\n", MAX_ANIMATIONS);
 }
 
 // List all scriptflags
@@ -837,6 +863,52 @@ void Workshop_Play_Dialogue_f(gentity_t* ent) {
 	Q3_PlaySound(0, selectedAI, sound, "CHAN_VOICE");
 }
 
+extern qboolean Q3_SetAnimUpper(int entID, const char *anim_name);
+extern qboolean Q3_SetAnimLower(int entID, const char *anim_name);
+extern void Q3_SetAnimHoldTime(int entID, int int_data, qboolean lower);
+void Workshop_Set_Animation_f(gentity_t* ent) {
+	if (gi.argc() != 4) {
+		gi.Printf("usage: %s <animation name> <\"lower\", \"upper\" or \"both\"> <hold time, milliseconds>\n", gi.argv(0));
+	}
+
+	char* animName = gi.argv(1);
+	char* section = gi.argv(2);
+	int holdTime = atoi(gi.argv(3));
+	if (Q_stricmp(section, "lower") && Q_stricmp(section, "upper") && Q_stricmp(section, "both")) {
+		gi.Printf("Only \"lower\", \"upper\", or \"both\" are valid sections for %s\n", gi.argv(0));
+		return;
+	}
+
+	if (!Q_stricmp(section, "lower") || !Q_stricmp(section, "both")) {
+		Q3_SetAnimLower(selectedAI, animName);
+		Q3_SetAnimHoldTime(selectedAI, holdTime, qtrue);
+	}
+	if (!Q_stricmp(section, "upper") || !Q_stricmp(section, "both")) {
+		Q3_SetAnimUpper(selectedAI, animName);
+		Q3_SetAnimHoldTime(selectedAI, holdTime, qfalse);
+	}
+}
+
+extern void Q3_SetHealth(int entID, int data);
+void Workshop_Set_Health_f(gentity_t* ent) {
+	if (gi.argc() != 2) {
+		gi.Printf("usage: %s <health>\n", gi.argv(0));
+	}
+
+	int health = atoi(gi.argv(1));
+	Q3_SetHealth(selectedAI, health);
+}
+
+extern void Q3_SetArmor(int entID, int data);
+void Workshop_Set_Armor_f(gentity_t* ent) {
+	if (gi.argc() != 2) {
+		gi.Printf("usage: %s <armor>\n", gi.argv(0));
+	}
+
+	int armor = atoi(gi.argv(1));
+	Q3_SetArmor(selectedAI, armor);
+}
+
 // Godmode for the NPC
 void Workshop_God_f(gentity_t* ent) {
 	gentity_t* selected = &g_entities[selectedAI];
@@ -853,14 +925,43 @@ void Workshop_God_f(gentity_t* ent) {
 // Notarget mode for the NPC
 void Workshop_Notarget_f(gentity_t* ent) {
 	gentity_t* selected = &g_entities[selectedAI];
+	const char* msg;
 	if (selected->flags & FL_NOTARGET) {
-		gi.Printf("notarget OFF\n");
-		selected->flags ^= FL_NOTARGET;
+		msg = "notarget OFF\n";
 	}
 	else {
-		gi.Printf("notarget ON\n");
-		selected->flags |= FL_NOTARGET;
+		msg = "notarget ON\n";
 	}
+	selected->flags ^= FL_NOTARGET;
+	gi.Printf(msg);
+}
+
+// Undying mode for the NPC
+void Workshop_Undying_f(gentity_t* ent) {
+	gentity_t* selected = &g_entities[selectedAI];
+	const char* msg;
+	if (selected->flags & FL_UNDYING) {
+		msg = "undead mode OFF\n";
+	}
+	else {
+		msg = "undead mode ON\n";
+	}
+	selected->flags ^= FL_UNDYING;
+	gi.Printf(msg);
+}
+
+// Shielding for the NPC
+void Workshop_Shielding_f(gentity_t* ent) {
+	gentity_t* selected = &g_entities[selectedAI];
+	const char* msg;
+	if (selected->flags & FL_SHIELDED) {
+		msg = "shielded mode OFF\n";
+	}
+	else {
+		msg = "shielded mode ON\n";
+	}
+	selected->flags ^= FL_SHIELDED;
+	gi.Printf(msg);
 }
 
 // Toggle the detailed display of the workshop
@@ -898,6 +999,7 @@ workshopCmd_t workshopCommands[] = {
 	{ "workshop_list_movetypes", "Lists all of the Move Types that an AI can use.", WSFLAG_ONLYINWS, Workshop_List_Movetypes_f },
 	{ "workshop_list_forcepowers", "Lists all of the Force Powers that an AI can have.", WSFLAG_ONLYINWS, Workshop_List_ForcePowers_f },
 	{ "workshop_list_bsets", "Lists all of the Behavior Sets that an NPC can attain.", WSFLAG_ONLYINWS, Workshop_List_BehaviorSets_f },
+	{ "workshop_list_anims", "Lists all of the animations that can be played by an NPC.", WSFLAG_ONLYINWS, Workshop_List_Anims_f },
 	{ "workshop_view_timers", "Lists all of the timers (alive or dead) that are active on the currently selected NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_View_Timers_f },
 	{ "workshop_set_timer", "Sets a timer on an NPC", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Timer_f },
 	{ "workshop_set_bstate", "Changes the Behavior State of an NPC", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_BehaviorState_f },
@@ -914,12 +1016,17 @@ workshopCmd_t workshopCommands[] = {
 	{ "workshop_set_movetype", "Sets the NPC's movetype. Rather self-explanatory.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Movetype_f },
 	{ "workshop_set_forcepower", "Gives the NPC a force power. Setting their force power to 0 takes the power away from them.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Forcepower_f },
 	{ "workshop_set_bsetscript", "Makes the NPC use an ICARUS script when a certain behaviorset is activated. These are things like angerscript, spawnscript, etc.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_BSetScript_f },
-	{ "workshop_set_parm", "Sets a parm that can be read with ICARUS.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Parm_f },
+	{ "workshop_set_parm", "Sets a parm on an NPC that can be read with ICARUS.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Parm_f },
+	{ "workshop_set_health", "Sets the NPC's health.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Health_f },
+	{ "workshop_set_armor", "Sets the NPC's armor.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Armor_f },
 	{ "workshop_play_dialogue", "Plays a line of dialogue from the NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Play_Dialogue_f },
+	{ "workshop_set_anim", "Sets the current animation of the NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Animation_f },
 	{ "workshop_activate_bset", "Activates a Behavior Set on an NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Activate_BSet_f },
 	{ "workshop_freeze", "Freezes an NPC", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Freeze_f },
 	{ "workshop_god", "Uses the god cheat (invincibility) on an NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_God_f },
 	{ "workshop_notarget", "Uses the notarget cheat (can't be seen by enemies) on an NPC. Some NPCs have notarget on by default.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Notarget_f },
+	{ "workshop_undying", "Uses the undead mode cheat (cannot die) on an NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Undying_f },
+	{ "workshop_shielding", "Toggles a blaster-protecting shield on an NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Shielding_f },
 	{ "", "", 0, nullptr },
 };
 
