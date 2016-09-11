@@ -2571,7 +2571,7 @@ FIXME: this should be a general NPC wrapper function
 	that is called ANY time	a bState is changed...
 ============
 */
-static qboolean Q3_SetBState( int entID, const char *bs_name )
+qboolean Q3_SetBState( int entID, const char *bs_name )
 {
 	gentity_t	*ent  = &g_entities[entID];
 	bState_t	bSID;

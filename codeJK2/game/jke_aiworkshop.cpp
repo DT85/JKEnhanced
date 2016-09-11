@@ -52,6 +52,8 @@ static void WorkshopDrawEntityInformation(gentity_t* ent, int x, const char* tit
 	}
 	cgi_R_Font_DrawString(x, OL_Y + add, va("bs = %s", BSTable[ent->NPC->behaviorState].name), textcolor, cgs.media.qhFontSmall, -1, OL_S);
 	add += OL_H;
+	cgi_R_Font_DrawString(x, OL_Y + add, va("temp bs = %s", BSTable[ent->NPC->tempBehavior].name), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	add += OL_H;
 	if (ent->NPC->combatMove) {
 		cgi_R_Font_DrawString(x, OL_Y + add, "-- in combat move --", textcolor, cgs.media.qhFontSmall, -1, OL_S);
 		add += OL_H;
@@ -490,17 +492,16 @@ void Workshop_View_Timers_f(gentity_t* ent) {
 }
 
 // Set Behavior State
+extern qboolean Q3_SetBState(int entID, const char *bs_name);
 void Workshop_Set_BehaviorState_f(gentity_t* ent) {
 	if (gi.argc() != 2) {
 		gi.Printf("usage: workshop_set_bstate <bstate>\n");
 		return;
 	}
-	int bState = GetIDForString(BSTable, gi.argv(1));
-	if (bState == -1) {
-		gi.Printf("Invalid bstate\n");
-		return;
+	char* bs_name = gi.argv(1);
+	if (!Q3_SetBState(selectedAI, bs_name)) {
+		gi.Printf("Couldn't activate that BehaviorSet on that NPC!\n");
 	}
-	g_entities[selectedAI].NPC->behaviorState = (bState_t)bState;
 }
 
 // Set goal entity
