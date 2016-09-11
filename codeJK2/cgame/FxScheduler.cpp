@@ -103,7 +103,7 @@ void CFxScheduler::Clean(bool bRemoveTemplates /*= true*/, int idToPreserve /*= 
 		next = itr;
 		++next;
 
-		delete *itr;
+		mScheduledEffectsPool.Free(*itr);
 		mFxSchedule.erase(itr);
 
 		itr = next;
@@ -649,7 +649,7 @@ void CFxScheduler::PlayEffect( const char *file, int clientID )
 			{
 				// We have to create a new scheduled effect so that we can create it at a later point
 				//	you should avoid this because it's much more expensive
-				sfx = new SScheduledEffect;
+				SScheduledEffect *sfx = mScheduledEffectsPool.Alloc();
 				sfx->mStartTime = theFxHelper.mTime + delay;
 				sfx->mpTemplate = prim;
 				sfx->mClientID = clientID;
@@ -931,7 +931,7 @@ void CFxScheduler::PlayEffect( int id, vec3_t origin, vec3_t axis[3], const int 
 			{
 				// We have to create a new scheduled effect so that we can create it at a later point
 				//	you should avoid this because it's much more expensive
-				sfx = new SScheduledEffect;
+				SScheduledEffect *sfx = mScheduledEffectsPool.Alloc();
 				sfx->mStartTime = theFxHelper.mTime + delay;
 				sfx->mpTemplate = prim;
 				sfx->mClientID = -1;
@@ -1151,7 +1151,7 @@ void CFxScheduler::AddScheduledEffects( void )
 			}
 
 			// Get 'em out of there.
-			delete *itr;
+			mScheduledEffectsPool.Free(*itr);
 			mFxSchedule.erase(itr);
 		}
 
