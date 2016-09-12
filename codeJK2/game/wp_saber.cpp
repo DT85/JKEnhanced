@@ -217,12 +217,14 @@ float forceSpeedFOVMod[NUM_FORCE_POWER_LEVELS] =
 	40.0f
 };
 
-int forceGripDamage[NUM_FORCE_POWER_LEVELS] =
+int forceGripDamage[FORCE_LEVEL_5 + 1] =
 {
 	0,//none
 	0,
 	6,
-	9
+	9,
+	18,
+	36
 };
 
 int mindTrickTime[NUM_FORCE_POWER_LEVELS] =
@@ -8299,7 +8301,7 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 					{//player takes damage faster
 						self->client->ps.forcePowerDebounce[FP_GRIP] = level.time + Q_irand( 100, 600 );
 					}
-					if ( forceGripDamage[self->client->ps.forcePowerLevel[FP_GRIP]] > 0)
+					if ( forceGripDamage[self->client->ps.forcePowerLevel[FP_GRIP]] > 0 && self->client->ps.forcePowerLevel[FP_GRIP] < FORCE_LEVEL_4)
 					{//no damage at level 1
 						WP_ForcePowerDrain( self, FP_GRIP, 3 );
 					}

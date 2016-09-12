@@ -225,7 +225,7 @@ SetForceCmd SetForceTable[] = {
 	{ "forcePush",			"setForcePush",			FORCE_LEVEL_3	},
 	{ "forcePull",			"setForcePull",			FORCE_LEVEL_3	},
 	{ "forceMindTrick",		"setForceMindTrick",	FORCE_LEVEL_4	},
-	{ "forceGrip",			"setForceGrip",			FORCE_LEVEL_3	},
+	{ "forceGrip",			"setForceGrip",			FORCE_LEVEL_5	},
 	{ "forceLightning",		"setForceLightning",	FORCE_LEVEL_3	},
 	{ "saberThrow",			"setSaberThrow",		FORCE_LEVEL_3	},
 	{ "saberDefense",		"setSaberDefense",		FORCE_LEVEL_3	},
