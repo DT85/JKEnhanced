@@ -220,7 +220,7 @@ struct SetForceCmd {
 
 SetForceCmd SetForceTable[] = {
 	{ "forceHeal",			"setForceHeal",			FORCE_LEVEL_3	},
-	{ "forceJump",			"setForceJump",			FORCE_LEVEL_3	},
+	{ "forceJump",			"setForceJump",			FORCE_LEVEL_5	},
 	{ "forceSpeed",			"setForceSpeed",		FORCE_LEVEL_3	},
 	{ "forcePush",			"setForcePush",			FORCE_LEVEL_3	},
 	{ "forcePull",			"setForcePull",			FORCE_LEVEL_3	},

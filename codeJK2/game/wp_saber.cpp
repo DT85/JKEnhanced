@@ -139,28 +139,34 @@ int forcePowerNeeded[NUM_FORCE_POWERS] =
 	//NUM_FORCE_POWERS
 };
 
-float forceJumpStrength[NUM_FORCE_POWER_LEVELS] =
+float forceJumpStrength[FORCE_LEVEL_5 + 1] =
 {
 	JUMP_VELOCITY,//normal jump
 	420,
 	590,
+	840,
+	840,
 	840
 };
 
-float forceJumpHeight[NUM_FORCE_POWER_LEVELS] =
+float forceJumpHeight[FORCE_LEVEL_5 + 1] =
 {
 	32,//normal jump (+stepheight+crouchdiff = 66)
 	96,//(+stepheight+crouchdiff = 130)
 	192,//(+stepheight+crouchdiff = 226)
-	384//(+stepheight+crouchdiff = 418)
+	384,//(+stepheight+crouchdiff = 418)
+	INT_MAX,
+	INT_MAX,
 };
 
-float forceJumpHeightMax[NUM_FORCE_POWER_LEVELS] =
+float forceJumpHeightMax[FORCE_LEVEL_5 + 1] =
 {
 	66,//normal jump (32+stepheight(18)+crouchdiff(24) = 74)
 	130,//(96+stepheight(18)+crouchdiff(24) = 138)
 	226,//(192+stepheight(18)+crouchdiff(24) = 234)
-	418//(384+stepheight(18)+crouchdiff(24) = 426)
+	418,//(384+stepheight(18)+crouchdiff(24) = 426)
+	INT_MAX,
+	INT_MAX,
 };
 
 float forcePushPullRadius[NUM_FORCE_POWER_LEVELS] =
@@ -8065,7 +8071,8 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 				{//still trying to go up
 					if ( WP_ForcePowerAvailable( self, FP_LEVITATION, 1 ) )
 					{
-						if ( self->client->ps.forcePowerDebounce[FP_LEVITATION] < level.time )
+						if ( self->client->ps.forcePowerDebounce[FP_LEVITATION] < level.time &&
+							self->client->ps.forcePowerLevel[FP_LEVITATION] < FORCE_LEVEL_5)
 						{
 							WP_ForcePowerDrain( self, FP_LEVITATION, 5 );
 							self->client->ps.forcePowerDebounce[FP_LEVITATION] = level.time + 100;

@@ -1124,7 +1124,9 @@ static qboolean PM_CheckJump( void )
 						pm->ps->pm_flags |= (PMF_JUMPING|PMF_SLOW_MO_FALL);
 						pm->cmd.upmove = 0;
 						G_SoundOnEnt( pm->gent, CHAN_AUTO, "sound/weapons/force/jump.wav" );
-						WP_ForcePowerDrain( pm->gent, FP_LEVITATION, 0 );
+						if (pm->ps->forcePowerLevel[FP_LEVITATION] < FORCE_LEVEL_5) {
+							WP_ForcePowerDrain(pm->gent, FP_LEVITATION, 0);
+						}
 					}
 				}
 			}
@@ -1259,7 +1261,9 @@ static qboolean PM_CheckJump( void )
 						pm->ps->pm_flags |= PMF_JUMPING|PMF_SLOW_MO_FALL;
 						pm->cmd.upmove = 0;
 						G_SoundOnEnt( pm->gent, CHAN_BODY, "sound/weapons/force/jump.wav" );
-						WP_ForcePowerDrain( pm->gent, FP_LEVITATION, 0 );
+						if (pm->ps->forcePowerLevel[FP_LEVITATION] < FORCE_LEVEL_5) {
+							WP_ForcePowerDrain(pm->gent, FP_LEVITATION, 0);
+						}
 					}
 				}
 			}
