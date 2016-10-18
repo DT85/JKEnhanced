@@ -264,8 +264,11 @@ vmCvar_t	cg_drawHUD;
 vmCvar_t	cg_debugAnim;
 #ifndef FINAL_BUILD
 vmCvar_t	cg_debugAnimTarget;
-vmCvar_t	cg_gun_frame;
+//DT EDIT: Ghoul2 viewmodels - START
+//vmCvar_t	cg_gun_frame;
 #endif
+vmCvar_t	cg_gun_frame;
+//DT EDIT: Ghoul2 viewmodels - END
 vmCvar_t	cg_gun_x;
 vmCvar_t	cg_gun_y;
 vmCvar_t	cg_gun_z;
@@ -393,9 +396,12 @@ static cvarTable_t cvarTable[] = {
 
 	{ &cg_debugAnim, "cg_debuganim", "0", CVAR_CHEAT },
 #ifndef FINAL_BUILD
-	{ &cg_gun_frame, "gun_frame", "0", CVAR_CHEAT },
+	//DT EDIT: Ghoul2 viewmodels - START
+	//{ &cg_gun_frame, "gun_frame", "0", CVAR_CHEAT },
 	{ &cg_debugAnimTarget, "cg_debugAnimTarget", "0", CVAR_CHEAT },
 #endif
+	{ &cg_gun_frame, "gun_frame", "0", CVAR_CHEAT },
+	//DT EDIT: Ghoul2 viewmodels - END
 	{ &cg_gun_x, "cg_gunX", "0", CVAR_ARCHIVE },
 	{ &cg_gun_y, "cg_gunY", "0", CVAR_ARCHIVE },
 	{ &cg_gun_z, "cg_gunZ", "0", CVAR_ARCHIVE },
