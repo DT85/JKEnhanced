@@ -73,12 +73,12 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define HOMEPATH_NAME_WIN "OpenJO"
 #define HOMEPATH_NAME_MACOSX HOMEPATH_NAME_WIN
 #else
-#define PRODUCT_NAME			"openjk_sp"
+#define PRODUCT_NAME			"opendf2_sp"
 
-#define CLIENT_WINDOW_TITLE "OpenJK (SP)"
-#define CLIENT_CONSOLE_TITLE "OpenJK Console (SP)"
-#define HOMEPATH_NAME_UNIX "openjk"
-#define HOMEPATH_NAME_WIN "OpenJK"
+#define CLIENT_WINDOW_TITLE "OpenDF2 (SP)"
+#define CLIENT_CONSOLE_TITLE "OpenDF2 Console (SP)"
+#define HOMEPATH_NAME_UNIX "opendf2"
+#define HOMEPATH_NAME_WIN "OpenDF2"
 #define HOMEPATH_NAME_MACOSX HOMEPATH_NAME_WIN
 #endif
 
