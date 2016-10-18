@@ -73,6 +73,9 @@ float weaponSpeed[WP_NUM_WEAPONS][2] =
 	{ EMPLACED_VEL,REPEATER_ALT_VELOCITY },//WP_RAPID_FIRE_CONC,
 	{ 0,0 },//WP_JAWA,
 	{ TUSKEN_RIFLE_VEL,TUSKEN_RIFLE_VEL },//WP_TUSKEN_RIFLE,
+	//DT EDIT: DF2 - START - Added Gamorrean weapon
+	{ 0, 0 },//WP_GAMM_AXE,
+	//DT EDIT: DF2 - END
 	{ 0,0 },//WP_TUSKEN_STAFF,
 	{ 0,0 },//WP_SCEPTER,
 	{ 0,0 },//WP_NOGHRI_STICK,
@@ -1535,6 +1538,9 @@ void FireWeapon( gentity_t *ent, qboolean alt_fire )
 		//else does melee attack/damage/func
 		break;
 
+	//DT EDIT: DF2 - START - Added Gamorrean weapon
+	case WP_GAMM_AXE:
+	//DT EDIT: DF2 - END
 	case WP_TUSKEN_STAFF:
 	default:
 		return;
@@ -1557,6 +1563,9 @@ void FireWeapon( gentity_t *ent, qboolean alt_fire )
 		if ( ent->client->ps.groundEntityNum == ENTITYNUM_WORLD//FIXME: check for sand contents type?
 			&& ent->s.weapon != WP_STUN_BATON
 			&& ent->s.weapon != WP_MELEE
+			//DT EDIT: DF2 - START - Added Gamorrean weapon
+			&& ent->s.weapon != WP_GAMM_AXE
+			//DT EDIT: DF2 - END
 			&& ent->s.weapon != WP_TUSKEN_STAFF
 			&& ent->s.weapon != WP_THERMAL
 			&& ent->s.weapon != WP_TRIP_MINE

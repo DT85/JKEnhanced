@@ -1975,6 +1975,14 @@ void NPC_RunBehavior( int team, int bState )
 		G_CheckCharmed( NPC );
 		return;
 	}
+	//DT EDIT: DF2 - START - Added Gamorrean weapon
+	else if (NPC->client->ps.weapon == WP_GAMM_AXE)
+	{
+		NPC_BehaviorSet_Gamorrean(bState);
+		G_CheckCharmed(NPC);
+		return;
+	}
+	//DT EDIT: DF2 - END
 	else if ( NPC->client->ps.weapon == WP_NOGHRI_STICK )
 	{
 		NPC_BehaviorSet_Stormtrooper( bState );

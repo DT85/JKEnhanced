@@ -328,7 +328,9 @@ static void CG_DrawAmmo(const centity_t	*cent,const int xPos,const int yPos)
 		return;
 	}
 
-	if ( cent->currentState.weapon == WP_STUN_BATON )
+	//DT EDIT: DF2 - START - Added WP_MELEE for ammo count removal
+	if (cent->currentState.weapon == WP_STUN_BATON || cent->currentState.weapon == WP_MELEE)
+	//DT EDIT: DF2 - END
 	{
 		return;
 	}
@@ -1895,7 +1897,9 @@ static void CG_DrawHUD( centity_t *cent )
 		// Draw armor & health values
 		if ( cg_drawStatus.integer == 2 )
 		{
-			if ( cent->currentState.weapon != WP_SABER && cent->currentState.weapon != WP_STUN_BATON && cent->gent )
+			//DT EDIT: DF2 - START - Added WP_MELEE for ammo count removal
+			if (cent->currentState.weapon != WP_SABER && cent->currentState.weapon != WP_STUN_BATON && cent->gent && cent->currentState.weapon != WP_MELEE && cent->gent)
+			//DT EDIT: DF2 - END
 			{
 				value = cg.snap->ps.ammo[weaponData[cent->currentState.weapon].ammoIndex];
 				CG_DrawSmallStringColor(sectionXPos, sectionYPos - 60,va("Ammo:%d",value), colorTable[CT_HUD_GREEN] );

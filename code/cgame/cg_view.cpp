@@ -807,7 +807,9 @@ static void CG_OffsetThirdPersonView( void )
 		}
 	}
 
-	if ( !cg.renderingThirdPerson && (cg.snap->ps.weapon == WP_SABER||cg.snap->ps.weapon == WP_MELEE) )
+	//DT EDIT: DF2 - START - removed WP_MELEE from this for no 3P auto switch
+	if (!cg.renderingThirdPerson && (cg.snap->ps.weapon == WP_SABER))
+	//DT EDIT: DF2 - END
 	{// First person saber
 		// FIXME: use something network-friendly
 		vec3_t	org, viewDir;
@@ -1665,7 +1667,9 @@ static qboolean CG_CalcViewValues( void ) {
 		}
 	}
 
-	if ( (cg.renderingThirdPerson||cg.snap->ps.weapon == WP_SABER||cg.snap->ps.weapon == WP_MELEE)
+	//DT EDIT: DF2 - START - removed WP_MELEE from this for no 3P auto switch
+	if ((cg.renderingThirdPerson || cg.snap->ps.weapon == WP_SABER)
+	//DT EDIT: DF2 - END
 		&& !cg.zoomMode
 		&& !viewEntIsCam )
 	{
@@ -1679,7 +1683,9 @@ static qboolean CG_CalcViewValues( void ) {
 		// First person saber
 		if ( !cg.renderingThirdPerson )
 		{
-			if ( cg.snap->ps.weapon == WP_SABER||cg.snap->ps.weapon == WP_MELEE )
+			//DT EDIT: DF2 - START - removed WP_MELEE from this for no 3P auto switch
+			if (cg.snap->ps.weapon == WP_SABER)
+			//DT EDIT: DF2 - END
 			{
 				vec3_t dir;
 				CG_OffsetFirstPersonView( qtrue );
@@ -2087,12 +2093,13 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView ) {
 		cg.zoomMode = 0;
 	}
 	// decide on third person view
-	cg.renderingThirdPerson = (qboolean)(
-		cg_thirdPerson.integer
-		|| (cg.snap->ps.stats[STAT_HEALTH] <= 0)
-		|| (cg.snap->ps.eFlags&EF_HELD_BY_SAND_CREATURE)
-		|| ((g_entities[0].client&&g_entities[0].client->NPC_class==CLASS_ATST)
-		|| (cg.snap->ps.weapon == WP_SABER || cg.snap->ps.weapon == WP_MELEE) ));
+	cg.renderingThirdPerson = (qboolean)(cg_thirdPerson.integer
+											|| (cg.snap->ps.stats[STAT_HEALTH] <= 0)
+											|| (cg.snap->ps.eFlags&EF_HELD_BY_SAND_CREATURE)
+											|| ((g_entities[0].client&&g_entities[0].client->NPC_class==CLASS_ATST)
+											//DT EDIT: DF2 - START - removed WP_MELEE from this for no 3P auto switch
+											|| (cg.snap->ps.weapon == WP_SABER)));
+											//DT EDIT: DF2 - END
 
 	if ( cg.zoomMode )
 	{

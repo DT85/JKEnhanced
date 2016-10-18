@@ -7195,7 +7195,9 @@ void Item_Model_Paint(itemDef_t *item)
 	}
 	if ( item->flags&ITF_ISANYSABER && !(item->flags&ITF_ISCHARACTER) )
 	{//hack to put saber on it's side
-		VectorSet( angles, curYaw, 0, 90 );
+		//DT EDIT: DF2 - START - Undo menu saber rotation hack
+		VectorSet(angles, 0, curYaw, 0);
+		//DT EDIT: DF2 - END
 	}
 	else
 	{

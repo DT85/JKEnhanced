@@ -151,6 +151,10 @@ static void IT_Name(const char **holdBuf)
 		itemNum = ITM_JAWA_PICKUP;
 	else if (!Q_stricmp(tokenStr,"ITM_TUSKEN_RIFLE_PICKUP"))
 		itemNum = ITM_TUSKEN_RIFLE_PICKUP;
+	//DT EDIT: DF2 - START - Added Gamorrean weapon
+	else if (!Q_stricmp(tokenStr, "ITM_GAMM_AXE_PICKUP"))
+		itemNum = ITM_GAMM_AXE_PICKUP;
+	//DT EDIT: DF2 - END
 	else if (!Q_stricmp(tokenStr,"ITM_TUSKEN_STAFF_PICKUP"))
 		itemNum = ITM_TUSKEN_STAFF_PICKUP;
 	else if (!Q_stricmp(tokenStr,"ITM_SCEPTER_PICKUP"))
@@ -368,6 +372,10 @@ static void IT_Tag(const char **holdBuf)
 		tag = WP_JAWA;
 	else if (!Q_stricmp(tokenStr,"WP_TUSKEN_RIFLE"))
 		tag = WP_TUSKEN_RIFLE;
+	//DT EDIT: DF2 - START - Added Gamorrean weapon
+	else if (!Q_stricmp(tokenStr, "WP_GAMM_AXE"))
+		tag = WP_GAMM_AXE;
+	//DT EDIT: DF2 - END
 	else if (!Q_stricmp(tokenStr,"WP_TUSKEN_STAFF"))
 		tag = WP_TUSKEN_STAFF;
 	else if (!Q_stricmp(tokenStr,"WP_SCEPTER"))

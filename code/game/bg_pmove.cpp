@@ -8054,7 +8054,9 @@ static void PM_Footsteps( void )
 			}
 			else if ( pm->ps->waterHeightLevel >= WHL_TORSO
 				&& ((pm->ps->clientNum < MAX_CLIENTS||PM_ControlledByPlayer())
-					||pm->ps->weapon==WP_SABER||pm->ps->weapon==WP_NONE||pm->ps->weapon==WP_MELEE) )//pm->waterlevel > 1 )	//in deep water
+					//DT EDIT: DF2 - START - removed WP_MELEE as it normally accompanies WP_SABER and it probably shouldn't for it to act like normal 1P weapons
+					|| pm->ps->weapon == WP_SABER || pm->ps->weapon == WP_NONE))//pm->waterlevel > 1 )	//in deep water
+					//DT EDIT: DF2 - END
 			{
 				if ( !PM_ForceJumpingUp( pm->gent ) )
 				{
@@ -8303,6 +8305,12 @@ static void PM_Footsteps( void )
 					{
 						PM_SetAnim(pm,SETANIM_LEGS,BOTH_STAND1,SETANIM_FLAG_NORMAL);
 					}
+					//DT EDIT: DF2 - START - Added Gamorrean weapon
+					else if (pm->ps->weapon == WP_GAMM_AXE)
+					{
+						PM_SetAnim(pm, SETANIM_LEGS, BOTH_STAND9, SETANIM_FLAG_NORMAL);
+					}
+					//DT EDIT: DF2 - END
 					else
 					{
 						if ( pm->gent && pm->gent->client && pm->gent->client->NPC_class == CLASS_RANCOR )
@@ -13731,6 +13739,56 @@ static void PM_Weapon( void )
 				}
 				break;
 
+			//DT EDIT: DF2 - START - Added Gamorrean weapon
+			case WP_GAMM_AXE:
+
+				if (pm->gent && pm->gent->client)
+				{
+					int anim;
+					int flags = (SETANIM_FLAG_OVERRIDE | SETANIM_FLAG_HOLD | SETANIM_FLAG_RESTART);
+					if ((pm->ps->clientNum < MAX_CLIENTS || PM_ControlledByPlayer()))
+					{//player
+						if (pm->cmd.buttons & BUTTON_ALT_ATTACK)
+						{
+							if (pm->cmd.buttons & BUTTON_ATTACK)
+							{
+								anim = BOTH_GAMM_ATTACK2;
+							}
+							else
+							{
+								anim = BOTH_GAMM_ATTACK1;
+							}
+						}
+						else
+						{
+							anim = BOTH_GAMM_ATTACK2;
+						}
+					}
+					{// npc
+						if (pm->cmd.buttons & BUTTON_ALT_ATTACK)
+						{
+							anim = BOTH_GAMM_ATTACK1;
+							if (pm->ps->torsoAnimTimer>0)
+							{
+								flags &= ~SETANIM_FLAG_RESTART;
+							}
+						}
+						else
+						{
+							anim = PM_PickAnim(pm->gent, BOTH_GAMM_ATTACK2, BOTH_GAMM_ATTACK1);
+						}
+					}
+					if (VectorCompare(pm->ps->velocity, vec3_origin) && pm->cmd.upmove >= 0)
+					{
+						PM_SetAnim(pm, SETANIM_BOTH, anim, flags, 0);
+					}
+					else
+					{
+						PM_SetAnim(pm, SETANIM_TORSO, anim, flags, 0);
+					}
+				}
+				break;
+			//DT EDIT: DF2 - END
 			case WP_TUSKEN_STAFF:
 
 				if ( pm->gent && pm->gent->client )
@@ -13952,6 +14010,9 @@ static void PM_Weapon( void )
 	}
 	else if ( (pm->ps->weapon == WP_MELEE && (pm->ps->clientNum>=MAX_CLIENTS||!g_debugMelee->integer) )
 		|| pm->ps->weapon == WP_TUSKEN_STAFF
+		//DT EDIT: DF2 - START - Added Gamorrean weapon
+		|| pm->ps->weapon == WP_GAMM_AXE
+		//DT EDIT: DF2 - END
 		|| (pm->ps->weapon == WP_TUSKEN_RIFLE&&!(pm->cmd.buttons&BUTTON_ALT_ATTACK))  )
 	{
 		PM_AddEvent( EV_FIRE_WEAPON );

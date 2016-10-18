@@ -34,8 +34,19 @@ typedef enum //# Objective_e
 	//
 	//=================================================
 
+	//DT EDIT: DF2 - START - Objectives
 	LIGHTSIDE_OBJ = 0,
-	HOTH2_OBJ1,
+	DF2_01NAR_OBJ,
+	DF2_02NAR_OBJ1,
+	DF2_02NAR_OBJ2,
+	DF2_02NAR_OBJ3,
+	DF2_03KATARN_OBJ,
+	DF2_07YUN_OBJ,
+
+	T3_BOUNTY_OBJ1, //needed as this is called elsewhere.
+	T2_RANCOR_OBJ5, //needed as this is called elsewhere.
+
+	/*HOTH2_OBJ1,
 	HOTH2_OBJ2,
 	HOTH2_OBJ3,
 	HOTH3_OBJ1,
@@ -130,7 +141,8 @@ typedef enum //# Objective_e
 	T1_SURPRISE_OBJ1,
 	T1_SURPRISE_OBJ2,
 	T1_SURPRISE_OBJ3,
-	T1_SURPRISE_OBJ4,
+	T1_SURPRISE_OBJ4,*/
+	//DT EDIT: DF2 - END
 
 	//# #eol
 	MAX_OBJECTIVES,

@@ -561,6 +561,9 @@ void CG_RegisterWeapon( int weaponNum ) {
 		break;
 
 	case WP_MELEE:
+	//DT EDIT: DF2 - START - Added Gamorrean weapon
+	case WP_GAMM_AXE:
+	//DT EDIT: DF2 - END
 	case WP_TUSKEN_STAFF:
 		//TEMP
 		theFxScheduler.RegisterEffect( "melee/punch_impact" );
@@ -1109,6 +1112,9 @@ void CG_AddViewWeapon( playerState_t *ps )
 	vec3_t extraOffset;
 	extraOffset[0] = extraOffset[1] = extraOffset[2] = 0.0f;
 
+	//DT EDIT: DF2 - START - Added Gamorrean weapon
+	//if( ps->weapon == WP_TUSKEN_RIFLE || ps->weapon == WP_NOGHRI_STICK || ps->weapon == WP_TUSKEN_STAFF || ps->weapon == WP_GAMM_AXE )
+	//DT EDIT: DF2 - END
 	if( ps->weapon == WP_TUSKEN_RIFLE || ps->weapon == WP_NOGHRI_STICK || ps->weapon == WP_TUSKEN_STAFF )
 	{
 		extraOffset[0] = 2;
