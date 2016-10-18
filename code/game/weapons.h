@@ -76,7 +76,7 @@ typedef enum //# weapon_e
 	WP_JAWA,
 	WP_TUSKEN_RIFLE,
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	WP_GAMM_AXE,
+	WP_GAMORREAN_AXE,
 	//DT EDIT: DF2 - END
 	WP_TUSKEN_STAFF,
 	WP_SCEPTER,

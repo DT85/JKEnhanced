@@ -933,7 +933,7 @@ void ChangeWeapon( gentity_t *ent, int newWeapon )
 
 	case WP_MELEE:
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	case WP_GAMM_AXE:
+	case WP_GAMORREAN_AXE:
 	//DT EDIT: DF2 - END
 	case WP_TUSKEN_STAFF:
 		ent->NPC->aiFlags &= ~NPCAI_BURST_WEAPON;
@@ -1081,7 +1081,7 @@ void NPC_ApplyWeaponFireDelay(void)
 
 	case WP_MELEE:
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	case WP_GAMM_AXE:
+	case WP_GAMORREAN_AXE:
 	//DT EDIT: DF2 - END
 	case WP_TUSKEN_STAFF:
 		if ( !PM_DroidMelee( client->NPC_class ) )

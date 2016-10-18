@@ -5971,7 +5971,7 @@ void PM_TorsoAnimation( void )
 					}
 					break;
 				//DT EDIT: DF2 - START - Added Gamorrean weapon
-				case WP_GAMM_AXE:
+				case WP_GAMORREAN_AXE:
 					if (PM_RunningAnim(pm->ps->legsAnim)
 						|| PM_WalkingAnim(pm->ps->legsAnim)
 						|| PM_JumpingAnim(pm->ps->legsAnim)
@@ -6289,7 +6289,7 @@ void PM_TorsoAnimation( void )
 					}
 					break;
 				//DT EDIT: DF2 - START - Added Gamorrean weapon
-				case WP_GAMM_AXE:
+				case WP_GAMORREAN_AXE:
 					if (PM_RunningAnim(pm->ps->legsAnim)
 						|| PM_WalkingAnim(pm->ps->legsAnim)
 						|| PM_JumpingAnim(pm->ps->legsAnim)

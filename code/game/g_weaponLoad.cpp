@@ -205,7 +205,7 @@ const int defaultDamage[] = {
 	BRYAR_PISTOL_DAMAGE,		// WP_JAWA
 	0,							// WP_TUSKEN_RIFLE
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	0,							// WP_GAMM_AXE
+	0,							// WP_GAMORREAN_AXE
 	//DT EDIT: DF2 - END
 	0,							// WP_TUSKEN_STAFF
 	0,							// WP_SCEPTER
@@ -245,7 +245,7 @@ const int defaultAltDamage[] = {
 	BRYAR_PISTOL_DAMAGE,	// WP_JAWA
 	0,						// WP_TUSKEN_RIFLE
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	0,						// WP_GAMM_AXE
+	0,						// WP_GAMORREAN_AXE
 	//DT EDIT: DF2 - END
 	0,						// WP_TUSKEN_STAFF
 	0,						// WP_SCEPTER
@@ -285,7 +285,7 @@ const int defaultSplashDamage[] = {
 	0,								// WP_JAWA
 	0,								// WP_TUSKEN_RIFLE
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	0,								// WP_GAMM_AXE
+	0,								// WP_GAMORREAN_AXE
 	//DT EDIT: DF2 - END
 	0,								// WP_TUSKEN_STAFF
 	0,								// WP_SCEPTER
@@ -325,7 +325,7 @@ const float defaultSplashRadius[] = {
 	0.0f,							// WP_JAWA
 	0.0f,							// WP_TUSKEN_RIFLE
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	0.0f,							// WP_GAMM_AXE
+	0.0f,							// WP_GAMORREAN_AXE
 	//DT EDIT: DF2 - END
 	0.0f,							// WP_TUSKEN_STAFF
 	0.0f,							// WP_SCEPTER
@@ -365,7 +365,7 @@ const int defaultAltSplashDamage[] = {
 	0,								// WP_JAWA
 	0,								// WP_TUSKEN_RIFLE
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	0,								// WP_GAMM_AXE
+	0,								// WP_GAMORREAN_AXE
 	//DT EDIT: DF2 - END
 	0,								// WP_TUSKEN_STAFF
 	0,								// WP_SCEPTER
@@ -405,7 +405,7 @@ const float defaultAltSplashRadius[] = {
 	0.0f,							// WP_JAWA
 	0.0f,							// WP_TUSKEN_RIFLE
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	0.0f,							// WP_GAMM_AXE
+	0.0f,							// WP_GAMORREAN_AXE
 	//DT EDIT: DF2 - END
 	0.0f,							// WP_TUSKEN_STAFF
 	0.0f,							// WP_SCEPTER
@@ -538,8 +538,8 @@ void WPN_WeaponType( const char **holdBuf)
 	else if (!Q_stricmp(tokenStr,"WP_TUSKEN_RIFLE"))
 		weaponNum = WP_TUSKEN_RIFLE;
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	else if (!Q_stricmp(tokenStr, "WP_GAMM_AXE"))
-		weaponNum = WP_GAMM_AXE;
+	else if (!Q_stricmp(tokenStr, "WP_GAMORREAN_AXE"))
+		weaponNum = WP_GAMORREAN_AXE;
 	//DT EDIT: DF2 - END
 	else if (!Q_stricmp(tokenStr,"WP_TUSKEN_STAFF"))
 		weaponNum = WP_TUSKEN_STAFF;

@@ -1523,6 +1523,31 @@ void NPC_BehaviorSet_Tusken( int bState )
 	}
 }
 
+//DT EDIT: DF2 - START - Added Gamorrean behaviour
+/*
+-------------------------
+NPC_BehaviorSet_Gamorrean
+-------------------------
+*/
+void NPC_BehaviorSet_Gamorrean(int bState)
+{
+	switch (bState)
+	{
+	case BS_STAND_GUARD:
+	case BS_PATROL:
+	case BS_STAND_AND_SHOOT:
+	case BS_HUNT_AND_KILL:
+	case BS_DEFAULT:
+		NPC_BSGamorrean_Default();
+		break;
+
+	default:
+		NPC_BehaviorSet_Default(bState);
+		break;
+	}
+}
+//DT EDIT: DF2 - END
+
 /*
 -------------------------
 NPC_BehaviorSet_Sniper
@@ -1976,7 +2001,7 @@ void NPC_RunBehavior( int team, int bState )
 		return;
 	}
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	else if (NPC->client->ps.weapon == WP_GAMM_AXE)
+	else if (NPC->client->ps.weapon == WP_GAMORREAN_AXE)
 	{
 		NPC_BehaviorSet_Gamorrean(bState);
 		G_CheckCharmed(NPC);

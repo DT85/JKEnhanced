@@ -74,7 +74,7 @@ float weaponSpeed[WP_NUM_WEAPONS][2] =
 	{ 0,0 },//WP_JAWA,
 	{ TUSKEN_RIFLE_VEL,TUSKEN_RIFLE_VEL },//WP_TUSKEN_RIFLE,
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	{ 0, 0 },//WP_GAMM_AXE,
+	{ 0, 0 },//WP_GAMORREAN_AXE,
 	//DT EDIT: DF2 - END
 	{ 0,0 },//WP_TUSKEN_STAFF,
 	{ 0,0 },//WP_SCEPTER,
@@ -1539,7 +1539,7 @@ void FireWeapon( gentity_t *ent, qboolean alt_fire )
 		break;
 
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	case WP_GAMM_AXE:
+	case WP_GAMORREAN_AXE:
 	//DT EDIT: DF2 - END
 	case WP_TUSKEN_STAFF:
 	default:
@@ -1564,7 +1564,7 @@ void FireWeapon( gentity_t *ent, qboolean alt_fire )
 			&& ent->s.weapon != WP_STUN_BATON
 			&& ent->s.weapon != WP_MELEE
 			//DT EDIT: DF2 - START - Added Gamorrean weapon
-			&& ent->s.weapon != WP_GAMM_AXE
+			&& ent->s.weapon != WP_GAMORREAN_AXE
 			//DT EDIT: DF2 - END
 			&& ent->s.weapon != WP_TUSKEN_STAFF
 			&& ent->s.weapon != WP_THERMAL

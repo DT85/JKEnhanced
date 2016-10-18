@@ -562,7 +562,7 @@ void CG_RegisterWeapon( int weaponNum ) {
 
 	case WP_MELEE:
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	case WP_GAMM_AXE:
+	case WP_GAMORREAN_AXE:
 	//DT EDIT: DF2 - END
 	case WP_TUSKEN_STAFF:
 		//TEMP
@@ -1113,7 +1113,7 @@ void CG_AddViewWeapon( playerState_t *ps )
 	extraOffset[0] = extraOffset[1] = extraOffset[2] = 0.0f;
 
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	//if( ps->weapon == WP_TUSKEN_RIFLE || ps->weapon == WP_NOGHRI_STICK || ps->weapon == WP_TUSKEN_STAFF || ps->weapon == WP_GAMM_AXE )
+	//if( ps->weapon == WP_TUSKEN_RIFLE || ps->weapon == WP_NOGHRI_STICK || ps->weapon == WP_TUSKEN_STAFF || ps->weapon == WP_GAMORREAN_AXE )
 	//DT EDIT: DF2 - END
 	if( ps->weapon == WP_TUSKEN_RIFLE || ps->weapon == WP_NOGHRI_STICK || ps->weapon == WP_TUSKEN_STAFF )
 	{

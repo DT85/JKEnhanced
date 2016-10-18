@@ -373,8 +373,8 @@ static void IT_Tag(const char **holdBuf)
 	else if (!Q_stricmp(tokenStr,"WP_TUSKEN_RIFLE"))
 		tag = WP_TUSKEN_RIFLE;
 	//DT EDIT: DF2 - START - Added Gamorrean weapon
-	else if (!Q_stricmp(tokenStr, "WP_GAMM_AXE"))
-		tag = WP_GAMM_AXE;
+	else if (!Q_stricmp(tokenStr, "WP_GAMORREAN_AXE"))
+		tag = WP_GAMORREAN_AXE;
 	//DT EDIT: DF2 - END
 	else if (!Q_stricmp(tokenStr,"WP_TUSKEN_STAFF"))
 		tag = WP_TUSKEN_STAFF;

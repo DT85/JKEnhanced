@@ -8306,7 +8306,7 @@ static void PM_Footsteps( void )
 						PM_SetAnim(pm,SETANIM_LEGS,BOTH_STAND1,SETANIM_FLAG_NORMAL);
 					}
 					//DT EDIT: DF2 - START - Added Gamorrean weapon
-					else if (pm->ps->weapon == WP_GAMM_AXE)
+					else if (pm->ps->weapon == WP_GAMORREAN_AXE)
 					{
 						PM_SetAnim(pm, SETANIM_LEGS, BOTH_STAND9, SETANIM_FLAG_NORMAL);
 					}
@@ -13740,7 +13740,7 @@ static void PM_Weapon( void )
 				break;
 
 			//DT EDIT: DF2 - START - Added Gamorrean weapon
-			case WP_GAMM_AXE:
+			case WP_GAMORREAN_AXE:
 
 				if (pm->gent && pm->gent->client)
 				{
@@ -14011,7 +14011,7 @@ static void PM_Weapon( void )
 	else if ( (pm->ps->weapon == WP_MELEE && (pm->ps->clientNum>=MAX_CLIENTS||!g_debugMelee->integer) )
 		|| pm->ps->weapon == WP_TUSKEN_STAFF
 		//DT EDIT: DF2 - START - Added Gamorrean weapon
-		|| pm->ps->weapon == WP_GAMM_AXE
+		|| pm->ps->weapon == WP_GAMORREAN_AXE
 		//DT EDIT: DF2 - END
 		|| (pm->ps->weapon == WP_TUSKEN_RIFLE&&!(pm->cmd.buttons&BUTTON_ALT_ATTACK))  )
 	{
