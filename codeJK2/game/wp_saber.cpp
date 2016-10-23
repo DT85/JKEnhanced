@@ -139,28 +139,34 @@ int forcePowerNeeded[NUM_FORCE_POWERS] =
 	//NUM_FORCE_POWERS
 };
 
-float forceJumpStrength[NUM_FORCE_POWER_LEVELS] =
+float forceJumpStrength[FORCE_LEVEL_5 + 1] =
 {
 	JUMP_VELOCITY,//normal jump
 	420,
 	590,
+	840,
+	840,
 	840
 };
 
-float forceJumpHeight[NUM_FORCE_POWER_LEVELS] =
+float forceJumpHeight[FORCE_LEVEL_5 + 1] =
 {
 	32,//normal jump (+stepheight+crouchdiff = 66)
 	96,//(+stepheight+crouchdiff = 130)
 	192,//(+stepheight+crouchdiff = 226)
-	384//(+stepheight+crouchdiff = 418)
+	384,//(+stepheight+crouchdiff = 418)
+	INT_MAX,
+	INT_MAX,
 };
 
-float forceJumpHeightMax[NUM_FORCE_POWER_LEVELS] =
+float forceJumpHeightMax[FORCE_LEVEL_5 + 1] =
 {
 	66,//normal jump (32+stepheight(18)+crouchdiff(24) = 74)
 	130,//(96+stepheight(18)+crouchdiff(24) = 138)
 	226,//(192+stepheight(18)+crouchdiff(24) = 234)
-	418//(384+stepheight(18)+crouchdiff(24) = 426)
+	418,//(384+stepheight(18)+crouchdiff(24) = 426)
+	INT_MAX,
+	INT_MAX,
 };
 
 float forcePushPullRadius[NUM_FORCE_POWER_LEVELS] =
@@ -211,12 +217,14 @@ float forceSpeedFOVMod[NUM_FORCE_POWER_LEVELS] =
 	40.0f
 };
 
-int forceGripDamage[NUM_FORCE_POWER_LEVELS] =
+int forceGripDamage[FORCE_LEVEL_5 + 1] =
 {
 	0,//none
 	0,
 	6,
-	9
+	9,
+	18,
+	36
 };
 
 int mindTrickTime[NUM_FORCE_POWER_LEVELS] =
@@ -7092,9 +7100,9 @@ void ForceGrip( gentity_t *self )
 	if ( traceEnt->client )
 	{
 		G_AddVoiceEvent( traceEnt, Q_irand(EV_PUSHED1, EV_PUSHED3), 2000 );
-		if ( self->client->ps.forcePowerLevel[FP_GRIP] > FORCE_LEVEL_2 || traceEnt->s.weapon == WP_SABER )
+		if (self->client->ps.forcePowerLevel[FP_GRIP] > FORCE_LEVEL_2 || traceEnt->s.weapon == WP_SABER)
 		{//if we pick up & carry, drop their weap
-			if ( traceEnt->s.weapon )
+			if ( traceEnt->s.weapon && !(self->flags & FL_GRIPMOVE) )
 			{
 				if ( traceEnt->s.weapon != WP_SABER )
 				{
@@ -8065,7 +8073,8 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 				{//still trying to go up
 					if ( WP_ForcePowerAvailable( self, FP_LEVITATION, 1 ) )
 					{
-						if ( self->client->ps.forcePowerDebounce[FP_LEVITATION] < level.time )
+						if ( self->client->ps.forcePowerDebounce[FP_LEVITATION] < level.time &&
+							self->client->ps.forcePowerLevel[FP_LEVITATION] < FORCE_LEVEL_5)
 						{
 							WP_ForcePowerDrain( self, FP_LEVITATION, 5 );
 							self->client->ps.forcePowerDebounce[FP_LEVITATION] = level.time + 100;
@@ -8272,7 +8281,7 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 				//AddSightEvent( self, gripOrg, 128, AEL_DANGER, 20 );
 				AddSightEvent( self, gripOrg, 128, AEL_DISCOVERED, 20 );
 
-				if ( self->client->ps.forcePowerDebounce[FP_GRIP] < level.time && gripEnt->client )
+				if (self->client->ps.forcePowerDebounce[FP_GRIP] < level.time && gripEnt->client  && !(self->flags & FL_GRIPMOVE))
 				{
 					//GEntity_PainFunc( gripEnt, self, self, gripOrg, 0, MOD_CRUSH );
 					gripEnt->painDebounceTime = 0;
@@ -8292,7 +8301,7 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 					{//player takes damage faster
 						self->client->ps.forcePowerDebounce[FP_GRIP] = level.time + Q_irand( 100, 600 );
 					}
-					if ( forceGripDamage[self->client->ps.forcePowerLevel[FP_GRIP]] > 0)
+					if ( forceGripDamage[self->client->ps.forcePowerLevel[FP_GRIP]] > 0 && self->client->ps.forcePowerLevel[FP_GRIP] < FORCE_LEVEL_4)
 					{//no damage at level 1
 						WP_ForcePowerDrain( self, FP_GRIP, 3 );
 					}
@@ -8305,7 +8314,7 @@ static void WP_ForcePowerRun( gentity_t *self, forcePowers_t forcePower, usercmd
 						G_SetEnemy( gripEnt, self );
 					}
 				}
-				if ( gripEnt->client && gripEnt->health > 0 )
+				if (gripEnt->client && gripEnt->health > 0 && !(self->flags & FL_GRIPMOVE))
 				{
 					int anim = BOTH_CHOKE3; //left-handed choke
 					if ( gripEnt->client->ps.weapon == WP_NONE || gripEnt->client->ps.weapon == WP_MELEE )

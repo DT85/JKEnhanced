@@ -70,6 +70,88 @@ typedef sstring_t fxString_t;
 
 #define FX_SND_LESS_ATTENUATION	0x20000	// attenuate sounds less
 
+template<typename T, int N>
+class PoolAllocator
+{
+public:
+	PoolAllocator()
+		: pool(new T[N])
+		, freeAndAllocated(new int[N])
+		, numFree(N)
+		, highWatermark(0)
+	{
+		for (int i = 0; i < N; i++)
+		{
+			freeAndAllocated[i] = i;
+		}
+	}
+
+	T *Alloc()
+	{
+		if (numFree == 0)
+		{
+			Com_Printf(S_COLOR_YELLOW "WARNING: Ran out of instances from memory pool.\n");
+			return NULL;
+		}
+
+		T *ptr = new (&pool[freeAndAllocated[0]]) T;
+
+		std::rotate(freeAndAllocated, freeAndAllocated + 1, freeAndAllocated + N);
+		numFree--;
+
+		highWatermark = std::max(highWatermark, N - numFree);
+
+		return ptr;
+	}
+
+	void Free(T *ptr)
+	{
+		for (int i = numFree; i < N; i++)
+		{
+			T *p = &pool[freeAndAllocated[i]];
+
+			if (p == ptr)
+			{
+				if (i > numFree)
+				{
+					std::rotate(freeAndAllocated + numFree, freeAndAllocated + i, freeAndAllocated + i + 1);
+				}
+
+
+				p->~T();
+				numFree++;
+
+				break;
+			}
+		}
+	}
+
+	int GetHighWatermark() const { return highWatermark; }
+
+	~PoolAllocator()
+	{
+		for (int i = numFree; i < N; i++)
+		{
+			T *p = &pool[freeAndAllocated[i]];
+
+			p->~T();
+		}
+
+		delete[] freeAndAllocated;
+		delete[] pool;
+	}
+
+private:
+	T *pool;
+
+	// The first 'numFree' elements are the indexes of the free slots.
+	// The remaining elements are the indexes of the allocated slots.
+	int *freeAndAllocated;
+	int numFree;
+
+	int highWatermark;
+};
+
 //-----------------------------------------------------------------
 //
 // CMediaHandles
@@ -427,6 +509,7 @@ private:
 	// List of scheduled effects that will need to be created at the correct time.
 	TScheduledEffect	mFxSchedule;
 
+	PoolAllocator<SScheduledEffect, 500> mScheduledEffectsPool;
 
 	// Private function prototypes
 	SEffectTemplate *GetNewEffectTemplate( int *id, const char *file );
@@ -457,6 +540,7 @@ public:
 
 	void	AddScheduledEffects( void );								// call once per CGame frame
 
+	int		GetHighWatermark() const { return mScheduledEffectsPool.GetHighWatermark(); }
 	int		NumScheduledFx()	{ return (int)mFxSchedule.size();	}
 	void	Clean(bool bRemoveTemplates = true, int idToPreserve = 0);	// clean out the system
 

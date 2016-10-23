@@ -2167,7 +2167,7 @@ Q3_SetAnimUpper
 Sets the upper animation of an entity
 =============
 */
-static qboolean Q3_SetAnimUpper( int entID, const char *anim_name )
+qboolean Q3_SetAnimUpper( int entID, const char *anim_name )
 {
 	int			animID = 0;
 
@@ -2196,7 +2196,7 @@ Q3_SetAnimLower
 Sets the lower animation of an entity
 =============
 */
-static qboolean Q3_SetAnimLower( int entID, const char *anim_name )
+qboolean Q3_SetAnimLower( int entID, const char *anim_name )
 {
 	int			animID = 0;
 
@@ -2231,7 +2231,7 @@ Q3_SetAnimHoldTime
 */
 extern void PM_SetTorsoAnimTimer( gentity_t *ent, int *torsoAnimTimer, int time );
 extern void PM_SetLegsAnimTimer( gentity_t *ent, int *legsAnimTimer, int time );
-static void Q3_SetAnimHoldTime( int entID, int int_data, qboolean lower )
+void Q3_SetAnimHoldTime( int entID, int int_data, qboolean lower )
 {
 	gentity_t	*ent  = &g_entities[entID];
 
@@ -2478,7 +2478,7 @@ Q3_SetHealth
   Argument		: int data
 ============
 */
-static void Q3_SetHealth( int entID, int data )
+void Q3_SetHealth( int entID, int data )
 {
 	gentity_t	*ent  = &g_entities[entID];
 
@@ -2535,7 +2535,7 @@ Q3_SetArmor
   Argument		: int data
 ============
 */
-static void Q3_SetArmor( int entID, int data )
+void Q3_SetArmor( int entID, int data )
 {
 	gentity_t	*ent  = &g_entities[entID];
 
@@ -2571,7 +2571,7 @@ FIXME: this should be a general NPC wrapper function
 	that is called ANY time	a bState is changed...
 ============
 */
-static qboolean Q3_SetBState( int entID, const char *bs_name )
+qboolean Q3_SetBState( int entID, const char *bs_name )
 {
 	gentity_t	*ent  = &g_entities[entID];
 	bState_t	bSID;
@@ -3769,7 +3769,7 @@ Q3_SetGravity
   Argument		: float float_data
 ============
 */
-static void Q3_SetGravity(int entID, float float_data)
+void Q3_SetGravity(int entID, float float_data)
 {
 	gentity_t	*self  = &g_entities[entID];
 
@@ -3872,7 +3872,7 @@ Q3_SetScale
   Argument		: float float_data
 ============
 */
-static void Q3_SetScale(int entID, float float_data)
+void Q3_SetScale(int entID, float float_data)
 {
 	gentity_t	*self  = &g_entities[entID];
 
