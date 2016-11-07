@@ -148,9 +148,18 @@ void CrystalAmmoSettings(gentity_t *ent)
 /*QUAKED misc_model_ghoul (1 0 0) (-16 -16 -24) (16 16 32) SOLID
 SOLID - Movement is blocked by it with the MASK_NPCSOLID & CONTENTS_BODY.
 
+"model" - Ghoul2 .glm file to load
 "modelscale" - "x" uniform scale
 "modelscale_vec" - "x y z" scale model in each axis
+"renderRadius" - Default "120" model render radius
+"rootbone" - Default "model_root" animation root bone
+"startframe" - Default "0". animation start frame
+"endframe" - Default "0". animation end frame
+"skin" - Default "models/players/kyle/model_default.skin". Skin file to load.
 
+- Use "endframe" when you have an animation that's more than 1 frame to play.
+- Use "renderRadius" for models larger than a player model if you notice the misc_model_ghoul disappearing when moving the camera.
+- Use "rootbone" to change the bone that the animation will play from, instead of animating the entire GLA. Use wisely.
 
 
 loaded as a model in the renderer - does not take up precious bsp space!
