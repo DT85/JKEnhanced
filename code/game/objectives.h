@@ -42,6 +42,8 @@ typedef enum //# Objective_e
 	DF2_02NAR_OBJ3,
 	DF2_03KATARN_OBJ,
 	DF2_07YUN_OBJ,
+	DF2_11GORC_OBJ1,
+	DF2_11GORC_OBJ2,
 
 	T3_BOUNTY_OBJ1, //needed as this is called elsewhere.
 	T2_RANCOR_OBJ5, //needed as this is called elsewhere.
@@ -235,6 +237,8 @@ stringID_table_t objectiveTable [] =
 	ENUM2STRING(DF2_02NAR_OBJ3),
 	ENUM2STRING(DF2_03KATARN_OBJ),
 	ENUM2STRING(DF2_07YUN_OBJ),
+	ENUM2STRING(DF2_11GORC_OBJ1),
+	ENUM2STRING(DF2_11GORC_OBJ2),
 
 	ENUM2STRING(T3_BOUNTY_OBJ1), //needed as this is called elsewhere.
 	ENUM2STRING(T2_RANCOR_OBJ5), //needed as this is called elsewhere.
