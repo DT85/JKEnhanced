@@ -38,6 +38,11 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 
 	# Files
 
+	# GLSL
+	file(GLOB SPRDRend2GLSLFiles "${SPDir}/rd-rend2/glsl/*.glsl")
+	source_group("renderer\\glsl" FILES ${SPRDRend2GLSLFiles})
+	set(SPRDRend2Files ${SPRDRend2Files} ${SPRDRend2GLSLFiles})
+
 	# GHOUL 2
 	set(SPRDRend2G2Files
 		"${SPDir}/ghoul2/G2.h"
@@ -99,12 +104,16 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 		"${SPDir}/rd-rend2/glext.h"
 		"${SPDir}/rd-rend2/qgl.h"
 		"${SPDir}/rd-rend2/tr_arb.cpp"
+		"${SPDir}/rd-rend2/tr_allocator.cpp"
+		"${SPDir}/rd-rend2/tr_allocator.h"
 		"${SPDir}/rd-rend2/tr_backend.cpp"
 		"${SPDir}/rd-rend2/tr_bsp.cpp"
 		"${SPDir}/rd-rend2/tr_cmds.cpp"
 		"${SPDir}/rd-rend2/tr_curve.cpp"
 		"${SPDir}/rd-rend2/tr_draw.cpp"
 		"${SPDir}/rd-rend2/tr_ghoul2.cpp"
+		"${SPDir}/rd-rend2/tr_glsl.cpp"
+		"${SPDir}/rd-rend2/tr_glsl_parse.cpp"
 		"${SPDir}/rd-rend2/tr_image.cpp"
 		"${SPDir}/rd-rend2/tr_init.cpp"
 		"${SPDir}/rd-rend2/tr_light.cpp"
@@ -199,5 +208,19 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 		set(SPRDRend2Defines ${SPRDRend2Defines} "JK2_MODE")
 		add_sp_renderer_project(${JK2SPRend2Renderer} "JK2 SP Rend2 Renderer" ${JK2SPEngine} ${JK2InstallDir} ${JK2SPClientComponent})
 	endif(BuildJK2SPRdRend2)
+	
+	# GLSL shader file generator
+	add_executable(compact_glsl
+		${SPDir}/rd-rend2/glsl/compact.cpp
+		${SPDir}/rd-rend2/tr_allocator.cpp
+		${SPDir}/rd-rend2/tr_allocator.h
+		${SPDir}/rd-rend2/tr_glsl_parse.cpp
+		)
+	set_target_properties(compact_glsl PROPERTIES COMPILE_DEFINITIONS "GLSL_BUILDTOOL")
+	set_target_properties(compact_glsl PROPERTIES INCLUDE_DIRECTORIES "${SPRDRend2RendererIncludeDirectories}")
+	add_custom_command(
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/glsl_shaders.cpp
+		COMMAND compact_glsl ${CMAKE_CURRENT_BINARY_DIR}/glsl_shaders.cpp ${SPRDRend2GLSLFiles}
+		DEPENDS compact_glsl ${SPRDRend2GLSLFiles})
 
 endif(BuildSPRdRend2 OR BuildJK2SPRdRend2)
