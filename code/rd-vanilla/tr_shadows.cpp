@@ -251,7 +251,8 @@ void RB_DoShadowTessEnd( vec3_t lightPos )
 		//out the ground pos for the vert to project the shadow volume to
 		VectorAdd(tess.xyz[i], backEnd.ori.origin, worldxyz);
 		groundDist = worldxyz[2] - backEnd.currentEntity->e.shadowPlane;
-		groundDist += 16.0f; //fudge factor
+		//DT EDIT: DF2 - Allow any model to project shadows
+		groundDist += 100.0f; //fudge factor
 		VectorMA( tess.xyz[i], -groundDist, lightDir, shadowXyz[i] );
 	}
 #else
@@ -335,6 +336,9 @@ void RB_DoShadowTessEnd( vec3_t lightPos )
 #ifndef _DEBUG_STENCIL_SHADOWS
 	qglColor3f( 0.2f, 0.2f, 0.2f );
 
+	// set models to be flat-shaded for speed
+	qglShadeModel(GL_FLAT);
+
 	// don't write to the color buffer
 	qglColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
 
@@ -402,7 +406,10 @@ void RB_DoShadowTessEnd( vec3_t lightPos )
 	}
 #endif
 
-	// reenable writing to the color buffer
+	// re-enable GL_SMOOTH
+	qglShadeModel(GL_SMOOTH);
+
+	// re-enable writing to the color buffer
 	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 
 #ifdef _DEBUG_STENCIL_SHADOWS
