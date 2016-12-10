@@ -36,6 +36,8 @@ glRefConfig_t glRefConfig;
 glstate_t	glState;
 window_t	window;
 
+cvar_t	*sv_mapname;
+cvar_t	*sv_mapChecksum;
 cvar_t	*se_language;
 
 cvar_t	*r_flareSize;
@@ -1560,6 +1562,8 @@ Ghoul2 Insert End
 */
 	com_buildScript						= ri.Cvar_Get( "com_buildScript",					"0",						0 );
 
+	sv_mapname							= ri.Cvar_Get( "mapname",							"nomap",					CVAR_SERVERINFO | CVAR_ROM);
+	sv_mapChecksum						= ri.Cvar_Get( "sv_mapChecksum",					"",							CVAR_ROM);
 	se_language = ri.Cvar_Get ( "se_language", "english", CVAR_ARCHIVE | CVAR_NORESTART );
 
 	for ( size_t i = 0; i < numCommands; i++ )
