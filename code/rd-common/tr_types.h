@@ -178,7 +178,6 @@ Ghoul2 Insert End
 
 } refEntity_t;
 
-
 #define	MAX_RENDER_STRINGS			8
 #define	MAX_RENDER_STRING_LENGTH	32
 
@@ -198,7 +197,7 @@ typedef struct {
 	byte		areamask[MAX_MAP_AREA_BYTES];
 
 	// text messages for deform text shaders
-//	char		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
+	char		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
 } refdef_t;
 
 
@@ -219,7 +218,8 @@ typedef enum {
 typedef enum {
 	TC_NONE,
 	TC_S3TC,
-	TC_S3TC_DXT
+	TC_S3TC_DXT,
+	TC_S3TC_ARB
 } textureCompression_t;
 
 typedef struct glconfig_s {

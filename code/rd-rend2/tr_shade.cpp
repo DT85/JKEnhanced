@@ -1,32 +1,28 @@
 /*
 ===========================================================================
-Copyright (C) 1999 - 2005, Id Software, Inc.
-Copyright (C) 2000 - 2013, Raven Software, Inc.
-Copyright (C) 2001 - 2013, Activision, Inc.
-Copyright (C) 2005 - 2015, ioquake3 contributors
-Copyright (C) 2013 - 2015, OpenJK contributors
+Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of the OpenJK source code.
+This file is part of Quake III Arena source code.
 
-OpenJK is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License version 2 as
-published by the Free Software Foundation.
+Quake III Arena source code is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
+Quake III Arena source code is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; if not, see <http://www.gnu.org/licenses/>.
+along with Quake III Arena source code; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
-
 // tr_shade.c
 
-#include "../server/exe_headers.h"
-
-#include "tr_local.h"
+#include "tr_local.h" 
+#include "tr_allocator.h"
 
 /*
 
@@ -35,179 +31,36 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
   This file deals with applying shaders to surface data in the tess struct.
 */
 
-shaderCommands_t	tess;
-static qboolean	setArraysOnce;
-
 color4ub_t	styleColors[MAX_LIGHT_STYLES];
-bool		styleUpdated[MAX_LIGHT_STYLES];
 
-extern bool g_bRenderGlowingObjects;
+void RB_BinTriangleCounts( void );
 
-/*
-================
-R_ArrayElementDiscrete
-
-This is just for OpenGL conformance testing, it should never be the fastest
-================
-*/
-static void APIENTRY R_ArrayElementDiscrete( GLint index ) {
-	qglColor4ubv( tess.svars.colors[ index ] );
-	if ( glState.currenttmu ) {
-		qglMultiTexCoord2fARB( 0, tess.svars.texcoords[ 0 ][ index ][0], tess.svars.texcoords[ 0 ][ index ][1] );
-		qglMultiTexCoord2fARB( 1, tess.svars.texcoords[ 1 ][ index ][0], tess.svars.texcoords[ 1 ][ index ][1] );
-	} else {
-		qglTexCoord2fv( tess.svars.texcoords[ 0 ][ index ] );
-	}
-	qglVertex3fv( tess.xyz[ index ] );
-}
-
-/*
-===================
-R_DrawStripElements
-
-===================
-*/
-static int		c_vertexes;		// for seeing how long our average strips are
-static int		c_begins;
-static void R_DrawStripElements( int numIndexes, const glIndex_t *indexes, void ( APIENTRY *element )(GLint) ) {
-	int i;
-	glIndex_t last[3];
-	qboolean even;
-
-	qglBegin( GL_TRIANGLE_STRIP );
-	c_begins++;
-
-	if ( numIndexes <= 0 ) {
-		return;
-	}
-
-	// prime the strip
-	element( indexes[0] );
-	element( indexes[1] );
-	element( indexes[2] );
-	c_vertexes += 3;
-
-	last[0] = indexes[0];
-	last[1] = indexes[1];
-	last[2] = indexes[2];
-
-	even = qfalse;
-
-	for ( i = 3; i < numIndexes; i += 3 )
-	{
-		// odd numbered triangle in potential strip
-		if ( !even )
-		{
-			// check previous triangle to see if we're continuing a strip
-			if ( ( indexes[i+0] == last[2] ) && ( indexes[i+1] == last[1] ) )
-			{
-				element( indexes[i+2] );
-				c_vertexes++;
-				assert( (int)indexes[i+2] < tess.numVertexes );
-				even = qtrue;
-			}
-			// otherwise we're done with this strip so finish it and start
-			// a new one
-			else
-			{
-				qglEnd();
-
-				qglBegin( GL_TRIANGLE_STRIP );
-				c_begins++;
-
-				element( indexes[i+0] );
-				element( indexes[i+1] );
-				element( indexes[i+2] );
-
-				c_vertexes += 3;
-
-				even = qfalse;
-			}
-		}
-		else
-		{
-			// check previous triangle to see if we're continuing a strip
-			if ( ( last[2] == indexes[i+1] ) && ( last[0] == indexes[i+0] ) )
-			{
-				element( indexes[i+2] );
-				c_vertexes++;
-
-				even = qfalse;
-			}
-			// otherwise we're done with this strip so finish it and start
-			// a new one
-			else
-			{
-				qglEnd();
-
-				qglBegin( GL_TRIANGLE_STRIP );
-				c_begins++;
-
-				element( indexes[i+0] );
-				element( indexes[i+1] );
-				element( indexes[i+2] );
-				c_vertexes += 3;
-
-				even = qfalse;
-			}
-		}
-
-		// cache the last three vertices
-		last[0] = indexes[i+0];
-		last[1] = indexes[i+1];
-		last[2] = indexes[i+2];
-	}
-
-	qglEnd();
-}
 
 /*
 ==================
 R_DrawElements
 
-Optionally performs our own glDrawElements that looks for strip conditions
-instead of using the single glDrawElements call that may be inefficient
-without compiled vertex arrays.
 ==================
 */
-static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
-	int		primitives;
 
-	primitives = r_primitives->integer;
+void R_DrawElementsVBO( int numIndexes, glIndex_t firstIndex, glIndex_t minIndex, glIndex_t maxIndex )
+{
+	int offset = firstIndex * sizeof(glIndex_t) +
+		(tess.useInternalVBO ? backEndData->currentFrame->dynamicIboCommitOffset : 0);
 
-	// default is to use triangles if compiled vertex arrays are present
-	if ( primitives == 0 ) {
-		if ( qglLockArraysEXT ) {
-			primitives = 2;
-		} else {
-			primitives = 1;
-		}
-	}
-
-
-	if ( primitives == 2 ) {
-		qglDrawElements( GL_TRIANGLES,
-						numIndexes,
-						GL_INDEX_TYPE,
-						indexes );
-		return;
-	}
-
-	if ( primitives == 1 ) {
-		R_DrawStripElements( numIndexes,  indexes, qglArrayElement );
-		return;
-	}
-
-	if ( primitives == 3 ) {
-		R_DrawStripElements( numIndexes,  indexes, R_ArrayElementDiscrete );
-		return;
-	}
-
-	// anything else will cause no drawing
+	GL_DrawIndexed(GL_TRIANGLES, numIndexes, offset, 1, 0);
 }
 
 
-
+static void R_DrawMultiElementsVBO( int multiDrawPrimitives, glIndex_t *multiDrawMinIndex, glIndex_t *multiDrawMaxIndex, 
+	GLsizei *multiDrawNumIndexes, glIndex_t **multiDrawFirstIndex)
+{
+	GL_MultiDrawIndexed(
+			GL_TRIANGLES,
+			multiDrawNumIndexes,
+			multiDrawFirstIndex,
+			multiDrawPrimitives);
+}
 
 
 /*
@@ -218,30 +71,29 @@ SURFACE SHADERS
 =============================================================
 */
 
+shaderCommands_t	tess;
+
 
 /*
 =================
-R_BindAnimatedImage
+R_BindAnimatedImageToTMU
 
 =================
 */
-void R_BindAnimatedImage( const textureBundle_t *bundle) {
+void R_BindAnimatedImageToTMU( textureBundle_t *bundle, int tmu ) {
 	int		index;
 
 	if ( bundle->isVideoMap ) {
+		int oldtmu = glState.currenttmu;
+		GL_SelectTexture(tmu);
 		ri.CIN_RunCinematic(bundle->videoMapHandle);
 		ri.CIN_UploadCinematic(bundle->videoMapHandle);
-		return;
-	}
-
-	if ((r_fullbright->integer || tr.refdef.doLAGoggles || (tr.refdef.rdflags & RDF_doFullbright) ) && bundle->isLightmap)
-	{
-		GL_Bind( tr.whiteImage );
+		GL_SelectTexture(oldtmu);
 		return;
 	}
 
 	if ( bundle->numImageAnimations <= 1 ) {
-		GL_Bind( bundle->image );
+		GL_BindToTMU( bundle->image[0], tmu);
 		return;
 	}
 
@@ -253,7 +105,7 @@ void R_BindAnimatedImage( const textureBundle_t *bundle) {
 	{
 		// it is necessary to do this messy calc to make sure animations line up
 		// exactly with waveforms of the same frequency
-		index = Q_ftol( backEnd.refdef.floatTime * bundle->imageAnimationSpeed * FUNCTABLE_SIZE );
+		index = Q_ftol( tess.shaderTime * bundle->imageAnimationSpeed * FUNCTABLE_SIZE );
 		index >>= FUNCTABLE_SIZE2;
 
 		if ( index < 0 ) {
@@ -275,7 +127,7 @@ void R_BindAnimatedImage( const textureBundle_t *bundle) {
 		index %= bundle->numImageAnimations;
 	}
 
-	GL_Bind( *((image_t**)bundle->image + index) );
+	GL_BindToTMU( bundle->image[ index ], tmu );
 }
 
 
@@ -286,104 +138,38 @@ DrawTris
 Draws triangle outlines for debugging
 ================
 */
-static void DrawTris (shaderCommands_t *input)
-{
+static void DrawTris (shaderCommands_t *input) {
+#if 0
 	GL_Bind( tr.whiteImage );
 
-	if ( r_showtriscolor->integer )
+	GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE );
+	GL_DepthRange(0.0f, 0.0f);
+
 	{
-		int i = r_showtriscolor->integer;
-		if (i == 42) {
-			i = Q_irand(0,8);
-		}
-		switch (i)
+		shaderProgram_t *sp = &tr.textureColorShader;
+		vec4_t color;
+
+		GLSL_VertexAttribsState(ATTR_POSITION, NULL);
+		GLSL_BindProgram(sp);
+		
+		GLSL_SetUniformMatrix4x4(sp, UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
+		VectorSet4(color, 1, 1, 1, 1);
+		GLSL_SetUniformVec4(sp, UNIFORM_COLOR, color);
+
+		if (input->multiDrawPrimitives)
 		{
-		case 1:
-			qglColor3f( 1.0, 0.0, 0.0); //red
-			break;
-		case 2:
-			qglColor3f( 0.0, 1.0, 0.0); //green
-			break;
-		case 3:
-			qglColor3f( 1.0, 1.0, 0.0); //yellow
-			break;
-		case 4:
-			qglColor3f( 0.0, 0.0, 1.0); //blue
-			break;
-		case 5:
-			qglColor3f( 0.0, 1.0, 1.0); //cyan
-			break;
-		case 6:
-			qglColor3f( 1.0, 0.0, 1.0); //magenta
-			break;
-		case 7:
-			qglColor3f( 0.8f, 0.8f, 0.8f); //white/grey
-			break;
-		case 8:
-			qglColor3f( 0.0, 0.0, 0.0); //black
-			break;
+			R_DrawMultiElementsVBO(input->multiDrawPrimitives, input->multiDrawMinIndex, input->multiDrawMaxIndex, input->multiDrawNumIndexes, input->multiDrawFirstIndex);
 		}
-	}
-	else
-	{
-		qglColor3f( 1.0, 1.0, 1.0); //white
-	}
-
-	if ( r_showtris->integer == 2 )
-	{
-		// tries to do non-xray style showtris
-		GL_State( GLS_POLYMODE_LINE );
-
-		qglEnable( GL_POLYGON_OFFSET_LINE );
-		qglPolygonOffset( -1, -2 );
-
-		qglDisableClientState( GL_COLOR_ARRAY );
-		qglDisableClientState( GL_TEXTURE_COORD_ARRAY );
-
-		qglVertexPointer( 3, GL_FLOAT, 16, input->xyz );	// padded for SIMD
-
-		if ( qglLockArraysEXT )
+		else
 		{
-			qglLockArraysEXT( 0, input->numVertexes );
-			GLimp_LogComment( "glLockArraysEXT\n" );
+			R_DrawElementsVBO(input->numIndexes, input->firstIndex, input->minIndex, input->maxIndex);
 		}
-
-		R_DrawElements( input->numIndexes, input->indexes );
-
-		if ( qglUnlockArraysEXT )
-		{
-			qglUnlockArraysEXT( );
-			GLimp_LogComment( "glUnlockArraysEXT\n" );
-		}
-
-		qglDisable( GL_POLYGON_OFFSET_LINE );
 	}
-	else
-	{
-		// same old showtris
-		GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE );
-		qglDepthRange( 0, 0 );
 
-		qglDisableClientState (GL_COLOR_ARRAY);
-		qglDisableClientState (GL_TEXTURE_COORD_ARRAY);
-
-		qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
-
-		if (qglLockArraysEXT) {
-			qglLockArraysEXT(0, input->numVertexes);
-			GLimp_LogComment( "glLockArraysEXT\n" );
-		}
-
-		R_DrawElements( input->numIndexes, input->indexes );
-
-		if (qglUnlockArraysEXT) {
-			qglUnlockArraysEXT();
-			GLimp_LogComment( "glUnlockArraysEXT\n" );
-		}
-
-		qglDepthRange( 0, 1 );
-	}
+	GL_DepthRange(0.0f, 1.0f);
+#endif
 }
+
 
 /*
 ================
@@ -393,25 +179,8 @@ Draws vertex normals for debugging
 ================
 */
 static void DrawNormals (shaderCommands_t *input) {
-	int		i;
-	vec3_t	temp;
-
-	GL_Bind( tr.whiteImage );
-	qglColor3f (1,1,1);
-	qglDepthRange( 0, 0 );	// never occluded
-	GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE );
-
-	qglBegin (GL_LINES);
-	for (i = 0 ; i < input->numVertexes ; i++) {
-		qglVertex3fv (input->xyz[i]);
-		VectorMA (input->xyz[i], 2, input->normal[i], temp);
-		qglVertex3fv (temp);
-	}
-	qglEnd ();
-
-	qglDepthRange( 0, 1 );
+	//FIXME: implement this
 }
-
 
 /*
 ==============
@@ -422,906 +191,930 @@ because a surface may be forced to perform a RB_End due
 to overflow.
 ==============
 */
-void RB_BeginSurface( shader_t *shader, int fogNum ) {
-//	shader_t *state = (shader->remappedShader) ? shader->remappedShader : shader;
-	shader_t *state = shader;
+void RB_BeginSurface( shader_t *shader, int fogNum, int cubemapIndex ) {
+
+	shader_t *state = (shader->remappedShader) ? shader->remappedShader : shader;
 
 	tess.numIndexes = 0;
+	tess.firstIndex = 0;
 	tess.numVertexes = 0;
-	tess.shader = state;//shader;
+	tess.multiDrawPrimitives = 0;
+	tess.shader = state;
 	tess.fogNum = fogNum;
+	tess.cubemapIndex = cubemapIndex;
 	tess.dlightBits = 0;		// will be OR'd in by surface functions
-
-	tess.SSInitializedWind = qfalse;	//is this right?
-
+	tess.pshadowBits = 0;       // will be OR'd in by surface functions
 	tess.xstages = state->stages;
 	tess.numPasses = state->numUnfoggedPasses;
+	tess.currentStageIteratorFunc = state->optimalStageIteratorFunc;
+	tess.externalIBO = nullptr;
+	tess.useInternalVBO = qtrue;
 
-	tess.currentStageIteratorFunc = shader->sky ? RB_StageIteratorSky : RB_StageIteratorGeneric;
-
-	tess.fading = false;
-
-	tess.registration++;
-}
-
-/*
-===================
-DrawMultitextured
-
-output = t0 * t1 or t0 + t1
-
-t0 = most upstream according to spec
-t1 = most downstream according to spec
-===================
-*/
-static void DrawMultitextured( shaderCommands_t *input, int stage ) {
-	shaderStage_t	*pStage;
-
-	pStage = &tess.xstages[stage];
-
-	GL_State( pStage->stateBits );
-
-	//
-	// base
-	//
-	GL_SelectTexture( 0 );
-	qglTexCoordPointer( 2, GL_FLOAT, 0, input->svars.texcoords[0] );
-	R_BindAnimatedImage( &pStage->bundle[0] );
-
-	//
-	// lightmap/secondary pass
-	//
-	GL_SelectTexture( 1 );
-	qglEnable( GL_TEXTURE_2D );
-	qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
-
-	if ( r_lightmap->integer ) {
-		GL_TexEnv( GL_REPLACE );
-	} else {
-		GL_TexEnv( tess.shader->multitextureEnv );
+	tess.shaderTime = backEnd.refdef.floatTime - tess.shader->timeOffset;
+	if (tess.shader->clampTime && tess.shaderTime >= tess.shader->clampTime) {
+		tess.shaderTime = tess.shader->clampTime;
 	}
 
-	qglTexCoordPointer( 2, GL_FLOAT, 0, input->svars.texcoords[1] );
-
-	R_BindAnimatedImage( &pStage->bundle[1] );
-
-	R_DrawElements( input->numIndexes, input->indexes );
-
-	//
-	// disable texturing on TEXTURE1, then select TEXTURE0
-	//
-	qglDisable( GL_TEXTURE_2D );
-
-	GL_SelectTexture( 0 );
+	if (backEnd.viewParms.flags & VPF_SHADOWMAP)
+	{
+		tess.currentStageIteratorFunc = RB_StageIteratorGeneric;
+	}
 }
 
-//--EF_old dlight code...reverting back to Quake III dlight to see if people like that better
-// Lifted the whole function because someone hacked the heck out of this and it doesn't seem to
-//	be a case where it's as easy as just changing the blend mode....
-/*
-===================
-ProjectDlightTexture
 
-Perform dynamic lighting with another rendering pass
-===================
-*/
-/*
-static void ProjectDlightTexture( void ) {
-	int		l;
-	vec3_t	origin;
-	float	*texCoords;
-	byte	*colors;
-	byte	clipBits[SHADER_MAX_VERTEXES];
-	float	texCoordsArray[SHADER_MAX_VERTEXES][2];
-	byte	colorArray[SHADER_MAX_VERTEXES][4];
-	unsigned	hitIndexes[SHADER_MAX_INDEXES];
+
+extern float EvalWaveForm( const waveForm_t *wf );
+extern float EvalWaveFormClamped( const waveForm_t *wf );
+
+
+static void ComputeTexMods( shaderStage_t *pStage, int bundleNum, float *outMatrix, float *outOffTurb)
+{
+	int tm;
+	float matrix[6], currentmatrix[6];
+	textureBundle_t *bundle = &pStage->bundle[bundleNum];
+
+	matrix[0] = 1.0f; matrix[2] = 0.0f; matrix[4] = 0.0f;
+	matrix[1] = 0.0f; matrix[3] = 1.0f; matrix[5] = 0.0f;
+
+	currentmatrix[0] = 1.0f; currentmatrix[2] = 0.0f; currentmatrix[4] = 0.0f;
+	currentmatrix[1] = 0.0f; currentmatrix[3] = 1.0f; currentmatrix[5] = 0.0f;
+
+	outMatrix[0] = 1.0f; outMatrix[2] = 0.0f;
+	outMatrix[1] = 0.0f; outMatrix[3] = 1.0f;
+
+	outOffTurb[0] = 0.0f; outOffTurb[1] = 0.0f; outOffTurb[2] = 0.0f; outOffTurb[3] = 0.0f;
+
+	for ( tm = 0; tm < bundle->numTexMods ; tm++ ) {
+		switch ( bundle->texMods[tm].type )
+		{
+			
+		case TMOD_NONE:
+			tm = TR_MAX_TEXMODS;		// break out of for loop
+			break;
+
+		case TMOD_TURBULENT:
+			RB_CalcTurbulentFactors(&bundle->texMods[tm].wave, &outOffTurb[2], &outOffTurb[3]);
+			break;
+
+		case TMOD_ENTITY_TRANSLATE:
+			RB_CalcScrollTexMatrix( backEnd.currentEntity->e.shaderTexCoord, matrix );
+			break;
+
+		case TMOD_SCROLL:
+			RB_CalcScrollTexMatrix( bundle->texMods[tm].scroll,
+									 matrix );
+			break;
+
+		case TMOD_SCALE:
+			RB_CalcScaleTexMatrix( bundle->texMods[tm].scale,
+								  matrix );
+			break;
+		
+		case TMOD_STRETCH:
+			RB_CalcStretchTexMatrix( &bundle->texMods[tm].wave, 
+								   matrix );
+			break;
+
+		case TMOD_TRANSFORM:
+			RB_CalcTransformTexMatrix( &bundle->texMods[tm],
+									 matrix );
+			break;
+
+		case TMOD_ROTATE:
+			RB_CalcRotateTexMatrix( bundle->texMods[tm].rotateSpeed,
+									matrix );
+			break;
+
+		default:
+			ri.Error( ERR_DROP, "ERROR: unknown texmod '%d' in shader '%s'", bundle->texMods[tm].type, tess.shader->name );
+			break;
+		}
+
+		switch ( bundle->texMods[tm].type )
+		{	
+		case TMOD_NONE:
+		case TMOD_TURBULENT:
+		default:
+			break;
+
+		case TMOD_ENTITY_TRANSLATE:
+		case TMOD_SCROLL:
+		case TMOD_SCALE:
+		case TMOD_STRETCH:
+		case TMOD_TRANSFORM:
+		case TMOD_ROTATE:
+			outMatrix[0] = matrix[0] * currentmatrix[0] + matrix[2] * currentmatrix[1];
+			outMatrix[1] = matrix[1] * currentmatrix[0] + matrix[3] * currentmatrix[1];
+
+			outMatrix[2] = matrix[0] * currentmatrix[2] + matrix[2] * currentmatrix[3];
+			outMatrix[3] = matrix[1] * currentmatrix[2] + matrix[3] * currentmatrix[3];
+
+			outOffTurb[0] = matrix[0] * currentmatrix[4] + matrix[2] * currentmatrix[5] + matrix[4];
+			outOffTurb[1] = matrix[1] * currentmatrix[4] + matrix[3] * currentmatrix[5] + matrix[5];
+
+			currentmatrix[0] = outMatrix[0];
+			currentmatrix[1] = outMatrix[1];
+			currentmatrix[2] = outMatrix[2];
+			currentmatrix[3] = outMatrix[3];
+			currentmatrix[4] = outOffTurb[0];
+			currentmatrix[5] = outOffTurb[1];
+			break;
+		}
+	}
+}
+
+
+static void ComputeDeformValues(deform_t *type, genFunc_t *waveFunc, float deformParams[7])
+{
+	// u_DeformGen
+	*type = DEFORM_NONE;
+	*waveFunc = GF_NONE;
+
+	if(!ShaderRequiresCPUDeforms(tess.shader))
+	{
+		deformStage_t  *ds;
+
+		// only support the first one
+		ds = &tess.shader->deforms[0];
+
+		switch (ds->deformation)
+		{
+			case DEFORM_WAVE:
+				*type = DEFORM_WAVE;
+				*waveFunc = ds->deformationWave.func;
+
+				deformParams[0] = ds->deformationWave.base;
+				deformParams[1] = ds->deformationWave.amplitude;
+				deformParams[2] = ds->deformationWave.phase;
+				deformParams[3] = ds->deformationWave.frequency;
+				deformParams[4] = ds->deformationSpread;
+				deformParams[5] = 0.0f;
+				deformParams[6] = 0.0f;
+				break;
+
+			case DEFORM_BULGE:
+				*type = DEFORM_BULGE;
+
+				deformParams[0] = 0.0f;
+				deformParams[1] = ds->bulgeHeight; // amplitude
+				deformParams[2] = ds->bulgeWidth;  // phase
+				deformParams[3] = ds->bulgeSpeed;  // frequency
+				deformParams[4] = 0.0f;
+				deformParams[5] = 0.0f;
+				deformParams[6] = 0.0f;
+				break;
+
+			case DEFORM_MOVE:
+				*type = DEFORM_MOVE;
+				*waveFunc = ds->deformationWave.func;
+
+				deformParams[0] = ds->deformationWave.base;
+				deformParams[1] = ds->deformationWave.amplitude;
+				deformParams[2] = ds->deformationWave.phase;
+				deformParams[3] = ds->deformationWave.frequency;
+				deformParams[4] = ds->moveVector[0];
+				deformParams[5] = ds->moveVector[1];
+				deformParams[6] = ds->moveVector[2];
+
+				break;
+
+			case DEFORM_NORMALS:
+				*type = DEFORM_NORMALS;
+
+				deformParams[0] = 0.0f;
+				deformParams[1] = ds->deformationWave.amplitude; // amplitude
+				deformParams[2] = 0.0f;  // phase
+				deformParams[3] = ds->deformationWave.frequency;  // frequency
+				deformParams[4] = 0.0f;
+				deformParams[5] = 0.0f;
+				deformParams[6] = 0.0f;
+				break;
+
+			case DEFORM_PROJECTION_SHADOW:
+				*type = DEFORM_PROJECTION_SHADOW;
+
+				deformParams[0] = backEnd.ori.axis[0][2];
+				deformParams[1] = backEnd.ori.axis[1][2];
+				deformParams[2] = backEnd.ori.axis[2][2];
+				deformParams[3] = backEnd.ori.origin[2] - backEnd.currentEntity->e.shadowPlane;
+				deformParams[4] = backEnd.currentEntity->lightDir[0];
+				deformParams[5] = backEnd.currentEntity->lightDir[1];
+				deformParams[6] = backEnd.currentEntity->lightDir[2];
+				break;
+
+			default:
+				break;
+		}
+	}
+}
+
+static void ComputeShaderColors( shaderStage_t *pStage, vec4_t baseColor, vec4_t vertColor, int blend, colorGen_t *forceRGBGen, alphaGen_t *forceAlphaGen )
+{
+	colorGen_t rgbGen = pStage->rgbGen;
+	alphaGen_t alphaGen = pStage->alphaGen;
+
+	baseColor[0] =  
+   	baseColor[1] = 
+   	baseColor[2] = 
+   	baseColor[3] = 1.0f; 
+   	
+   	vertColor[0] = 
+   	vertColor[1] = 
+   	vertColor[2] = 
+   	vertColor[3] = 0.0f;
+
+	if ( forceRGBGen != NULL && *forceRGBGen != CGEN_BAD )
+	{
+		rgbGen = *forceRGBGen;
+	}
+
+	if ( forceAlphaGen != NULL && *forceAlphaGen != AGEN_IDENTITY )
+	{
+		alphaGen = *forceAlphaGen;
+	}
+
+	switch ( rgbGen )
+	{
+		case CGEN_IDENTITY_LIGHTING:
+			baseColor[0] = 
+			baseColor[1] =
+			baseColor[2] = tr.identityLight;
+			break;
+		case CGEN_EXACT_VERTEX:
+		case CGEN_EXACT_VERTEX_LIT:
+			baseColor[0] = 
+			baseColor[1] =
+			baseColor[2] = 
+			baseColor[3] = 0.0f;
+
+			vertColor[0] =
+			vertColor[1] =
+			vertColor[2] = 
+			vertColor[3] = 1.0f;
+			break;
+		case CGEN_CONST:
+			baseColor[0] = pStage->constantColor[0] / 255.0f;
+			baseColor[1] = pStage->constantColor[1] / 255.0f;
+			baseColor[2] = pStage->constantColor[2] / 255.0f;
+			baseColor[3] = pStage->constantColor[3] / 255.0f;
+			break;
+		case CGEN_VERTEX:
+			baseColor[0] = 
+			baseColor[1] =
+			baseColor[2] =
+			baseColor[3] = 0.0f;
+
+			vertColor[0] =
+			vertColor[1] =
+			vertColor[2] = tr.identityLight;
+			vertColor[3] = 1.0f;
+			break;
+		case CGEN_VERTEX_LIT:
+			baseColor[0] = 
+			baseColor[1] =
+			baseColor[2] = 
+			baseColor[3] = 0.0f;
+
+			vertColor[0] =
+			vertColor[1] =
+			vertColor[2] = 
+			vertColor[3] = tr.identityLight;
+			break;
+		case CGEN_ONE_MINUS_VERTEX:
+			baseColor[0] = 
+			baseColor[1] =
+			baseColor[2] = tr.identityLight;
+
+			vertColor[0] =
+			vertColor[1] =
+			vertColor[2] = -tr.identityLight;
+			break;
+		case CGEN_FOG:
+			{
+				fog_t *fog = tr.world->fogs + tess.fogNum;
+				VectorCopy4(fog->color, baseColor);
+			}
+			break;
+		case CGEN_WAVEFORM:
+			baseColor[0] = 
+			baseColor[1] = 
+			baseColor[2] = RB_CalcWaveColorSingle( &pStage->rgbWave );
+			break;
+		case CGEN_ENTITY:
+		case CGEN_LIGHTING_DIFFUSE_ENTITY:
+			if (backEnd.currentEntity)
+			{
+				baseColor[0] = ((unsigned char *)backEnd.currentEntity->e.shaderRGBA)[0] / 255.0f;
+				baseColor[1] = ((unsigned char *)backEnd.currentEntity->e.shaderRGBA)[1] / 255.0f;
+				baseColor[2] = ((unsigned char *)backEnd.currentEntity->e.shaderRGBA)[2] / 255.0f;
+				baseColor[3] = ((unsigned char *)backEnd.currentEntity->e.shaderRGBA)[3] / 255.0f;
+
+				if ( alphaGen == AGEN_IDENTITY &&
+					backEnd.currentEntity->e.shaderRGBA[3] == 255 )
+				{
+					alphaGen = AGEN_SKIP;
+				}
+			}
+			break;
+		case CGEN_ONE_MINUS_ENTITY:
+			if (backEnd.currentEntity)
+			{
+				baseColor[0] = 1.0f - ((unsigned char *)backEnd.currentEntity->e.shaderRGBA)[0] / 255.0f;
+				baseColor[1] = 1.0f - ((unsigned char *)backEnd.currentEntity->e.shaderRGBA)[1] / 255.0f;
+				baseColor[2] = 1.0f - ((unsigned char *)backEnd.currentEntity->e.shaderRGBA)[2] / 255.0f;
+				baseColor[3] = 1.0f - ((unsigned char *)backEnd.currentEntity->e.shaderRGBA)[3] / 255.0f;
+			}
+			break;
+		case CGEN_LIGHTMAPSTYLE:
+			VectorScale4 (styleColors[pStage->lightmapStyle], 1.0f / 255.0f, baseColor);
+			break;
+		case CGEN_IDENTITY:
+		case CGEN_LIGHTING_DIFFUSE:
+		case CGEN_BAD:
+			break;
+	}
+
+	//
+	// alphaGen
+	//
+	switch ( alphaGen )
+	{
+		case AGEN_SKIP:
+			break;
+		case AGEN_CONST:
+			if ( rgbGen != CGEN_CONST ) {
+				baseColor[3] = pStage->constantColor[3] / 255.0f;
+				vertColor[3] = 0.0f;
+			}
+			break;
+		case AGEN_WAVEFORM:
+			baseColor[3] = RB_CalcWaveAlphaSingle( &pStage->alphaWave );
+			vertColor[3] = 0.0f;
+			break;
+		case AGEN_ENTITY:
+			if (backEnd.currentEntity)
+			{
+				baseColor[3] = ((unsigned char *)backEnd.currentEntity->e.shaderRGBA)[3] / 255.0f;
+			}
+			vertColor[3] = 0.0f;
+			break;
+		case AGEN_ONE_MINUS_ENTITY:
+			if (backEnd.currentEntity)
+			{
+				baseColor[3] = 1.0f - ((unsigned char *)backEnd.currentEntity->e.shaderRGBA)[3] / 255.0f;
+			}
+			vertColor[3] = 0.0f;
+			break;
+		case AGEN_VERTEX:
+			if ( rgbGen != CGEN_VERTEX ) {
+				baseColor[3] = 0.0f;
+				vertColor[3] = 1.0f;
+			}
+			break;
+		case AGEN_ONE_MINUS_VERTEX:
+			baseColor[3] = 1.0f;
+			vertColor[3] = -1.0f;
+			break;
+		case AGEN_IDENTITY:
+		case AGEN_LIGHTING_SPECULAR:
+		case AGEN_PORTAL:
+			// Done entirely in vertex program
+			baseColor[3] = 1.0f;
+			vertColor[3] = 0.0f;
+			break;
+	}
+
+	if ( forceAlphaGen != NULL )
+	{
+		*forceAlphaGen = alphaGen;
+	}
+
+	if ( forceRGBGen != NULL )
+	{
+		*forceRGBGen = rgbGen;
+	}
+	
+	// multiply color by overbrightbits if this isn't a blend
+	if (tr.overbrightBits 
+	 && !((blend & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR)
+	 && !((blend & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE_MINUS_DST_COLOR)
+	 && !((blend & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR)
+	 && !((blend & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE_MINUS_SRC_COLOR))
+	{
+		float scale = 1 << tr.overbrightBits;
+
+		baseColor[0] *= scale;
+		baseColor[1] *= scale;
+		baseColor[2] *= scale;
+		vertColor[0] *= scale;
+		vertColor[1] *= scale;
+		vertColor[2] *= scale;
+	}
+
+	// FIXME: find some way to implement this.
+#if 0
+	// if in greyscale rendering mode turn all color values into greyscale.
+	if(r_greyscale->integer)
+	{
+		int scale;
+		
+		for(i = 0; i < tess.numVertexes; i++)
+		{
+			scale = (tess.svars.colors[i][0] + tess.svars.colors[i][1] + tess.svars.colors[i][2]) / 3;
+			tess.svars.colors[i][0] = tess.svars.colors[i][1] = tess.svars.colors[i][2] = scale;
+		}
+	}
+#endif
+}
+
+
+static void ComputeFogValues(vec4_t fogDistanceVector, vec4_t fogDepthVector, float *eyeT)
+{
+	// from RB_CalcFogTexCoords()
+	fog_t  *fog;
+	vec3_t  local;
+
+	if (!tess.fogNum)
+		return;
+
+	fog = tr.world->fogs + tess.fogNum;
+
+	VectorSubtract( backEnd.ori.origin, backEnd.viewParms.ori.origin, local );
+	fogDistanceVector[0] = -backEnd.ori.modelViewMatrix[2];
+	fogDistanceVector[1] = -backEnd.ori.modelViewMatrix[6];
+	fogDistanceVector[2] = -backEnd.ori.modelViewMatrix[10];
+	fogDistanceVector[3] = DotProduct( local, backEnd.viewParms.ori.axis[0] );
+
+	// scale the fog vectors based on the fog's thickness
+	VectorScale4(fogDistanceVector, fog->tcScale, fogDistanceVector);
+
+	// rotate the gradient vector for this orientation
+	if ( fog->hasSurface ) {
+		fogDepthVector[0] = fog->surface[0] * backEnd.ori.axis[0][0] + 
+			fog->surface[1] * backEnd.ori.axis[0][1] + fog->surface[2] * backEnd.ori.axis[0][2];
+		fogDepthVector[1] = fog->surface[0] * backEnd.ori.axis[1][0] + 
+			fog->surface[1] * backEnd.ori.axis[1][1] + fog->surface[2] * backEnd.ori.axis[1][2];
+		fogDepthVector[2] = fog->surface[0] * backEnd.ori.axis[2][0] + 
+			fog->surface[1] * backEnd.ori.axis[2][1] + fog->surface[2] * backEnd.ori.axis[2][2];
+		fogDepthVector[3] = -fog->surface[3] + DotProduct( backEnd.ori.origin, fog->surface );
+
+		*eyeT = DotProduct( backEnd.ori.viewOrigin, fogDepthVector ) + fogDepthVector[3];
+	} else {
+		VectorClear4(fogDepthVector);
+		*eyeT = 1;	// non-surface fog always has eye inside
+	}
+}
+
+
+static void ComputeFogColorMask( shaderStage_t *pStage, vec4_t fogColorMask )
+{
+	switch(pStage->adjustColorsForFog)
+	{
+		case ACFF_MODULATE_RGB:
+			fogColorMask[0] =
+			fogColorMask[1] =
+			fogColorMask[2] = 1.0f;
+			fogColorMask[3] = 0.0f;
+			break;
+		case ACFF_MODULATE_ALPHA:
+			fogColorMask[0] =
+			fogColorMask[1] =
+			fogColorMask[2] = 0.0f;
+			fogColorMask[3] = 1.0f;
+			break;
+		case ACFF_MODULATE_RGBA:
+			fogColorMask[0] =
+			fogColorMask[1] =
+			fogColorMask[2] =
+			fogColorMask[3] = 1.0f;
+			break;
+		default:
+			fogColorMask[0] =
+			fogColorMask[1] =
+			fogColorMask[2] =
+			fogColorMask[3] = 0.0f;
+			break;
+	}
+}
+
+static void CaptureDrawData(const shaderCommands_t *input, shaderStage_t *stage, int glslShaderIndex, int stageIndex )
+{
+	if ( !tr.numFramesToCapture )
+		return;
+
+	if ( input->multiDrawPrimitives )
+	{
+		int numIndexes = 0;
+		for ( int i = 0; i < input->multiDrawPrimitives; i++ )
+			numIndexes += input->multiDrawNumIndexes[i];
+
+		const char *data = va("%d,%d,%s,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,Y\n",
+				tr.frameCount,
+				backEnd.currentEntity == &tr.worldEntity ? -1 : (backEnd.currentEntity - tr.refdef.entities),
+				stage->glslShaderGroup ? "lightall" : "generic", glslShaderIndex,
+				input->shader->name, stageIndex, input->shader->sortedIndex, (int)input->shader->sort,
+				input->fogNum,
+				input->cubemapIndex,
+				glState.vertexAttribsState,
+				glState.glStateBits,
+				glState.currentVBO->vertexesVBO,
+				glState.currentIBO->indexesVBO,
+				numIndexes / 3);
+		ri.FS_Write(data, strlen(data), tr.debugFile);
+	}
+	else
+	{
+		const char *data = va("%d,%d,%s,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,N\n",
+				tr.frameCount,
+				backEnd.currentEntity == &tr.worldEntity ? -1 : (backEnd.currentEntity - tr.refdef.entities),
+				stage->glslShaderGroup ? "lightall" : "generic", glslShaderIndex,
+				input->shader->name, stageIndex, input->shader->sortedIndex, (int)input->shader->sort,
+				input->fogNum,
+				input->cubemapIndex,
+				glState.vertexAttribsState,
+				glState.glStateBits,
+				glState.currentVBO->vertexesVBO,
+				glState.currentIBO->indexesVBO,
+				input->numIndexes / 3);
+		ri.FS_Write(data, strlen(data), tr.debugFile);
+	}
+}
+
+uint32_t RB_CreateSortKey( const DrawItem& item, int stage, int layer )
+{
+	uint32_t key = 0;
+	uintptr_t shaderProgram = (uintptr_t)item.program;
+
+	assert(stage < 16);
+	layer = Q_min(layer, 15);
+
+	key |= (layer & 0xf) << 28;
+	key |= (stage & 0xf) << 24;
+	key |= shaderProgram & 0x00ffffff;
+	return key;
+}
+
+static cullType_t RB_GetCullType( const viewParms_t *viewParms, const trRefEntity_t *refEntity, cullType_t shaderCullType )
+{
+	assert(refEntity);
+
+	cullType_t cullType = CT_TWO_SIDED;
+	if ( !backEnd.projection2D )
+	{
+		if ( shaderCullType != CT_TWO_SIDED )
+		{
+			bool cullFront = (shaderCullType == CT_FRONT_SIDED);
+			if ( viewParms->isMirror )
+				cullFront = !cullFront;
+
+			if ( refEntity->mirrored )
+				cullFront = !cullFront;
+
+			if ( viewParms->flags & VPF_DEPTHSHADOW )
+				cullFront = !cullFront;
+
+			cullType = (cullFront ? CT_FRONT_SIDED : CT_BACK_SIDED);
+		}
+	}
+
+	return cullType;
+}
+
+DepthRange RB_GetDepthRange( const trRefEntity_t *re, const shader_t *shader )
+{
+	DepthRange range = {0.0f, 1.0f};
+	if ( shader->isSky )
+	{
+		// r_showsky will let all the sky blocks be drawn in
+		// front of everything to allow developers to see how
+		// much sky is getting sucked in
+		if ( !r_showsky->integer )
+		{
+			range.minDepth = 1.0f;
+			range.maxDepth = 1.0f;
+		}
+		else
+		{
+			range.maxDepth = 0.0f;
+		}
+	}
+	else if ( re->e.renderfx & RF_NODEPTH )
+	{
+		range.maxDepth = 0.0f;
+	}
+	else if ( re->e.renderfx & RF_DEPTHHACK )
+	{
+		range.maxDepth = 0.3f;
+	}
+
+	return range;
+}
+
+void RB_FillDrawCommand(
+	DrawCommand& drawCmd,
+	GLenum primitiveType,
+	int numInstances,
+	const shaderCommands_t *input
+)
+{
+	drawCmd.primitiveType = primitiveType;
+	drawCmd.numInstances = numInstances;
+
+	if ( input->multiDrawPrimitives )
+	{
+		if ( input->multiDrawPrimitives == 1 )
+		{
+			drawCmd.type = DRAW_COMMAND_INDEXED;
+			drawCmd.params.indexed.firstIndex = (glIndex_t)(size_t)(input->multiDrawFirstIndex[0]);
+			drawCmd.params.indexed.numIndices = input->multiDrawNumIndexes[0];
+		}
+		else
+		{
+			drawCmd.type = DRAW_COMMAND_MULTI_INDEXED;
+			drawCmd.params.multiIndexed.numDraws = input->multiDrawPrimitives;
+
+			drawCmd.params.multiIndexed.firstIndices =
+				ojkAllocArray<glIndex_t *>(*backEndData->perFrameMemory, input->multiDrawPrimitives);
+			memcpy(drawCmd.params.multiIndexed.firstIndices,
+				input->multiDrawFirstIndex,
+				sizeof(glIndex_t *) * input->multiDrawPrimitives);
+
+			drawCmd.params.multiIndexed.numIndices =
+				ojkAllocArray<GLsizei>(*backEndData->perFrameMemory, input->multiDrawPrimitives);
+			memcpy(drawCmd.params.multiIndexed.numIndices,
+				input->multiDrawNumIndexes,
+				sizeof(GLsizei *) * input->multiDrawPrimitives);
+		}
+	}
+	else
+	{
+		int offset = input->firstIndex * sizeof(glIndex_t) +
+			(input->useInternalVBO ? backEndData->currentFrame->dynamicIboCommitOffset : 0);
+
+		drawCmd.type = DRAW_COMMAND_INDEXED;
+		drawCmd.params.indexed.firstIndex = offset;
+		drawCmd.params.indexed.numIndices = input->numIndexes;
+	}
+}
+
+static void ForwardDlight( const shaderCommands_t *input,  VertexArraysProperties *vertexArrays )
+{
+	deform_t deformType;
+	genFunc_t deformGen;
+	float deformParams[7];
 
 	if ( !backEnd.refdef.num_dlights ) {
 		return;
 	}
+	
+	ComputeDeformValues(&deformType, &deformGen, deformParams);
 
-	for ( l = 0 ; l < backEnd.refdef.num_dlights ; l++ ) {
-		int		numIndexes;
-		vec3_t	floatColor;
-		float	scale;
-		float	radius, chord;
-		dlight_t	*dl;
-		int i;
+	cullType_t cullType = RB_GetCullType(&backEnd.viewParms, backEnd.currentEntity, input->shader->cullType);
+
+	vertexAttribute_t attribs[ATTR_INDEX_MAX] = {};
+	GL_VertexArraysToAttribs(attribs, ARRAY_LEN(attribs), vertexArrays);
+
+	UniformDataWriter uniformDataWriter;
+	SamplerBindingsWriter samplerBindingsWriter;
+
+	shaderStage_t *pStage = tess.xstages[0];
+	int index;
+	shaderProgram_t *shaderGroup;
+	uint32_t stateBits = 0;
+	if ( input->shader->numUnfoggedPasses == 1 &&
+			pStage->glslShaderGroup == tr.lightallShader &&
+			(pStage->glslShaderIndex & LIGHTDEF_LIGHTTYPE_MASK) )
+	{
+		index = pStage->glslShaderIndex;
+
+		stateBits = GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL;
+		shaderGroup = tr.lightallShader;
+		index &= ~LIGHTDEF_LIGHTTYPE_MASK;
+		index |= LIGHTDEF_USE_LIGHT_VECTOR;
+
+		if (glState.vertexAnimation)
+			index |= LIGHTDEF_USE_VERTEX_ANIMATION;
+
+		if (glState.skeletalAnimation)
+			index |= LIGHTDEF_USE_SKELETAL_ANIMATION;
+	}
+	else
+	{
+		index = 0;
+
+		stateBits = GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL;
+		shaderGroup = tr.dlightShader;
+		if ( deformGen != DGEN_NONE )
+			index |= DLIGHTDEF_USE_DEFORM_VERTEXES;
+	}
+
+	shaderProgram_t *sp = shaderGroup + index;
+	for ( int l = 0 ; l < backEnd.refdef.num_dlights ; l++ ) {
+		vec4_t texMatrix;
+		vec4_t texOffTurb;
 
 		if ( !( tess.dlightBits & ( 1 << l ) ) ) {
 			continue;	// this surface definately doesn't have any of this light
 		}
-		texCoords = texCoordsArray[0];
-		colors = colorArray[0];
 
-		dl = &backEnd.refdef.dlights[l];
-		VectorCopy( dl->transformed, origin );
-		radius = dl->radius;
-		chord = radius*radius*0.25f;
-		scale = 1.0f / radius;
-		floatColor[0] = dl->color[0] * 255f;
-		floatColor[1] = dl->color[1] * 255f;
-		floatColor[2] = dl->color[2] * 255f;
+		dlight_t *dl = &backEnd.refdef.dlights[l];
+		float radius = dl->radius;
 
-		for ( i = 0 ; i < tess.numVertexes ; i++, texCoords += 2, colors += 4 ) {
-			vec3_t	distVec;
-			int		clip;
-			float	tempColor;
-			float	modulate, dist;
+		backEnd.pc.c_lightallDraws++;
 
-//			if ( 0 ) {
-//				clipBits[i] = 255;	// definately not dlighted
-//				continue;
-//			}
-//
-			backEnd.pc.c_dlightVertexes++;
+		uniformDataWriter.Start(sp);
 
-			VectorSubtract( origin, tess.xyz[i], distVec );
-			dist = VectorLengthSquared(distVec);
+		uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
+		uniformDataWriter.SetUniformVec3(UNIFORM_VIEWORIGIN, backEnd.viewParms.ori.origin);
+		uniformDataWriter.SetUniformVec3(UNIFORM_LOCALVIEWORIGIN, backEnd.ori.viewOrigin);
 
-			texCoords[0] = 0.5 + distVec[0] * scale;	//xy projection
-			texCoords[1] = 0.5 + distVec[1] * scale;
+		uniformDataWriter.SetUniformFloat(UNIFORM_VERTEXLERP, glState.vertexAttribsInterpolation);
+		uniformDataWriter.SetUniformMatrix4x3(UNIFORM_BONE_MATRICES, &glState.boneMatrices[0][0], glState.numBones);
 
-			clip = 0;
-			if ( texCoords[0] < 0 ) {
-				clip |= 1;
-			} else if ( texCoords[0] > 1 ) {
-				clip |= 2;
-			}
-			if ( texCoords[1] < 0 ) {
-				clip |= 4;
-			} else if ( texCoords[1] > 1 ) {
-				clip |= 8;
-			}
-			clipBits[i] = clip;
-
-			// modulate the strength based on the height and color
-			if ( dist > chord) {
-				clip |= 16;
-				modulate = 255*1.0ff;
-			} else {
-				modulate = 255*2*dist*scale*scale;
-			}
-			tempColor = floatColor[0] + modulate;
-			colors[0] = tempColor > 255 ? 255: Q_ftol(tempColor);
-
-			tempColor = floatColor[1] + modulate;
-			colors[1] = tempColor > 255 ? 255: Q_ftol(tempColor);
-
-			tempColor = floatColor[2] + modulate;
-			colors[2] = tempColor > 255 ? 255: Q_ftol(tempColor);
-
-//			colors[3] = 255;
-			if ( distVec[2] > radius ) {
-				colors[3] = 0;
-			} else if ( distVec[2] < -radius ) {
-				colors[3] = 0;
-			} else {
-				if ( distVec[2] < 0 ) {
-					distVec[2] = -distVec[2];
-				}
-				if ( distVec[2] < radius * 0.5 ) {
-					colors[3] = 255;
-				} else {
-					colors[3] = Q_ftol(255* (radius - distVec[2]) * scale);
-				}
-			}
-
+		uniformDataWriter.SetUniformInt(UNIFORM_DEFORMTYPE, deformType);
+		if (deformType != DEFORM_NONE)
+		{
+			uniformDataWriter.SetUniformInt(UNIFORM_DEFORMFUNC, deformGen);
+			uniformDataWriter.SetUniformFloat(UNIFORM_DEFORMPARAMS, deformParams, 7);
+			uniformDataWriter.SetUniformFloat(UNIFORM_TIME, tess.shaderTime);
 		}
 
-		// build a list of triangles that need light
-		numIndexes = 0;
-		for ( i = 0 ; i < tess.numIndexes ; i += 3 ) {
-			int		a, b, c;
+		{
+			vec4_t baseColor;
+			vec4_t vertColor;
 
-			a = tess.indexes[i];
-			b = tess.indexes[i+1];
-			c = tess.indexes[i+2];
-			if ( clipBits[a] & clipBits[b] & clipBits[c] ) {
-				continue;	// not lighted
-			}
-			hitIndexes[numIndexes] = a;
-			hitIndexes[numIndexes+1] = b;
-			hitIndexes[numIndexes+2] = c;
-			numIndexes += 3;
+			ComputeShaderColors(pStage, baseColor, vertColor, GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE, NULL, NULL);
+
+			uniformDataWriter.SetUniformVec4(UNIFORM_BASECOLOR, baseColor);
+			uniformDataWriter.SetUniformVec4(UNIFORM_VERTCOLOR, vertColor);
 		}
 
-		if ( !numIndexes ) {
-			continue;
+		if (pStage->alphaGen == AGEN_PORTAL)
+		{
+			uniformDataWriter.SetUniformFloat(UNIFORM_PORTALRANGE, tess.shader->portalRange);
 		}
 
-		qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
-		qglTexCoordPointer( 2, GL_FLOAT, 0, texCoordsArray[0] );
+		uniformDataWriter.SetUniformInt(UNIFORM_COLORGEN, pStage->rgbGen);
+		uniformDataWriter.SetUniformInt(UNIFORM_ALPHAGEN, pStage->alphaGen);
 
-		qglEnableClientState( GL_COLOR_ARRAY );
-		qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, colorArray );
+		uniformDataWriter.SetUniformVec3(UNIFORM_DIRECTEDLIGHT, dl->color);
 
-		GL_Bind( tr.dlightImage );
+		vec4_t vector = {};
+		uniformDataWriter.SetUniformVec3(UNIFORM_AMBIENTLIGHT, vector);
+
+		VectorCopy(dl->origin, vector);
+		vector[3] = 1.0f;
+		uniformDataWriter.SetUniformVec4(UNIFORM_LIGHTORIGIN, vector);
+		uniformDataWriter.SetUniformFloat(UNIFORM_LIGHTRADIUS, radius);
+
+		uniformDataWriter.SetUniformVec4(UNIFORM_NORMALSCALE, pStage->normalScale);
+		uniformDataWriter.SetUniformVec4(UNIFORM_SPECULARSCALE, pStage->specularScale);
+
+		uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELMATRIX, backEnd.ori.modelMatrix);
+
+		if (pStage->bundle[TB_DIFFUSEMAP].image[0])
+			samplerBindingsWriter.AddAnimatedImage( &pStage->bundle[TB_DIFFUSEMAP], TB_DIFFUSEMAP);
+
+		// bind textures that are sampled and used in the glsl shader, and
+		// bind whiteImage to textures that are sampled but zeroed in the glsl shader
+		//
+		// alternatives:
+		//  - use the last bound texture
+		//     -> costs more to sample a higher res texture then throw out the result
+		//  - disable texture sampling in glsl shader with #ifdefs, as before
+		//     -> increases the number of shaders that must be compiled
+		//
+
+		if (pStage->bundle[TB_NORMALMAP].image[0])
+			samplerBindingsWriter.AddAnimatedImage( &pStage->bundle[TB_NORMALMAP], TB_NORMALMAP);
+		else if (r_normalMapping->integer)
+			samplerBindingsWriter.AddStaticImage( tr.whiteImage, TB_NORMALMAP );
+
+		if (pStage->bundle[TB_SPECULARMAP].image[0])
+			samplerBindingsWriter.AddAnimatedImage( &pStage->bundle[TB_SPECULARMAP], TB_SPECULARMAP);
+		else if (r_specularMapping->integer)
+			samplerBindingsWriter.AddStaticImage( tr.whiteImage, TB_SPECULARMAP );
+
+		vec4_t enableTextures = {};
+		uniformDataWriter.SetUniformVec4(UNIFORM_ENABLETEXTURES, enableTextures);
+
+		if (r_dlightMode->integer >= 2)
+			samplerBindingsWriter.AddStaticImage(tr.shadowCubemaps[l], TB_SHADOWMAP);
+
+		ComputeTexMods( pStage, TB_DIFFUSEMAP, texMatrix, texOffTurb );
+		uniformDataWriter.SetUniformVec4(UNIFORM_DIFFUSETEXMATRIX, texMatrix);
+		uniformDataWriter.SetUniformVec4(UNIFORM_DIFFUSETEXOFFTURB, texOffTurb);
+
+		uniformDataWriter.SetUniformInt(UNIFORM_TCGEN0, pStage->bundle[0].tcGen);
+		uniformDataWriter.SetUniformInt(UNIFORM_TCGEN1, pStage->bundle[1].tcGen);
+
+		CaptureDrawData(input, pStage, 0, 0);
+
+		DrawItem item = {};
 
 		// include GLS_DEPTHFUNC_EQUAL so alpha tested surfaces don't add light
 		// where they aren't rendered
-		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_SRC_COLOR | GLS_DEPTHFUNC_EQUAL);//our way
-//		GL_State( GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );	//Id way
-		R_DrawElements( numIndexes, hitIndexes );
-		backEnd.pc.c_totalIndexes += numIndexes;
-		backEnd.pc.c_dlightIndexes += numIndexes;
+		item.stateBits = stateBits;
+		item.cullType = cullType;
+		item.program = sp;
+		item.depthRange = RB_GetDepthRange(backEnd.currentEntity, input->shader);
+		item.ibo = input->externalIBO ? input->externalIBO : backEndData->currentFrame->dynamicIbo;
+
+		item.numAttributes = vertexArrays->numVertexArrays;
+		item.attributes = ojkAllocArray<vertexAttribute_t>(
+			*backEndData->perFrameMemory, vertexArrays->numVertexArrays);
+		memcpy(item.attributes, attribs, sizeof(*item.attributes)*vertexArrays->numVertexArrays);
+
+		item.uniformData = uniformDataWriter.Finish(*backEndData->perFrameMemory);
+		// FIXME: This is a bit ugly with the casting
+		item.samplerBindings = samplerBindingsWriter.Finish(
+			*backEndData->perFrameMemory, (int *)&item.numSamplerBindings);
+
+		RB_FillDrawCommand(item.draw, GL_TRIANGLES, 1, input);
+
+		uint32_t key = RB_CreateSortKey(item, 15, input->shader->sort);
+		RB_AddDrawItem(backEndData->currentPass, key, item);
+
+		backEnd.pc.c_totalIndexes += tess.numIndexes;
+		backEnd.pc.c_dlightIndexes += tess.numIndexes;
+		backEnd.pc.c_dlightVertexes += tess.numVertexes;
+
+		RB_BinTriangleCounts();
 	}
 }
-*/
 
-// Lifted from Quake III to see if people like this kind of dlight better
-/*
-===================
-ProjectDlightTexture
 
-Perform dynamic lighting with another rendering pass
-===================
-*/
-static void ProjectDlightTexture2( void ) {
-	int		i, l;
+static void ProjectPshadowVBOGLSL( void ) {
+	int		l;
 	vec3_t	origin;
-	byte	clipBits[SHADER_MAX_VERTEXES];
-	float	texCoordsArray[SHADER_MAX_VERTEXES][2];
-	float	oldTexCoordsArray[SHADER_MAX_VERTEXES][2];
-	float	vertCoordsArray[SHADER_MAX_VERTEXES][4];
-	unsigned int		colorArray[SHADER_MAX_VERTEXES];
-	glIndex_t	hitIndexes[SHADER_MAX_INDEXES];
-	int		numIndexes;
 	float	radius;
-#ifndef JK2_MODE
-	int		fogging;
-#endif
-	shaderStage_t *dStage;
-	vec3_t	posa;
-	vec3_t	posb;
-	vec3_t	posc;
-	vec3_t	dist;
-	vec3_t	e1;
-	vec3_t	e2;
-	vec3_t	normal;
-	float	fac,modulate;
-	vec3_t	floatColor;
-	byte colorTemp[4];
 
-	int		needResetVerts=0;
+	shaderCommands_t *input = &tess;
 
-	if ( !backEnd.refdef.num_dlights )
-	{
+	if ( !backEnd.refdef.num_pshadows ) {
 		return;
 	}
 
-	for ( l = 0 ; l < backEnd.refdef.num_dlights ; l++ )
-	{
-		dlight_t	*dl;
+	for ( l = 0 ; l < backEnd.refdef.num_pshadows ; l++ ) {
+		pshadow_t	*ps;
+		shaderProgram_t *sp;
+		vec4_t vector;
 
-		if ( !( tess.dlightBits & ( 1 << l ) ) ) {
-			continue;	// this surface definately doesn't have any of this light
+		if ( !( tess.pshadowBits & ( 1 << l ) ) ) {
+			continue;	// this surface definately doesn't have any of this shadow
 		}
 
-		dl = &backEnd.refdef.dlights[l];
-		VectorCopy( dl->transformed, origin );
-		radius = dl->radius;
+		ps = &backEnd.refdef.pshadows[l];
+		VectorCopy( ps->lightOrigin, origin );
+		radius = ps->lightRadius;
 
-		int		clipall = 63;
-		for ( i = 0 ; i < tess.numVertexes ; i++)
+		sp = &tr.pshadowShader;
+
+		GLSL_BindProgram(sp);
+
+		GLSL_SetUniformMatrix4x4(sp, UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
+
+		VectorCopy(origin, vector);
+		vector[3] = 1.0f;
+		GLSL_SetUniformVec4(sp, UNIFORM_LIGHTORIGIN, vector);
+
+		VectorScale(ps->lightViewAxis[0], 1.0f / ps->viewRadius, vector);
+		GLSL_SetUniformVec3(sp, UNIFORM_LIGHTFORWARD, vector);
+
+		VectorScale(ps->lightViewAxis[1], 1.0f / ps->viewRadius, vector);
+		GLSL_SetUniformVec3(sp, UNIFORM_LIGHTRIGHT, vector);
+
+		VectorScale(ps->lightViewAxis[2], 1.0f / ps->viewRadius, vector);
+		GLSL_SetUniformVec3(sp, UNIFORM_LIGHTUP, vector);
+
+		GLSL_SetUniformFloat(sp, UNIFORM_LIGHTRADIUS, radius);
+	  
+		// include GLS_DEPTHFUNC_EQUAL so alpha tested surfaces don't add light
+		// where they aren't rendered
+		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
+
+		GL_BindToTMU( tr.pshadowMaps[l], TB_DIFFUSEMAP );
+
+		//
+		// draw
+		//
+
+		if (input->multiDrawPrimitives)
 		{
-			int		clip;
-			VectorSubtract( origin, tess.xyz[i], dist );
-
-			clip = 0;
-			if (  dist[0] < -radius )
-			{
-				clip |= 1;
-			}
-			else if ( dist[0] > radius )
-			{
-				clip |= 2;
-			}
-			if (  dist[1] < -radius )
-			{
-				clip |= 4;
-			}
-			else if ( dist[1] > radius )
-			{
-				clip |= 8;
-			}
-			if (  dist[2] < -radius )
-			{
-				clip |= 16;
-			}
-			else if ( dist[2] > radius )
-			{
-				clip |= 32;
-			}
-
-			clipBits[i] = clip;
-			clipall &= clip;
-		}
-		if ( clipall )
-		{
-			continue;	// this surface doesn't have any of this light
-		}
-		floatColor[0] = dl->color[0] * 255.0f;
-		floatColor[1] = dl->color[1] * 255.0f;
-		floatColor[2] = dl->color[2] * 255.0f;
-		// build a list of triangles that need light
-		numIndexes = 0;
-		for ( i = 0 ; i < tess.numIndexes ; i += 3 )
-		{
-			int		a, b, c;
-
-			a = tess.indexes[i];
-			b = tess.indexes[i+1];
-			c = tess.indexes[i+2];
-			if ( clipBits[a] & clipBits[b] & clipBits[c] )
-			{
-				continue;	// not lighted
-			}
-
-			// copy the vertex positions
-			VectorCopy(tess.xyz[a],posa);
-			VectorCopy(tess.xyz[b],posb);
-			VectorCopy(tess.xyz[c],posc);
-
-			VectorSubtract( posa, posb,e1);
-			VectorSubtract( posc, posb,e2);
-			CrossProduct(e1,e2,normal);
-//			fac=DotProduct(normal,origin)-DotProduct(normal,posa);
-//			if (fac <= 0.0f || // backface
-// rjr - removed for hacking 			if ( (!r_dlightBacks->integer && DotProduct(normal,origin)-DotProduct(normal,posa) <= 0.0f) || // backface
-			if ( DotProduct(normal,origin)-DotProduct(normal,posa) <= 0.0f || // backface
-				DotProduct(normal,normal) < 1E-8f) // junk triangle
-			{
-				continue;
-			}
-			VectorNormalize(normal);
-			fac=DotProduct(normal,origin)-DotProduct(normal,posa);
-			if (fac >= radius)  // out of range
-			{
-				continue;
-			}
-			modulate = 1.0f-((fac*fac) / (radius*radius));
-			fac = 0.5f/sqrtf(radius*radius - fac*fac);
-
-			// save the verts
-			VectorCopy(posa,vertCoordsArray[numIndexes]);
-			VectorCopy(posb,vertCoordsArray[numIndexes+1]);
-			VectorCopy(posc,vertCoordsArray[numIndexes+2]);
-
-			// now we need e1 and e2 to be an orthonormal basis
-			if (DotProduct(e1,e1) > DotProduct(e2,e2))
-			{
-				VectorNormalize(e1);
-				CrossProduct(e1,normal,e2);
-			}
-			else
-			{
-				VectorNormalize(e2);
-				CrossProduct(normal,e2,e1);
-			}
-			VectorScale(e1,fac,e1);
-			VectorScale(e2,fac,e2);
-
-			VectorSubtract( posa, origin,dist);
-			texCoordsArray[numIndexes][0]=DotProduct(dist,e1)+0.5f;
-			texCoordsArray[numIndexes][1]=DotProduct(dist,e2)+0.5f;
-
-			VectorSubtract( posb, origin,dist);
-			texCoordsArray[numIndexes+1][0]=DotProduct(dist,e1)+0.5f;
-			texCoordsArray[numIndexes+1][1]=DotProduct(dist,e2)+0.5f;
-
-			VectorSubtract( posc, origin,dist);
-			texCoordsArray[numIndexes+2][0]=DotProduct(dist,e1)+0.5f;
-			texCoordsArray[numIndexes+2][1]=DotProduct(dist,e2)+0.5f;
-
-			if ((texCoordsArray[numIndexes][0] < 0.0f && texCoordsArray[numIndexes+1][0] < 0.0f && texCoordsArray[numIndexes+2][0] < 0.0f) ||
-				(texCoordsArray[numIndexes][0] > 1.0f && texCoordsArray[numIndexes+1][0] > 1.0f && texCoordsArray[numIndexes+2][0] > 1.0f) ||
-				(texCoordsArray[numIndexes][1] < 0.0f && texCoordsArray[numIndexes+1][1] < 0.0f && texCoordsArray[numIndexes+2][1] < 0.0f) ||
-				(texCoordsArray[numIndexes][1] > 1.0f && texCoordsArray[numIndexes+1][1] > 1.0f && texCoordsArray[numIndexes+2][1] > 1.0f) )
-			{
-				continue; // didn't end up hitting this tri
-			}
-
-			// these are the old texture coordinates for the multitexture dlight
-
-			/* old code, get from the svars = wrong
-			oldTexCoordsArray[numIndexes][0]=tess.svars.texcoords[0][a][0];
-			oldTexCoordsArray[numIndexes][1]=tess.svars.texcoords[0][a][1];
-			oldTexCoordsArray[numIndexes+1][0]=tess.svars.texcoords[0][b][0];
-			oldTexCoordsArray[numIndexes+1][1]=tess.svars.texcoords[0][b][1];
-			oldTexCoordsArray[numIndexes+2][0]=tess.svars.texcoords[0][c][0];
-			oldTexCoordsArray[numIndexes+2][1]=tess.svars.texcoords[0][c][1];
-			*/
-			oldTexCoordsArray[numIndexes][0]=tess.texCoords[a][0][0];
-			oldTexCoordsArray[numIndexes][1]=tess.texCoords[a][0][1];
-			oldTexCoordsArray[numIndexes+1][0]=tess.texCoords[b][0][0];
-			oldTexCoordsArray[numIndexes+1][1]=tess.texCoords[b][0][1];
-			oldTexCoordsArray[numIndexes+2][0]=tess.texCoords[c][0][0];
-			oldTexCoordsArray[numIndexes+2][1]=tess.texCoords[c][0][1];
-
-			colorTemp[0] = Q_ftol(floatColor[0] * modulate);
-			colorTemp[1] = Q_ftol(floatColor[1] * modulate);
-			colorTemp[2] = Q_ftol(floatColor[2] * modulate);
-			colorTemp[3] = 255;
-
-			byteAlias_t *ba = (byteAlias_t *)&colorTemp;
-			colorArray[numIndexes + 0] = ba->ui;
-			colorArray[numIndexes + 1] = ba->ui;
-			colorArray[numIndexes + 2] = ba->ui;
-
-			hitIndexes[numIndexes] = numIndexes;
-			hitIndexes[numIndexes+1] = numIndexes+1;
-			hitIndexes[numIndexes+2] = numIndexes+2;
-			numIndexes += 3;
-
-			if (numIndexes>=SHADER_MAX_VERTEXES-3)
-			{
-				break; // we are out of space, so we are done :)
-			}
-		}
-
-		if ( !numIndexes ) {
-			continue;
-		}
-#ifndef JK2_MODE
-		//don't have fog enabled when we redraw with alpha test, or it will double over
-		//and screw the tri up -rww
-		if (r_drawfog->value == 2 &&
-			tr.world &&
-			(tess.fogNum == tr.world->globalFog || tess.fogNum == tr.world->numfogs))
-		{
-			fogging = qglIsEnabled(GL_FOG);
-
-			if (fogging)
-			{
-				qglDisable(GL_FOG);
-			}
+			R_DrawMultiElementsVBO(input->multiDrawPrimitives, input->multiDrawMinIndex, input->multiDrawMaxIndex, input->multiDrawNumIndexes, input->multiDrawFirstIndex);
 		}
 		else
 		{
-			fogging = 0;
-		}
-#endif
-
-		if (!needResetVerts)
-		{
-			needResetVerts=1;
-			if (qglUnlockArraysEXT)
-			{
-				qglUnlockArraysEXT();
-				GLimp_LogComment( "glUnlockArraysEXT\n" );
-			}
-		}
-		qglVertexPointer (3, GL_FLOAT, 16, vertCoordsArray);	// padded for SIMD
-
-		dStage = NULL;
-		if (tess.shader && qglActiveTextureARB)
-		{
-			int i = 0;
-			while (i < tess.shader->numUnfoggedPasses)
-			{
-				const int blendBits = (GLS_SRCBLEND_BITS+GLS_DSTBLEND_BITS);
-				if (((tess.shader->stages[i].bundle[0].image && !tess.shader->stages[i].bundle[0].isLightmap && !tess.shader->stages[i].bundle[0].numTexMods && tess.shader->stages[i].bundle[0].tcGen != TCGEN_ENVIRONMENT_MAPPED && tess.shader->stages[i].bundle[0].tcGen != TCGEN_FOG) ||
-					 (tess.shader->stages[i].bundle[1].image && !tess.shader->stages[i].bundle[1].isLightmap && !tess.shader->stages[i].bundle[1].numTexMods && tess.shader->stages[i].bundle[1].tcGen != TCGEN_ENVIRONMENT_MAPPED && tess.shader->stages[i].bundle[1].tcGen != TCGEN_FOG)) &&
-					(tess.shader->stages[i].stateBits & blendBits) == 0 )
-				{ //only use non-lightmap opaque stages
-                    dStage = &tess.shader->stages[i];
-					break;
-				}
-				i++;
-			}
+			R_DrawElementsVBO(input->numIndexes, input->firstIndex, input->minIndex, input->maxIndex);
 		}
 
-		if (dStage)
-		{
-			GL_SelectTexture( 0 );
-			GL_State(0);
-			qglTexCoordPointer( 2, GL_FLOAT, 0, oldTexCoordsArray[0] );
-			if (dStage->bundle[0].image && !dStage->bundle[0].isLightmap && !dStage->bundle[0].numTexMods && dStage->bundle[0].tcGen != TCGEN_ENVIRONMENT_MAPPED && dStage->bundle[0].tcGen != TCGEN_FOG)
-			{
-				R_BindAnimatedImage( &dStage->bundle[0] );
-			}
-			else
-			{
-				R_BindAnimatedImage( &dStage->bundle[1] );
-			}
-
-			GL_SelectTexture( 1 );
-			qglEnable( GL_TEXTURE_2D );
-			qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
-			qglTexCoordPointer( 2, GL_FLOAT, 0, texCoordsArray[0] );
-			qglEnableClientState( GL_COLOR_ARRAY );
-			qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, colorArray );
-			GL_Bind( tr.dlightImage );
-			GL_TexEnv( GL_MODULATE );
-
-
-			GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL);// | GLS_ATEST_GT_0);
-
-			R_DrawElements( numIndexes, hitIndexes );
-
-			qglDisable( GL_TEXTURE_2D );
-			GL_SelectTexture(0);
-		}
-		else
-		{
-			qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
-			qglTexCoordPointer( 2, GL_FLOAT, 0, texCoordsArray[0] );
-
-			qglEnableClientState( GL_COLOR_ARRAY );
-			qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, colorArray );
-
-			GL_Bind( tr.dlightImage );
-			// include GLS_DEPTHFUNC_EQUAL so alpha tested surfaces don't add light
-			// where they aren't rendered
-			//if ( dl->additive ) {
-			//	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
-			//}
-			//else
-			{
-				GL_State( GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
-			}
-
-			R_DrawElements( numIndexes, hitIndexes );
-		}
-
-#ifndef JK2_MODE
-		if (fogging)
-		{
-			qglEnable(GL_FOG);
-		}
-#endif
-
-		backEnd.pc.c_totalIndexes += numIndexes;
-		backEnd.pc.c_dlightIndexes += numIndexes;
-	}
-	if (needResetVerts)
-	{
-		qglVertexPointer (3, GL_FLOAT, 16, tess.xyz);	// padded for SIMD
-		if (qglLockArraysEXT)
-		{
-			qglLockArraysEXT(0, tess.numVertexes);
-			GLimp_LogComment( "glLockArraysEXT\n" );
-		}
+		backEnd.pc.c_totalIndexes += tess.numIndexes;
+		//backEnd.pc.c_dlightIndexes += tess.numIndexes;
+		RB_BinTriangleCounts();
 	}
 }
-static void ProjectDlightTexture( void ) {
-	int		i, l;
-	vec3_t	origin;
-	float	*texCoords;
-	byte	*colors;
-	byte	clipBits[SHADER_MAX_VERTEXES];
-	float	texCoordsArray[SHADER_MAX_VERTEXES][2];
-	byte	colorArray[SHADER_MAX_VERTEXES][4];
-	glIndex_t	hitIndexes[SHADER_MAX_INDEXES];
-	int		numIndexes;
-	float	scale;
-	float	radius;
-#ifndef JK2_MODE
-	int		fogging;
-#endif
-	vec3_t	floatColor;
-	shaderStage_t *dStage;
-
-	if ( !backEnd.refdef.num_dlights ) {
-		return;
-	}
-
-	for ( l = 0 ; l < backEnd.refdef.num_dlights ; l++ ) {
-		dlight_t	*dl;
-
-		if ( !( tess.dlightBits & ( 1 << l ) ) ) {
-			continue;	// this surface definately doesn't have any of this light
-		}
-
-		texCoords = texCoordsArray[0];
-		colors = colorArray[0];
-
-		dl = &backEnd.refdef.dlights[l];
-		VectorCopy( dl->transformed, origin );
-		radius = dl->radius;
-		scale = 1.0f / radius;
-
-		floatColor[0] = dl->color[0] * 255.0f;
-		floatColor[1] = dl->color[1] * 255.0f;
-		floatColor[2] = dl->color[2] * 255.0f;
-
-		for ( i = 0 ; i < tess.numVertexes ; i++, texCoords += 2, colors += 4 ) {
-			vec3_t	dist;
-			int		clip;
-			float	modulate;
-
-			backEnd.pc.c_dlightVertexes++;
-
-			VectorSubtract( origin, tess.xyz[i], dist );
-
-			int l = 1;
-			int bestIndex = 0;
-			float greatest = tess.normal[i][0];
-			if (greatest < 0.0f)
-			{
-				greatest = -greatest;
-			}
-
-			if (VectorCompare(tess.normal[i], vec3_origin))
-			{ //damn you terrain!
-				bestIndex = 2;
-			}
-			else
-			{
-				while (l < 3)
-				{
-					if ((tess.normal[i][l] > greatest && tess.normal[i][l] > 0.0f) ||
-						(tess.normal[i][l] < -greatest && tess.normal[i][l] < 0.0f))
-					{
-						greatest = tess.normal[i][l];
-						if (greatest < 0.0f)
-						{
-							greatest = -greatest;
-						}
-						bestIndex = l;
-					}
-					l++;
-				}
-			}
-
-			float dUse = 0.0f;
-			const float maxScale = 1.5f;
-			const float maxGroundScale = 1.4f;
-			const float lightScaleTolerance = 0.1f;
-
-			if (bestIndex == 2)
-			{
-				dUse = origin[2]-tess.xyz[i][2];
-				if (dUse < 0.0f)
-				{
-					dUse = -dUse;
-				}
-				dUse = (radius*0.5f)/dUse;
-				if (dUse > maxGroundScale)
-				{
-					dUse = maxGroundScale;
-				}
-				else if (dUse < 0.1f)
-				{
-					dUse = 0.1f;
-				}
-
-				if (VectorCompare(tess.normal[i], vec3_origin) ||
-					tess.normal[i][0] > lightScaleTolerance ||
-					tess.normal[i][0] < -lightScaleTolerance ||
-					tess.normal[i][1] > lightScaleTolerance ||
-					tess.normal[i][1] < -lightScaleTolerance)
-				{ //if not perfectly flat, we must use a constant dist
-					scale = 1.0f / radius;
-				}
-				else
-				{
-					scale = 1.0f / (radius*dUse);
-				}
-
-				texCoords[0] = 0.5f + dist[0] * scale;
-				texCoords[1] = 0.5f + dist[1] * scale;
-			}
-			else if (bestIndex == 1)
-			{
-				dUse = origin[1]-tess.xyz[i][1];
-				if (dUse < 0.0f)
-				{
-					dUse = -dUse;
-				}
-				dUse = (radius*0.5f)/dUse;
-				if (dUse > maxScale)
-				{
-					dUse = maxScale;
-				}
-				else if (dUse < 0.1f)
-				{
-					dUse = 0.1f;
-				}
-				if (tess.normal[i][0] > lightScaleTolerance ||
-					tess.normal[i][0] < -lightScaleTolerance ||
-					tess.normal[i][2] > lightScaleTolerance ||
-					tess.normal[i][2] < -lightScaleTolerance)
-				{ //if not perfectly flat, we must use a constant dist
-					scale = 1.0f / radius;
-				}
-				else
-				{
-					scale = 1.0f / (radius*dUse);
-				}
-
-				texCoords[0] = 0.5f + dist[0] * scale;
-				texCoords[1] = 0.5f + dist[2] * scale;
-			}
-			else
-			{
-				dUse = origin[0]-tess.xyz[i][0];
-				if (dUse < 0.0f)
-				{
-					dUse = -dUse;
-				}
-				dUse = (radius*0.5f)/dUse;
-				if (dUse > maxScale)
-				{
-					dUse = maxScale;
-				}
-				else if (dUse < 0.1f)
-				{
-					dUse = 0.1f;
-				}
-				if (tess.normal[i][2] > lightScaleTolerance ||
-					tess.normal[i][2] < -lightScaleTolerance ||
-					tess.normal[i][1] > lightScaleTolerance ||
-					tess.normal[i][1] < -lightScaleTolerance)
-				{ //if not perfectly flat, we must use a constant dist
-					scale = 1.0f / radius;
-				}
-				else
-				{
-					scale = 1.0f / (radius*dUse);
-				}
-
-				texCoords[0] = 0.5f + dist[1] * scale;
-				texCoords[1] = 0.5f + dist[2] * scale;
-			}
-
-			clip = 0;
-			if ( texCoords[0] < 0.0f ) {
-				clip |= 1;
-			} else if ( texCoords[0] > 1.0f ) {
-				clip |= 2;
-			}
-			if ( texCoords[1] < 0.0f ) {
-				clip |= 4;
-			} else if ( texCoords[1] > 1.0f ) {
-				clip |= 8;
-			}
-			// modulate the strength based on the height and color
-			if ( dist[bestIndex] > radius ) {
-				clip |= 16;
-				modulate = 0.0f;
-			} else if ( dist[bestIndex] < -radius ) {
-				clip |= 32;
-				modulate = 0.0f;
-			} else {
-				dist[bestIndex] = Q_fabs(dist[bestIndex]);
-				if ( dist[bestIndex] < radius * 0.5f ) {
-					modulate = 1.0f;
-				} else {
-					modulate = 2.0f * (radius - dist[bestIndex]) * scale;
-				}
-			}
-			clipBits[i] = clip;
-
-			colors[0] = Q_ftol(floatColor[0] * modulate);
-			colors[1] = Q_ftol(floatColor[1] * modulate);
-			colors[2] = Q_ftol(floatColor[2] * modulate);
-			colors[3] = 255;
-		}
-		// build a list of triangles that need light
-		numIndexes = 0;
-		for ( i = 0 ; i < tess.numIndexes ; i += 3 ) {
-			int		a, b, c;
-
-			a = tess.indexes[i];
-			b = tess.indexes[i+1];
-			c = tess.indexes[i+2];
-			if ( clipBits[a] & clipBits[b] & clipBits[c] ) {
-				continue;	// not lighted
-			}
-			hitIndexes[numIndexes] = a;
-			hitIndexes[numIndexes+1] = b;
-			hitIndexes[numIndexes+2] = c;
-			numIndexes += 3;
-		}
-
-		if ( !numIndexes ) {
-			continue;
-		}
-
-#ifndef JK2_MODE
-		//don't have fog enabled when we redraw with alpha test, or it will double over
-		//and screw the tri up -rww
-		if (r_drawfog->value == 2 &&
-			tr.world &&
-			(tess.fogNum == tr.world->globalFog || tess.fogNum == tr.world->numfogs))
-		{
-			fogging = qglIsEnabled(GL_FOG);
-
-			if (fogging)
-			{
-				qglDisable(GL_FOG);
-			}
-		}
-		else
-		{
-			fogging = 0;
-		}
-#endif
 
 
-		dStage = NULL;
-		if (tess.shader && qglActiveTextureARB)
-		{
-			int i = 0;
-			while (i < tess.shader->numUnfoggedPasses)
-			{
-				const int blendBits = (GLS_SRCBLEND_BITS+GLS_DSTBLEND_BITS);
-				if (((tess.shader->stages[i].bundle[0].image && !tess.shader->stages[i].bundle[0].isLightmap && !tess.shader->stages[i].bundle[0].numTexMods && tess.shader->stages[i].bundle[0].tcGen != TCGEN_ENVIRONMENT_MAPPED && tess.shader->stages[i].bundle[0].tcGen != TCGEN_FOG) ||
-					 (tess.shader->stages[i].bundle[1].image && !tess.shader->stages[i].bundle[1].isLightmap && !tess.shader->stages[i].bundle[1].numTexMods && tess.shader->stages[i].bundle[1].tcGen != TCGEN_ENVIRONMENT_MAPPED && tess.shader->stages[i].bundle[1].tcGen != TCGEN_FOG)) &&
-					(tess.shader->stages[i].stateBits & blendBits) == 0 )
-				{ //only use non-lightmap opaque stages
-                    dStage = &tess.shader->stages[i];
-					break;
-				}
-				i++;
-			}
-		}
-
-		if (dStage)
-		{
-			GL_SelectTexture( 0 );
-			GL_State(0);
-			qglTexCoordPointer( 2, GL_FLOAT, 0, tess.svars.texcoords[0] );
-			if (dStage->bundle[0].image && !dStage->bundle[0].isLightmap && !dStage->bundle[0].numTexMods && dStage->bundle[0].tcGen != TCGEN_ENVIRONMENT_MAPPED && dStage->bundle[0].tcGen != TCGEN_FOG)
-			{
-				R_BindAnimatedImage( &dStage->bundle[0] );
-			}
-			else
-			{
-				R_BindAnimatedImage( &dStage->bundle[1] );
-			}
-
-			GL_SelectTexture( 1 );
-			qglEnable( GL_TEXTURE_2D );
-			qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
-			qglTexCoordPointer( 2, GL_FLOAT, 0, texCoordsArray[0] );
-			qglEnableClientState( GL_COLOR_ARRAY );
-			qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, colorArray );
-			GL_Bind( tr.dlightImage );
-			GL_TexEnv( GL_MODULATE );
-
-			GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL);// | GLS_ATEST_GT_0);
-
-			R_DrawElements( numIndexes, hitIndexes );
-
-			qglDisable( GL_TEXTURE_2D );
-			GL_SelectTexture(0);
-		}
-		else
-		{
-			qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
-			qglTexCoordPointer( 2, GL_FLOAT, 0, texCoordsArray[0] );
-
-			qglEnableClientState( GL_COLOR_ARRAY );
-			qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, colorArray );
-
-			GL_Bind( tr.dlightImage );
-			// include GLS_DEPTHFUNC_EQUAL so alpha tested surfaces don't add light
-			// where they aren't rendered
-			//if ( dl->additive ) {
-			//	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
-			//}
-			//else
-			{
-				GL_State( GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
-			}
-
-			R_DrawElements( numIndexes, hitIndexes );
-		}
-
-#ifndef JK2_MODE
-		if (fogging)
-		{
-			qglEnable(GL_FOG);
-		}
-#endif
-
-		backEnd.pc.c_totalIndexes += numIndexes;
-		backEnd.pc.c_dlightIndexes += numIndexes;
-	}
-}
 
 /*
 ===================
@@ -1330,718 +1123,683 @@ RB_FogPass
 Blends a fog texture on top of everything else
 ===================
 */
-static void RB_FogPass( void ) {
-	fog_t		*fog;
-	int			i;
+static void RB_FogPass( shaderCommands_t *input, const fog_t *fog, const VertexArraysProperties *vertexArrays )
+{
+	shaderProgram_t *sp;
 
-	qglEnableClientState( GL_COLOR_ARRAY );
-	qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, tess.svars.colors );
+	deform_t deformType;
+	genFunc_t deformGen;
+	vec5_t deformParams;
 
-	qglEnableClientState( GL_TEXTURE_COORD_ARRAY);
-	qglTexCoordPointer( 2, GL_FLOAT, 0, tess.svars.texcoords[0] );
+	ComputeDeformValues(&deformType, &deformGen, deformParams);
 
-	fog = tr.world->fogs + tess.fogNum;
+	cullType_t cullType = RB_GetCullType(&backEnd.viewParms, backEnd.currentEntity, input->shader->cullType);
 
-	for ( i = 0; i < tess.numVertexes; i++ ) {
-		byteAlias_t *ba = (byteAlias_t *)&tess.svars.colors[i];
-		ba->i = fog->colorInt;
+	vertexAttribute_t attribs[ATTR_INDEX_MAX] = {};
+	GL_VertexArraysToAttribs(attribs, ARRAY_LEN(attribs), vertexArrays);
+
+	UniformDataWriter uniformDataWriter;
+
+	int shaderBits = 0;
+
+	if (deformGen != DGEN_NONE)
+		shaderBits |= FOGDEF_USE_DEFORM_VERTEXES;
+
+	if (glState.vertexAnimation)
+		shaderBits |= FOGDEF_USE_VERTEX_ANIMATION;
+
+	if (glState.skeletalAnimation)
+		shaderBits |= FOGDEF_USE_SKELETAL_ANIMATION;
+	
+	sp = tr.fogShader + shaderBits;
+	uniformDataWriter.Start(sp);
+
+	backEnd.pc.c_fogDraws++;
+
+	uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
+	uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELMATRIX, backEnd.ori.modelMatrix);
+
+	uniformDataWriter.SetUniformFloat(UNIFORM_VERTEXLERP, glState.vertexAttribsInterpolation);
+	uniformDataWriter.SetUniformMatrix4x3(UNIFORM_BONE_MATRICES, &glState.boneMatrices[0][0], glState.numBones);
+	
+	uniformDataWriter.SetUniformInt(UNIFORM_DEFORMTYPE, deformType);
+	if (deformType != DEFORM_NONE)
+	{
+		uniformDataWriter.SetUniformInt(UNIFORM_DEFORMFUNC, deformGen);
+		uniformDataWriter.SetUniformFloat(UNIFORM_DEFORMPARAMS, deformParams, 7);
+		uniformDataWriter.SetUniformFloat(UNIFORM_TIME, tess.shaderTime);
 	}
 
-	RB_CalcFogTexCoords( ( float * ) tess.svars.texcoords[0] );
+	uniformDataWriter.SetUniformVec4(UNIFORM_COLOR, fog->color);
+	uniformDataWriter.SetUniformVec4(UNIFORM_FOGPLANE, fog->surface);
+	uniformDataWriter.SetUniformInt(UNIFORM_FOGHASPLANE, fog->hasSurface);
+	uniformDataWriter.SetUniformFloat(UNIFORM_FOGDEPTHTOOPAQUE, sqrtf(-logf(1.0f / 255.0f)) / fog->parms.depthForOpaque);
+	uniformDataWriter.SetUniformVec3(UNIFORM_VIEWORIGIN, backEnd.refdef.vieworg);
 
-	GL_Bind( tr.fogImage );
+	uint32_t stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+	if ( tess.shader->fogPass == FP_EQUAL )
+		stateBits |= GLS_DEPTHFUNC_EQUAL;
 
-	if ( tess.shader->fogPass == FP_EQUAL ) {
-		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
-	} else {
-		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
-	}
+	DrawItem item = {};
+	item.stateBits = stateBits;
+	item.cullType = cullType;
+	item.program = sp;
+	item.depthRange = RB_GetDepthRange(backEnd.currentEntity, input->shader);
+	item.ibo = input->externalIBO ? input->externalIBO : backEndData->currentFrame->dynamicIbo;
 
-	R_DrawElements( tess.numIndexes, tess.indexes );
+	item.numAttributes = vertexArrays->numVertexArrays;
+	item.attributes = ojkAllocArray<vertexAttribute_t>(
+		*backEndData->perFrameMemory, vertexArrays->numVertexArrays);
+	memcpy(item.attributes, attribs, sizeof(*item.attributes)*vertexArrays->numVertexArrays);
+
+	item.uniformData = uniformDataWriter.Finish(*backEndData->perFrameMemory);
+
+	RB_FillDrawCommand(item.draw, GL_TRIANGLES, 1, input);
+
+	uint32_t key = RB_CreateSortKey(item, 15, input->shader->sort);
+	RB_AddDrawItem(backEndData->currentPass, key, item);
 }
 
-
-/*
-===============
-ComputeColors
-===============
-*/
-static void ComputeColors( shaderStage_t *pStage, alphaGen_t forceAlphaGen, colorGen_t forceRGBGen )
+static unsigned int RB_CalcShaderVertexAttribs( const shader_t *shader )
 {
-	int i;
+	unsigned int vertexAttribs = shader->vertexAttribs;
 
-	if ( tess.shader != tr.projectionShadowShader && tess.shader != tr.shadowShader &&
-			( backEnd.currentEntity->e.renderfx & (RF_DISINTEGRATE1|RF_DISINTEGRATE2)))
+	if(glState.vertexAnimation)
 	{
-		RB_CalcDisintegrateColors( (unsigned char *)tess.svars.colors, pStage->rgbGen );
-		RB_CalcDisintegrateVertDeform();
-
-		// We've done some custom alpha and color stuff, so we can skip the rest.  Let it do fog though
-		forceRGBGen = CGEN_SKIP;
-		forceAlphaGen = AGEN_SKIP;
-	}
-
-	//
-	// rgbGen
-	//
-	if ( !forceRGBGen )
-	{
-		forceRGBGen = pStage->rgbGen;
-	}
-
-	if ( backEnd.currentEntity->e.renderfx & RF_VOLUMETRIC ) // does not work for rotated models, technically, this should also be a CGEN type, but that would entail adding new shader commands....which is too much work for one thing
-	{
-		int			i;
-		float		*normal, dot;
-		unsigned char *color;
-		int			numVertexes;
-
-		normal = tess.normal[0];
-		color = tess.svars.colors[0];
-
-		numVertexes = tess.numVertexes;
-
-		for ( i = 0 ; i < numVertexes ; i++, normal += 4, color += 4)
+		vertexAttribs &= ~ATTR_COLOR;
+		vertexAttribs |= ATTR_POSITION2;
+		if (vertexAttribs & ATTR_NORMAL)
 		{
-			dot = DotProduct( normal, backEnd.refdef.viewaxis[0] );
-
-			dot *= dot * dot * dot;
-
-			if ( dot < 0.2f ) // so low, so just clamp it
-			{
-				dot = 0.0f;
-			}
-
-			color[0] = color[1] = color[2] = color[3] = Q_ftol( backEnd.currentEntity->e.shaderRGBA[0] * (1-dot) );
-		}
-
-		forceRGBGen = CGEN_SKIP;
-		forceAlphaGen = AGEN_SKIP;
-	}
-
-	if ( !forceAlphaGen )	//set this up so we can override below
-	{
-		forceAlphaGen = pStage->alphaGen;
-	}
-
-	switch ( forceRGBGen )
-	{
-		case CGEN_SKIP:
-			break;
-		case CGEN_IDENTITY:
-			memset( tess.svars.colors, 0xff, tess.numVertexes * 4 );
-			break;
-		default:
-		case CGEN_IDENTITY_LIGHTING:
-			memset( tess.svars.colors, tr.identityLightByte, tess.numVertexes * 4 );
-			break;
-		case CGEN_LIGHTING_DIFFUSE:
-			RB_CalcDiffuseColor( ( unsigned char * ) tess.svars.colors );
-			break;
-		case CGEN_LIGHTING_DIFFUSE_ENTITY:
-			RB_CalcDiffuseEntityColor( ( unsigned char * ) tess.svars.colors );
-
-			if ( forceAlphaGen == AGEN_IDENTITY &&
-				 backEnd.currentEntity->e.shaderRGBA[3] == 0xff
-				)
-			{
-				forceAlphaGen = AGEN_SKIP;	//already got it in this set since it does all 4 components
-			}
-			break;
-		case CGEN_EXACT_VERTEX:
-			memcpy( tess.svars.colors, tess.vertexColors, tess.numVertexes * sizeof( tess.vertexColors[0] ) );
-			break;
-		case CGEN_CONST:
-			for ( i = 0; i < tess.numVertexes; i++ ) {
-				byteAlias_t *baDest = (byteAlias_t *)&tess.svars.colors[i],
-					*baSource = (byteAlias_t *)&pStage->constantColor;
-				baDest->i = baSource->i;
-			}
-			break;
-		case CGEN_VERTEX:
-			if ( tr.identityLight == 1 )
-			{
-				memcpy( tess.svars.colors, tess.vertexColors, tess.numVertexes * sizeof( tess.vertexColors[0] ) );
-			}
-			else
-			{
-				for ( i = 0; i < tess.numVertexes; i++ )
-				{
-					tess.svars.colors[i][0] = tess.vertexColors[i][0] * tr.identityLight;
-					tess.svars.colors[i][1] = tess.vertexColors[i][1] * tr.identityLight;
-					tess.svars.colors[i][2] = tess.vertexColors[i][2] * tr.identityLight;
-					tess.svars.colors[i][3] = tess.vertexColors[i][3];
-				}
-			}
-			break;
-		case CGEN_ONE_MINUS_VERTEX:
-			if ( tr.identityLight == 1 )
-			{
-				for ( i = 0; i < tess.numVertexes; i++ )
-				{
-					tess.svars.colors[i][0] = 255 - tess.vertexColors[i][0];
-					tess.svars.colors[i][1] = 255 - tess.vertexColors[i][1];
-					tess.svars.colors[i][2] = 255 - tess.vertexColors[i][2];
-				}
-			}
-			else
-			{
-				for ( i = 0; i < tess.numVertexes; i++ )
-				{
-					tess.svars.colors[i][0] = ( 255 - tess.vertexColors[i][0] ) * tr.identityLight;
-					tess.svars.colors[i][1] = ( 255 - tess.vertexColors[i][1] ) * tr.identityLight;
-					tess.svars.colors[i][2] = ( 255 - tess.vertexColors[i][2] ) * tr.identityLight;
-				}
-			}
-			break;
-		case CGEN_FOG:
-			{
-				const fog_t *fog = tr.world->fogs + tess.fogNum;
-
-				for ( i = 0; i < tess.numVertexes; i++ ) {
-					byteAlias_t *ba = (byteAlias_t *)&tess.svars.colors[i];
-					ba->i = fog->colorInt;
-				}
-			}
-			break;
-		case CGEN_WAVEFORM:
-			RB_CalcWaveColor( &pStage->rgbWave, ( unsigned char * ) tess.svars.colors );
-			break;
-		case CGEN_ENTITY:
-			RB_CalcColorFromEntity( ( unsigned char * ) tess.svars.colors );
-			if ( forceAlphaGen == AGEN_IDENTITY &&
-				 backEnd.currentEntity->e.shaderRGBA[3] == 0xff
-				)
-			{
-				forceAlphaGen = AGEN_SKIP;	//already got it in this set since it does all 4 components
-			}
-
-			break;
-		case CGEN_ONE_MINUS_ENTITY:
-			RB_CalcColorFromOneMinusEntity( ( unsigned char * ) tess.svars.colors );
-			break;
-		case CGEN_LIGHTMAPSTYLE:
-			for ( i = 0; i < tess.numVertexes; i++ )
-			{
-				byteAlias_t *baDest = (byteAlias_t *)&tess.svars.colors[i],
-					*baSource = (byteAlias_t *)&styleColors[pStage->lightmapStyle];
-				baDest->ui = baSource->ui;
-			}
-			break;
-		}
-
-	//
-	// alphaGen
-	//
-
-	switch ( forceAlphaGen )
-	{
-	case AGEN_SKIP:
-		break;
-	case AGEN_IDENTITY:
-		if ( forceRGBGen != CGEN_IDENTITY &&  forceRGBGen != CGEN_LIGHTING_DIFFUSE ) {
-			if ( ( forceRGBGen == CGEN_VERTEX && tr.identityLight != 1 ) ||
-				 forceRGBGen != CGEN_VERTEX ) {
-				for ( i = 0; i < tess.numVertexes; i++ ) {
-					tess.svars.colors[i][3] = 0xff;
-				}
-			}
-		}
-		break;
-	case AGEN_CONST:
-		if ( forceRGBGen != CGEN_CONST ) {
-			for ( i = 0; i < tess.numVertexes; i++ ) {
-				tess.svars.colors[i][3] = pStage->constantColor[3];
-			}
-		}
-		break;
-	case AGEN_WAVEFORM:
-		RB_CalcWaveAlpha( &pStage->alphaWave, ( unsigned char * ) tess.svars.colors );
-		break;
-	case AGEN_LIGHTING_SPECULAR:
-		RB_CalcSpecularAlpha( ( unsigned char * ) tess.svars.colors );
-		break;
-	case AGEN_ENTITY:
-		if ( forceRGBGen != CGEN_ENTITY ) { //already got it in the CGEN_entity since it does all 4 components
-			RB_CalcAlphaFromEntity( ( unsigned char * ) tess.svars.colors );
-		}
-		break;
-	case AGEN_ONE_MINUS_ENTITY:
-		RB_CalcAlphaFromOneMinusEntity( ( unsigned char * ) tess.svars.colors );
-		break;
-	case AGEN_VERTEX:
-		if ( forceRGBGen != CGEN_VERTEX ) {
-			for ( i = 0; i < tess.numVertexes; i++ ) {
-				tess.svars.colors[i][3] = tess.vertexColors[i][3];
-			}
-		}
-        break;
-    case AGEN_ONE_MINUS_VERTEX:
-		for ( i = 0; i < tess.numVertexes; i++ )
-		{
-			tess.svars.colors[i][3] = 255 - tess.vertexColors[i][3];
-		}
-		break;
-	case AGEN_PORTAL:
-		{
-			unsigned char alpha;
-
-			for ( i = 0; i < tess.numVertexes; i++ )
-			{
-				float len;
-				vec3_t v;
-
-				VectorSubtract( tess.xyz[i], backEnd.viewParms.ori.origin, v );
-				len = VectorLength( v );
-
-				len /= tess.shader->portalRange;
-
-				if ( len < 0 )
-				{
-					alpha = 0;
-				}
-				else if ( len > 1 )
-				{
-					alpha = 0xff;
-				}
-				else
-				{
-					alpha = len * 0xff;
-				}
-
-				tess.svars.colors[i][3] = alpha;
-			}
-		}
-		break;
-	case AGEN_BLEND:
-		if ( forceRGBGen != CGEN_VERTEX )
-		{
-			for ( i = 0; i < tess.numVertexes; i++ )
-			{
-				tess.svars.colors[i][3] = tess.vertexAlphas[i][pStage->index];
-			}
-		}
-		break;
-	default:
-		break;
-	}
-
-	//
-	// fog adjustment for colors to fade out as fog increases
-	//
-	if ( tess.fogNum )
-	{
-		switch ( pStage->adjustColorsForFog )
-		{
-		case ACFF_MODULATE_RGB:
-			RB_CalcModulateColorsByFog( ( unsigned char * ) tess.svars.colors );
-			break;
-		case ACFF_MODULATE_ALPHA:
-			RB_CalcModulateAlphasByFog( ( unsigned char * ) tess.svars.colors );
-			break;
-		case ACFF_MODULATE_RGBA:
-			RB_CalcModulateRGBAsByFog( ( unsigned char * ) tess.svars.colors );
-			break;
-		case ACFF_NONE:
-			break;
-		default:
-			break;
+			vertexAttribs |= ATTR_NORMAL2;
+			vertexAttribs |= ATTR_TANGENT2;
 		}
 	}
+
+	if (glState.skeletalAnimation)
+	{
+		vertexAttribs |= ATTR_BONE_WEIGHTS;
+		vertexAttribs |= ATTR_BONE_INDEXES;
+	}
+
+	return vertexAttribs;
 }
 
-/*
-===============
-ComputeTexCoords
-===============
-*/
-static void ComputeTexCoords( shaderStage_t *pStage ) {
-	int		i;
-	int b;
-
-	for ( b = 0; b < NUM_TEXTURE_BUNDLES; b++ ) {
-		int tm;
-
-		//
-		// generate the texture coordinates
-		//
-		switch ( pStage->bundle[b].tcGen )
-		{
-		case TCGEN_IDENTITY:
-			memset( tess.svars.texcoords[b], 0, sizeof( float ) * 2 * tess.numVertexes );
-			break;
-		case TCGEN_TEXTURE:
-			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
-				tess.svars.texcoords[b][i][0] = tess.texCoords[i][0][0];
-				tess.svars.texcoords[b][i][1] = tess.texCoords[i][0][1];
-			}
-			break;
-		case TCGEN_LIGHTMAP:
-			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
-				tess.svars.texcoords[b][i][0] = tess.texCoords[i][1][0];
-				tess.svars.texcoords[b][i][1] = tess.texCoords[i][1][1];
-			}
-			break;
-		case TCGEN_LIGHTMAP1:
-			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
-				tess.svars.texcoords[b][i][0] = tess.texCoords[i][2][0];
-				tess.svars.texcoords[b][i][1] = tess.texCoords[i][2][1];
-			}
-			break;
-		case TCGEN_LIGHTMAP2:
-			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
-				tess.svars.texcoords[b][i][0] = tess.texCoords[i][3][0];
-				tess.svars.texcoords[b][i][1] = tess.texCoords[i][3][1];
-			}
-			break;
-		case TCGEN_LIGHTMAP3:
-			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
-				tess.svars.texcoords[b][i][0] = tess.texCoords[i][4][0];
-				tess.svars.texcoords[b][i][1] = tess.texCoords[i][4][1];
-			}
-			break;
-		case TCGEN_VECTOR:
-			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
-				tess.svars.texcoords[b][i][0] = DotProduct( tess.xyz[i], pStage->bundle[b].tcGenVectors[0] );
-				tess.svars.texcoords[b][i][1] = DotProduct( tess.xyz[i], pStage->bundle[b].tcGenVectors[1] );
-			}
-			break;
-		case TCGEN_FOG:
-			RB_CalcFogTexCoords( ( float * ) tess.svars.texcoords[b] );
-			break;
-		case TCGEN_ENVIRONMENT_MAPPED:
-			if ( r_environmentMapping->integer )
-				RB_CalcEnvironmentTexCoords( (float *)tess.svars.texcoords[b] );
-			else
-				memset( tess.svars.texcoords[b], 0, sizeof( float ) * 2 * tess.numVertexes );
-			break;
-		case TCGEN_BAD:
-			return;
-		}
-
-		//
-		// alter texture coordinates
-		//
-		for ( tm = 0; tm < pStage->bundle[b].numTexMods ; tm++ ) {
-			switch ( pStage->bundle[b].texMods[tm].type )
-			{
-			case TMOD_NONE:
-				tm = TR_MAX_TEXMODS;		// break out of for loop
-				break;
-
-			case TMOD_TURBULENT:
-				RB_CalcTurbulentTexCoords( &pStage->bundle[b].texMods[tm].wave,
-						                 ( float * ) tess.svars.texcoords[b] );
-				break;
-
-			case TMOD_ENTITY_TRANSLATE:
-				RB_CalcScrollTexCoords( backEnd.currentEntity->e.shaderTexCoord,
-									 ( float * ) tess.svars.texcoords[b] );
-				break;
-
-			case TMOD_SCROLL:
-				RB_CalcScrollTexCoords( pStage->bundle[b].texMods[tm].translate,	//union scroll into translate
-										 ( float * ) tess.svars.texcoords[b] );
-				break;
-
-			case TMOD_SCALE:
-				RB_CalcScaleTexCoords( pStage->bundle[b].texMods[tm].translate,		//union scroll into translate
-									 ( float * ) tess.svars.texcoords[b] );
-				break;
-
-			case TMOD_STRETCH:
-				RB_CalcStretchTexCoords( &pStage->bundle[b].texMods[tm].wave,
-						               ( float * ) tess.svars.texcoords[b] );
-				break;
-
-			case TMOD_TRANSFORM:
-				RB_CalcTransformTexCoords( &pStage->bundle[b].texMods[tm],
-						                 ( float * ) tess.svars.texcoords[b] );
-				break;
-
-			case TMOD_ROTATE:
-				RB_CalcRotateTexCoords( pStage->bundle[b].texMods[tm].translate[0], //union rotateSpeed into translate[0]
-										( float * ) tess.svars.texcoords[b] );
-				break;
-
-			default:
-				Com_Error( ERR_DROP, "ERROR: unknown texmod '%d' in shader '%s'\n", pStage->bundle[b].texMods[tm].type, tess.shader->name );
-				break;
-			}
-		}
-	}
-}
-
-void ForceAlpha(unsigned char *dstColors, int TR_ForceEntAlpha)
+static shaderProgram_t *SelectShaderProgram( int stageIndex, shaderStage_t *stage, shaderProgram_t *glslShaderGroup, bool useAlphaTestGE192 )
 {
-	int	i;
+	uint32_t index;
+	shaderProgram_t *result = nullptr;
 
-	dstColors += 3;
-
-	for ( i = 0; i < tess.numVertexes; i++, dstColors += 4 )
+	if (backEnd.depthFill)
 	{
-		*dstColors = TR_ForceEntAlpha;
-	}
-}
+		if (glslShaderGroup == tr.lightallShader)
+		{
+			index = 0;
 
-/*
-** RB_IterateStagesGeneric
-*/
-#ifndef JK2_MODE
-static vec4_t	GLFogOverrideColors[GLFOGOVERRIDE_MAX] =
-{
-	{ 0.0, 0.0, 0.0, 1.0 },	// GLFOGOVERRIDE_NONE
-	{ 0.0, 0.0, 0.0, 1.0 },	// GLFOGOVERRIDE_BLACK
-	{ 1.0, 1.0, 1.0, 1.0 }	// GLFOGOVERRIDE_WHITE
-};
-
-static const float logtestExp2 = (sqrt( -log( 1.0 / 255.0 ) ));
-#endif
-extern bool tr_stencilled; //tr_backend.cpp
-static void RB_IterateStagesGeneric( shaderCommands_t *input )
-{
-	int stage;
-#ifndef JK2_MODE
-	bool	UseGLFog = false;
-	bool	FogColorChange = false;
-	fog_t	*fog = NULL;
-
-	if (tess.fogNum && tess.shader->fogPass && (tess.fogNum == tr.world->globalFog || tess.fogNum == tr.world->numfogs)
-		&& r_drawfog->value == 2)
-	{	// only gl fog global fog and the "special fog"
-		fog = tr.world->fogs + tess.fogNum;
-
-		if (tr.rangedFog)
-		{ //ranged fog, used for sniper scope
-			float fStart = fog->parms.depthForOpaque;
-			float fEnd = tr.distanceCull;
-
-			if (tr.rangedFog < 0.0f)
-			{ //special designer override
-				fStart = -tr.rangedFog;
-				fEnd = fog->parms.depthForOpaque;
-
-				if (fStart >= fEnd)
+			if (backEnd.currentEntity && backEnd.currentEntity != &tr.worldEntity)
+			{
+				if (glState.vertexAnimation)
 				{
-					fStart = fEnd-1.0f;
+					index |= LIGHTDEF_USE_VERTEX_ANIMATION;
+				}
+				else if (glState.skeletalAnimation)
+				{
+					index |= LIGHTDEF_USE_SKELETAL_ANIMATION;
 				}
 			}
-			else
-			{
-				//the greater tr.rangedFog is, the more fog we will get between the view point and cull distance
-				if ((tr.distanceCull-fStart) < tr.rangedFog)
-				{ //assure a minimum range between fog beginning and cutoff distance
-					fStart = tr.distanceCull-tr.rangedFog;
 
-					if (fStart < 16.0f)
+			if ( !useAlphaTestGE192 )
+			{
+				if (stage->alphaTestCmp != ATEST_CMP_NONE)
+				{
+					index |= LIGHTDEF_USE_TCGEN_AND_TCMOD;
+					switch ( stage->alphaTestCmp )
 					{
-						fStart = 16.0f;
+						case ATEST_CMP_LT:
+							index |= LIGHTDEF_USE_ATEST_LT;
+							break;
+						case ATEST_CMP_GT:
+							index |= LIGHTDEF_USE_ATEST_GT;
+							break;
+						case ATEST_CMP_GE:
+							index |= LIGHTDEF_USE_ATEST_GE;
+							break;
+						default:
+							break;
 					}
 				}
 			}
+			else
+			{
+				index |= LIGHTDEF_USE_ATEST_GE;
+			}
 
-			qglFogi(GL_FOG_MODE, GL_LINEAR);
-			qglFogf(GL_FOG_START, fStart);
-			qglFogf(GL_FOG_END, fEnd);
+			result = &stage->glslShaderGroup[index];
+			backEnd.pc.c_lightallDraws++;
 		}
 		else
 		{
-			qglFogi(GL_FOG_MODE, GL_EXP2);
-			qglFogf(GL_FOG_DENSITY, logtestExp2 / fog->parms.depthForOpaque);
-		}
+			index = 0;
 
-		if ( g_bRenderGlowingObjects )
-		{
-			const float fogColor[3] = { 0.0f, 0.0f, 0.0f };
-			qglFogfv(GL_FOG_COLOR, fogColor );
-		}
-		else
-		{
-			qglFogfv(GL_FOG_COLOR, fog->parms.color);
-		}
+			if (tess.shader->numDeforms && !ShaderRequiresCPUDeforms(tess.shader))
+			{
+				index |= GENERICDEF_USE_DEFORM_VERTEXES;
+			}
 
-		qglEnable(GL_FOG);
-		UseGLFog = true;
+			if (glState.vertexAnimation)
+			{
+				index |= GENERICDEF_USE_VERTEX_ANIMATION;
+			}
+			else if (glState.skeletalAnimation)
+			{
+				index |= GENERICDEF_USE_SKELETAL_ANIMATION;
+			}
+
+			if ( !useAlphaTestGE192 )
+			{
+				if (stage->alphaTestCmp != ATEST_CMP_NONE)
+				{
+					index |= GENERICDEF_USE_TCGEN_AND_TCMOD;
+					switch ( stage->alphaTestCmp )
+					{
+						case ATEST_CMP_LT:
+							index |= GENERICDEF_USE_ATEST_LT;
+							break;
+						case ATEST_CMP_GT:
+							index |= GENERICDEF_USE_ATEST_GT;
+							break;
+						case ATEST_CMP_GE:
+							index |= GENERICDEF_USE_ATEST_GE;
+							break;
+						default:
+							break;
+					}
+				}
+			}
+			else
+			{
+				index |= GENERICDEF_USE_ATEST_GE;
+			}
+
+			result = &tr.genericShader[index];
+			backEnd.pc.c_genericDraws++;
+		}
 	}
-#endif
-
-	for ( stage = 0; stage < input->shader->numUnfoggedPasses; stage++ )
+	else if (stage->glslShaderGroup == tr.lightallShader)
 	{
-		shaderStage_t *pStage = &tess.xstages[stage];
-		if ( !pStage->active )
+		index = stage->glslShaderIndex;
+
+		if (r_lightmap->integer && (index & LIGHTDEF_USE_LIGHTMAP))
+		{
+			index = LIGHTDEF_USE_LIGHTMAP;
+		}
+		else
+		{
+			if (backEnd.currentEntity && backEnd.currentEntity != &tr.worldEntity)
+			{
+				if (glState.vertexAnimation)
+				{
+					index |= LIGHTDEF_USE_VERTEX_ANIMATION;
+				}
+
+				if (glState.skeletalAnimation)
+				{
+					index |= LIGHTDEF_USE_SKELETAL_ANIMATION;
+				} 
+			}
+
+			if (r_sunlightMode->integer &&
+					(backEnd.viewParms.flags & VPF_USESUNLIGHT) &&
+					(index & LIGHTDEF_LIGHTTYPE_MASK))
+			{
+				index |= LIGHTDEF_USE_SHADOWMAP;
+			}
+
+			if ( !useAlphaTestGE192 )
+			{
+				if (stage->alphaTestCmp != ATEST_CMP_NONE)
+				{
+					index |= LIGHTDEF_USE_TCGEN_AND_TCMOD;
+					switch ( stage->alphaTestCmp )
+					{
+						case ATEST_CMP_LT:
+							index |= LIGHTDEF_USE_ATEST_LT;
+							break;
+						case ATEST_CMP_GT:
+							index |= LIGHTDEF_USE_ATEST_GT;
+							break;
+						case ATEST_CMP_GE:
+							index |= LIGHTDEF_USE_ATEST_GE;
+							break;
+						default:
+							break;
+					}
+				}
+			}
+			else
+			{
+				index |= LIGHTDEF_USE_ATEST_GE;
+			}
+		}
+
+		result = &stage->glslShaderGroup[index];
+		backEnd.pc.c_lightallDraws++;
+	}
+	else
+	{
+		result = GLSL_GetGenericShaderProgram(stageIndex);
+		backEnd.pc.c_genericDraws++;
+	}
+
+	return result;
+}
+
+static void RB_IterateStagesGeneric( shaderCommands_t *input, const VertexArraysProperties *vertexArrays )
+{
+	deform_t deformType;
+	genFunc_t deformGen;
+	float deformParams[7];
+
+	ComputeDeformValues(&deformType, &deformGen, deformParams);
+
+	cullType_t cullType = RB_GetCullType(&backEnd.viewParms, backEnd.currentEntity, input->shader->cullType);
+
+	vertexAttribute_t attribs[ATTR_INDEX_MAX] = {};
+	GL_VertexArraysToAttribs(attribs, ARRAY_LEN(attribs), vertexArrays);
+
+	UniformDataWriter uniformDataWriter;
+	SamplerBindingsWriter samplerBindingsWriter;
+
+	for ( int stage = 0; stage < MAX_SHADER_STAGES; stage++ )
+	{
+		shaderStage_t *pStage = input->xstages[stage];
+		shaderProgram_t *sp;
+		vec4_t texMatrix;
+		vec4_t texOffTurb;
+		int stateBits;
+		colorGen_t forceRGBGen = CGEN_BAD;
+		alphaGen_t forceAlphaGen = AGEN_IDENTITY;
+		int index = 0;
+		bool useAlphaTestGE192 = false;
+
+		if ( !pStage )
 		{
 			break;
 		}
 
-		// Reject this stage if it's not a glow stage but we are doing a glow pass.
-		if ( g_bRenderGlowingObjects && !pStage->glow )
+		if ( pStage->ss )
 		{
 			continue;
 		}
 
-		int	stateBits = pStage->stateBits;
-		alphaGen_t	forceAlphaGen = (alphaGen_t)0;
-		colorGen_t	forceRGBGen = (colorGen_t)0;
+		stateBits = pStage->stateBits;
 
-		// allow skipping out to show just lightmaps during development
-		if ( stage && r_lightmap->integer)
+		if (backEnd.currentEntity)
 		{
-			if ( !( pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap || pStage->bundle[0].vertexLightmap ) )
-			{
-				continue;	// need to keep going in case the LM is in a later stage
-			}
-			else
-			{
-				stateBits = (GLS_DSTBLEND_ZERO | GLS_SRCBLEND_ONE);	//we want to replace the prior stages with this LM, not blend
-			}
-		}
+			assert(backEnd.currentEntity->e.renderfx >= 0);
 
-		if ( backEnd.currentEntity )
-		{
 			if ( backEnd.currentEntity->e.renderfx & RF_DISINTEGRATE1 )
 			{
-				// we want to be able to rip a hole in the thing being disintegrated, and by doing the depth-testing it avoids some kinds of artefacts, but will probably introduce others?
-				//	NOTE: adjusting the alphaFunc seems to help a bit
-				stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHMASK_TRUE | GLS_ATEST_GE_C0;
-			}
-
-			if ( backEnd.currentEntity->e.renderfx & RF_ALPHA_FADE )
-			{
-				if ( backEnd.currentEntity->e.shaderRGBA[3] < 255 )
-				{
-					stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
-					forceAlphaGen = AGEN_ENTITY;
-				}
+				// we want to be able to rip a hole in the thing being
+				// disintegrated, and by doing the depth-testing it avoids some
+				// kinds of artefacts, but will probably introduce others?
+				stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHMASK_TRUE;
+				useAlphaTestGE192 = true;
 			}
 
 			if ( backEnd.currentEntity->e.renderfx & RF_RGB_TINT )
 			{//want to use RGBGen from ent
 				forceRGBGen = CGEN_ENTITY;
 			}
-		}
 
-		if (pStage->ss && pStage->ss->surfaceSpriteType)
-		{
-			// We check for surfacesprites AFTER drawing everything else
-			continue;
-		}
-
-#ifndef JK2_MODE
-		if (UseGLFog)
-		{
-			if (pStage->mGLFogColorOverride)
+			/*if ( backEnd.currentEntity->e.renderfx & RF_FORCE_ENT_ALPHA )
 			{
-				qglFogfv(GL_FOG_COLOR, GLFogOverrideColors[pStage->mGLFogColorOverride]);
-				FogColorChange = true;
-			}
-			else if (FogColorChange && fog)
-			{
-				FogColorChange = false;
-				qglFogfv(GL_FOG_COLOR, fog->parms.color);
-			}
-		}
-#endif
-
-		if (!input->fading)
-		{ //this means ignore this, while we do a fade-out
-			ComputeColors( pStage, forceAlphaGen, forceRGBGen );
-		}
-		ComputeTexCoords( pStage );
-
-		if ( !setArraysOnce )
-		{
-			qglEnableClientState( GL_COLOR_ARRAY );
-			qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, input->svars.colors );
-		}
-
-		if (pStage->bundle[0].isLightmap && r_debugStyle->integer >= 0)
-		{
-			if (pStage->lightmapStyle != r_debugStyle->integer)
-			{
-				if (pStage->lightmapStyle == 0)
+				stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+				if ( backEnd.currentEntity->e.renderfx & RF_ALPHA_DEPTH )
 				{
-					GL_State( GLS_DSTBLEND_ZERO | GLS_SRCBLEND_ZERO );
-					R_DrawElements( input->numIndexes, input->indexes );
+					// depth write, so faces through the model will be stomped
+					// over by nearer ones. this works because we draw
+					// RF_FORCE_ENT_ALPHA stuff after everything else, including
+					// standard alpha surfs.
+					stateBits |= GLS_DEPTHMASK_TRUE;
 				}
-				continue;
-			}
+			}*/
 		}
+
+		sp = SelectShaderProgram(stage, pStage, pStage->glslShaderGroup, useAlphaTestGE192);
+		assert(sp);
+
+		uniformDataWriter.Start(sp);
+		uniformDataWriter.SetUniformMatrix4x4( UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
+		uniformDataWriter.SetUniformVec3(UNIFORM_VIEWORIGIN, backEnd.viewParms.ori.origin);
+		uniformDataWriter.SetUniformVec3(UNIFORM_LOCALVIEWORIGIN, backEnd.ori.viewOrigin);
+
+		if (glState.skeletalAnimation)
+		{
+			uniformDataWriter.SetUniformMatrix4x3(UNIFORM_BONE_MATRICES, &glState.boneMatrices[0][0], glState.numBones);
+		}
+
+		uniformDataWriter.SetUniformFloat(UNIFORM_VERTEXLERP, glState.vertexAttribsInterpolation);
+		
+		uniformDataWriter.SetUniformInt(UNIFORM_DEFORMTYPE, deformType);
+		if (deformType != DEFORM_NONE)
+		{
+			uniformDataWriter.SetUniformInt(UNIFORM_DEFORMFUNC, deformGen);
+			uniformDataWriter.SetUniformFloat(UNIFORM_DEFORMPARAMS, deformParams, 7);
+			uniformDataWriter.SetUniformFloat(UNIFORM_TIME, tess.shaderTime);
+		}
+
+		if ( input->fogNum ) {
+			const fog_t *fog = tr.world->fogs + input->fogNum;
+
+			uniformDataWriter.SetUniformVec4(UNIFORM_COLOR, fog->color);
+			uniformDataWriter.SetUniformVec4(UNIFORM_FOGPLANE, fog->surface);
+			uniformDataWriter.SetUniformInt(UNIFORM_FOGHASPLANE, fog->hasSurface);
+			uniformDataWriter.SetUniformFloat(UNIFORM_FOGDEPTHTOOPAQUE, fog->parms.depthForOpaque);
+			uniformDataWriter.SetUniformVec3(UNIFORM_VIEWORIGIN, backEnd.refdef.vieworg);
+
+			vec4_t fogColorMask;
+			ComputeFogColorMask(pStage, fogColorMask);
+			uniformDataWriter.SetUniformVec4(UNIFORM_FOGCOLORMASK, fogColorMask);
+		}
+
+		float volumetricBaseValue = -1.0f;
+		if ( backEnd.currentEntity->e.renderfx & RF_VOLUMETRIC )
+		{
+			volumetricBaseValue = backEnd.currentEntity->e.shaderRGBA[0] / 255.0f;
+			uniformDataWriter.SetUniformVec3(UNIFORM_VIEWFORWARD, backEnd.refdef.viewaxis[0]);
+		}
+		else
+		{
+			vec4_t baseColor;
+			vec4_t vertColor;
+			
+			ComputeShaderColors(pStage, baseColor, vertColor, stateBits, &forceRGBGen, &forceAlphaGen);
+
+			if ((backEnd.refdef.colorScale != 1.0f) && !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL))
+			{
+				// use VectorScale to only scale first three values, not alpha
+				VectorScale(baseColor, backEnd.refdef.colorScale, baseColor);
+				VectorScale(vertColor, backEnd.refdef.colorScale, vertColor);
+			}
+
+			if (backEnd.currentEntity->e.renderfx & RF_FORCE_ENT_ALPHA)
+			{
+				vertColor[3] = backEnd.currentEntity->e.shaderRGBA[3] / 255.0f;
+			}
+
+			uniformDataWriter.SetUniformVec4(UNIFORM_BASECOLOR, baseColor);
+			uniformDataWriter.SetUniformVec4(UNIFORM_VERTCOLOR, vertColor);
+		}
+
+		uniformDataWriter.SetUniformFloat(UNIFORM_FX_VOLUMETRIC_BASE, volumetricBaseValue);
+
+		if (pStage->rgbGen == CGEN_LIGHTING_DIFFUSE ||
+			pStage->rgbGen == CGEN_LIGHTING_DIFFUSE_ENTITY)
+		{
+			vec4_t vec;
+
+			VectorScale(backEnd.currentEntity->ambientLight, 1.0f / 255.0f, vec);
+			uniformDataWriter.SetUniformVec3(UNIFORM_AMBIENTLIGHT, vec);
+
+			VectorScale(backEnd.currentEntity->directedLight, 1.0f / 255.0f, vec);
+			uniformDataWriter.SetUniformVec3(UNIFORM_DIRECTEDLIGHT, vec);
+			
+			VectorCopy(backEnd.currentEntity->lightDir, vec);
+			vec[3] = 0.0f;
+			uniformDataWriter.SetUniformVec4(UNIFORM_LIGHTORIGIN, vec);
+			uniformDataWriter.SetUniformVec3(UNIFORM_MODELLIGHTDIR, backEnd.currentEntity->modelLightDir);
+
+			uniformDataWriter.SetUniformFloat(UNIFORM_LIGHTRADIUS, 0.0f);
+		}
+
+		if (pStage->alphaGen == AGEN_PORTAL)
+		{
+			uniformDataWriter.SetUniformFloat(UNIFORM_PORTALRANGE, tess.shader->portalRange);
+		}
+
+		uniformDataWriter.SetUniformInt(UNIFORM_COLORGEN, forceRGBGen);
+		uniformDataWriter.SetUniformInt(UNIFORM_ALPHAGEN, forceAlphaGen);
+
+		ComputeTexMods( pStage, TB_DIFFUSEMAP, texMatrix, texOffTurb );
+		uniformDataWriter.SetUniformVec4(UNIFORM_DIFFUSETEXMATRIX, texMatrix);
+		uniformDataWriter.SetUniformVec4(UNIFORM_DIFFUSETEXOFFTURB, texOffTurb);
+
+		uniformDataWriter.SetUniformInt(UNIFORM_TCGEN0, pStage->bundle[0].tcGen);
+		uniformDataWriter.SetUniformInt(UNIFORM_TCGEN1, pStage->bundle[1].tcGen);
+		if (pStage->bundle[0].tcGen == TCGEN_VECTOR)
+		{
+			uniformDataWriter.SetUniformVec3(UNIFORM_TCGEN0VECTOR0, pStage->bundle[0].tcGenVectors[0]);
+			uniformDataWriter.SetUniformVec3(UNIFORM_TCGEN0VECTOR1, pStage->bundle[0].tcGenVectors[1]);
+		}
+
+		uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELMATRIX, backEnd.ori.modelMatrix);
+
+		uniformDataWriter.SetUniformVec4(UNIFORM_NORMALSCALE, pStage->normalScale);
+		uniformDataWriter.SetUniformVec4(UNIFORM_SPECULARSCALE, pStage->specularScale);
+
+		float alphaTestValue = useAlphaTestGE192 ? 0.75f : pStage->alphaTestValue;
+		uniformDataWriter.SetUniformFloat(UNIFORM_ALPHA_TEST_VALUE, alphaTestValue);
 
 		//
 		// do multitexture
 		//
-		if ( pStage->bundle[1].image != 0 )
-		{
-			DrawMultitextured( input, stage );
-		}
-		else
-		{
-			static bool lStencilled = false;
+		bool enableCubeMaps =
+			(r_cubeMapping->integer && !(tr.viewParms.flags & VPF_NOCUBEMAPS) && input->cubemapIndex);
 
-			if ( !setArraysOnce )
+		if ( backEnd.depthFill )
+		{
+			if (pStage->alphaTestCmp == ATEST_CMP_NONE)
+				samplerBindingsWriter.AddStaticImage(tr.whiteImage, 0);
+			else if ( pStage->bundle[TB_COLORMAP].image[0] != 0 )
+				samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[TB_COLORMAP], TB_COLORMAP);
+		}
+		else if ( pStage->glslShaderGroup == tr.lightallShader )
+		{
+			int i;
+			vec4_t enableTextures = {};
+
+			if (r_sunlightMode->integer &&
+					(backEnd.viewParms.flags & VPF_USESUNLIGHT) &&
+					(pStage->glslShaderIndex & LIGHTDEF_LIGHTTYPE_MASK))
 			{
-				qglTexCoordPointer( 2, GL_FLOAT, 0, input->svars.texcoords[0] );
+				samplerBindingsWriter.AddStaticImage(tr.screenShadowImage, TB_SHADOWMAP);
+				uniformDataWriter.SetUniformVec3(UNIFORM_PRIMARYLIGHTAMBIENT, backEnd.refdef.sunAmbCol);
+				uniformDataWriter.SetUniformVec3(UNIFORM_PRIMARYLIGHTCOLOR,   backEnd.refdef.sunCol);
+				uniformDataWriter.SetUniformVec4(UNIFORM_PRIMARYLIGHTORIGIN,  backEnd.refdef.sunDir);
 			}
 
+			if ((r_lightmap->integer == 1 || r_lightmap->integer == 2) &&
+					pStage->bundle[TB_LIGHTMAP].image[0])
+			{
+				for (i = 0; i < NUM_TEXTURE_BUNDLES; i++)
+				{
+					if (i == TB_LIGHTMAP)
+						samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[TB_LIGHTMAP], i);
+					else
+						samplerBindingsWriter.AddStaticImage(tr.whiteImage, i);
+				}
+			}
+			else if (r_lightmap->integer == 3 && pStage->bundle[TB_DELUXEMAP].image[0])
+			{
+				for (i = 0; i < NUM_TEXTURE_BUNDLES; i++)
+				{
+					if (i == TB_LIGHTMAP)
+						samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[TB_DELUXEMAP], i);
+					else
+						samplerBindingsWriter.AddStaticImage(tr.whiteImage, i);
+				}
+			}
+			else
+			{
+				qboolean light = (qboolean)((pStage->glslShaderIndex & LIGHTDEF_LIGHTTYPE_MASK) != 0);
+				qboolean allowVertexLighting = (qboolean)!(r_normalMapping->integer || r_specularMapping->integer);
+
+				if (pStage->bundle[TB_DIFFUSEMAP].image[0])
+					samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[TB_DIFFUSEMAP], TB_DIFFUSEMAP);
+
+				if (pStage->bundle[TB_LIGHTMAP].image[0])
+					samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[TB_LIGHTMAP], TB_LIGHTMAP);
+
+				// bind textures that are sampled and used in the glsl shader, and
+				// bind whiteImage to textures that are sampled but zeroed in the glsl shader
+				//
+				// alternatives:
+				//  - use the last bound texture
+				//     -> costs more to sample a higher res texture then throw out the result
+				//  - disable texture sampling in glsl shader with #ifdefs, as before
+				//     -> increases the number of shaders that must be compiled
+				//
+				if (light && !allowVertexLighting)
+				{
+					if (pStage->bundle[TB_NORMALMAP].image[0])
+					{
+						samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[TB_NORMALMAP], TB_NORMALMAP);
+						enableTextures[0] = 1.0f;
+					}
+					else if (r_normalMapping->integer)
+					{
+						samplerBindingsWriter.AddStaticImage(tr.whiteImage, TB_NORMALMAP);
+					}
+
+					if (pStage->bundle[TB_DELUXEMAP].image[0])
+					{
+						samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[TB_DELUXEMAP], TB_DELUXEMAP);
+						enableTextures[1] = 1.0f;
+					}
+					else if (r_deluxeMapping->integer)
+					{
+						samplerBindingsWriter.AddStaticImage(tr.whiteImage, TB_DELUXEMAP);
+					}
+
+					if (pStage->bundle[TB_SPECULARMAP].image[0])
+					{
+						samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[TB_SPECULARMAP], TB_SPECULARMAP);
+						enableTextures[2] = 1.0f;
+					}
+					else if (r_specularMapping->integer)
+					{
+						samplerBindingsWriter.AddStaticImage(tr.whiteImage, TB_SPECULARMAP);
+					}
+				}
+
+				if ( enableCubeMaps )
+				{
+					enableTextures[3] =  1.0f;
+				}
+			}
+
+			uniformDataWriter.SetUniformVec4(UNIFORM_ENABLETEXTURES, enableTextures);
+		}
+		else if ( pStage->bundle[1].image[0] != 0 )
+		{
+			samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[0], 0);
+			samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[1], 1);
+		}
+		else 
+		{
 			//
 			// set state
 			//
-			if ( (tess.shader == tr.distortionShader) ||
-				 (backEnd.currentEntity && (backEnd.currentEntity->e.renderfx & RF_DISTORTION)) )
-			{ //special distortion effect -rww
-				//tr.screenImage should have been set for this specific entity before we got in here.
-				GL_Bind( tr.screenImage );
-				GL_Cull(CT_TWO_SIDED);
-			}
-			else if ( pStage->bundle[0].vertexLightmap && ( r_vertexLight->integer ) && r_lightmap->integer )
-			{
-				GL_Bind( tr.whiteImage );
-			}
-			else
-				R_BindAnimatedImage( &pStage->bundle[0] );
-
-			if (tess.shader == tr.distortionShader &&
-				glConfig.stencilBits >= 4)
-			{ //draw it to the stencil buffer!
-				tr_stencilled = true;
-				lStencilled = true;
-				qglEnable(GL_STENCIL_TEST);
-				qglStencilFunc(GL_ALWAYS, 1, 0xFFFFFFFF);
-				qglStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-				qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-
-				//don't depthmask, don't blend.. don't do anything
-				GL_State(0);
-			}
-			else if (backEnd.currentEntity && (backEnd.currentEntity->e.renderfx & RF_FORCE_ENT_ALPHA))
-			{
-				ForceAlpha((unsigned char *) tess.svars.colors, backEnd.currentEntity->e.shaderRGBA[3]);
-				GL_State(GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA);
-			}
-			else
-			{
-				GL_State( stateBits );
-			}
-
-			//
-			// draw
-			//
-			R_DrawElements( input->numIndexes, input->indexes );
-
-			if (lStencilled)
-			{ //re-enable the color buffer, disable stencil test
-				lStencilled = false;
-				qglDisable(GL_STENCIL_TEST);
-				qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-			}
+			samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[0], 0);
 		}
+
+		//
+		// testing cube map
+		//
+		if ( enableCubeMaps )
+		{
+			vec4_t vec;
+
+			samplerBindingsWriter.AddStaticImage(tr.cubemaps[input->cubemapIndex - 1], TB_CUBEMAP);
+
+			vec[0] = tr.cubemapOrigins[input->cubemapIndex - 1][0] - backEnd.viewParms.ori.origin[0];
+			vec[1] = tr.cubemapOrigins[input->cubemapIndex - 1][1] - backEnd.viewParms.ori.origin[1];
+			vec[2] = tr.cubemapOrigins[input->cubemapIndex - 1][2] - backEnd.viewParms.ori.origin[2];
+			vec[3] = 1.0f;
+
+			VectorScale4(vec, 1.0f / 1000.0f, vec);
+
+			uniformDataWriter.SetUniformVec4(UNIFORM_CUBEMAPINFO, vec);
+		}
+
+		CaptureDrawData(input, pStage, index, stage);
+
+		DrawItem item = {};
+		item.stateBits = stateBits;
+		item.cullType = cullType;
+		item.program = sp;
+		item.depthRange = RB_GetDepthRange(backEnd.currentEntity, input->shader);
+		item.ibo = input->externalIBO ? input->externalIBO : backEndData->currentFrame->dynamicIbo;
+
+		item.numAttributes = vertexArrays->numVertexArrays;
+		item.attributes = ojkAllocArray<vertexAttribute_t>(
+			*backEndData->perFrameMemory, vertexArrays->numVertexArrays);
+		memcpy(item.attributes, attribs, sizeof(*item.attributes)*vertexArrays->numVertexArrays);
+
+		item.uniformData = uniformDataWriter.Finish(*backEndData->perFrameMemory);
+		// FIXME: This is a bit ugly with the casting
+		item.samplerBindings = samplerBindingsWriter.Finish(
+			*backEndData->perFrameMemory, (int *)&item.numSamplerBindings);
+
+		RB_FillDrawCommand(item.draw, GL_TRIANGLES, 1, input);
+
+		uint32_t key = RB_CreateSortKey(item, stage, input->shader->sort);
+		RB_AddDrawItem(backEndData->currentPass, key, item);
+
+		// allow skipping out to show just lightmaps during development
+		if ( r_lightmap->integer && ( pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap ) )
+		{
+			break;
+		}
+
+		if (backEnd.depthFill)
+			break;
 	}
-#ifndef JK2_MODE
-	if (FogColorChange)
-	{
-		qglFogfv(GL_FOG_COLOR, fog->parms.color);
-	}
-#endif
+}
+
+
+static void RB_RenderShadowmap( shaderCommands_t *input, const VertexArraysProperties *vertexArrays )
+{
+	deform_t deformType;
+	genFunc_t deformGen;
+	float deformParams[7];
+
+	ComputeDeformValues(&deformType, &deformGen, deformParams);
+
+	cullType_t cullType = RB_GetCullType(&backEnd.viewParms, backEnd.currentEntity, input->shader->cullType);
+
+	vertexAttribute_t attribs[ATTR_INDEX_MAX] = {};
+	GL_VertexArraysToAttribs(attribs, ARRAY_LEN(attribs), vertexArrays);
+
+	UniformDataWriter uniformDataWriter;
+
+	shaderProgram_t *sp = &tr.shadowmapShader;
+	uniformDataWriter.Start(sp);
+	uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
+	uniformDataWriter.SetUniformFloat(UNIFORM_VERTEXLERP, glState.vertexAttribsInterpolation);
+	uniformDataWriter.SetUniformInt(UNIFORM_DEFORMTYPE, deformType);
+	uniformDataWriter.SetUniformInt(UNIFORM_DEFORMFUNC, deformGen);
+	uniformDataWriter.SetUniformFloat(UNIFORM_DEFORMPARAMS, deformParams, 7);
+	uniformDataWriter.SetUniformFloat(UNIFORM_TIME, tess.shaderTime);
+
+	DrawItem item = {};
+	item.cullType = cullType;
+	item.program = sp;
+	item.depthRange = RB_GetDepthRange(backEnd.currentEntity, input->shader);
+	item.ibo = input->externalIBO ? input->externalIBO : backEndData->currentFrame->dynamicIbo;
+
+	item.numAttributes = vertexArrays->numVertexArrays;
+	item.attributes = ojkAllocArray<vertexAttribute_t>(
+		*backEndData->perFrameMemory, vertexArrays->numVertexArrays);
+	memcpy(item.attributes, attribs, sizeof(*item.attributes)*vertexArrays->numVertexArrays);
+
+	item.uniformData = uniformDataWriter.Finish(*backEndData->perFrameMemory);
+
+	RB_FillDrawCommand(item.draw, GL_TRIANGLES, 1, input);
+
+	// FIXME: Use depth to object
+	uint32_t key = 0;
+	RB_AddDrawItem(backEndData->currentPass, key, item);
 }
 
 /*
@@ -2049,17 +1807,16 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 */
 void RB_StageIteratorGeneric( void )
 {
-	shaderCommands_t *input;
-	int stage;
-
-	input = &tess;
-
-	RB_DeformTessGeometry();
+	shaderCommands_t *input = &tess;
+	if (!input->numVertexes || !input->numIndexes)
+	{
+		return;
+	}
 
 	//
 	// log this call
 	//
-	if ( r_logFile->integer )
+	if ( r_logFile->integer ) 
 	{
 		// don't just call LogComment, or we will get
 		// a call to va() every frame!
@@ -2067,132 +1824,117 @@ void RB_StageIteratorGeneric( void )
 	}
 
 	//
-	// set face culling appropriately
-	//
-	GL_Cull( input->shader->cullType );
-
-	// set polygon offset if necessary
-	if ( input->shader->polygonOffset )
+	// update vertex buffer data
+	// 
+	uint32_t vertexAttribs = RB_CalcShaderVertexAttribs( input->shader );
+	if (tess.useInternalVBO)
 	{
-		qglEnable( GL_POLYGON_OFFSET_FILL );
-		qglPolygonOffset( r_offsetFactor->value, r_offsetUnits->value );
-	}
-
-	//
-	// if there is only a single pass then we can enable color
-	// and texture arrays before we compile, otherwise we need
-	// to avoid compiling those arrays since they will change
-	// during multipass rendering
-	//
-	if ( tess.numPasses > 1 || input->shader->multitextureEnv )
-	{
-		setArraysOnce = qfalse;
-		qglDisableClientState (GL_COLOR_ARRAY);
-		qglDisableClientState (GL_TEXTURE_COORD_ARRAY);
+		RB_DeformTessGeometry();
+		RB_UpdateVBOs(vertexAttribs);
 	}
 	else
 	{
-		setArraysOnce = qtrue;
-
-		qglEnableClientState( GL_COLOR_ARRAY);
-		qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, tess.svars.colors );
-
-		qglEnableClientState( GL_TEXTURE_COORD_ARRAY);
-		qglTexCoordPointer( 2, GL_FLOAT, 0, tess.svars.texcoords[0] );
+		backEnd.pc.c_staticVboDraws++;
 	}
 
 	//
-	// lock XYZ
+	// vertex arrays
 	//
-	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
-
-	if (qglLockArraysEXT)
+	VertexArraysProperties vertexArrays;
+	if ( tess.useInternalVBO )
 	{
-		qglLockArraysEXT(0, input->numVertexes);
-		GLimp_LogComment( "glLockArraysEXT\n" );
-	}
-
-	//
-	// enable color and texcoord arrays after the lock if necessary
-	//
-	if ( !setArraysOnce )
-	{
-		qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
-		qglEnableClientState( GL_COLOR_ARRAY );
-	}
-
-	//
-	// call shader function
-	//
-	RB_IterateStagesGeneric( input );
-
-	//
-	// now do any dynamic lighting needed
-	//
-	if ( tess.dlightBits && tess.shader->sort <= SS_OPAQUE
-		&& !(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY) ) ) {
-		if (r_dlightStyle->integer>0)
+		CalculateVertexArraysProperties(vertexAttribs, &vertexArrays);
+		for ( int i = 0; i < vertexArrays.numVertexArrays; i++ )
 		{
-			ProjectDlightTexture2();
-		}
-		else
-		{
-			ProjectDlightTexture();
+			int attributeIndex = vertexArrays.enabledAttributes[i];
+			vertexArrays.offsets[attributeIndex] += backEndData->currentFrame->dynamicVboCommitOffset;
 		}
 	}
+	else
+	{
+		CalculateVertexArraysFromVBO(vertexAttribs, glState.currentVBO, &vertexArrays);
+	}
 
-	//
-	// now do fog
-	//
-#ifdef JK2_MODE
-	if (tess.fogNum && tess.shader->fogPass && r_drawfog->value)
-#else
-	if (tr.world && (tess.fogNum != tr.world->globalFog || r_drawfog->value != 2) && r_drawfog->value && tess.fogNum && tess.shader->fogPass)
+	if ( backEnd.depthFill )
+	{
+		RB_IterateStagesGeneric( input, &vertexArrays );
+	}
+	else if (backEnd.viewParms.flags & VPF_SHADOWMAP)
+	{
+		if ( input->shader->sort == SS_OPAQUE )
+		{
+			RB_RenderShadowmap(input, &vertexArrays);
+		}
+	}
+	else
+	{
+		RB_IterateStagesGeneric( input, &vertexArrays );
+
+#if 0 // don't do this for now while I get draw sorting working :)
+		//
+		// pshadows!
+		//
+		if (r_shadows->integer == 4 &&
+				tess.pshadowBits &&
+				tess.shader->sort <= SS_OPAQUE &&
+				!(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY)))
+		{
+			ProjectPshadowVBOGLSL();
+		}
 #endif
-	{
-		RB_FogPass();
-	}
 
-	//
-	// unlock arrays
-	//
-	if (qglUnlockArraysEXT)
-	{
-		qglUnlockArraysEXT();
-		GLimp_LogComment( "glUnlockArraysEXT\n" );
-	}
-
-	//
-	// reset polygon offset
-	//
-	if ( input->shader->polygonOffset )
-	{
-		qglDisable( GL_POLYGON_OFFSET_FILL );
-	}
-
-	// Now check for surfacesprites.
-	if (r_surfaceSprites->integer)
-	{
-		for ( stage = 1; stage < tess.shader->numUnfoggedPasses; stage++ )
+		// 
+		// now do any dynamic lighting needed
+		//
+		if ( tess.dlightBits &&
+				tess.shader->sort <= SS_OPAQUE &&
+				!(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY) ) )
 		{
-			if (tess.xstages[stage].ss && tess.xstages[stage].ss->surfaceSpriteType)
-			{	// Draw the surfacesprite
-				RB_DrawSurfaceSprites( &tess.xstages[stage], input);
-			}
+			ForwardDlight(input, &vertexArrays);
+		}
+
+		//
+		// now do fog
+		//
+		const fog_t *fog = nullptr;
+		if ( tr.world )
+		{
+			if ( tr.world->globalFog )
+				fog = tr.world->globalFog;
+			else if ( tess.fogNum )
+				fog = tr.world->fogs + tess.fogNum;
+		}
+
+		if ( fog && tess.shader->fogPass ) {
+			RB_FogPass( &tess, fog, &vertexArrays );
 		}
 	}
 
-#ifndef JK2_MODE
-	//don't disable the hardware fog til after we do surface sprites
-	if (r_drawfog->value == 2 &&
-		tess.fogNum && tess.shader->fogPass &&
-		(tess.fogNum == tr.world->globalFog || tess.fogNum == tr.world->numfogs))
-	{
-		qglDisable(GL_FOG);
-	}
-#endif
+	RB_CommitInternalBufferData();
 }
 
+void RB_BinTriangleCounts( void )
+{
+	int numTriangles = tess.numIndexes / 3;
+	if ( numTriangles < 20 )
+		backEnd.pc.c_triangleCountBins[TRI_BIN_0_19]++;
+	else if ( numTriangles < 50 )
+		backEnd.pc.c_triangleCountBins[TRI_BIN_20_49]++;
+	else if ( numTriangles < 100 )
+		backEnd.pc.c_triangleCountBins[TRI_BIN_50_99]++;
+	else if ( numTriangles < 300 )
+		backEnd.pc.c_triangleCountBins[TRI_BIN_100_299]++;
+	else if ( numTriangles < 600 )
+		backEnd.pc.c_triangleCountBins[TRI_BIN_300_599]++;
+	else if ( numTriangles < 1000 )
+		backEnd.pc.c_triangleCountBins[TRI_BIN_1000_1499]++;
+	else if ( numTriangles < 1500 )
+		backEnd.pc.c_triangleCountBins[TRI_BIN_1500_1999]++;
+	else if ( numTriangles < 2000 )
+		backEnd.pc.c_triangleCountBins[TRI_BIN_2000_2999]++;
+	else
+		backEnd.pc.c_triangleCountBins[TRI_BIN_3000_PLUS]++;
+}
 
 /*
 ** RB_EndSurface
@@ -2202,15 +1944,15 @@ void RB_EndSurface( void ) {
 
 	input = &tess;
 
-	if (input->numIndexes == 0) {
+	if (input->numIndexes == 0 || input->numVertexes == 0) {
 		return;
 	}
 
 	if (input->indexes[SHADER_MAX_INDEXES-1] != 0) {
-		Com_Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_INDEXES hit");
-	}
+		ri.Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_INDEXES hit");
+	}	
 	if (input->xyz[SHADER_MAX_VERTEXES-1][0] != 0) {
-		Com_Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_VERTEXES hit");
+		ri.Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_VERTEXES hit");
 	}
 
 	if ( tess.shader == tr.shadowShader ) {
@@ -2223,47 +1965,15 @@ void RB_EndSurface( void ) {
 		return;
 	}
 
-	if ( skyboxportal )
-	{
-		// world
-		if(!(backEnd.refdef.rdflags & RDF_SKYBOXPORTAL))
-		{
-			if(tess.currentStageIteratorFunc == RB_StageIteratorSky)
-			{	// don't process these tris at all
-				return;
-			}
-		}
-		// portal sky
-		else
-		{
-			if(!drawskyboxportal)
-			{
-				if( !(tess.currentStageIteratorFunc == RB_StageIteratorSky))
-				{	// /only/ process sky tris
-					return;
-				}
-			}
-		}
-	}
-
 	//
 	// update performance counters
 	//
-	if (!backEnd.projection2D)
-	{
-		backEnd.pc.c_shaders++;
-		backEnd.pc.c_vertexes += tess.numVertexes;
-		backEnd.pc.c_indexes += tess.numIndexes;
-		backEnd.pc.c_totalIndexes += tess.numIndexes * tess.numPasses;
-#ifdef JK2_MODE
-		if (tess.fogNum && tess.shader->fogPass && r_drawfog->value)
-#else
-		if (tess.fogNum && tess.shader->fogPass && r_drawfog->value == 1)
-#endif
-		{	// Fogging adds an additional pass
-			backEnd.pc.c_totalIndexes += tess.numIndexes;
-		}
-	}
+	backEnd.pc.c_shaders++;
+	backEnd.pc.c_vertexes += tess.numVertexes;
+	backEnd.pc.c_indexes += tess.numIndexes;
+	backEnd.pc.c_totalIndexes += tess.numIndexes * tess.numPasses;
+
+	RB_BinTriangleCounts();
 
 	//
 	// call off to shader specific tess end function
@@ -2273,18 +1983,18 @@ void RB_EndSurface( void ) {
 	//
 	// draw debugging stuff
 	//
-	if ( r_showtris->integer )
-	{
+	if ( r_showtris->integer ) {
 		DrawTris (input);
 	}
-
 	if ( r_shownormals->integer ) {
 		DrawNormals (input);
 	}
-
 	// clear shader so we can tell we don't have any unclosed surfaces
 	tess.numIndexes = 0;
+	tess.numVertexes = 0;
+	tess.firstIndex = 0;
+	tess.multiDrawPrimitives = 0;
+	tess.externalIBO = nullptr;
 
 	GLimp_LogComment( "----------\n" );
 }
-

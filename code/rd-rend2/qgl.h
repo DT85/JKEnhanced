@@ -1,37 +1,12 @@
-/*
-===========================================================================
-Copyright (C) 1999 - 2005, Id Software, Inc.
-Copyright (C) 2000 - 2013, Raven Software, Inc.
-Copyright (C) 2001 - 2013, Activision, Inc.
-Copyright (C) 2013 - 2015, OpenJK contributors
-
-This file is part of the OpenJK source code.
-
-OpenJK is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License version 2 as
-published by the Free Software Foundation.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, see <http://www.gnu.org/licenses/>.
-===========================================================================
-*/
-
 #pragma once
 
 #if defined( __LINT__ )
 #	include <GL/gl.h>
 #elif defined( _WIN32 )
 #	include <windows.h>
-#	include <GL/gl.h>
+#	include <gl/gl.h>
 #elif defined(MACOS_X)
-// Prevent OS X headers from including its own glext header
-#	define GL_GLEXT_LEGACY
-#	include <OpenGL/gl.h>
+#	include <OpenGL/gl3.h>
 #elif defined( __linux__ )
 #	include <GL/gl.h>
 #	include <GL/glx.h>
@@ -52,7 +27,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "glext.h"
 
 #define qglAccum glAccum
-#define qglAlphaFunc glAlphaFunc
+//#define qglAlphaFunc glAlphaFunc
 #define qglAreTexturesResident glAreTexturesResident
 #define qglArrayElement glArrayElement
 #define qglBegin glBegin
@@ -386,44 +361,245 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define qglVertexPointer glVertexPointer
 #define qglViewport glViewport
 
-extern PFNGLACTIVETEXTUREARBPROC qglActiveTextureARB;
-extern PFNGLCLIENTACTIVETEXTUREARBPROC qglClientActiveTextureARB;
-extern PFNGLMULTITEXCOORD2FARBPROC qglMultiTexCoord2fARB;
+// Drawing commands
+extern PFNGLDRAWRANGEELEMENTSPROC qglDrawRangeElements;
+extern PFNGLDRAWARRAYSINSTANCEDPROC qglDrawArraysInstanced;
+extern PFNGLDRAWELEMENTSINSTANCEDPROC qglDrawElementsInstanced;
+extern PFNGLDRAWELEMENTSBASEVERTEXPROC qglDrawElementsBaseVertex;
+extern PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC qglDrawRangeElementsBaseVertex;
+extern PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXPROC qglDrawElementsInstancedBaseVertex;
+extern PFNGLMULTIDRAWARRAYSPROC qglMultiDrawArrays;
+extern PFNGLMULTIDRAWELEMENTSPROC qglMultiDrawElements;
+extern PFNGLMULTIDRAWELEMENTSBASEVERTEXPROC qglMultiDrawElementsBaseVertex;
 
-extern PFNGLCOMBINERPARAMETERFVNVPROC qglCombinerParameterfvNV;
-extern PFNGLCOMBINERPARAMETERIVNVPROC qglCombinerParameterivNV;
-extern PFNGLCOMBINERPARAMETERFNVPROC qglCombinerParameterfNV;
-extern PFNGLCOMBINERPARAMETERINVPROC qglCombinerParameteriNV;
-extern PFNGLCOMBINERINPUTNVPROC qglCombinerInputNV;
-extern PFNGLCOMBINEROUTPUTNVPROC qglCombinerOutputNV;
+// Vertex arrays
+extern PFNGLVERTEXATTRIBPOINTERPROC qglVertexAttribPointer;
+extern PFNGLVERTEXATTRIBIPOINTERPROC qglVertexAttribIPointer;
+extern PFNGLVERTEXATTRIBDIVISORPROC qglVertexAttribDivisor;
+extern PFNGLENABLEVERTEXATTRIBARRAYPROC qglEnableVertexAttribArray;
+extern PFNGLDISABLEVERTEXATTRIBARRAYPROC qglDisableVertexAttribArray;
 
-extern PFNGLFINALCOMBINERINPUTNVPROC qglFinalCombinerInputNV;
-extern PFNGLGETCOMBINERINPUTPARAMETERFVNVPROC qglGetCombinerInputParameterfvNV;
-extern PFNGLGETCOMBINERINPUTPARAMETERIVNVPROC qglGetCombinerInputParameterivNV;
-extern PFNGLGETCOMBINEROUTPUTPARAMETERFVNVPROC qglGetCombinerOutputParameterfvNV;
-extern PFNGLGETCOMBINEROUTPUTPARAMETERIVNVPROC qglGetCombinerOutputParameterivNV;
-extern PFNGLGETFINALCOMBINERINPUTPARAMETERFVNVPROC qglGetFinalCombinerInputParameterfvNV;
-extern PFNGLGETFINALCOMBINERINPUTPARAMETERIVNVPROC qglGetFinalCombinerInputParameterivNV;
+// Vertex array objects
+extern PFNGLGENVERTEXARRAYSPROC qglGenVertexArrays;
+extern PFNGLDELETEVERTEXARRAYSPROC qglDeleteVertexArrays;
+extern PFNGLBINDVERTEXARRAYPROC qglBindVertexArray;
+extern PFNGLISVERTEXARRAYPROC qglIsVertexArray;
 
-extern PFNGLPROGRAMSTRINGARBPROC qglProgramStringARB;
-extern PFNGLBINDPROGRAMARBPROC qglBindProgramARB;
-extern PFNGLDELETEPROGRAMSARBPROC qglDeleteProgramsARB;
-extern PFNGLGENPROGRAMSARBPROC qglGenProgramsARB;
-extern PFNGLPROGRAMENVPARAMETER4DARBPROC qglProgramEnvParameter4dARB;
-extern PFNGLPROGRAMENVPARAMETER4DVARBPROC qglProgramEnvParameter4dvARB;
-extern PFNGLPROGRAMENVPARAMETER4FARBPROC qglProgramEnvParameter4fARB;
-extern PFNGLPROGRAMENVPARAMETER4FVARBPROC qglProgramEnvParameter4fvARB;
-extern PFNGLPROGRAMLOCALPARAMETER4DARBPROC qglProgramLocalParameter4dARB;
-extern PFNGLPROGRAMLOCALPARAMETER4DVARBPROC qglProgramLocalParameter4dvARB;
-extern PFNGLPROGRAMLOCALPARAMETER4FARBPROC qglProgramLocalParameter4fARB;
-extern PFNGLPROGRAMLOCALPARAMETER4FVARBPROC qglProgramLocalParameter4fvARB;
-extern PFNGLGETPROGRAMENVPARAMETERDVARBPROC qglGetProgramEnvParameterdvARB;
-extern PFNGLGETPROGRAMENVPARAMETERFVARBPROC qglGetProgramEnvParameterfvARB;
-extern PFNGLGETPROGRAMLOCALPARAMETERDVARBPROC qglGetProgramLocalParameterdvARB;
-extern PFNGLGETPROGRAMLOCALPARAMETERFVARBPROC qglGetProgramLocalParameterfvARB;
-extern PFNGLGETPROGRAMIVARBPROC qglGetProgramivARB;
-extern PFNGLGETPROGRAMSTRINGARBPROC qglGetProgramStringARB;
-extern PFNGLISPROGRAMARBPROC qglIsProgramARB;
+// Buffer objects
+extern PFNGLBINDBUFFERPROC qglBindBuffer;
+extern PFNGLDELETEBUFFERSPROC qglDeleteBuffers;
+extern PFNGLGENBUFFERSPROC qglGenBuffers;
+extern PFNGLISBUFFERPROC qglIsBuffer;
+extern PFNGLBUFFERDATAPROC qglBufferData;
+extern PFNGLBUFFERSUBDATAPROC qglBufferSubData;
+extern PFNGLGETBUFFERSUBDATAPROC qglGetBufferSubData;
+extern PFNGLGETBUFFERPARAMETERIVPROC qglGetBufferParameteriv;
+extern PFNGLGETBUFFERPARAMETERI64VPROC qglGetBufferParameteri64v;
+extern PFNGLGETBUFFERPOINTERVPROC qglGetBufferPointerv;
+extern PFNGLBINDBUFFERRANGEPROC qglBindBufferRange;
+extern PFNGLBINDBUFFERBASEPROC qglBindBufferBase;
+extern PFNGLMAPBUFFERRANGEPROC qglMapBufferRange;
+extern PFNGLMAPBUFFERPROC qglMapBuffer;
+extern PFNGLFLUSHMAPPEDBUFFERRANGEPROC qglFlushMappedBufferRange;
+extern PFNGLUNMAPBUFFERPROC qglUnmapBuffer;
+extern PFNGLCOPYBUFFERSUBDATAPROC qglCopyBufferSubData;
+extern PFNGLISBUFFERPROC qglIsBuffer;
 
-extern PFNGLLOCKARRAYSEXTPROC qglLockArraysEXT;
-extern PFNGLUNLOCKARRAYSEXTPROC qglUnlockArraysEXT;
+// Texturing
+extern PFNGLACTIVETEXTUREPROC qglActiveTexture;
+
+// Shader objects
+extern PFNGLCREATESHADERPROC qglCreateShader;
+extern PFNGLSHADERSOURCEPROC qglShaderSource;
+extern PFNGLCOMPILESHADERPROC qglCompileShader;
+extern PFNGLDELETESHADERPROC qglDeleteShader;
+extern PFNGLISSHADERPROC qglIsShader;
+extern PFNGLGETSHADERIVPROC qglGetShaderiv;
+extern PFNGLGETSHADERINFOLOGPROC qglGetShaderInfoLog;
+extern PFNGLGETSHADERSOURCEPROC qglGetShaderSource;
+
+// Program objects
+extern PFNGLCREATEPROGRAMPROC qglCreateProgram;
+extern PFNGLATTACHSHADERPROC qglAttachShader;
+extern PFNGLDETACHSHADERPROC qglDetachShader;
+extern PFNGLLINKPROGRAMPROC qglLinkProgram;
+extern PFNGLUSEPROGRAMPROC qglUseProgram;
+extern PFNGLDELETEPROGRAMPROC qglDeleteProgram;
+extern PFNGLVALIDATEPROGRAMPROC qglValidateProgram;
+extern PFNGLISPROGRAMPROC qglIsProgram;
+extern PFNGLGETPROGRAMIVPROC qglGetProgramiv;
+extern PFNGLGETATTACHEDSHADERSPROC qglGetAttachedShaders;
+extern PFNGLGETPROGRAMINFOLOGPROC qglGetProgramInfoLog;
+extern PFNGLBINDFRAGDATALOCATIONPROC qglBindFragDataLocation;
+
+// Vertex attributes
+extern PFNGLGETACTIVEATTRIBPROC qglGetActiveAttrib;
+extern PFNGLGETATTRIBLOCATIONPROC qglGetAttribLocation;
+extern PFNGLBINDATTRIBLOCATIONPROC qglBindAttribLocation;
+extern PFNGLGETVERTEXATTRIBDVPROC qglGetVertexAttribdv;
+extern PFNGLGETVERTEXATTRIBFVPROC qglGetVertexAttribfv;
+extern PFNGLGETVERTEXATTRIBIVPROC qglGetVertexAttribiv;
+extern PFNGLGETVERTEXATTRIBIIVPROC qglGetVertexAttribIiv;
+extern PFNGLGETVERTEXATTRIBIUIVPROC qglGetVertexAttribIuiv;
+
+// Varying variables
+extern PFNGLTRANSFORMFEEDBACKVARYINGSPROC qglTransformFeedbackVaryings;
+extern PFNGLGETTRANSFORMFEEDBACKVARYINGPROC qglGetTransformFeedbackVarying;
+
+// Uniform variables
+extern PFNGLGETUNIFORMLOCATIONPROC qglGetUniformLocation;
+extern PFNGLGETUNIFORMBLOCKINDEXPROC qglGetUniformBlockIndex;
+extern PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC qglGetActiveUniformBlockName;
+extern PFNGLGETACTIVEUNIFORMBLOCKIVPROC qglGetActiveUniformBlockiv;
+extern PFNGLGETUNIFORMINDICESPROC qglGetUniformIndices;
+extern PFNGLGETACTIVEUNIFORMNAMEPROC qglGetActiveUniformName;
+extern PFNGLGETACTIVEUNIFORMPROC qglGetActiveUniform;
+extern PFNGLGETACTIVEUNIFORMSIVPROC qglGetActiveUniformsiv;
+extern PFNGLUNIFORM1IPROC qglUniform1i;
+extern PFNGLUNIFORM2IPROC qglUniform2i;
+extern PFNGLUNIFORM3IPROC qglUniform3i;
+extern PFNGLUNIFORM4IPROC qglUniform4i;
+extern PFNGLUNIFORM1FPROC qglUniform1f;
+extern PFNGLUNIFORM2FPROC qglUniform2f;
+extern PFNGLUNIFORM3FPROC qglUniform3f;
+extern PFNGLUNIFORM4FPROC qglUniform4f;
+extern PFNGLUNIFORM1IVPROC qglUniform1iv;
+extern PFNGLUNIFORM2IVPROC qglUniform2iv;
+extern PFNGLUNIFORM3IVPROC qglUniform3iv;
+extern PFNGLUNIFORM4IVPROC qglUniform4iv;
+extern PFNGLUNIFORM1FVPROC qglUniform1fv;
+extern PFNGLUNIFORM2FVPROC qglUniform2fv;
+extern PFNGLUNIFORM3FVPROC qglUniform3fv;
+extern PFNGLUNIFORM4FVPROC qglUniform4fv;
+extern PFNGLUNIFORM1UIPROC qglUniform1ui;
+extern PFNGLUNIFORM2UIPROC qglUniform2ui;
+extern PFNGLUNIFORM3UIPROC qglUniform3ui;
+extern PFNGLUNIFORM4UIPROC qglUniform4ui;
+extern PFNGLUNIFORM1UIVPROC qglUniform1uiv;
+extern PFNGLUNIFORM2UIVPROC qglUniform2uiv;
+extern PFNGLUNIFORM3UIVPROC qglUniform3uiv;
+extern PFNGLUNIFORM4UIVPROC qglUniform4uiv;
+extern PFNGLUNIFORMMATRIX2FVPROC qglUniformMatrix2fv;
+extern PFNGLUNIFORMMATRIX3FVPROC qglUniformMatrix3fv;
+extern PFNGLUNIFORMMATRIX4FVPROC qglUniformMatrix4fv;
+extern PFNGLUNIFORMMATRIX2X3FVPROC qglUniformMatrix2x3fv;
+extern PFNGLUNIFORMMATRIX3X2FVPROC qglUniformMatrix3x2fv;
+extern PFNGLUNIFORMMATRIX2X4FVPROC qglUniformMatrix2x4fv;
+extern PFNGLUNIFORMMATRIX4X2FVPROC qglUniformMatrix4x2fv;
+extern PFNGLUNIFORMMATRIX3X4FVPROC qglUniformMatrix3x4fv;
+extern PFNGLUNIFORMMATRIX4X3FVPROC qglUniformMatrix4x3fv;
+extern PFNGLUNIFORMBLOCKBINDINGPROC qglUniformBlockBinding;
+extern PFNGLGETUNIFORMFVPROC qglGetUniformfv;
+extern PFNGLGETUNIFORMIVPROC qglGetUniformiv;
+extern PFNGLGETUNIFORMUIVPROC qglGetUniformuiv;
+
+// Transform feedback
+extern PFNGLBEGINTRANSFORMFEEDBACKPROC qglBeginTransformFeedback;
+extern PFNGLENDTRANSFORMFEEDBACKPROC qglEndTransformFeedback;
+
+// Texture compression
+extern PFNGLCOMPRESSEDTEXIMAGE3DPROC qglCompressedTexImage3D;
+extern PFNGLCOMPRESSEDTEXIMAGE2DPROC qglCompressedTexImage2D;
+extern PFNGLCOMPRESSEDTEXIMAGE1DPROC qglCompressedTexImage1D;
+extern PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC qglCompressedTexSubImage3D;
+extern PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC qglCompressedTexSubImage2D;
+extern PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC qglCompressedTexSubImage1D;
+extern PFNGLGETCOMPRESSEDTEXIMAGEPROC qglGetCompressedTexImage;
+
+// GL_NVX_gpu_memory_info
+#ifndef GL_NVX_gpu_memory_info
+#define GL_NVX_gpu_memory_info
+#define GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX          0x9047
+#define GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX    0x9048
+#define GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX  0x9049
+#define GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX            0x904A
+#define GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX            0x904B
+#endif
+
+// GL_ATI_meminfo
+#ifndef GL_ATI_meminfo
+#define GL_ATI_meminfo
+#define GL_VBO_FREE_MEMORY_ATI                    0x87FB
+#define GL_TEXTURE_FREE_MEMORY_ATI                0x87FC
+#define GL_RENDERBUFFER_FREE_MEMORY_ATI           0x87FD
+#endif
+
+// Framebuffers and renderbuffers
+extern PFNGLISRENDERBUFFERPROC qglIsRenderbuffer;
+extern PFNGLBINDRENDERBUFFERPROC qglBindRenderbuffer;
+extern PFNGLDELETERENDERBUFFERSPROC qglDeleteRenderbuffers;
+extern PFNGLGENRENDERBUFFERSPROC qglGenRenderbuffers;
+extern PFNGLRENDERBUFFERSTORAGEPROC qglRenderbufferStorage;
+extern PFNGLGETRENDERBUFFERPARAMETERIVPROC qglGetRenderbufferParameteriv;
+extern PFNGLISFRAMEBUFFERPROC qglIsFramebuffer;
+extern PFNGLBINDFRAMEBUFFERPROC qglBindFramebuffer;
+extern PFNGLDELETEFRAMEBUFFERSPROC qglDeleteFramebuffers;
+extern PFNGLGENFRAMEBUFFERSPROC qglGenFramebuffers;
+extern PFNGLCHECKFRAMEBUFFERSTATUSPROC qglCheckFramebufferStatus;
+extern PFNGLFRAMEBUFFERTEXTURE1DPROC qglFramebufferTexture1D;
+extern PFNGLFRAMEBUFFERTEXTURE2DPROC qglFramebufferTexture2D;
+extern PFNGLFRAMEBUFFERTEXTURE3DPROC qglFramebufferTexture3D;
+extern PFNGLFRAMEBUFFERRENDERBUFFERPROC qglFramebufferRenderbuffer;
+extern PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC qglGetFramebufferAttachmentParameteriv;
+extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC qglRenderbufferStorageMultisample;
+extern PFNGLBLITFRAMEBUFFERPROC qglBlitFramebuffer;
+extern PFNGLGENERATEMIPMAPPROC qglGenerateMipmap;
+extern PFNGLDRAWBUFFERSPROC qglDrawBuffers;
+extern PFNGLCLEARBUFFERFVPROC qglClearBufferfv;
+
+// Query objects
+extern PFNGLGENQUERIESPROC qglGenQueries;
+extern PFNGLDELETEQUERIESPROC qglDeleteQueries;
+extern PFNGLISQUERYPROC qglIsQuery;
+extern PFNGLBEGINQUERYPROC qglBeginQuery;
+extern PFNGLENDQUERYPROC qglEndQuery;
+extern PFNGLGETQUERYIVPROC qglGetQueryiv;
+extern PFNGLGETQUERYOBJECTIVPROC qglGetQueryObjectiv;
+extern PFNGLGETQUERYOBJECTUIVPROC qglGetQueryObjectuiv;
+
+// GL state
+extern PFNGLGETSTRINGIPROC qglGetStringi;
+
+// Sync objects and fences
+extern PFNGLFENCESYNCPROC qglFenceSync;
+extern PFNGLDELETESYNCPROC qglDeleteSync;
+extern PFNGLCLIENTWAITSYNCPROC qglClientWaitSync;
+extern PFNGLWAITSYNCPROC qglWaitSync;
+
+#ifndef GL_EXT_texture_compression_latc
+#define GL_EXT_texture_compression_latc
+#define GL_COMPRESSED_LUMINANCE_LATC1_EXT                 0x8C70
+#define GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT          0x8C71
+#define GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT           0x8C72
+#define GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT    0x8C73
+#endif
+
+#ifndef GL_ARB_texture_compression_bptc
+#define GL_ARB_texture_compression_bptc
+#define GL_COMPRESSED_RGBA_BPTC_UNORM_ARB                 0x8E8C
+#define GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB           0x8E8D
+#define GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB           0x8E8E
+#define GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB         0x8E8F
+#endif
+
+// GL_ARB_texture_storage
+extern PFNGLTEXSTORAGE1DPROC qglTexStorage1D;
+extern PFNGLTEXSTORAGE2DPROC qglTexStorage2D;
+extern PFNGLTEXSTORAGE3DPROC qglTexStorage3D;
+#ifndef GL_ARB_texture_storage
+#define GL_TEXTURE_IMMUTABLE_FORMAT                0x912F
+#endif
+
+// GL_ARB_buffer_storage
+extern PFNGLBUFFERSTORAGEPROC qglBufferStorage;
+
+// GL_ARB_debug_output
+extern PFNGLDEBUGMESSAGECONTROLARBPROC qglDebugMessageControlARB;
+extern PFNGLDEBUGMESSAGEINSERTARBPROC qglDebugMessageInsertARB;
+extern PFNGLDEBUGMESSAGECALLBACKARBPROC qglDebugMessageCallbackARB;
+extern PFNGLGETDEBUGMESSAGELOGARBPROC qglGetDebugMessageLogARB;
+
+// GL_ARB_timer_query
+extern PFNGLQUERYCOUNTERPROC qglQueryCounter;
+extern PFNGLGETQUERYOBJECTI64VPROC qglGetQueryObjecti64v;
+extern PFNGLGETQUERYOBJECTUI64VPROC qglGetQueryObjectui64v;

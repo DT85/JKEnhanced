@@ -154,6 +154,23 @@ typedef struct {
 	int		  (*GetAnimationCFG)(const char *psCFGFilename, char *psDest, int iDestSize);
 	qhandle_t (*RegisterShader)( const char *name );
 	qhandle_t (*RegisterShaderNoMip)( const char *name );
+	//DT EDIT: Rend2 - START
+	const char *	(*ShaderNameFromIndex)(int index);
+	void(*ClearDecals)(void);
+	void(*AddDecalToScene)(qhandle_t shader, const vec3_t origin, const vec3_t dir, float orientation, float r, float g, float b, float a, qboolean alphaFade, float radius, qboolean temporary);
+	int(*LightForPoint)(vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir);
+	void(*AddAdditiveLightToScene)(const vec3_t org, float intensity, float r, float g, float b);
+	void(*RemapShader)(const char *oldShader, const char *newShader, const char *offsetTime);
+	qboolean(*GetEntityToken)(char *buffer, int size);
+	void(*SetRefractionProperties)(float distortionAlpha, float distortionStretch, qboolean distortionPrePost, qboolean distortionNegate);
+	float(*GetDistanceCull)(void);
+	void(*GetRealRes)(int *w, int *h);
+	qboolean(*InitializeWireframeAutomap)(void);
+	void(*InitSkins)(void);
+	void(*InitShaders)(void);
+	void(*HunkClearCrap)(void);
+	qboolean(*inPVS)(const vec3_t p1, const vec3_t p2, byte *mask);
+	//DT EDIT: Rend2 - END
 	void	(*LoadWorld)( const char *name );
 	void	(*R_LoadImage)( const char *name, byte **pic, int *width, int *height );
 

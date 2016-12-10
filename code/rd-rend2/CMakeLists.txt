@@ -38,11 +38,6 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 
 	# Files
 
-	# GLSL
-	file(GLOB SPRDRend2GLSLFiles "${SPDir}/rd-rend2/glsl/*.glsl")
-	source_group("renderer\\glsl" FILES ${SPRDRend2GLSLFiles})
-	set(SPRDRend2Files ${SPRDRend2Files} ${SPRDRend2GLSLFiles})
-
 	# GHOUL 2
 	set(SPRDRend2G2Files
 		"${SPDir}/ghoul2/G2.h"
@@ -103,14 +98,22 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 	set(SPRDRend2MainFiles
 		"${SPDir}/rd-rend2/glext.h"
 		"${SPDir}/rd-rend2/qgl.h"
-		"${SPDir}/rd-rend2/tr_arb.cpp"
 		"${SPDir}/rd-rend2/tr_allocator.cpp"
 		"${SPDir}/rd-rend2/tr_allocator.h"
 		"${SPDir}/rd-rend2/tr_backend.cpp"
 		"${SPDir}/rd-rend2/tr_bsp.cpp"
+		"${SPDir}/rd-rend2/tr_cache.cpp"
+		"${SPDir}/rd-rend2/tr_cache.h"
 		"${SPDir}/rd-rend2/tr_cmds.cpp"
 		"${SPDir}/rd-rend2/tr_curve.cpp"
-		"${SPDir}/rd-rend2/tr_draw.cpp"
+		"${SPDir}/rd-rend2/tr_decals.cpp"
+		"${SPDir}/rd-rend2/tr_extensions.cpp"
+		"${SPDir}/rd-rend2/tr_extramath.cpp"
+		"${SPDir}/rd-rend2/tr_extramath.h"
+		"${SPDir}/rd-rend2/tr_extratypes.h"
+		"${SPDir}/rd-rend2/tr_fbo.cpp"
+		"${SPDir}/rd-rend2/tr_fbo.h"
+		"${SPDir}/rd-rend2/tr_flares.cpp"
 		"${SPDir}/rd-rend2/tr_ghoul2.cpp"
 		"${SPDir}/rd-rend2/tr_glsl.cpp"
 		"${SPDir}/rd-rend2/tr_glsl_parse.cpp"
@@ -122,8 +125,8 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 		"${SPDir}/rd-rend2/tr_marks.cpp"
 		"${SPDir}/rd-rend2/tr_mesh.cpp"
 		"${SPDir}/rd-rend2/tr_model.cpp"
-		"${SPDir}/rd-rend2/tr_quicksprite.cpp"
-		"${SPDir}/rd-rend2/tr_quicksprite.h"
+		"${SPDir}/rd-rend2/tr_postprocess.cpp"
+		"${SPDir}/rd-rend2/tr_postprocess.h"
 		"${SPDir}/rd-rend2/tr_scene.cpp"
 		"${SPDir}/rd-rend2/tr_shade.cpp"
 		"${SPDir}/rd-rend2/tr_shade_calc.cpp"
@@ -131,18 +134,18 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 		"${SPDir}/rd-rend2/tr_shadows.cpp"
 		"${SPDir}/rd-rend2/tr_skin.cpp"
 		"${SPDir}/rd-rend2/tr_sky.cpp"
-		"${SPDir}/rd-rend2/tr_stl.cpp"
-		"${SPDir}/rd-rend2/tr_stl.h"
 		"${SPDir}/rd-rend2/tr_subs.cpp"
 		"${SPDir}/rd-rend2/tr_surface.cpp"
-		"${SPDir}/rd-rend2/tr_surfacesprites.cpp"
+		"${SPDir}/rd-rend2/tr_vbo.cpp"
 		"${SPDir}/rd-rend2/tr_world.cpp"
-		"${SPDir}/rd-rend2/tr_WorldEffects.cpp"
-		"${SPDir}/rd-rend2/tr_WorldEffects.h"
 		)
 	source_group("renderer" FILES ${SPRDRend2MainFiles})
 	set(SPRDRend2Files ${SPRDRend2Files} ${SPRDRend2MainFiles})
 
+	file(GLOB SPRDRend2GLSLFiles "${SPDir}/rd-rend2/glsl/*.glsl")
+	source_group("renderer\\glsl" FILES ${SPRDRend2GLSLFiles})
+	set(SPRDRend2Files ${SPRDRend2Files} ${SPRDRend2GLSLFiles})
+	
 	set(SPRDRend2RdCommonFiles
 		"${SPDir}/rd-common/mdx_format.h"
 		"${SPDir}/rd-common/tr_common.h"
@@ -162,6 +165,9 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 	set(SPRDRend2RendererIncludeDirectories ${SPRDRend2RendererIncludeDirectories} ${OPENGL_INCLUDE_DIR})
 	set(SPRDRend2RendererLibraries ${SPRDRend2RendererLibraries} ${OPENGL_LIBRARIES})
 
+	source_group("renderer" FILES ${CMAKE_CURRENT_BINARY_DIR}/glsl_shaders.cpp)
+	set(SPRDRend2Files ${SPRDRend2Files} ${CMAKE_CURRENT_BINARY_DIR}/glsl_shaders.cpp)
+	
 	set(SPRDRend2RendererIncludeDirectories ${SPRDRend2RendererIncludeDirectories} ${OpenJKLibDir})
 
 	function(add_sp_renderer_project ProjectName Label EngineName InstallDir Component)
