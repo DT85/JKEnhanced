@@ -1793,6 +1793,16 @@ void GLSL_EndLoadGPUShaders ( int startTime )
 	int i;
 	int numGenShaders = 0, numLightShaders = 0, numEtcShaders = 0;
 
+	//DT EDIT: START - Without this, you'll get a crash upon exiting. edited version of textureColorShader.
+	GLSL_InitUniforms(&tr.splashScreenShader);
+
+	qglUseProgram(tr.textureColorShader.program);
+	GLSL_SetUniformInt(&tr.splashScreenShader, UNIFORM_TEXTUREMAP, TB_DIFFUSEMAP);
+	qglUseProgram(0);
+
+	GLSL_FinishGPUShader(&tr.splashScreenShader);
+	//DT EDIT: END
+
 	for (i = 0; i < GENERICDEF_COUNT; i++)
 	{
 		if (!GLSL_IsValidPermutationForGeneric (i))
