@@ -1,26 +1,26 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-Jedi Academy is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
+This file is part of the OpenJK source code.
 
-Jedi Academy is distributed in the hope that it will be useful,
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
-
-
 
 #ifndef __Q_SHARED_H
 #include "../qcommon/q_shared.h"
@@ -51,7 +51,7 @@ void G2_Bone_Not_Found(const char *boneName, const char *modName);
 //=====================================================================================================================
 // Bone List handling routines - so entities can override bone info on a bone by bone level, and also interrogate this info
 
-// Given a bone name, see if that bone is already in our bone list - note the model_t pointer that gets passed in here MUST point at the 
+// Given a bone name, see if that bone is already in our bone list - note the model_t pointer that gets passed in here MUST point at the
 // gla file, not the glm file type.
 int G2_Find_Bone(CGhoul2Info *ghlInfo, boneInfo_v &blist, const char *boneName)
 {
@@ -80,7 +80,7 @@ int G2_Find_Bone(CGhoul2Info *ghlInfo, boneInfo_v &blist, const char *boneName)
 	}
 #if _DEBUG
 	G2_Bone_Not_Found(boneName, ghlInfo->mFileName);
-#endif	
+#endif
 	// didn't find it
 	return -1;
 }
@@ -117,7 +117,7 @@ int G2_Add_Bone(const model_t *mod, boneInfo_v &blist, const char *boneName)
 	{
 #if _DEBUG
 		G2_Bone_Not_Found(boneName, mod->name);
-#endif	
+#endif
 		return -1;
 	}
 
@@ -600,7 +600,7 @@ qboolean G2_Set_Bone_Anim_Index(boneInfo_v &blist, const int index, const int st
 					// cope with if the lerp frame is actually off the end of the anim
 					if (blist[index].blendFrame >= blist[index].endFrame)
 					{
-						// we only want to lerp with the first frame of the anim if we are looping 
+						// we only want to lerp with the first frame of the anim if we are looping
 						if (blist[index].flags & BONE_ANIM_OVERRIDE_LOOP)
 						{
 							blist[index].blendFrame = blist[index].startFrame;
@@ -616,7 +616,7 @@ qboolean G2_Set_Bone_Anim_Index(boneInfo_v &blist, const int index, const int st
 					// cope with if the lerp frame is actually off the end of the anim
 					if (blist[index].blendLerpFrame >= blist[index].endFrame)
 					{
-						// we only want to lerp with the first frame of the anim if we are looping 
+						// we only want to lerp with the first frame of the anim if we are looping
 						if (blist[index].flags & BONE_ANIM_OVERRIDE_LOOP)
 						{
 							blist[index].blendLerpFrame = blist[index].startFrame;
@@ -1213,7 +1213,7 @@ int G2_Find_Bone_Rag(CGhoul2Info *ghlInfo, boneInfo_v &blist, const char *boneNa
 	}
 #if _DEBUG
 	//	G2_Bone_Not_Found(boneName,ghlInfo->mFileName);
-#endif	
+#endif
 	// didn't find it
 	return -1;
 }
@@ -1506,7 +1506,7 @@ void G2_ResetRagDoll(CGhoul2Info_v &ghoul2V)
 	//If so this needs to be done a better way somehow. Providing SP ever even needs to reset ragdoll, it's only used in MP on respawn.
 	G2_Init_Bone_List(blist, ghoul2.aHeader->numBones);
 #else //The anims on every bone are messed up too, as are the angles. There's not really any way to get back to a normal state, so just clear the list
-	  //and let them re-set their anims/angles gameside.
+	//and let them re-set their anims/angles gameside.
 	int i = 0;
 	while (i < blist.size())
 	{
@@ -3023,7 +3023,7 @@ static bool G2_RagDollSettlePositionNumeroTrois(CGhoul2Info_v &ghoul2V, const ve
 		vec3_t effectorGroundSpot;
 		VectorAdvance(testStart, vertEffectorTraceFraction, testEnd, effectorGroundSpot);//  VA(a,t,b,c)-> c := (1-t)a+tb
 																						 // trace from the quake origin horzontally to the effector
-																						 // gonna choose the maximum of the ground spot or the effector location 
+																						 // gonna choose the maximum of the ground spot or the effector location
 																						 // and clamp it to be roughly in the bbox
 		VectorCopy(groundSpot, testStart); //last arg is dest
 		if (iAmStartSolid)
@@ -4774,7 +4774,6 @@ int	G2_Get_Bone_Index(CGhoul2Info *ghoul2, const char *boneName, qboolean bAddIf
 		return G2_Find_Bone(ghoul2, ghoul2->mBlist, boneName);
 	}
 }
-
 
 void G2_FreeRag(void)
 {

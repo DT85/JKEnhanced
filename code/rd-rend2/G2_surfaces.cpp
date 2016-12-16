@@ -1,26 +1,26 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-Jedi Academy is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
+This file is part of the OpenJK source code.
 
-Jedi Academy is distributed in the hope that it will be useful,
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
-
-
 
 #ifndef __Q_SHARED_H
 #include "../qcommon/q_shared.h"
@@ -35,10 +35,6 @@ along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #define G2_MODEL_OK(g) ((g)&&(g)->mValid&&(g)->aHeader&&(g)->currentModel&&(g)->animModel)
-
-#ifdef _MSC_VER
-#pragma warning(disable : 4512)		//assignment op could not be genereated
-#endif
 
 class CQuickOverride
 {
@@ -233,7 +229,7 @@ qboolean G2_SetSurfaceOnOff(CGhoul2Info *ghlInfo, const char *surfaceName, const
 	else
 	{
 		// ok, not in the list already - in that case, lets verify this surface exists in the model mesh
-		uint32_t	flags;
+		uint32_t flags;
 		int surfaceNum = G2_IsSurfaceLegal(ghlInfo->currentModel, surfaceName, &flags);
 		if (surfaceNum != -1)
 		{
@@ -379,7 +375,7 @@ int G2_GetSurfaceIndex(CGhoul2Info *ghlInfo, const char *surfaceName)
 
 int G2_IsSurfaceRendered(CGhoul2Info *ghlInfo, const char *surfaceName, surfaceInfo_v &slist)
 {
-	uint32_t					flags = 0;//, surfFlags = 0;
+	uint32_t				flags = 0u;//, surfFlags = 0;
 	int						surfIndex = 0;
 	assert(ghlInfo->currentModel);
 	assert(ghlInfo->currentModel->data.glm->header);
@@ -400,9 +396,9 @@ int G2_IsSurfaceRendered(CGhoul2Info *ghlInfo, const char *surfaceName, surfaceI
 		// walk the surface hierarchy up until we hit the root
 		while (surfNum != -1)
 		{
-			const mdxmSurface_t		*parentSurf;
-			uint32_t					parentFlags;
-			const mdxmSurfHierarchy_t		*parentSurfInfo;
+			const mdxmSurface_t *parentSurf;
+			uint32_t parentFlags = 0u;
+			const mdxmSurfHierarchy_t *parentSurfInfo;
 
 			parentSurfInfo = (mdxmSurfHierarchy_t *)((byte *)surfIndexes + surfIndexes->offsets[surfNum]);
 
@@ -410,7 +406,7 @@ int G2_IsSurfaceRendered(CGhoul2Info *ghlInfo, const char *surfaceName, surfaceI
 			//G2 was bug, above comment was accurate, but we don't want the original flags, we want the parent flags
 			G2_IsSurfaceLegal(ghlInfo->currentModel, parentSurfInfo->name, &parentFlags);
 
-			// now see if we already have overriden this surface in the slist 
+			// now see if we already have overriden this surface in the slist
 			parentSurf = G2_FindSurface(ghlInfo, slist, parentSurfInfo->name, &surfIndex);
 			if (parentSurf)
 			{
@@ -433,7 +429,7 @@ int G2_IsSurfaceRendered(CGhoul2Info *ghlInfo, const char *surfaceName, surfaceI
 	}
 	if (flags == 0)
 	{//it's not being overridden by a parent
-	 // now see if we already have overriden this surface in the slist 
+	 // now see if we already have overriden this surface in the slist
 		const mdxmSurface_t *surf = G2_FindSurface(ghlInfo, slist, surfaceName, &surfIndex);
 		if (surf)
 		{

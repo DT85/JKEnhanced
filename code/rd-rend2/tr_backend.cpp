@@ -2219,7 +2219,7 @@ static const void	*RB_SwapBuffers( const void *data ) {
 		RB_EndSurface();
 	}
 
-	ResetGhoul2RenderableSurfaceHeap();
+	//ResetGhoul2RenderableSurfaceHeap();
 
 	// texture swapping test
 	if ( r_showImages->integer ) {

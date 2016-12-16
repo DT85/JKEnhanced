@@ -134,6 +134,8 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 		"${SPDir}/rd-rend2/tr_shadows.cpp"
 		"${SPDir}/rd-rend2/tr_skin.cpp"
 		"${SPDir}/rd-rend2/tr_sky.cpp"
+		"${SPDir}/rd-rend2/tr_stl.cpp"
+		"${SPDir}/rd-rend2/tr_stl.h"
 		"${SPDir}/rd-rend2/tr_subs.cpp"
 		"${SPDir}/rd-rend2/tr_surface.cpp"
 		"${SPDir}/rd-rend2/tr_vbo.cpp"

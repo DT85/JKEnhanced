@@ -1,30 +1,32 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-Jedi Academy is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
+This file is part of the OpenJK source code.
 
-Jedi Academy is distributed in the hope that it will be useful,
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
-
-
 
 #ifndef __Q_SHARED_H
 #include "../qcommon/q_shared.h"
 #endif
+
+#include "tr_common.h"
 
 #if !defined(TR_LOCAL_H)
 #include "tr_local.h"
@@ -58,7 +60,7 @@ static int CurrentTag = GORE_TAG_UPPER + 1;
 static int CurrentTagUpper = GORE_TAG_UPPER;
 
 static std::map<int, GoreTextureCoordinates> GoreRecords;
-static std::map<std::pair<int, int>, int> GoreTagsTemp; // this is a surface index to gore tag map used only 
+static std::map<std::pair<int, int>, int> GoreTagsTemp; // this is a surface index to gore tag map used only
 														// temporarily during the generation phase so we reuse gore tags per LOD
 int goreModelIndex;
 
@@ -188,7 +190,7 @@ void DeleteGoreSet(int goreSetTag)
 CGoreSet::~CGoreSet()
 {
 	std::multimap<int, SGoreSurface>::iterator i;
-	for (i = mGoreRecords.begin(); i != mGoreRecords.end(); i++)
+	for (i = mGoreRecords.begin(); i != mGoreRecords.end(); ++i)
 	{
 		DeleteGoreRecord((*i).second.mGoreTag);
 	}
@@ -199,10 +201,6 @@ extern mdxaBone_t		worldMatrix;
 extern mdxaBone_t		worldMatrixInv;
 
 const mdxaBone_t &EvalBoneCache(int index, CBoneCache *boneCache);
-
-#ifdef _MSC_VER
-#pragma warning(disable : 4512)		//assignment op could not be genereated
-#endif
 class CTraceSurface
 {
 public:
@@ -334,7 +332,7 @@ void G2_List_Model_Bones(const char *fileName, int frame)
 	// figure out where the offset list is
 	offsets = (mdxaSkelOffsets_t *)((byte *)header + sizeof(mdxaHeader_t));
 
-	//    frameSize = (int)( &((mdxaFrame_t *)0)->boneIndexes[ header->numBones ] );   
+	//    frameSize = (int)( &((mdxaFrame_t *)0)->boneIndexes[ header->numBones ] );
 
 	//	aframe = (mdxaFrame_t *)((byte *)header + header->ofsFrames + (frame * frameSize));
 	// walk each bone and list it's name
@@ -384,7 +382,7 @@ qboolean G2_GetAnimFileName(const char *fileName, char **filename)
 
 
 /////////////////////////////////////////////////////////////////////
-// 
+//
 //	Code for collision detection for models gameside
 //
 /////////////////////////////////////////////////////////////////////
@@ -575,8 +573,12 @@ void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, 
 {
 	int				i, lod;
 	vec3_t			correctScale;
-	qboolean		firstModelOnly = qfalse;
 
+#if !defined(JK2_MODE) || defined(_G2_GORE)
+	qboolean		firstModelOnly = qfalse;
+#endif // !JK2_MODE || _G2_GORE
+
+#ifndef JK2_MODE
 	if (cg_g2MarksAllModels == NULL)
 	{
 		cg_g2MarksAllModels = ri.Cvar_Get("cg_g2MarksAllModels", "0", 0);
@@ -587,6 +589,7 @@ void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, 
 	{
 		firstModelOnly = qtrue;
 	}
+#endif // !JK2_MODE
 
 #ifdef _G2_GORE
 	if (gore
@@ -993,7 +996,7 @@ static void G2_GorePolys(const mdxmSurface_t *surface, CTraceSurface &TS, const 
 	}
 
 	int newTag;
-	std::map<std::pair<int, int>, int>::iterator f = GoreTagsTemp.find(std::pair<int, int>(goreModelIndex, TS.surfaceNum));
+	std::map<std::pair<int, int>, int>::iterator f = GoreTagsTemp.find(std::make_pair(goreModelIndex, TS.surfaceNum));
 	if (f == GoreTagsTemp.end()) // need to generate a record
 	{
 		newTag = AllocGoreRecord();
@@ -1033,8 +1036,8 @@ static void G2_GorePolys(const mdxmSurface_t *surface, CTraceSurface &TS, const 
 		add.mGoreGrowFactor = (1.0f - TS.gore->goreScaleStartFraction) / (float)(TS.gore->growDuration);	//curscale = (curtime-mGoreGrowStartTime)*mGoreGrowFactor;
 		add.mGoreGrowOffset = TS.gore->goreScaleStartFraction;
 
-		goreSet->mGoreRecords.insert(std::pair<int, SGoreSurface>(TS.surfaceNum, add));
-		GoreTagsTemp[std::pair<int, int>(goreModelIndex, TS.surfaceNum)] = newTag;
+		goreSet->mGoreRecords.insert(std::make_pair(TS.surfaceNum, add));
+		GoreTagsTemp[std::make_pair(goreModelIndex, TS.surfaceNum)] = newTag;
 	}
 	else
 	{
@@ -1389,7 +1392,7 @@ static bool G2_RadiusTracePolys(
 					//						newCol.mFlags = G2_BACKFACE;
 					//					}
 
-					//get normal from triangle				
+					//get normal from triangle
 					const float *A = &verts[(tris[j].indexes[0] * 5)];
 					const float *B = &verts[(tris[j].indexes[1] * 5)];
 					const float *C = &verts[(tris[j].indexes[2] * 5)];
@@ -1505,7 +1508,7 @@ static void G2_TraceSurfaces(CTraceSurface &TS)
 			{
 				// .. then use radius check
 				//
-				if (G2_RadiusTracePolys(surface,		// const mdxmSurface_t *surface, 
+				if (G2_RadiusTracePolys(surface,		// const mdxmSurface_t *surface,
 					TS
 				)
 					&& (TS.eG2TraceType == G2_RETURNONHIT)
@@ -1560,9 +1563,12 @@ void G2_TraceModels(CGhoul2Info_v &ghoul2, vec3_t rayStart, vec3_t rayEnd, CColl
 	int				i, lod;
 	skin_t			*skin;
 	shader_t		*cust_shader;
+#if !defined(JK2_MODE) || defined(_G2_GORE)
 	qboolean		firstModelOnly = qfalse;
+#endif // !JK2_MODE || _G2_GORE
 	int				firstModel = 0;
 
+#ifndef JK2_MODE
 	if (cg_g2MarksAllModels == NULL)
 	{
 		cg_g2MarksAllModels = ri.Cvar_Get("cg_g2MarksAllModels", "0", 0);
@@ -1573,6 +1579,7 @@ void G2_TraceModels(CGhoul2Info_v &ghoul2, vec3_t rayStart, vec3_t rayEnd, CColl
 	{
 		firstModelOnly = qtrue;
 	}
+#endif // !JK2_MODE
 
 #ifdef _G2_GORE
 	if (gore
@@ -1627,6 +1634,8 @@ void G2_TraceModels(CGhoul2Info_v &ghoul2, vec3_t rayStart, vec3_t rayEnd, CColl
 		}
 
 		lod = G2_DecideTraceLod(g, useLod);
+
+#ifndef JK2_MODE
 		if (skipIfLODNotMatch)
 		{//we only want to hit this SPECIFIC LOD...
 			if (lod != useLod)
@@ -1634,6 +1643,8 @@ void G2_TraceModels(CGhoul2Info_v &ghoul2, vec3_t rayStart, vec3_t rayEnd, CColl
 				continue;
 			}
 		}
+#endif // !JK2_MODE
+
 		//reset the quick surface override lookup
 		G2_FindOverrideSurface(-1, g.mSlist);
 
@@ -1764,9 +1775,11 @@ void *G2_FindSurface(const model_s *mod, int index, int lod)
 	return (void *)current;
 }
 
+
 #define SURFACE_SAVE_BLOCK_SIZE	sizeof(surfaceInfo_t)
 #define BOLT_SAVE_BLOCK_SIZE sizeof(boltInfo_t)
 #define BONE_SAVE_BLOCK_SIZE sizeof(boneInfo_t)
+
 
 void G2_SaveGhoul2Models(
 	CGhoul2Info_v& ghoul2)

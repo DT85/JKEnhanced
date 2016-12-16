@@ -1,54 +1,35 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-Jedi Academy is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
+This file is part of the OpenJK source code.
 
-Jedi Academy is distributed in the hope that it will be useful,
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
-// leave this as first line for PCH reasons...
-//
 #include "../server/exe_headers.h"
 
-#ifdef _MSC_VER
-#pragma warning( disable : 4786) 
-#pragma warning( disable : 4100) 
-#pragma warning( disable : 4511) 
-
-#pragma warning (push, 3)	//go back down to 3 for the stl include
-#endif
 #include <list>
 #include <string>
-#ifdef _MSC_VER
-#pragma warning (pop)
-#endif
 
-#ifndef __Q_SHARED_H
 #include "../qcommon/q_shared.h"
-#endif
-
-#if !defined(TR_LOCAL_H)
 #include "tr_local.h"
-#endif
-
-#if !defined(G2_H_INC)
+#include "tr_common.h"
 #include "../ghoul2/G2.h"
-#endif
-
-#if !defined(MINIHEAP_H_INC)
 #include "../qcommon/MiniHeap.h"
-#endif
-
 
 #ifdef FINAL_BUILD
 #define G2API_DEBUG (0) // please don't change this
@@ -63,8 +44,6 @@ along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
 //rww - RAGDOLL_BEGIN
 #include "../ghoul2/ghoul2_gore.h"
 //rww - RAGDOLL_END
-
-using namespace std;
 
 extern mdxaBone_t		worldMatrix;
 extern mdxaBone_t		worldMatrixInv;
@@ -89,10 +68,10 @@ bool G2_TestModelPointers(CGhoul2Info *ghlInfo);
 #define MAX_ERROR_PRINTS (3)
 class ErrorReporter
 {
-	string mName;
-	map<string, int> mErrors;
+	std::string mName;
+	std::map<std::string, int> mErrors;
 public:
-	ErrorReporter(const string &name) :
+	ErrorReporter(const std::string &name) :
 		mName(name)
 	{
 	}
@@ -103,8 +82,8 @@ public:
 		sprintf(mess, "****** %s Error Report Begin******\n", mName.c_str());
 		Com_DPrintf(mess);
 
-		map<string, int>::iterator i;
-		for (i = mErrors.begin(); i != mErrors.end(); i++)
+		std::map<std::string, int>::iterator i;
+		for (i = mErrors.begin(); i != mErrors.end(); ++i)
 		{
 			total += (*i).second;
 			sprintf(mess, "%s (hits %d)\n", (*i).first.c_str(), (*i).second);
@@ -182,7 +161,7 @@ public:
 					int			pauseTime = ghlInfo->mBlist[i].pauseTime;		// time we paused this animation - 0 if not paused
 					float		animSpeed = ghlInfo->mBlist[i].animSpeed;		// speed at which this anim runs. 1.0f means full speed of animation incoming - ie if anim is 20hrtz, we run at 20hrts. If 5hrts, we run at 5 hrts
 
-					float		blendFrame = 0.0f;		// frame PLUS LERP value to blend 
+					float		blendFrame = 0.0f;		// frame PLUS LERP value to blend
 					int			blendLerpFrame = 0;	// frame to lerp the blend frame with.
 
 					if (blend)
@@ -237,7 +216,7 @@ public:
 	{
 		char mess[1000];
 		assert(m);
-		string full = mName;
+		std::string full = mName;
 		if (kind == 2)
 		{
 			full += ":NOTE:     ";
@@ -258,11 +237,11 @@ public:
 
 		// assert(0);
 		int ret = 0; //place a breakpoint here
-		map<string, int>::iterator f = mErrors.find(full);
+		std::map<std::string, int>::iterator f = mErrors.find(full);
 		if (f == mErrors.end())
 		{
 			ret++; // or a breakpoint here for the first occurance
-			mErrors.insert(pair<string, int>(full, 0));
+			mErrors.insert(std::make_pair(full, 0));
 			f = mErrors.find(full);
 		}
 		assert(f != mErrors.end());
@@ -455,9 +434,9 @@ static size_t DeserializeGhoul2Info(const char *buffer, CGhoul2Info& g2Info)
 
 class Ghoul2InfoArray : public IGhoul2InfoArray
 {
-	vector<CGhoul2Info>	mInfos[MAX_G2_MODELS];
+	std::vector<CGhoul2Info>	mInfos[MAX_G2_MODELS];
 	int					mIds[MAX_G2_MODELS];
-	list<int>			mFreeIndecies;
+	std::list<int>			mFreeIndecies;
 	void DeleteLow(int idx)
 	{
 		{
@@ -591,8 +570,8 @@ public:
 			int i;
 			for (i = 0; i<MAX_G2_MODELS; i++)
 			{
-				list<int>::iterator j;
-				for (j = mFreeIndecies.begin(); j != mFreeIndecies.end(); j++)
+				std::list<int>::iterator j;
+				for (j = mFreeIndecies.begin(); j != mFreeIndecies.end(); ++j)
 				{
 					if (*j == i)
 						break;
@@ -628,7 +607,7 @@ public:
 			Com_Error(ERR_FATAL, "Out of ghoul2 info slots");
 
 		}
-		// gonna pull from the front, doing a 
+		// gonna pull from the front, doing a
 		int idx = *mFreeIndecies.begin();
 		mFreeIndecies.erase(mFreeIndecies.begin());
 		return mIds[idx];
@@ -661,7 +640,7 @@ public:
 			DeleteLow(handle&G2_INDEX_MASK);
 		}
 	}
-	vector<CGhoul2Info> &Get(int handle)
+	std::vector<CGhoul2Info> &Get(int handle)
 	{
 		assert(handle>0); //null handle
 		assert((handle&G2_INDEX_MASK) >= 0 && (handle&G2_INDEX_MASK)<MAX_G2_MODELS); //junk handle
@@ -670,7 +649,7 @@ public:
 
 		return mInfos[handle&G2_INDEX_MASK];
 	}
-	const vector<CGhoul2Info> &Get(int handle) const
+	const std::vector<CGhoul2Info> &Get(int handle) const
 	{
 		assert(handle>0);
 		assert(mIds[handle&G2_INDEX_MASK] == handle); // not a valid handle, could be old or garbage
@@ -678,7 +657,7 @@ public:
 	}
 
 #if G2API_DEBUG
-	vector<CGhoul2Info> &GetDebug(int handle)
+	std::vector<CGhoul2Info> &GetDebug(int handle)
 	{
 		assert(!(handle <= 0 || (handle&G2_INDEX_MASK)<0 || (handle&G2_INDEX_MASK) >= MAX_G2_MODELS || mIds[handle&G2_INDEX_MASK] != handle));
 
@@ -688,7 +667,7 @@ public:
 	{
 		for (size_t j = 0; j<MAX_G2_MODELS; j++)
 		{
-			vector<CGhoul2Info> &ghoul2 = mInfos[j];
+			std::vector<CGhoul2Info> &ghoul2 = mInfos[j];
 			for (size_t i = 0; i<ghoul2.size(); i++)
 			{
 				if (G2_SetupModelPointers(&ghoul2[i]))
@@ -713,7 +692,7 @@ IGhoul2InfoArray &TheGhoul2InfoArray()
 }
 
 #if G2API_DEBUG
-vector<CGhoul2Info> &DebugG2Info(int handle)
+std::vector<CGhoul2Info> &DebugG2Info(int handle)
 {
 	return ((Ghoul2InfoArray *)(&TheGhoul2InfoArray()))->GetDebug(handle);
 }
@@ -746,7 +725,10 @@ void RestoreGhoul2InfoArray()
 			return;
 		}
 
-		size_t read = singleton->Deserialize((const char *)data, size);
+#ifdef _DEBUG
+		size_t read =
+#endif // _DEBUG
+			singleton->Deserialize((const char *)data, size);
 		R_Free((void *)data);
 
 		assert(read == size);
@@ -757,7 +739,10 @@ void SaveGhoul2InfoArray()
 {
 	size_t size = singleton->GetSerializedSize();
 	void *data = R_Malloc(size, TAG_GHOUL2, qfalse);
-	size_t written = singleton->Serialize((char *)data);
+#ifdef _DEBUG
+	size_t written =
+#endif // _DEBUG
+		singleton->Serialize((char *)data);
 
 	assert(written == size);
 
@@ -843,7 +828,7 @@ int G2API_InitGhoul2Model(CGhoul2Info_v &ghoul2, const char *fileName, int, qhan
 qboolean G2API_SetLodBias(CGhoul2Info *ghlInfo, int lodBias)
 {
 	G2ERROR(ghlInfo, "NULL ghlInfo");
-	if (ghlInfo)
+	if (G2_SetupModelPointers(ghlInfo))
 	{
 		ghlInfo->mLodBias = lodBias;
 		return qtrue;
@@ -855,14 +840,14 @@ qboolean G2API_SetSkin(CGhoul2Info *ghlInfo, qhandle_t customSkin, qhandle_t ren
 {
 	G2ERROR(ghlInfo, "NULL ghlInfo");
 #ifdef JK2_MODE
-	if (ghlInfo)
+	if (G2_SetupModelPointers(ghlInfo))
 	{
 		ghlInfo->mCustomSkin = customSkin;
 		return qtrue;
 	}
 	return qfalse;
 #else
-	if (ghlInfo)
+	if (G2_SetupModelPointers(ghlInfo))
 	{
 		ghlInfo->mCustomSkin = customSkin;
 		if (renderSkin)
@@ -879,7 +864,7 @@ qboolean G2API_SetSkin(CGhoul2Info *ghlInfo, qhandle_t customSkin, qhandle_t ren
 qboolean G2API_SetShader(CGhoul2Info *ghlInfo, qhandle_t customShader)
 {
 	G2ERROR(ghlInfo, "NULL ghlInfo");
-	if (ghlInfo)
+	if (G2_SetupModelPointers(ghlInfo))
 	{
 		ghlInfo->mCustomShader = customShader;
 		return qtrue;
@@ -1153,13 +1138,13 @@ qboolean G2API_GetBoneAnimIndex(CGhoul2Info *ghlInfo, const int iBoneIndex, cons
 			if ((ghlInfo->mBlist[iBoneIndex].flags & (BONE_ANIM_OVERRIDE_LOOP | BONE_ANIM_OVERRIDE)))
 			{
 				int sf, ef;
-				ret = G2_Get_Bone_Anim_Index(ghlInfo->mBlist,// boneInfo_v &blist, 
-					iBoneIndex,		// const int index, 
-					currentTime,	// const int currentTime, 
+				ret = G2_Get_Bone_Anim_Index(ghlInfo->mBlist,// boneInfo_v &blist,
+					iBoneIndex,		// const int index,
+					currentTime,	// const int currentTime,
 					currentFrame,	// float *currentFrame,
-					&sf,		// int *startFrame, 
-					&ef,		// int *endFrame, 
-					flags,			// int *flags, 
+					&sf,		// int *startFrame,
+					&ef,		// int *endFrame,
+					flags,			// int *flags,
 					animSpeed,		// float *retAnimSpeed,
 					ghlInfo->aHeader->numFrames
 				);
@@ -1450,9 +1435,6 @@ extern int ragTraceCount;
 
 void G2API_AnimateG2Models(CGhoul2Info_v &ghoul2, int AcurrentTime, CRagDollUpdateParams *params)
 {
-#ifdef JK2_MODE
-	return;			// handled elsewhere
-#endif
 	int model;
 	int currentTime = G2API_GetTime(AcurrentTime);
 
@@ -1624,12 +1606,14 @@ qboolean G2API_RagForceSolve(CGhoul2Info_v &ghoul2, qboolean force)
 }
 
 qboolean G2_SetBoneIKState(CGhoul2Info_v &ghoul2, int time, const char *boneName, int ikState, sharedSetBoneIKStateParams_t *params);
+
 qboolean G2API_SetBoneIKState(CGhoul2Info_v &ghoul2, int time, const char *boneName, int ikState, sharedSetBoneIKStateParams_t *params)
 {
 	return G2_SetBoneIKState(ghoul2, time, boneName, ikState, params);
 }
 
 qboolean G2_IKMove(CGhoul2Info_v &ghoul2, int time, sharedIKMoveParams_t *params);
+
 qboolean G2API_IKMove(CGhoul2Info_v &ghoul2, int time, sharedIKMoveParams_t *params)
 {
 	return G2_IKMove(ghoul2, time, params);
@@ -1808,7 +1792,7 @@ qboolean G2API_GetBoltMatrix(CGhoul2Info_v &ghoul2, const int modelIndex, const 
 	{
 		G2WARNING(0, "G2API_GetBoltMatrix Failed on empty or bad model");
 	}
-	Multiply_3x4Matrix(matrix, &worldMatrix, (mdxaBone_t *)&identityMatrix);
+	Multiply_3x4Matrix(matrix, &worldMatrix, &identityMatrix);
 	return qfalse;
 }
 

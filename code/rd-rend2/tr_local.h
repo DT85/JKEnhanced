@@ -1888,8 +1888,6 @@ typedef enum {
 	MOD_BAD,
 	MOD_BRUSH,
 	MOD_MESH,
-	MOD_MDR,
-	MOD_IQM,
 /*
 Ghoul2 Insert Start
 */
@@ -1941,7 +1939,6 @@ typedef struct model_s {
 	{
 		bmodel_t		*bmodel;			// type == MOD_BRUSH
 		mdvModel_t		*mdv[MD3_MAX_LODS];	// type == MOD_MESH
-		iqmData_t		*iqm;				// type == MOD_IQM
 		mdxmData_t		*glm;				// type == MOD_MDXM
 		mdxaHeader_t	*gla;				// type == MOD_MDXA
 	} data;

@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 #include "tr_local.h"
+#include "tr_stl.h"
 
 // tr_shader.c -- this file deals with the parsing and definition of shaders
 
@@ -4007,6 +4008,17 @@ If found, it will return a valid shader
 */
 static const char *FindShaderInShaderText( const char *shadername ) {
 
+
+#ifdef USE_STL_FOR_SHADER_LOOKUPS
+
+	char sLowerCaseName[MAX_QPATH];
+	Q_strncpyz(sLowerCaseName, shadername, sizeof(sLowerCaseName));
+	Q_strlwr(sLowerCaseName);	// Q_strlwr is pretty gay, so I'm not using it
+
+	return ShaderEntryPtrs_Lookup(sLowerCaseName);
+
+#else
+
 	char *token;
 	const char *p;
 
@@ -4049,6 +4061,7 @@ static const char *FindShaderInShaderText( const char *shadername ) {
 	}
 
 	return NULL;
+#endif
 }
 
 
@@ -4295,7 +4308,7 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndexes, const byte
 	return FinishShader();
 }
 
-shader_t *R_FindServerShader( const char *name, const int *lightmapIndexes, const byte *styles, qboolean mipRawImage ) 
+/*shader_t *R_FindServerShader( const char *name, const int *lightmapIndexes, const byte *styles, qboolean mipRawImage ) 
 {
 	char		strippedName[MAX_QPATH];
 	int			hash;
@@ -4330,9 +4343,9 @@ shader_t *R_FindServerShader( const char *name, const int *lightmapIndexes, cons
 	
 	shader.defaultShader = qtrue;
 	return FinishShader();
-}
+}*/
 
-qhandle_t RE_RegisterShaderFromImage(const char *name, const int *lightmapIndexes, const byte *styles, image_t *image, qboolean mipRawImage) {
+/*qhandle_t RE_RegisterShaderFromImage(const char *name, const int *lightmapIndexes, const byte *styles, image_t *image, qboolean mipRawImage) {
 	int			hash;
 	shader_t	*sh;
 
@@ -4417,7 +4430,7 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, const int *lightmapIndexe
 
 	sh = FinishShader();
   return sh->index; 
-}
+}*/
 
 
 /* 
@@ -4593,6 +4606,50 @@ void	R_ShaderList_f (void) {
 	ri.Printf (PRINT_ALL, "------------------\n");
 }
 
+#ifdef USE_STL_FOR_SHADER_LOOKUPS
+// setup my STL shortcut list as to where all the shaders are, saves re-parsing every line for every .TGA request.
+//
+static void SetupShaderEntryPtrs(void)
+{
+	const char *p = s_shaderText;
+	char *token;
+
+	ShaderEntryPtrs_Clear();	// extra safe, though done elsewhere already
+
+	if (!p)
+		return;
+
+	// FIXED this nasty little bugger --eez
+	COM_BeginParseSession();
+
+	while (1)
+	{
+		token = COM_ParseExt(&p, qtrue);
+		if (token[0] == 0)
+			break;				// EOF
+
+		if (token[0] == '{')	// '}'	// counterbrace for matching
+		{
+			SkipBracedSection(&p);
+		}
+		else
+		{
+			Q_strlwr(token);	// token is always a ptr to com_token here, not the original buffer.
+								//	(Not that it matters, except for reasons of speed by not strlwr'ing the whole buffer)
+
+								// token = a string of this shader name, p = ptr within s_shadertext it's found at, so store it...
+								//
+			ShaderEntryPtrs_Insert(token, p);
+			SkipRestOfLine(&p);		// now legally skip over this name and go get the next one
+		}
+	}
+
+	COM_EndParseSession();
+
+	//ri.Printf( PRINT_DEVELOPER, "SetupShaderEntryPtrs(): Stored %d shader ptrs\n",ShaderEntryPtrs_Size() );
+}
+#endif
+
 /*
 ====================
 ScanAndLoadShaderFiles
@@ -4711,6 +4768,10 @@ static void ScanAndLoadShaderFiles( void )
 
 		SkipBracedSection(&p);
 	}
+
+#ifdef USE_STL_FOR_SHADER_LOOKUPS
+	SetupShaderEntryPtrs();
+#endif
 
 	return;
 

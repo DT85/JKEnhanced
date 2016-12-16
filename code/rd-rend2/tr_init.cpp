@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // tr_init.c -- functions that are not called every frame
 
 #include "tr_local.h"
+#include "tr_stl.h"
 #include "tr_cache.h"
 #include "tr_allocator.h"
 #include <algorithm>
@@ -1914,6 +1915,8 @@ void C_LevelLoadEnd( void )
 	CModelCache->LevelLoadEnd( qfalse );
 	ri.SND_RegisterAudio_LevelLoadEnd( qfalse );
 	ri.S_RestartMusic();
+
+	*(ri.gbAlreadyDoingLoad()) = qfalse;
 }
 
 //bool inServer = false;
@@ -1938,7 +1941,7 @@ GetRefAPI
 //extern void R_LoadImage(const char *shortname, byte **pic, int *width, int *height);
 //extern void R_WorldEffectCommand(const char *command);
 extern qboolean R_inPVS(vec3_t p1, vec3_t p2);
-//extern void G2API_AnimateG2Models(CGhoul2Info_v &ghoul2, int AcurrentTime, CRagDollUpdateParams *params);
+extern void G2API_AnimateG2Models(CGhoul2Info_v &ghoul2, int AcurrentTime, CRagDollUpdateParams *params);
 extern qboolean G2API_GetRagBonePos(CGhoul2Info_v &ghoul2, const char *boneName, vec3_t pos, vec3_t entAngles, vec3_t entPos, vec3_t entScale);
 extern qboolean G2API_RagEffectorKick(CGhoul2Info_v &ghoul2, const char *boneName, vec3_t velocity);
 extern qboolean G2API_RagForceSolve(CGhoul2Info_v &ghoul2, qboolean force);
@@ -2151,7 +2154,7 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI(int apiVersion, refimport_t *ri
 	re.G2API_AddBolt = G2API_AddBolt;
 	re.G2API_AddBoltSurfNum = G2API_AddBoltSurfNum;
 	re.G2API_AddSurface = G2API_AddSurface;
-	//re.G2API_AnimateG2ModelsRag = G2API_AnimateG2ModelsRag;
+	re.G2API_AnimateG2Models = G2API_AnimateG2Models;
 	re.G2API_AttachEnt = G2API_AttachEnt;
 	re.G2API_AttachG2Model = G2API_AttachG2Model;
 	//re.G2API_AttachInstanceToEntNum = G2API_AttachInstanceToEntNum;
