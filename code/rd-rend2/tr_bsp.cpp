@@ -2763,7 +2763,7 @@ void R_LoadEntities( world_t *worldData, lump_t *l ) {
 		Q_strncpyz(value, token, sizeof(value));
 
 		// check for remapping of shaders for vertex lighting
-		s = vertexRemapShaderText;
+		/*s = vertexRemapShaderText;
 		if (!Q_strncmp(keyname, s, strlen(s)) ) {
 			s = strchr(value, ';');
 			if (!s) {
@@ -2787,7 +2787,7 @@ void R_LoadEntities( world_t *worldData, lump_t *l ) {
 			*s++ = 0;
 			R_RemapShader(value, s, "0");
 			continue;
-		}
+		}*/
  		if (!Q_stricmp(keyname, "distanceCull")) {
 			sscanf(value, "%f", &tr.distanceCull );
 			continue;
@@ -2811,7 +2811,7 @@ void R_LoadEntities( world_t *worldData, lump_t *l ) {
 R_GetEntityToken
 =================
 */
-qboolean R_GetEntityToken( char *buffer, int size ) {
+/*qboolean R_GetEntityToken( char *buffer, int size ) {
 	char	*s;
 	world_t *worldData = &s_worldData;
 
@@ -2829,7 +2829,7 @@ qboolean R_GetEntityToken( char *buffer, int size ) {
 	} else {
 		return qtrue;
 	}
-}
+}*/
 
 #ifndef MAX_SPAWN_VARS
 #define MAX_SPAWN_VARS 64
@@ -2845,10 +2845,10 @@ static qboolean R_ParseSpawnVars( char *spawnVarChars, int maxSpawnVarChars, int
 	*numSpawnVars = 0;
 
 	// parse the opening brace
-	if ( !R_GetEntityToken( com_token, sizeof( com_token ) ) ) {
+	/*if ( !R_GetEntityToken( com_token, sizeof( com_token ) ) ) {
 		// end of spawn string
 		return qfalse;
-	}
+	}*/
 	if ( com_token[0] != '{' ) {
 		ri.Printf( PRINT_ALL, "R_ParseSpawnVars: found %s when expecting {\n",com_token );
 		return qfalse;
@@ -2859,20 +2859,20 @@ static qboolean R_ParseSpawnVars( char *spawnVarChars, int maxSpawnVarChars, int
 		int keyLength, tokenLength;
 
 		// parse key
-		if ( !R_GetEntityToken( keyname, sizeof( keyname ) ) ) {
+		/*if ( !R_GetEntityToken( keyname, sizeof( keyname ) ) ) {
 			ri.Printf( PRINT_ALL, "R_ParseSpawnVars: EOF without closing brace\n" );
 			return qfalse;
-		}
+		}*/
 
 		if ( keyname[0] == '}' ) {
 			break;
 		}
 
 		// parse value  
-		if ( !R_GetEntityToken( com_token, sizeof( com_token ) ) ) {
+		/*if ( !R_GetEntityToken( com_token, sizeof( com_token ) ) ) {
 			ri.Printf( PRINT_ALL, "R_ParseSpawnVars: EOF without closing brace\n" );
 			return qfalse;
-		}
+		}*/
 
 		if ( com_token[0] == '}' ) {
 			ri.Printf( PRINT_ALL, "R_ParseSpawnVars: closing brace without data\n" );

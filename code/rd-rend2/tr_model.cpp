@@ -776,7 +776,7 @@ void R_ModelInit(void) {
 	mod->type = MOD_BAD;
 }
 
-extern void KillTheShaderHashTable(void);
+/*extern void KillTheShaderHashTable(void);
 void RE_HunkClearCrap(void)
 { //get your dirty sticky assets off me, you damn dirty hunk!
 	KillTheShaderHashTable();
@@ -784,7 +784,7 @@ void RE_HunkClearCrap(void)
 	CModelCache->DeleteAll();
 	tr.numShaders = 0;
 	tr.numSkins = 0;
-}
+}*/
 
 
 /*

@@ -2623,14 +2623,14 @@ void		RE_BeginFrame( stereoFrame_t stereoFrame );
 void		RE_BeginRegistration( glconfig_t *glconfig );
 void		RE_LoadWorldMap( const char *mapname );
 void		RE_SetWorldVisData( const byte *vis );
-qhandle_t	RE_RegisterServerModel( const char *name );
+//qhandle_t	RE_RegisterServerModel( const char *name );
 qhandle_t	RE_RegisterModel( const char *name );
-qhandle_t	RE_RegisterServerSkin( const char *name );
+//qhandle_t	RE_RegisterServerSkin( const char *name );
 qhandle_t	RE_RegisterSkin( const char *name );
 int			RE_GetAnimationCFG(const char *psCFGFilename, char *psDest, int iDestSize);
 void		RE_Shutdown( qboolean destroyWindow );
 
-qboolean	R_GetEntityToken( char *buffer, int size );
+//qboolean	R_GetEntityToken( char *buffer, int size );
 
 model_t		*R_AllocModel( void );
 
@@ -2661,7 +2661,7 @@ skin_t	*R_GetSkinByHandle( qhandle_t hSkin );
 int R_ComputeLOD( trRefEntity_t *ent );
 
 //const void *RB_TakeVideoFrameCmd( const void *data );
-void RE_HunkClearCrap(void);
+//void RE_HunkClearCrap(void);
 
 //
 // tr_shader.c
@@ -2678,7 +2678,7 @@ shader_t	*R_GetShaderByState( int index, long *cycleTime );
 shader_t *R_FindShaderByName( const char *name );
 void		R_InitShaders( void );
 void		R_ShaderList_f( void );
-void    R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
+//void    R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
 shader_t *R_CreateShaderFromTextureBundle(
 		const char *name,
 		const textureBundle_t *bundle,
@@ -2798,6 +2798,7 @@ WORLD MAP
 
 void R_AddBrushModelSurfaces( trRefEntity_t *e, int entityNum );
 void R_AddWorldSurfaces( void );
+qboolean R_inPVS(const vec3_t p1, const vec3_t p2, byte *mask);
 
 
 /*
@@ -3365,7 +3366,6 @@ void R_AddDecals( void );
 image_t	*R_FindImageFile( const char *name, imgType_t type, int flags );
 qhandle_t RE_RegisterShader( const char *name );
 qhandle_t RE_RegisterShaderNoMip( const char *name );
-//const char		*RE_ShaderNameFromIndex(int index);
 image_t *R_CreateImage( const char *name, byte *pic, int width, int height, imgType_t type, int flags, int internalFormat );
 
 float ProjectRadius( float r, vec3_t location );
