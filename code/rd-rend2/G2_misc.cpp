@@ -528,7 +528,7 @@ void G2_TransformSurfaces(int surfaceNum, surfaceInfo_v &rootSList,
 {
 	int	i;
 	assert(currentModel);
-	assert(currentModel->data.glm->header);
+	assert(currentModel->data.glm && currentModel->data.glm->header);
 	// back track and get the surfinfo struct for this surface
 	const mdxmSurface_t			*surface = (mdxmSurface_t *)G2_FindSurface(currentModel, surfaceNum, lod);
 	const mdxmHierarchyOffsets_t	*surfIndexes = (mdxmHierarchyOffsets_t *)((byte *)currentModel->data.glm->header + sizeof(mdxmHeader_t));
@@ -1472,7 +1472,7 @@ static void G2_TraceSurfaces(CTraceSurface &TS)
 	int	i;
 	// back track and get the surfinfo struct for this surface
 	assert(TS.currentModel);
-	assert(TS.currentModel->data.glm->header);
+	assert(TS.currentModel->data.glm && TS.currentModel->data.glm->header);
 	const mdxmSurface_t		*surface = (mdxmSurface_t *)G2_FindSurface(TS.currentModel, TS.surfaceNum, TS.lod);
 	const mdxmHierarchyOffsets_t	*surfIndexes = (mdxmHierarchyOffsets_t *)((byte *)TS.currentModel->data.glm->header + sizeof(mdxmHeader_t));
 	const mdxmSurfHierarchy_t		*surfInfo = (mdxmSurfHierarchy_t *)((byte *)surfIndexes + surfIndexes->offsets[surface->thisSurfaceIndex]);

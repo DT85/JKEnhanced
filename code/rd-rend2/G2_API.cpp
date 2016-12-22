@@ -2214,7 +2214,8 @@ bool G2_TestModelPointers(CGhoul2Info *ghlInfo) // returns true if the model is 
 		ghlInfo->currentModel = R_GetModelByHandle(ghlInfo->mModel);
 		if (ghlInfo->currentModel)
 		{
-			if (ghlInfo->currentModel->data.glm->header)
+			if (ghlInfo->currentModel->data.glm &&
+				ghlInfo->currentModel->data.glm->header)
 			{
 				if (ghlInfo->currentModelSize)
 				{
@@ -2275,7 +2276,8 @@ bool G2_SetupModelPointers(CGhoul2Info *ghlInfo) // returns true if the model is
 		if (ghlInfo->currentModel)
 		{
 			G2ERROR(ghlInfo->currentModel->data.glm->header, va("Model has no mdxm (glm) %s", ghlInfo->mFileName));
-			if (ghlInfo->currentModel->data.glm->header)
+			if (ghlInfo->currentModel->data.glm &&
+				ghlInfo->currentModel->data.glm->header)
 			{
 				if (ghlInfo->currentModelSize)
 				{

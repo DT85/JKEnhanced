@@ -378,8 +378,8 @@ int G2_IsSurfaceRendered(CGhoul2Info *ghlInfo, const char *surfaceName, surfaceI
 	uint32_t				flags = 0u;//, surfFlags = 0;
 	int						surfIndex = 0;
 	assert(ghlInfo->currentModel);
-	assert(ghlInfo->currentModel->data.glm->header);
-	if (!ghlInfo->currentModel->data.glm->header)
+	assert(ghlInfo->currentModel->data.glm && ghlInfo->currentModel->data.glm->header);
+	if (!ghlInfo->currentModel->data.glm || !ghlInfo->currentModel->data.glm->header)
 	{
 		return -1;
 	}

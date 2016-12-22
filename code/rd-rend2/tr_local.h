@@ -265,10 +265,10 @@ extern cvar_t	*r_noPrecacheGLA;
 extern cvar_t	*r_noGhoul2;
 extern cvar_t	*r_Ghoul2AnimSmooth;
 extern cvar_t	*r_Ghoul2UnSqashAfterSmooth;
-//extern cvar_t	*r_Ghoul2UnSqash;
-//extern cvar_t	*r_Ghoul2TimeBase=0; from single player
-//extern cvar_t	*r_Ghoul2NoLerp;
-//extern cvar_t	*r_Ghoul2NoBlend;
+extern cvar_t	*r_Ghoul2UnSqash;
+//extern cvar_t	*r_Ghoul2TimeBase=0;
+extern cvar_t	*r_Ghoul2NoLerp;
+extern cvar_t	*r_Ghoul2NoBlend;
 //extern cvar_t	*r_Ghoul2BlendMultiplier=0;
 
 extern cvar_t	*broadsword;

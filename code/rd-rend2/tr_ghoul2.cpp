@@ -33,6 +33,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "qcommon/matcomp.h"
 #include "tr_cache.h"
+
 #if !defined(_QCOMMON_H_)
 #include "../qcommon/qcommon.h"
 #endif
@@ -75,7 +76,10 @@ void G2Time_ReportTimers(void)
 #include <float.h>
 //rww - RAGDOLL_END
 
+extern	cvar_t	*r_Ghoul2UnSqash;
 extern	cvar_t	*r_Ghoul2AnimSmooth;
+extern	cvar_t	*r_Ghoul2NoLerp;
+extern	cvar_t	*r_Ghoul2NoBlend;
 extern	cvar_t	*r_Ghoul2UnSqashAfterSmooth;
 
 bool HackadelicOnClient = false; // means this is a render traversal
@@ -395,7 +399,14 @@ public:
 	// Need to add in smoothing step?
 	CTransformBone *EvalFull(int index)
 	{
+#ifdef JK2_MODE
+		//		Eval(index);
+
+		// FIXME BBi Was commented
+		Eval(index);
+#else
 		EvalRender(index);
+#endif // JK2_MODE
 		if (mSmoothingActive)
 		{
 			return mSmoothBones + index;
@@ -642,6 +653,7 @@ const mdxaBone_t &EvalBoneCache(int index, CBoneCache *boneCache)
 	assert(boneCache);
 	return boneCache->Eval(index);
 }
+
 
 class CRenderSurface
 {
@@ -1344,6 +1356,11 @@ void G2_TransformBone(int child, CBoneCache &BC)
 				TB.blendMode = false;
 			}
 		}
+		else if (r_Ghoul2NoBlend->integer || ((boneList[boneListIndex].flags) & (BONE_ANIM_OVERRIDE_LOOP | BONE_ANIM_OVERRIDE)))
+			// turn off blending if we are just doing a straing animation override
+		{
+			TB.blendMode = false;
+		}
 
 		// should this animation be overridden by an animation in the bone list?
 		if ((boneList[boneListIndex].flags) & (BONE_ANIM_OVERRIDE_LOOP | BONE_ANIM_OVERRIDE))
@@ -1353,6 +1370,10 @@ void G2_TransformBone(int child, CBoneCache &BC)
 #if DEBUG_G2_TIMING
 		printTiming = true;
 #endif
+		if ((r_Ghoul2NoLerp->integer) || ((boneList[boneListIndex].flags) & (BONE_ANIM_NO_LERP)))
+		{
+			TB.backlerp = 0.0f;
+		}
 	}
 	// figure out where the location of the bone animation data is
 	assert(TB.newFrame >= 0 && TB.newFrame<BC.header->numFrames);
@@ -1777,6 +1798,22 @@ void G2_TransformBone(int child, CBoneCache &BC)
 			Multiply_3x4Matrix(&BC.mFinalBones[child].boneMatrix, &tempMatrix, &boneList[boneListIndex].matrix);
 		}
 	}
+	if (r_Ghoul2UnSqash->integer)
+	{
+		mdxaBone_t tempMatrix;
+		Multiply_3x4Matrix(&tempMatrix, &BC.mFinalBones[child].boneMatrix, &skel->BasePoseMat);
+		float maxl;
+		maxl = VectorLength(&skel->BasePoseMat.matrix[0][0]);
+		VectorNormalize(&tempMatrix.matrix[0][0]);
+		VectorNormalize(&tempMatrix.matrix[1][0]);
+		VectorNormalize(&tempMatrix.matrix[2][0]);
+
+		VectorScale(&tempMatrix.matrix[0][0], maxl, &tempMatrix.matrix[0][0]);
+		VectorScale(&tempMatrix.matrix[1][0], maxl, &tempMatrix.matrix[1][0]);
+		VectorScale(&tempMatrix.matrix[2][0], maxl, &tempMatrix.matrix[2][0]);
+		Multiply_3x4Matrix(&BC.mFinalBones[child].boneMatrix, &tempMatrix, &skel->BasePoseMatInv);
+	}
+
 }
 
 
@@ -2254,7 +2291,6 @@ void RenderSurfaces(CRenderSurface &RS, int entityNum)
 			assert(newSurf->vboMesh != NULL && RS.surfaceNum == surface->thisSurfaceIndex);
 			newSurf->surfaceData = surface;
 			newSurf->boneCache = RS.boneCache;
-
 			R_AddDrawSurf((surfaceType_t *)newSurf, entityNum, (shader_t *)shader, RS.fogNum, qfalse, R_IsPostRenderEntity(entityNum, tr.currentEntity), cubemapIndex);
 
 #ifdef _G2_GORE
@@ -2459,14 +2495,9 @@ static void RootMatrix(CGhoul2Info_v &ghoul2, int time, const vec3_t scale, mdxa
 	retMatrix = identityMatrix;
 }
 
-
 static inline bool bInShadowRange(vec3_t location)
 {
 	return false;
-
-
-
-
 
 }
 
@@ -2711,6 +2742,9 @@ RB_SurfaceGhoul
 */
 void RB_SurfaceGhoul(CRenderableSurface *surf)
 {
+#ifdef G2_PERFORMANCE_ANALYSIS
+	G2PerformanceTimer_RB_SurfaceGhoul.Start();
+#endif
 	static mat4x3_t boneMatrices[20] = {};
 
 	mdxmSurface_t *surfData = surf->surfaceData;
@@ -2751,6 +2785,10 @@ void RB_SurfaceGhoul(CRenderableSurface *surf)
 
 	// So we don't lerp surfaces that shouldn't be lerped
 	glState.skeletalAnimation = qfalse;
+
+#ifdef G2_PERFORMANCE_ANALYSIS
+	G2Time_RB_SurfaceGhoul += G2PerformanceTimer_RB_SurfaceGhoul.End();
+#endif
 }
 
 /*
@@ -3160,10 +3198,8 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 
 	qboolean bAlreadyFound = qfalse;
 	mdxm = (mdxmHeader_t*)CModelCache->Allocate(size, buffer, mod_name, &bAlreadyFound, TAG_MODEL_GLM);
-	mod->data.glm = (mdxmData_t *)R_Hunk_Alloc(sizeof(mdxmData_t), qtrue);
+	mod->data.glm = (mdxmData_t*)R_Hunk_Alloc(sizeof(mdxmData_t), qtrue);
 	mod->data.glm->header = mdxm;
-
-
 	//RE_RegisterModels_Malloc(size, buffer, mod_name, &bAlreadyFound, TAG_MODEL_GLM);
 
 	assert(bAlreadyCached == bAlreadyFound);
@@ -3205,17 +3241,20 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 		}
 	}
 
+#ifndef JK2_MODE
 	bool isAnOldModelFile = false;
 	if (mdxm->numBones == 72 && strstr(mdxm->animName, "_humanoid"))
 	{
 		isAnOldModelFile = true;
 	}
+#endif
 
 	if (!mdxm->animIndex)
 	{
 		ri.Printf(PRINT_WARNING, "R_LoadMDXM: missing animation file %s for mesh %s\n", mdxm->animName, mdxm->name);
 		return qfalse;
 	}
+#ifndef JK2_MODE
 	else
 	{
 		assert(tr.models[mdxm->animIndex]->data.gla->numBones == mdxm->numBones);
@@ -3239,6 +3278,7 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 			}
 		}
 	}
+#endif
 
 	mod->numLods = mdxm->numLODs - 1;	//copy this up to the model for ease of use - it wil get inced after this.
 
@@ -3257,11 +3297,13 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 		LL(surfInfo->numChildren);
 		LL(surfInfo->parentIndex);
 
+#ifndef JK2_MODE
 		Q_strlwr(surfInfo->name);	//just in case
 		if (!strcmp(&surfInfo->name[strlen(surfInfo->name) - 4], "_off"))
 		{
 			surfInfo->name[strlen(surfInfo->name) - 4] = 0;	//remove "_off" from name
 		}
+#endif
 
 		if (surfInfo->shader[0] == '[')
 		{
@@ -3284,10 +3326,10 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 			continue;
 		}
 
-		/*if (!sh->defaultShader)
+		if (!sh->defaultShader)
 		{
 			surfInfo->shaderIndex = sh->index;
-		}*/
+		}
 
 		if (surfInfo->shaderIndex)
 		{
@@ -3385,6 +3427,7 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 			}
 #endif
 
+#ifndef JK2_MODE
 			if (isAnOldModelFile)
 			{
 				int *boneRef = (int *)((byte *)surf + surf->ofsBoneReferences);
@@ -3401,7 +3444,7 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 					}
 				}
 			}
-
+#endif
 			// find the next surface
 			surf = (mdxmSurface_t *)((byte *)surf + surf->ofsEnd);
 		}
@@ -3766,7 +3809,7 @@ qboolean R_LoadMDXA(model_t *mod, void *buffer, const char *mod_name, qboolean &
 	mdxa = (mdxaHeader_t*)CModelCache->Allocate(size, buffer, mod_name, &bAlreadyFound, TAG_MODEL_GLA);
 	mod->data.gla = mdxa;
 
-	assert(bAlreadyCached == bAlreadyFound);	// I should probably eliminate 'bAlreadyFound', but wtf?
+	assert(bAlreadyCached == bAlreadyFound);
 
 	if (!bAlreadyFound)
 	{
