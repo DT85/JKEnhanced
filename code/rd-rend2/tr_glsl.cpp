@@ -503,7 +503,7 @@ static int GLSL_BeginLoadGPUShader2(shaderProgram_t * program, const char *name,
 
 	ri.Printf(PRINT_DEVELOPER, "------- GPU shader -------\n");
 
-	program->name = (char *)R_Malloc (nameBufSize, TAG_GP2, qfalse);
+	program->name = (char *)R_Malloc (nameBufSize, TAG_TEMP_WORKSPACE, qfalse);
 	Q_strncpyz(program->name, name, nameBufSize);
 
 	program->program = qglCreateProgram();
@@ -675,9 +675,9 @@ static int GLSL_BeginLoadGPUShader(shaderProgram_t * program, const char *name,
 void GLSL_InitUniforms(shaderProgram_t *program)
 {
 	program->uniforms = (GLint *)R_Malloc(
-			UNIFORM_COUNT * sizeof(*program->uniforms), TAG_GP2, qfalse);
+			UNIFORM_COUNT * sizeof(*program->uniforms), TAG_TEMP_WORKSPACE, qfalse);
 	program->uniformBufferOffsets = (short *)R_Malloc(
-			UNIFORM_COUNT * sizeof(*program->uniformBufferOffsets), TAG_GP2, qfalse);
+			UNIFORM_COUNT * sizeof(*program->uniformBufferOffsets), TAG_TEMP_WORKSPACE, qfalse);
 
 	GLint *uniforms = program->uniforms;
 	int size = 0;
@@ -1128,7 +1128,7 @@ void GLSL_InitSplashScreenShader()
 
 	size_t splashLen = strlen("splash");
 	tr.splashScreenShader.program = program;
-	tr.splashScreenShader.name = (char *)R_Malloc(splashLen + 1, TAG_GP2, qfalse);
+	tr.splashScreenShader.name = (char *)R_Malloc(splashLen + 1, TAG_TEMP_WORKSPACE, qfalse);
 	Q_strncpyz(tr.splashScreenShader.name, "splash", splashLen + 1);
 }
 

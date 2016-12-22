@@ -45,7 +45,7 @@ Extends the size of the images pool allocator
 */
 static void R_ExtendImagesPool()
 {
-	ImagesPool *pool = (ImagesPool *)R_Malloc(sizeof(*pool), TAG_GP2, qfalse);
+	ImagesPool *pool = (ImagesPool *)R_Malloc(sizeof(*pool), TAG_TEMP_WORKSPACE, qfalse);
 	image_t *freeImages = (image_t *)R_Malloc(sizeof(*freeImages) * NUM_IMAGES_PER_POOL_ALLOC, TAG_IMAGE_T, qfalse);
 
 	for ( int i = 0; i < (NUM_IMAGES_PER_POOL_ALLOC - 1); i++ )
@@ -2592,7 +2592,7 @@ static void R_CreateNormalMap ( const char *name, byte *pic, int width, int heig
 		
 		normalWidth = width;
 		normalHeight = height;
-		normalPic = (byte *)R_Malloc(width * height * 4, TAG_GP2, qfalse);
+		normalPic = (byte *)R_Malloc(width * height * 4, TAG_TEMP_WORKSPACE, qfalse);
 		RGBAtoNormal(pic, normalPic, width, height, (qboolean)(flags & IMGFLAG_CLAMPTOEDGE));
 		
 #if 1
