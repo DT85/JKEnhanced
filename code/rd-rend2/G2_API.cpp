@@ -839,14 +839,7 @@ qboolean G2API_SetLodBias(CGhoul2Info *ghlInfo, int lodBias)
 qboolean G2API_SetSkin(CGhoul2Info *ghlInfo, qhandle_t customSkin, qhandle_t renderSkin)
 {
 	G2ERROR(ghlInfo, "NULL ghlInfo");
-#ifdef JK2_MODE
-	if (G2_SetupModelPointers(ghlInfo))
-	{
-		ghlInfo->mCustomSkin = customSkin;
-		return qtrue;
-	}
-	return qfalse;
-#else
+
 	if (G2_SetupModelPointers(ghlInfo))
 	{
 		ghlInfo->mCustomSkin = customSkin;
@@ -857,7 +850,6 @@ qboolean G2API_SetSkin(CGhoul2Info *ghlInfo, qhandle_t customSkin, qhandle_t ren
 		}
 		return qtrue;
 	}
-#endif
 	return qfalse;
 }
 

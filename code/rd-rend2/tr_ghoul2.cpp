@@ -395,14 +395,7 @@ public:
 	// Need to add in smoothing step?
 	CTransformBone *EvalFull(int index)
 	{
-#ifdef JK2_MODE
-		//		Eval(index);
-
-		// FIXME BBi Was commented
-		Eval(index);
-#else
 		EvalRender(index);
-#endif // JK2_MODE
 		if (mSmoothingActive)
 		{
 			return mSmoothBones + index;
@@ -3212,20 +3205,17 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 		}
 	}
 
-#ifndef JK2_MODE
 	bool isAnOldModelFile = false;
 	if (mdxm->numBones == 72 && strstr(mdxm->animName, "_humanoid"))
 	{
 		isAnOldModelFile = true;
 	}
-#endif
 
 	if (!mdxm->animIndex)
 	{
 		ri.Printf(PRINT_WARNING, "R_LoadMDXM: missing animation file %s for mesh %s\n", mdxm->animName, mdxm->name);
 		return qfalse;
 	}
-#ifndef JK2_MODE
 	else
 	{
 		assert(tr.models[mdxm->animIndex]->data.gla->numBones == mdxm->numBones);
@@ -3249,7 +3239,6 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 			}
 		}
 	}
-#endif
 
 	mod->numLods = mdxm->numLODs - 1;	//copy this up to the model for ease of use - it wil get inced after this.
 
@@ -3268,13 +3257,11 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 		LL(surfInfo->numChildren);
 		LL(surfInfo->parentIndex);
 
-#ifndef JK2_MODE
 		Q_strlwr(surfInfo->name);	//just in case
 		if (!strcmp(&surfInfo->name[strlen(surfInfo->name) - 4], "_off"))
 		{
 			surfInfo->name[strlen(surfInfo->name) - 4] = 0;	//remove "_off" from name
 		}
-#endif
 
 		if (surfInfo->shader[0] == '[')
 		{
@@ -3398,7 +3385,6 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 			}
 #endif
 
-#ifndef JK2_MODE
 			if (isAnOldModelFile)
 			{
 				int *boneRef = (int *)((byte *)surf + surf->ofsBoneReferences);
@@ -3415,7 +3401,7 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 					}
 				}
 			}
-#endif
+
 			// find the next surface
 			surf = (mdxmSurface_t *)((byte *)surf + surf->ofsEnd);
 		}
