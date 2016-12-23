@@ -1907,6 +1907,12 @@ static void R_AddEntitySurface (int entityNum)
 			case MOD_MESH:
 				R_AddMD3Surfaces( ent, entityNum );
 				break;
+			case MOD_MDR:
+				R_MDRAddAnimSurfaces(ent, entityNum);
+				break;
+			case MOD_IQM:
+				R_AddIQMSurfaces(ent, entityNum);
+				break;
 			case MOD_BRUSH:
 				R_AddBrushModelSurfaces( ent, entityNum );
 				break;
@@ -2248,6 +2254,29 @@ void R_RenderPshadowMaps(const refdef_t *fd)
 					mdvFrame_t *frame = &model->data.mdv[0]->frames[ent->e.frame];
 
 					radius = frame->radius * scale;
+				}
+				break;
+
+				case MOD_MDR:
+				{
+					// FIXME: never actually tested this
+					mdrHeader_t *header = model->data.mdr;
+					int frameSize = (size_t)( &((mdrFrame_t *)0)->bones[ header->numBones ] );
+					mdrFrame_t *frame = ( mdrFrame_t * ) ( ( byte * ) header + header->ofsFrames + frameSize * ent->e.frame);
+
+					radius = frame->radius;
+				}
+				break;
+				case MOD_IQM:
+				{
+					// FIXME: never actually tested this
+					iqmData_t *data = model->data.iqm;
+					vec3_t diag;
+					float *framebounds;
+
+					framebounds = data->bounds + 6*ent->e.frame;
+					VectorSubtract( framebounds+3, framebounds, diag );
+					radius = 0.5f * VectorLength( diag );
 				}
 				break;
 

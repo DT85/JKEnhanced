@@ -97,9 +97,11 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 	# main files
 	set(SPRDRend2MainFiles
 		"${SPDir}/rd-rend2/glext.h"
+		"${SPDir}/rd-rend2/iqm.h"		
 		"${SPDir}/rd-rend2/qgl.h"
 		"${SPDir}/rd-rend2/tr_allocator.cpp"
 		"${SPDir}/rd-rend2/tr_allocator.h"
+		"${SPDir}/rd-rend2/tr_animation.cpp"
 		"${SPDir}/rd-rend2/tr_backend.cpp"
 		"${SPDir}/rd-rend2/tr_bsp.cpp"
 		"${SPDir}/rd-rend2/tr_cache.cpp"
@@ -125,6 +127,7 @@ if(BuildSPRdRend2 OR BuildJK2SPRdRend2)
 		"${SPDir}/rd-rend2/tr_marks.cpp"
 		"${SPDir}/rd-rend2/tr_mesh.cpp"
 		"${SPDir}/rd-rend2/tr_model.cpp"
+		"${SPDir}/rd-rend2/tr_model_iqm.cpp"
 		"${SPDir}/rd-rend2/tr_postprocess.cpp"
 		"${SPDir}/rd-rend2/tr_postprocess.h"
 		"${SPDir}/rd-rend2/tr_scene.cpp"

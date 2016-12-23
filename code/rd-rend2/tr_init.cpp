@@ -1908,6 +1908,13 @@ void stub_RE_AddWeatherZone(vec3_t mins, vec3_t maxs) {}
 qboolean stub_RE_ProcessDissolve(void) { return qfalse; }
 qboolean stub_RE_InitDissolve(qboolean bForceCircularExtroWipe) { return qfalse; }
 bool stub_R_IsShaking(vec3_t pos) { return qfalse; }
+void stub_R_InitWorldEffects(void){}
+bool stub_R_GetWindVector(vec3_t windVector, vec3_t atpoint) { return qfalse; }
+bool stub_R_GetWindGusting(vec3_t atpoint){ return qfalse; }
+bool stub_R_IsOutside(vec3_t pos) { return qfalse; }
+float stub_R_IsOutsideCausingPain(vec3_t pos) { return qfalse; }
+float stub_R_GetChanceOfSaberFizz(){return qfalse;}
+qboolean stub_RE_GetLighting(const vec3_t origin, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir) { return qfalse; }
 
 void C_LevelLoadBegin(const char *psMapName, ForceReload_e eForceReload, qboolean bAllowScreenDissolve)
 {
@@ -1976,100 +1983,202 @@ extern "C" {
 
 		// the RE_ functions are Renderer Entry points
 
-		re.Shutdown = RE_Shutdown;
+#define REX(x)	re.x = RE_##x
 
-		re.BeginRegistration = RE_BeginRegistration;
-		re.RegisterModel = RE_RegisterModel;
-		//re.RegisterServerModel = RE_RegisterServerModel;
-		re.RegisterSkin = RE_RegisterSkin;
-		//re.RegisterServerSkin = RE_RegisterServerSkin;
-		re.GetAnimationCFG = RE_GetAnimationCFG;
-		re.RegisterShader = RE_RegisterShader;
-		re.RegisterShaderNoMip = RE_RegisterShaderNoMip;
-		//re.ShaderNameFromIndex = RE_ShaderNameFromIndex;
+		REX(Shutdown);
+
+		REX(BeginRegistration);
+		REX(RegisterModel);
+		REX(RegisterSkin);
+		REX(GetAnimationCFG);
+		REX(RegisterShader);
+		REX(RegisterShaderNoMip);
 		re.LoadWorld = RE_LoadWorldMap;
-		re.SetWorldVisData = RE_SetWorldVisData;
-		re.EndRegistration = RE_EndRegistration;
+		re.R_LoadImage = R_LoadImage;
 
-		re.BeginFrame = RE_BeginFrame;
-		re.EndFrame = RE_EndFrame;
-
-		re.ProcessDissolve = stub_RE_ProcessDissolve;
-		re.InitDissolve = stub_RE_InitDissolve;
-
-		re.MarkFragments = R_MarkFragments;
-		re.LerpTag = R_LerpTag;
-		re.ModelBounds = R_ModelBounds;
-
-		re.DrawRotatePic = RE_RotatePic;
-		re.DrawRotatePic2 = RE_RotatePic2;
-
-		re.ClearScene = RE_ClearScene;
-		re.ClearDecals = RE_ClearDecals;
-		re.AddRefEntityToScene = RE_AddRefEntityToScene;
-		//re.AddMiniRefEntityToScene = RE_AddMiniRefEntityToScene;
-		re.AddPolyToScene = RE_AddPolyToScene;
-		re.AddDecalToScene = RE_AddDecalToScene;
-		re.LightForPoint = R_LightForPoint;
-		re.AddLightToScene = RE_AddLightToScene;
-		re.AddAdditiveLightToScene = RE_AddAdditiveLightToScene;
-		re.RenderScene = RE_RenderScene;
-
-		re.SetColor = RE_SetColor;
-		re.DrawStretchPic = RE_StretchPic;
-		re.DrawStretchRaw = RE_StretchRaw;
-		re.UploadCinematic = RE_UploadCinematic;
-
-		re.RegisterFont = RE_RegisterFont;
-		re.Font_StrLenPixels = RE_Font_StrLenPixels;
-		re.Font_StrLenChars = RE_Font_StrLenChars;
-		re.Font_HeightPixels = RE_Font_HeightPixels;
-		re.Font_DrawString = RE_Font_DrawString;
-		re.Language_IsAsian = Language_IsAsian;
-		re.Language_UsesSpaces = Language_UsesSpaces;
-		re.AnyLanguage_ReadCharFromString = AnyLanguage_ReadCharFromString;
-		//re.RemapShader = R_RemapShader;
-		//re.GetEntityToken = R_GetEntityToken;
-		re.R_ClearStuffToStopGhoul2CrashingThings = R_ClearStuffToStopGhoul2CrashingThings;
-		re.R_inPVS = R_inPVS;
-
-		re.GetLightStyle = RE_GetLightStyle;
-		re.SetLightStyle = RE_SetLightStyle;
-		re.GetBModelVerts = stub_RE_GetBModelVerts;
-
-		re.SetRangedFog = RE_SetRangedFog;
-		//re.SetRefractionProperties = RE_SetRefractionProperties;
-		//re.GetDistanceCull = GetDistanceCull;
-		//re.GetRealRes = GetRealRes;
-		// R_AutomapElevationAdjustment
-		//re.InitializeWireframeAutomap = stub_InitializeWireframeAutomap;
-		re.AddWeatherZone = stub_RE_AddWeatherZone;
-		re.WorldEffectCommand = stub_RE_WorldEffectCommand;
 		re.RegisterMedia_LevelLoadBegin = C_LevelLoadBegin;
 		re.RegisterMedia_LevelLoadEnd = C_LevelLoadEnd;
 		re.RegisterMedia_GetLevel = C_GetLevel;
 		re.RegisterImages_LevelLoadEnd = C_Images_LevelLoadEnd;
 		re.RegisterModels_LevelLoadEnd = C_Models_LevelLoadEnd;
 
-		//re.TakeVideoFrame = RE_TakeVideoFrame;
+		REX(SetWorldVisData);
 
-		//re.InitSkins = R_InitSkins;
-		//re.InitShaders = R_InitShaders;
+		REX(EndRegistration);
+
+		REX(ClearScene);
+		REX(ClearDecals);
+		REX(AddRefEntityToScene);
+		re.GetLighting = stub_RE_GetLighting;
+		REX(AddPolyToScene);
+		re.LightForPoint = R_LightForPoint;
+		REX(AddDecalToScene);
+		REX(AddLightToScene);
+		REX(AddAdditiveLightToScene);
+		REX(RenderScene);
+		re.GetLighting = stub_RE_GetLighting;
+
+		REX(SetColor);
+		re.DrawStretchPic = RE_StretchPic;
+		re.DrawRotatePic = RE_RotatePic;
+		re.DrawRotatePic2 = RE_RotatePic2;
+		//REX(LAGoggles);
+		//REX(Scissor);
+
+		re.DrawStretchRaw = RE_StretchRaw;
+		REX(UploadCinematic);
+
+		REX(BeginFrame);
+		REX(EndFrame);
+
+		re.ProcessDissolve = stub_RE_ProcessDissolve;
+		re.InitDissolve = stub_RE_InitDissolve;
+
+		//REX(GetScreenShot);
+
+		//REX(TempRawImage_ReadFromFile);
+		//REX(TempRawImage_CleanUp);
+
+		re.MarkFragments = R_MarkFragments;
+		re.LerpTag = R_LerpTag;
+		re.ModelBounds = R_ModelBounds;
+		REX(GetLightStyle);
+		REX(SetLightStyle);
+		re.GetBModelVerts = stub_RE_GetBModelVerts;
+		re.WorldEffectCommand = stub_RE_WorldEffectCommand;
+		//REX(GetModelBounds);
+
 		re.SVModelInit = R_SVModelInit;
-		//re.HunkClearCrap = RE_HunkClearCrap;
 
-		//re.GetWindVector = R_GetWindVector;
-		//re.GetWindGusting = R_GetWindGusting;
-		//re.IsOutside = R_IsOutside;
-		//re.IsOutsideCausingPain = R_IsOutsideCausingPain;
-		//re.GetChanceOfSaberFizz = R_GetChanceOfSaberFizz;
+		REX(RegisterFont);
+		REX(Font_HeightPixels);
+		REX(Font_StrLenPixels);
+		REX(Font_DrawString);
+		REX(Font_StrLenChars);
+		re.Language_IsAsian = Language_IsAsian;
+		re.Language_UsesSpaces = Language_UsesSpaces;
+		re.AnyLanguage_ReadCharFromString = AnyLanguage_ReadCharFromString;
+		
+		re.R_InitWorldEffects = stub_R_InitWorldEffects;
+		re.R_ClearStuffToStopGhoul2CrashingThings = R_ClearStuffToStopGhoul2CrashingThings;
+		re.R_inPVS = R_inPVS;
+
+		//re.tr_distortionAlpha = get_tr_distortionAlpha;
+		//re.tr_distortionStretch = get_tr_distortionStretch;
+		//re.tr_distortionPrePost = get_tr_distortionPrePost;
+		//re.tr_distortionNegate = get_tr_distortionNegate;
+
+		re.GetWindVector = stub_R_GetWindVector;
+		re.GetWindGusting = stub_R_GetWindGusting;
+		re.IsOutside = stub_R_IsOutside;
+		re.IsOutsideCausingPain = stub_R_IsOutsideCausingPain;
+		re.GetChanceOfSaberFizz = stub_R_GetChanceOfSaberFizz;
 		re.IsShaking = stub_R_IsShaking;
-		//re.AddWeatherZone = R_AddWeatherZone;
+		re.AddWeatherZone = stub_RE_AddWeatherZone;
 		//re.SetTempGlobalFogColor = R_SetTempGlobalFogColor;
+
+		REX(SetRangedFog);
 
 		re.TheGhoul2InfoArray = TheGhoul2InfoArray;
 
-		re.G2API_AddBolt = G2API_AddBolt;
+		//re.RemapShader = R_RemapShader;
+		//re.GetEntityToken = R_GetEntityToken;
+		//re.SetRefractionProperties = RE_SetRefractionProperties;
+		//re.GetDistanceCull = GetDistanceCull;
+		//re.GetRealRes = GetRealRes;
+		// R_AutomapElevationAdjustment
+		//re.InitializeWireframeAutomap = stub_InitializeWireframeAutomap;		
+		//re.TakeVideoFrame = RE_TakeVideoFrame;
+		//re.InitSkins = R_InitSkins;
+		//re.InitShaders = R_InitShaders;		
+		//re.HunkClearCrap = RE_HunkClearCrap;
+
+#define G2EX(x)	re.G2API_##x = G2API_##x
+
+		G2EX(AddBolt);
+		G2EX(AddBoltSurfNum);
+		G2EX(AddSurface);
+		G2EX(AnimateG2Models);
+		G2EX(AttachEnt);
+		G2EX(AttachG2Model);
+		G2EX(CollisionDetect);
+		G2EX(CleanGhoul2Models);
+		G2EX(CopyGhoul2Instance);
+		G2EX(DetachEnt);
+		G2EX(DetachG2Model);
+		G2EX(GetAnimFileName);
+		G2EX(GetAnimFileNameIndex);
+		G2EX(GetAnimFileInternalNameIndex);
+		G2EX(GetAnimIndex);
+		G2EX(GetAnimRange);
+		G2EX(GetAnimRangeIndex);
+		G2EX(GetBoneAnim);
+		G2EX(GetBoneAnimIndex);
+		G2EX(GetBoneIndex);
+		G2EX(GetBoltMatrix);
+		G2EX(GetGhoul2ModelFlags);
+		G2EX(GetGLAName);
+		G2EX(GetParentSurface);
+		G2EX(GetRagBonePos);
+		G2EX(GetSurfaceIndex);
+		G2EX(GetSurfaceName);
+		G2EX(GetSurfaceRenderStatus);
+		G2EX(GetTime);
+		G2EX(GiveMeVectorFromMatrix);
+		G2EX(HaveWeGhoul2Models);
+		G2EX(IKMove);
+		G2EX(InitGhoul2Model);
+		G2EX(IsPaused);
+		G2EX(ListBones);
+		G2EX(ListSurfaces);
+		G2EX(LoadGhoul2Models);
+		G2EX(LoadSaveCodeDestructGhoul2Info);
+		G2EX(PauseBoneAnim);
+		G2EX(PauseBoneAnimIndex);
+		G2EX(PrecacheGhoul2Model);
+		G2EX(RagEffectorGoal);
+		G2EX(RagEffectorKick);
+		G2EX(RagForceSolve);
+		G2EX(RagPCJConstraint);
+		G2EX(RagPCJGradientSpeed);
+		G2EX(RemoveBolt);
+		G2EX(RemoveBone);
+		G2EX(RemoveGhoul2Model);
+		G2EX(RemoveSurface);
+		G2EX(SaveGhoul2Models);
+		G2EX(SetAnimIndex);
+		G2EX(SetBoneAnim);
+		G2EX(SetBoneAnimIndex);
+		G2EX(SetBoneAngles);
+		G2EX(SetBoneAnglesIndex);
+		G2EX(SetBoneAnglesMatrix);
+		G2EX(SetBoneIKState);
+		G2EX(SetGhoul2ModelFlags);
+		G2EX(SetGhoul2ModelIndexes);
+		G2EX(SetLodBias);
+		//G2EX(SetModelIndexes);
+		G2EX(SetNewOrigin);
+		G2EX(SetRagDoll);
+		G2EX(SetRootSurface);
+		G2EX(SetShader);
+		G2EX(SetSkin);
+		G2EX(SetSurfaceOnOff);
+		G2EX(SetTime);
+		G2EX(StopBoneAnim);
+		G2EX(StopBoneAnimIndex);
+		G2EX(StopBoneAngles);
+		G2EX(StopBoneAnglesIndex);
+#ifdef _G2_GORE
+		G2EX(AddSkinGore);
+		G2EX(ClearSkinGore);
+#endif
+
+#ifdef G2_PERFORMANCE_ANALYSIS
+		re.G2Time_ReportTimers = G2Time_ReportTimers;
+		re.G2Time_ResetTimers = G2Time_ResetTimers;
+#endif
+
+		/*re.G2API_AddBolt = G2API_AddBolt;
 		re.G2API_AddBoltSurfNum = G2API_AddBoltSurfNum;
 		re.G2API_AddSurface = G2API_AddSurface;
 		re.G2API_AnimateG2Models = G2API_AnimateG2Models;
@@ -2162,7 +2271,7 @@ extern "C" {
 		//re.G2API_GetNumGoreMarks = G2API_GetNumGoreMarks;
 		re.G2API_AddSkinGore = G2API_AddSkinGore;
 		re.G2API_ClearSkinGore = G2API_ClearSkinGore;
-#endif // _SOF2
+#endif // _SOF2*/
 
 		/*
 		Ghoul2 Insert End

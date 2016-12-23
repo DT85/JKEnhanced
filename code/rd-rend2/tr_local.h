@@ -1888,6 +1888,8 @@ typedef enum {
 	MOD_BAD,
 	MOD_BRUSH,
 	MOD_MESH,
+	MOD_MDR,
+	MOD_IQM,
 /*
 Ghoul2 Insert Start
 */
@@ -1939,6 +1941,8 @@ typedef struct model_s {
 	{
 		bmodel_t		*bmodel;			// type == MOD_BRUSH
 		mdvModel_t		*mdv[MD3_MAX_LODS];	// type == MOD_MESH
+		mdrHeader_t		*mdr;				// type == MOD_MDR
+		iqmData_t		*iqm;				// type == MOD_IQM
 		mdxmData_t		*glm;				// type == MOD_MDXM
 		mdxaHeader_t	*gla;				// type == MOD_MDXA
 	} data;
@@ -3006,6 +3010,15 @@ ANIMATED MODELS
 
 =============================================================
 */
+
+void R_MDRAddAnimSurfaces(trRefEntity_t *ent, int entityNum);
+void RB_MDRSurfaceAnim(mdrSurface_t *surface);
+qboolean R_LoadIQM(model_t *mod, void *buffer, int filesize, const char *name);
+void R_AddIQMSurfaces(trRefEntity_t *ent, int entityNum);
+void RB_IQMSurfaceAnim(surfaceType_t *surface);
+int R_IQMLerpTag(orientation_t *tag, iqmData_t *data,
+	int startFrame, int endFrame,
+	float frac, const char *tagName);
 
 /*
 Ghoul2 Insert Start
