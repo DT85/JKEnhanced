@@ -4006,8 +4006,12 @@ return NULL if not found
 If found, it will return a valid shader
 =====================
 */
-static const char *FindShaderInShaderText( const char *shadername ) {
+static const char *FindShaderInShaderText(const char *shadername) {
+	char *p = s_shaderText;
 
+	if (!p) {
+		return NULL;
+	}
 
 #ifdef USE_STL_FOR_SHADER_LOOKUPS
 
@@ -4020,47 +4024,32 @@ static const char *FindShaderInShaderText( const char *shadername ) {
 #else
 
 	char *token;
-	const char *p;
-
-	int i, hash;
-
-	hash = generateHashValue(shadername, MAX_SHADERTEXT_HASH);
-
-	if(shaderTextHashTable[hash])
-	{
-		for (i = 0; shaderTextHashTable[hash][i]; i++)
-		{
-			p = shaderTextHashTable[hash][i];
-			token = COM_ParseExt(&p, qtrue);
-		
-			if(!Q_stricmp(token, shadername))
-				return p;
-		}
-	}
-
-	p = s_shaderText;
-
-	if ( !p ) {
-		return NULL;
-	}
 
 	// look for label
-	while ( 1 ) {
-		token = COM_ParseExt( &p, qtrue );
-		if ( token[0] == 0 ) {
+	// note that this could get confused if a shader name is used inside
+	// another shader definition
+	while (1) {
+
+		token = COM_ParseExt(&p, qtrue);
+		if (token[0] == 0) {
 			break;
 		}
 
-		if ( !Q_stricmp( token, shadername ) ) {
+		if (token[0] == '{') {
+			// skip the definition
+			SkipBracedSection(&p);
+		}
+		else if (!Q_stricmp(token, shadername)) {
 			return p;
 		}
 		else {
-			// skip the definition
-			SkipBracedSection( &p );
+			// skip to end of line
+			SkipRestOfLine(&p);
 		}
 	}
 
 	return NULL;
+
 #endif
 }
 
@@ -4659,36 +4648,29 @@ a single large text block that can be scanned for shader names
 =====================
 */
 #define	MAX_SHADER_FILES	4096
-static void ScanAndLoadShaderFiles( void )
+static void ScanAndLoadShaderFiles(void)
 {
 	char **shaderFiles;
 	char *buffers[MAX_SHADER_FILES];
-	const char *p;
+	char *textEnd;
 	int numShaderFiles;
 	int i;
-	char *oldp, *token, *hashMem, *textEnd;
-	int shaderTextHashTableSizes[MAX_SHADERTEXT_HASH], hash, size;
-	char shaderName[MAX_QPATH];
-	int shaderLine;
-
 	long sum = 0, summand;
 
-	COM_BeginParseSession();
-
 	// scan for shader files
-	shaderFiles = ri.FS_ListFiles( "shaders", ".shader", &numShaderFiles );
+	shaderFiles = ri.FS_ListFiles("shaders", ".shader", &numShaderFiles);
 
-	if ( !shaderFiles || !numShaderFiles )
+	if (!shaderFiles || !numShaderFiles)
 	{
-		ri.Printf( PRINT_WARNING, "WARNING: no shader files found\n" );
+		ri.Error(ERR_FATAL, "WARNING: no shader files found\n");
 		return;
 	}
 
-	if ( numShaderFiles > MAX_SHADER_FILES ) {
+	if (numShaderFiles > MAX_SHADER_FILES) {
 		numShaderFiles = MAX_SHADER_FILES;
 	}
 
-	// load and parse shader files
+	// load and store shader files
 	for (i = 0; i < numShaderFiles; i++)
 	{
 		char filename[MAX_QPATH];
@@ -4706,75 +4688,29 @@ static void ScanAndLoadShaderFiles( void )
 
 	// build single large buffer
 	s_shaderText = (char *)R_Hunk_Alloc(sum + numShaderFiles * 2, qtrue);
-	s_shaderText[ 0 ] = '\0';
+	s_shaderText[0] = '\0';
 	textEnd = s_shaderText;
- 
+
 	// free in reverse order, so the temp files are all dumped
-	for ( i = numShaderFiles - 1; i >= 0 ; i-- )
+	for (i = numShaderFiles - 1; i >= 0; i--)
 	{
-		if ( !buffers[i] )
+		if (!buffers[i])
 			continue;
 
-		strcat( textEnd, buffers[i] );
-		strcat( textEnd, "\n" );
-		textEnd += strlen( textEnd );
-		ri.FS_FreeFile( buffers[i] );
+		strcat(textEnd, buffers[i]);
+		strcat(textEnd, "\n");
+		textEnd += strlen(textEnd);
+		ri.FS_FreeFile(buffers[i]);
 	}
 
-	COM_Compress( s_shaderText );
+	COM_Compress(s_shaderText);
 
 	// free up memory
-	ri.FS_FreeFileList( shaderFiles );
+	ri.FS_FreeFileList(shaderFiles);
 
-	Com_Memset(shaderTextHashTableSizes, 0, sizeof(shaderTextHashTableSizes));
-	size = 0;
-
-	p = s_shaderText;
-	// look for shader names
-	while ( 1 ) {
-		token = COM_ParseExt( &p, qtrue );
-		if ( token[0] == 0 ) {
-			break;
-		}
-
-		hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
-		shaderTextHashTableSizes[hash]++;
-		size++;
-		SkipBracedSection(&p);
-	}
-
-	size += MAX_SHADERTEXT_HASH;
-
-	hashMem = (char *)R_Hunk_Alloc( size * sizeof(char *), qtrue);
-
-	for (i = 0; i < MAX_SHADERTEXT_HASH; i++) {
-		shaderTextHashTable[i] = (char **) hashMem;
-		hashMem = ((char *) hashMem) + ((shaderTextHashTableSizes[i] + 1) * sizeof(char *));
-	}
-
-	Com_Memset(shaderTextHashTableSizes, 0, sizeof(shaderTextHashTableSizes));
-
-	p = s_shaderText;
-	// look for shader names
-	while ( 1 ) {
-		oldp = (char *)p;
-		token = COM_ParseExt( &p, qtrue );
-		if ( token[0] == 0 ) {
-			break;
-		}
-
-		hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
-		shaderTextHashTable[hash][shaderTextHashTableSizes[hash]++] = oldp;
-
-		SkipBracedSection(&p);
-	}
-
-#ifdef USE_STL_FOR_SHADER_LOOKUPS
+	#ifdef USE_STL_FOR_SHADER_LOOKUPS
 	SetupShaderEntryPtrs();
-#endif
-
-	return;
-
+	#endif
 }
 
 shader_t *R_CreateShaderFromTextureBundle(

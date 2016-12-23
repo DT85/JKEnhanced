@@ -594,7 +594,7 @@ void GL_CheckErrs(const char *file, int line) {
 		break;
 	}
 
-	ri->Error(ERR_FATAL, "GL_CheckErrors: %s in %s at line %d", s, file, line);
+	ri.Error(ERR_FATAL, "GL_CheckErrors: %s in %s at line %d", s, file, line);
 #endif
 }
 
@@ -1676,6 +1676,13 @@ static void R_ShutdownBackEndFrameData()
 	}
 }
 
+// need to do this hackery so ghoul2 doesn't crash the game because of ITS hackery...
+//
+void R_ClearStuffToStopGhoul2CrashingThings(void)
+{
+	memset(&tr, 0, sizeof(tr));
+}
+
 /*
 ===============
 R_Init
@@ -1900,6 +1907,7 @@ void stub_RE_AddWeatherZone(vec3_t mins, vec3_t maxs) {}
 //static void RE_SetRefractionProperties(float distortionAlpha, float distortionStretch, qboolean distortionPrePost, qboolean distortionNegate) { }
 qboolean stub_RE_ProcessDissolve(void) { return qfalse; }
 qboolean stub_RE_InitDissolve(qboolean bForceCircularExtroWipe) { return qfalse; }
+bool stub_R_IsShaking(vec3_t pos) { return qfalse; }
 
 void C_LevelLoadBegin(const char *psMapName, ForceReload_e eForceReload, qboolean bAllowScreenDissolve)
 {
@@ -2022,6 +2030,7 @@ extern "C" {
 		re.AnyLanguage_ReadCharFromString = AnyLanguage_ReadCharFromString;
 		//re.RemapShader = R_RemapShader;
 		//re.GetEntityToken = R_GetEntityToken;
+		re.R_ClearStuffToStopGhoul2CrashingThings = R_ClearStuffToStopGhoul2CrashingThings;
 		re.R_inPVS = R_inPVS;
 
 		re.GetLightStyle = RE_GetLightStyle;
@@ -2048,6 +2057,15 @@ extern "C" {
 		//re.InitShaders = R_InitShaders;
 		re.SVModelInit = R_SVModelInit;
 		//re.HunkClearCrap = RE_HunkClearCrap;
+
+		//re.GetWindVector = R_GetWindVector;
+		//re.GetWindGusting = R_GetWindGusting;
+		//re.IsOutside = R_IsOutside;
+		//re.IsOutsideCausingPain = R_IsOutsideCausingPain;
+		//re.GetChanceOfSaberFizz = R_GetChanceOfSaberFizz;
+		re.IsShaking = stub_R_IsShaking;
+		//re.AddWeatherZone = R_AddWeatherZone;
+		//re.SetTempGlobalFogColor = R_SetTempGlobalFogColor;
 
 		re.TheGhoul2InfoArray = TheGhoul2InfoArray;
 
