@@ -1356,6 +1356,7 @@ typedef struct {
 	vec3_t		bounds[2];
 
 	vec4_t		color;
+	unsigned	colorInt;				// in packed byte format
 	float		tcScale;				// texture coordinate vector scales
 	fogParms_t	parms;
 
@@ -3185,6 +3186,13 @@ typedef struct rotatePicCommand_s {
 	float	a;
 } rotatePicCommand_t;
 
+typedef struct
+{
+	int		commandId;
+	float	x, y;
+	float	w, h;
+} scissorCommand_t;
+
 typedef struct drawSurfsCommand_s {
 	int		commandId;
 	trRefdef_t	refdef;
@@ -3255,6 +3263,7 @@ typedef enum {
 	RC_END_OF_LIST,
 	RC_SET_COLOR,
 	RC_STRETCH_PIC,
+	RC_SCISSOR,
 	RC_ROTATE_PIC,
 	RC_ROTATE_PIC2,
 	RC_DRAW_SURFS,
@@ -3351,6 +3360,8 @@ void RE_SetColor( const float *rgba );
 void RE_StretchPic ( float x, float y, float w, float h, float s1, float t1, float s2, float t2, qhandle_t hShader );
 void RE_RotatePic ( float x, float y, float w, float h, float s1, float t1, float s2, float t2, float a, qhandle_t hShader );
 void RE_RotatePic2 ( float x, float y, float w, float h, float s1, float t1, float s2, float t2,float a, qhandle_t hShader );
+void RE_LAGoggles(void);
+void RE_Scissor(float x, float y, float w, float h);
 void RE_BeginFrame( stereoFrame_t stereoFrame );
 void RE_EndFrame( int *frontEndMsec, int *backEndMsec );
 void RE_TakeVideoFrame( int width, int height,

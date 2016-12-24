@@ -1786,6 +1786,33 @@ static const void *RB_RotatePic2 ( const void *data )
 	return (const void *)(cmd + 1);
 }
 
+/*
+=============
+RB_ScissorPic
+=============
+*/
+const void *RB_Scissor(const void *data)
+{
+	const scissorCommand_t	*cmd;
+
+	cmd = (const scissorCommand_t *)data;
+
+	if (!backEnd.projection2D)
+	{
+		RB_SetGL2D();
+	}
+
+	if (cmd->x >= 0)
+	{
+		qglScissor(cmd->x, (glConfig.vidHeight - cmd->y - cmd->h), cmd->w, cmd->h);
+	}
+	else
+	{
+		qglScissor(0, 0, glConfig.vidWidth, glConfig.vidHeight);
+	}
+
+	return (const void *)(cmd + 1);
+}
 
 /*
 =============
@@ -2576,6 +2603,9 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			break;
 		case RC_ROTATE_PIC2:
 			data = RB_RotatePic2( data );
+			break;
+		case RC_SCISSOR:
+			data = RB_Scissor(data);
 			break;
 		case RC_DRAW_SURFS:
 			data = RB_DrawSurfs( data );

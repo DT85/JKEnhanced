@@ -72,6 +72,8 @@ void RE_ClearScene( void ) {
 	r_firstSceneDlight = r_numdlights;
 	r_firstSceneEntity = r_numentities;
 	r_firstScenePoly = r_numpolys;
+	tr.refdef.rdflags &= ~(RDF_doLAGoggles | RDF_doFullbright);	//probably not needed since it gets copied over in RE_RenderScene
+	tr.refdef.doLAGoggles = qfalse;
 }
 
 /*

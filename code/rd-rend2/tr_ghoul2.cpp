@@ -794,6 +794,11 @@ static int R_GComputeFogNum(trRefEntity_t *ent) {
 		return 0;
 	}
 
+	if (tr.refdef.doLAGoggles)
+	{
+		return tr.world->numfogs;
+	}
+
 	for (i = 1; i < tr.world->numfogs; i++) {
 		fog = &tr.world->fogs[i];
 		for (j = 0; j < 3; j++) {

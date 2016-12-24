@@ -2713,19 +2713,17 @@ image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 	// load the pic from disk
 	//
 	R_LoadImage(name, &pic, &width, &height);
-	if (pic == NULL) {
+	if ( !pic ) {
 		return NULL;
 	}
 
-	if (r_normalMapping->integer && !(type == IMGTYPE_NORMAL) &&
-		(flags & IMGFLAG_PICMIP) && (flags & IMGFLAG_MIPMAP) && (flags & IMGFLAG_GENNORMALMAP))
+	if (r_normalMapping->integer && !(type == IMGTYPE_NORMAL) && (flags & IMGFLAG_PICMIP) && (flags & IMGFLAG_MIPMAP) && (flags & IMGFLAG_GENNORMALMAP))
 	{
 		R_CreateNormalMap(name, pic, width, height, flags);
 	}
 
 	image = R_CreateImage(name, pic, width, height, type, flags, 0);
 	R_Free(pic);
-
 	return image;
 }
 

@@ -1648,6 +1648,11 @@ int R_SpriteFogNum( trRefEntity_t *ent ) {
 		return 0;
 	}
 
+	if (tr.refdef.doLAGoggles)
+	{
+		return tr.world->numfogs;
+	}
+
 	for ( i = 1 ; i < tr.world->numfogs ; i++ ) {
 		fog = &tr.world->fogs[i];
 		for ( j = 0 ; j < 3 ; j++ ) {
@@ -1776,6 +1781,11 @@ void R_AddDrawSurf( surfaceType_t *surface, int entityNum, shader_t *shader,  in
 	{
 		fogIndex = 0;
 	}*/
+
+	if (tr.refdef.doLAGoggles)
+	{
+		fogIndex = tr.world->numfogs;
+	}
 
 	if ( (shader->surfaceFlags & SURF_FORCESIGHT) && !(tr.refdef.rdflags & RDF_ForceSightOn) )
 	{	//if shader is only seen with ForceSight and we don't have ForceSight on, then don't draw
