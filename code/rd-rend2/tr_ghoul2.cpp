@@ -2556,9 +2556,9 @@ void R_AddGhoulSurfaces(trRefEntity_t *ent, int entityNum) {
 	personalModel = (qboolean)((ent->e.renderfx & RF_THIRD_PERSON) && !(tr.viewParms.isPortal
 		|| (tr.viewParms.flags & (VPF_SHADOWMAP | VPF_DEPTHSHADOW))));
 
-	int modelList[256];
-	assert(ghoul2.size() <= 255);
-	modelList[255] = 548;
+	int modelList[32];
+	assert(ghoul2.size() <= 31);
+	modelList[31] = 548;
 
 	// set up lighting now that we know we aren't culled
 	if (!personalModel || r_shadows->integer > 1) {
@@ -2570,7 +2570,7 @@ void R_AddGhoulSurfaces(trRefEntity_t *ent, int entityNum) {
 
 	// sort the ghoul 2 models so bolt ons get bolted to the right model
 	G2_Sort_Models(ghoul2, modelList, &modelCount);
-	assert(modelList[255] == 548);
+	assert(modelList[31] == 548);
 
 #ifdef _G2_GORE
 	if (goreShader == -1)
@@ -2681,9 +2681,9 @@ void G2_ConstructGhoulSkeleton(CGhoul2Info_v &ghoul2, const int frameNum, bool c
 	int				modelCount;
 	mdxaBone_t		rootMatrix;
 
-	int modelList[256];
-	assert(ghoul2.size() <= 255);
-	modelList[255] = 548;
+	int modelList[32];
+	assert(ghoul2.size() <= 31);
+	modelList[31] = 548;
 
 	if (checkForNewOrigin)
 	{
@@ -2695,7 +2695,7 @@ void G2_ConstructGhoulSkeleton(CGhoul2Info_v &ghoul2, const int frameNum, bool c
 	}
 
 	G2_Sort_Models(ghoul2, modelList, &modelCount);
-	assert(modelList[255] == 548);
+	assert(modelList[31] == 548);
 
 	for (j = 0; j<modelCount; j++)
 	{
