@@ -2275,7 +2275,8 @@ bool G2_SetupModelPointers(CGhoul2Info *ghlInfo) // returns true if the model is
 		G2ERROR(ghlInfo->currentModel, va("NULL Model (glm) %s", ghlInfo->mFileName));
 		if (ghlInfo->currentModel)
 		{
-			G2ERROR(ghlInfo->currentModel->data.glm->header, va("Model has no mdxm (glm) %s", ghlInfo->mFileName));
+			//G2ERROR(ghlInfo->currentModel->data.glm->header, va("Model has no mdxm (glm) %s", ghlInfo->mFileName));
+			G2ERROR(ghlInfo->currentModel->modelData, va("Model has no mdxm (glm) %s", ghlInfo->mFileName));
 			if (ghlInfo->currentModel->data.glm &&
 				ghlInfo->currentModel->data.glm->header)
 			{
