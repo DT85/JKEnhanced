@@ -2456,6 +2456,7 @@ static qboolean ParseShader( const char **text )
 	if ( token[0] != '{' )
 	{
 		ri.Printf( PRINT_WARNING, "WARNING: expecting '{', found '%s' instead in shader '%s'\n", token, shader.name );
+		COM_EndParseSession();
 		return qfalse;
 	}
 
@@ -2465,6 +2466,7 @@ static qboolean ParseShader( const char **text )
 		if ( !token[0] )
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: no concluding '}' in shader %s\n", shader.name );
+			COM_EndParseSession();
 			return qfalse;
 		}
 
@@ -2478,11 +2480,13 @@ static qboolean ParseShader( const char **text )
 		{
 			if ( s >= MAX_SHADER_STAGES ) {
 				ri.Printf( PRINT_WARNING, "WARNING: too many stages in shader %s\n", shader.name );
+				COM_EndParseSession();
 				return qfalse;
 			}
 
 			if ( !ParseStage( &stages[s], text ) )
 			{
+				COM_EndParseSession();
 				return qfalse;
 			}
 			stages[s].active = qtrue;
@@ -2654,6 +2658,7 @@ static qboolean ParseShader( const char **text )
 		else if ( !Q_stricmp( token, "fogParms" ) ) 
 		{
 			if ( !ParseVector( text, 3, shader.fogParms.color ) ) {
+				COM_EndParseSession();
 				return qfalse;
 			}
 
@@ -2721,6 +2726,7 @@ static qboolean ParseShader( const char **text )
 		else
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: unknown general shader parameter '%s' in '%s'\n", token, shader.name );
+			COM_EndParseSession();
 			return qfalse;
 		}
 	}
@@ -2729,6 +2735,7 @@ static qboolean ParseShader( const char **text )
 	// ignore shaders that don't have any stages, unless it is a sky or fog
 	//
 	if ( s == 0 && !shader.isSky && !(shader.contentFlags & CONTENTS_FOG ) ) {
+		COM_EndParseSession();
 		return qfalse;
 	}
 
@@ -2750,6 +2757,7 @@ static qboolean ParseShader( const char **text )
 		stages[0].stateBits |= GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
 	}
 
+	COM_EndParseSession();
 	return qtrue;
 }
 
@@ -4637,7 +4645,7 @@ static void SetupShaderEntryPtrs(void)
 		}
 	}
 
-	COM_EndParseSession();
+	COM_EndParseSession(  );
 
 	//ri.Printf( PRINT_DEVELOPER, "SetupShaderEntryPtrs(): Stored %d shader ptrs\n",ShaderEntryPtrs_Size() );
 }
