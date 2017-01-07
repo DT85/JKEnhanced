@@ -2570,6 +2570,7 @@ done:
 		R_Free(resampledBuffer);
 }
 
+#if 0
 static void R_CreateNormalMap(const char *name, byte *pic, int width, int height, int flags)
 {
 	char normalName[MAX_QPATH];
@@ -2672,6 +2673,7 @@ static void R_CreateNormalMap(const char *name, byte *pic, int width, int height
 		R_Free(normalPic);
 	}
 }
+#endif
 
 /*
 ===============
@@ -2717,11 +2719,11 @@ image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 		return NULL;
 	}
 
-	if (r_normalMapping->integer && !(type == IMGTYPE_NORMAL) &&
+	/*if (r_normalMapping->integer && !(type == IMGTYPE_NORMAL) &&
 		(flags & IMGFLAG_PICMIP) && (flags & IMGFLAG_MIPMAP) && (flags & IMGFLAG_GENNORMALMAP))
 	{
 		R_CreateNormalMap(name, pic, width, height, flags);
-	}
+	}*/
 
 	image = R_CreateImage(name, pic, width, height, type, flags, 0);
 	R_Free(pic);

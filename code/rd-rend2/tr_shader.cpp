@@ -1298,8 +1298,8 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 				}
 				else
 				{
-					if (r_genNormalMaps->integer)
-						flags |= IMGFLAG_GENNORMALMAP;
+					/*if (r_genNormalMaps->integer)
+						flags |= IMGFLAG_GENNORMALMAP;*/
 
 					if (r_srgb->integer)
 						flags |= IMGFLAG_SRGB;
@@ -1348,8 +1348,8 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			}
 			else
 			{
-				if (r_genNormalMaps->integer)
-					flags |= IMGFLAG_GENNORMALMAP;
+				/*if (r_genNormalMaps->integer)
+					flags |= IMGFLAG_GENNORMALMAP;*/
 
 				if (r_srgb->integer)
 					flags |= IMGFLAG_SRGB;
@@ -1413,8 +1413,8 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 					}
 					else
 					{
-						if ( r_genNormalMaps->integer )
-							flags |= IMGFLAG_GENNORMALMAP;
+						/*if ( r_genNormalMaps->integer )
+							flags |= IMGFLAG_GENNORMALMAP;*/
 
 						if ( r_srgb->integer )
 							flags |= IMGFLAG_SRGB;
@@ -2997,6 +2997,7 @@ static void CollapseStagesToLightall(shaderStage_t *diffuse,
 
 			VectorCopy4(normal->normalScale, diffuse->normalScale);
 		}
+		/*
 		else if ((lightmap || useLightVector || useLightVertex) && (diffuseImg = diffuse->bundle[TB_DIFFUSEMAP].image[0]))
 		{
 			char normalName[MAX_QPATH];
@@ -3019,7 +3020,7 @@ static void CollapseStagesToLightall(shaderStage_t *diffuse,
 
 				VectorSet4(diffuse->normalScale, r_baseNormalX->value, r_baseNormalY->value, 1.0f, r_baseParallax->value);
 			}
-		}
+		}*/
 	}
 
 	if (r_specularMapping->integer)
@@ -4240,8 +4241,8 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndexes, const byte
 	{
 		flags |= IMGFLAG_MIPMAP | IMGFLAG_PICMIP;
 
-		if (r_genNormalMaps->integer)
-			flags |= IMGFLAG_GENNORMALMAP;
+		/*if (r_genNormalMaps->integer)
+			flags |= IMGFLAG_GENNORMALMAP;*/
 	}
 	else
 	{

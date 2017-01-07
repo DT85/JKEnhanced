@@ -142,7 +142,7 @@ cvar_t  *r_pshadowDist;
 cvar_t  *r_imageUpsample;
 cvar_t  *r_imageUpsampleMaxSize;
 cvar_t  *r_imageUpsampleType;
-cvar_t  *r_genNormalMaps;
+//cvar_t  *r_genNormalMaps;
 cvar_t  *r_forceSun;
 cvar_t  *r_forceSunMapLightScale;
 cvar_t  *r_forceSunLightScale;
@@ -1427,7 +1427,7 @@ void R_Register(void)
 	r_imageUpsample = ri.Cvar_Get("r_imageUpsample", "0", CVAR_ARCHIVE | CVAR_LATCH);
 	r_imageUpsampleMaxSize = ri.Cvar_Get("r_imageUpsampleMaxSize", "1024", CVAR_ARCHIVE | CVAR_LATCH);
 	r_imageUpsampleType = ri.Cvar_Get("r_imageUpsampleType", "1", CVAR_ARCHIVE | CVAR_LATCH);
-	r_genNormalMaps = ri.Cvar_Get("r_genNormalMaps", "0", CVAR_ARCHIVE | CVAR_LATCH);
+	//r_genNormalMaps = ri.Cvar_Get("r_genNormalMaps", "0", CVAR_ARCHIVE | CVAR_LATCH);
 
 	r_forceSun = ri.Cvar_Get("r_forceSun", "0", CVAR_CHEAT);
 	r_forceSunMapLightScale = ri.Cvar_Get("r_forceSunMapLightScale", "1.0", CVAR_CHEAT);
