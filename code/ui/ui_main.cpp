@@ -703,6 +703,14 @@ const char *UI_FeederItemText(float feederID, int index, int column, qhandle_t *
 			return uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color[index].shader;
 		}
 	}
+	else if (feederID == FEEDER_COLORCHOICES2)
+	{
+		if (index >= 0 && index < uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color2Count)
+		{
+			*handle = ui.R_RegisterShaderNoMip( uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color2[index].shader);
+			return uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color2[index].shader;
+		}
+	}
 	else if (feederID == FEEDER_MODS)
 	{
 		if (index >= 0 && index < uiInfo.modCount)
@@ -752,6 +760,13 @@ qhandle_t UI_FeederItemImage(float feederID, int index)
 		if (index >= 0 && index < uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].ColorCount)
 		{
 			return ui.R_RegisterShaderNoMip( uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color[index].shader);
+		}
+	}
+	else if (feederID == FEEDER_COLORCHOICES2)
+	{
+		if (index >= 0 && index < uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color2Count)
+		{
+			return ui.R_RegisterShaderNoMip( uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color2[index].shader);
 		}
 	}
 /*	else if (feederID == FEEDER_ALLMAPS || feederID == FEEDER_MAPS)
@@ -1825,6 +1840,10 @@ static int UI_FeederCount(float feederID)
 	{
 		return uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].ColorCount;
 	}
+	else if (feederID == FEEDER_COLORCHOICES2)
+	{
+		return uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color2Count;
+	}
 
 	return 0;
 }
@@ -1989,6 +2008,14 @@ extern void	Item_RunScript(itemDef_t *item, const char *s);		//from ui_shared;
 		if (index >= 0 && index < uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].ColorCount)
 		{
 			Item_RunScript(item, uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color[index].actionText);
+		}
+	}
+	else if (feederID == FEEDER_COLORCHOICES2)
+	{
+		extern void	Item_RunScript(itemDef_t *item, const char *s);		//from ui_shared;
+		if (index >= 0 && index < uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color2Count)
+		{
+			Item_RunScript(item, uiInfo.playerSpecies[uiInfo.playerSpeciesIndex].Color2[index].actionText);
 		}
 	}
 /*	else if (feederID == FEEDER_CINEMATICS)
@@ -2337,6 +2364,60 @@ static qboolean UI_ParseColorData(char* buf, playerSpeciesInfo_t &species)
 	return qtrue;//never get here
 }
 
+static qboolean UI_ParseColor2Data(char* buf, playerSpeciesInfo_t &species)
+{
+	const char	*token;
+	const char	*p;
+	
+	p = buf;
+	COM_BeginParseSession();
+	species.Color2Count = 0;
+	species.Color2Max = 16;
+	species.Color2 = (playerColor_t *)malloc(species.Color2Max * sizeof(playerColor_t));
+	
+	while ( p )
+	{
+		token = COM_ParseExt( &p, qtrue );	//looking for the shader
+		if ( token[0] == 0 )
+		{
+			COM_EndParseSession(  );
+			return (qboolean)!(species.Color2Count == 0);
+		}
+		
+		if (species.Color2Count >= species.Color2Max)
+		{
+			species.Color2Max *= 2;
+			species.Color2 = (playerColor_t *)realloc(species.Color2, species.Color2Max * sizeof(playerColor_t));
+		}
+		
+		memset(&species.Color2[species.Color2Count], 0, sizeof(playerColor_t));
+
+		Q_strncpyz( species.Color2[species.Color2Count].shader, token, MAX_QPATH );
+		
+		token = COM_ParseExt( &p, qtrue );	//looking for action block {
+		if ( token[0] != '{' )
+		{
+			COM_EndParseSession(  );
+			return qfalse;
+		}
+		
+		token = COM_ParseExt( &p, qtrue );	//looking for action commands
+		while (token[0] != '}')
+		{
+			if ( token[0] == 0)
+			{	//EOF
+				COM_EndParseSession(  );
+				return qfalse;
+			}
+			Q_strcat(species.Color2[species.Color2Count].actionText, ACTION_BUFFER_SIZE, token);
+			Q_strcat(species.Color2[species.Color2Count].actionText, ACTION_BUFFER_SIZE, " ");
+			token = COM_ParseExt( &p, qtrue );	//looking for action commands or final }
+		}
+		species.Color2Count++;	//next color please
+	}
+	COM_EndParseSession(  );
+	return qtrue;//never get here
+}
 /*
 =================
 bIsImageFile
@@ -2377,6 +2458,7 @@ static void UI_FreeSpecies( playerSpeciesInfo_t *species )
 	free(species->SkinTorso);
 	free(species->SkinLeg);
 	free(species->Color);
+	free(species->Color2);
 	memset(species, 0, sizeof(playerSpeciesInfo_t));
 }
 
@@ -2486,6 +2568,22 @@ static void UI_BuildPlayerModel_List( qboolean inGameLoad )
 			species->SkinHead = (skinName_t *)malloc(species->SkinHeadMax * sizeof(skinName_t));
 			species->SkinTorso = (skinName_t *)malloc(species->SkinTorsoMax * sizeof(skinName_t));
 			species->SkinLeg = (skinName_t *)malloc(species->SkinLegMax * sizeof(skinName_t));
+
+			Com_sprintf(fpath, 2048, "models/players/%s/PlayerChoice2.txt", dirptr);
+			filelen = ui.FS_FOpenFile(fpath, &f, FS_READ);
+			
+			species->Color2Count = 0;
+			
+			if (f)
+			{
+				ui.FS_Read(&buffer, filelen, f);
+				ui.FS_FCloseFile(f);
+				buffer[filelen] = 0;	//ensure trailing NULL
+				if (!UI_ParseColor2Data(buffer.data(),*species))
+				{
+					ui.Printf( "UI_BuildPlayerModel_List: Errors parsing '%s'\n", fpath );
+				}
+			}
 
 			int		j;
 			char	skinname[64];
@@ -6257,6 +6355,7 @@ static void UI_UpdateCharacter( qboolean changedModel )
 		UI_FeederSelection(FEEDER_PLAYER_SKIN_TORSO, 0, item);
 		UI_FeederSelection(FEEDER_PLAYER_SKIN_LEGS, 0, item);
 		UI_FeederSelection(FEEDER_COLORCHOICES, 0, item);
+		UI_FeederSelection(FEEDER_COLORCHOICES2, 0, item);
 	}
 	UI_UpdateCharacterSkin();
 }

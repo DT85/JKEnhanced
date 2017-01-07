@@ -147,7 +147,10 @@ typedef struct {
 	skinName_t	*SkinLeg;
 	int			ColorMax;
 	int			ColorCount;
+	int			Color2Max;
+	int			Color2Count;
 	playerColor_t	*Color;
+	playerColor_t	*Color2;
 } playerSpeciesInfo_t;
 
 typedef struct {
