@@ -45,8 +45,8 @@ Extends the size of the images pool allocator
 */
 static void R_ExtendImagesPool()
 {
-	ImagesPool *pool = (ImagesPool *)R_Malloc(sizeof(*pool), TAG_TEMP_WORKSPACE);
-	image_t *freeImages = (image_t *)R_Malloc(sizeof(*freeImages) * NUM_IMAGES_PER_POOL_ALLOC, TAG_IMAGE_T, qtrue);
+	ImagesPool *pool = (ImagesPool *)ri.Malloc(sizeof(*pool), TAG_IMAGE_T, qtrue, 0);
+	image_t *freeImages = (image_t *)ri.Malloc(sizeof(*freeImages) * NUM_IMAGES_PER_POOL_ALLOC, TAG_IMAGE_T, qtrue, 0);
 
 	for (int i = 0; i < (NUM_IMAGES_PER_POOL_ALLOC - 1); i++)
 	{
@@ -1319,7 +1319,7 @@ static void R_MipMap2(byte *in, int inWidth, int inHeight) {
 
 	outWidth = inWidth >> 1;
 	outHeight = inHeight >> 1;
-	temp = (unsigned int *)R_Malloc(outWidth * outHeight * 4, TAG_TEMP_WORKSPACE, qfalse);
+	temp = (unsigned int *)ri.Malloc(outWidth * outHeight * 4, TAG_IMAGE_T, qtrue, 0);
 
 	inWidthMask = inWidth - 1;
 	inHeightMask = inHeight - 1;
@@ -1354,7 +1354,7 @@ static void R_MipMap2(byte *in, int inWidth, int inHeight) {
 	}
 
 	Com_Memcpy(in, temp, outWidth * outHeight * 4);
-	R_Free(temp);
+	ri.Z_Free(temp);
 }
 
 
@@ -1366,7 +1366,7 @@ static void R_MipMapsRGB(byte *in, int inWidth, int inHeight)
 
 	outWidth = inWidth >> 1;
 	outHeight = inHeight >> 1;
-	temp = (byte *)R_Malloc(outWidth * outHeight * 4, TAG_TEMP_WORKSPACE, qfalse);
+	temp = (byte *)ri.Malloc(outWidth * outHeight * 4, TAG_IMAGE_T, qtrue, 0);
 
 	for (i = 0; i < outHeight; i++) {
 		byte *outbyte = temp + (i          * outWidth) * 4;
@@ -1396,7 +1396,7 @@ static void R_MipMapsRGB(byte *in, int inWidth, int inHeight)
 	}
 
 	Com_Memcpy(in, temp, outWidth * outHeight * 4);
-	R_Free(temp);
+	ri.Z_Free(temp);
 }
 
 /*
@@ -1632,7 +1632,7 @@ static void RawImage_ScaleToPower2(byte **data, int *inout_width, int *inout_hei
 		int finalwidth, finalheight;
 		//int startTime, endTime;
 
-		//startTime = ri->Milliseconds();
+		//startTime = ri.Milliseconds();
 
 		finalwidth = scaled_width << r_imageUpsample->integer;
 		finalheight = scaled_height << r_imageUpsample->integer;
@@ -1649,7 +1649,7 @@ static void RawImage_ScaleToPower2(byte **data, int *inout_width, int *inout_hei
 			finalheight >>= 1;
 		}
 
-		*resampledBuffer = (byte *)R_Malloc(finalwidth * finalheight * 4, TAG_TEMP_WORKSPACE, qfalse);
+		*resampledBuffer = (byte *)ri.Malloc(finalwidth * finalheight * 4, TAG_IMAGE_T, qtrue, 0);
 
 		if (scaled_width != width || scaled_height != height)
 		{
@@ -1690,7 +1690,7 @@ static void RawImage_ScaleToPower2(byte **data, int *inout_width, int *inout_hei
 		}
 
 
-		//endTime = ri->Milliseconds();
+		//endTime = ri.Milliseconds();
 
 		//ri.Printf(PRINT_ALL, "upsampled %dx%d to %dx%d in %dms\n", width, height, scaled_width, scaled_height, endTime - startTime);
 
@@ -1701,7 +1701,7 @@ static void RawImage_ScaleToPower2(byte **data, int *inout_width, int *inout_hei
 	else if (scaled_width != width || scaled_height != height) {
 		if (data && resampledBuffer)
 		{
-			*resampledBuffer = (byte *)R_Malloc(scaled_width * scaled_height * 4, TAG_TEMP_WORKSPACE, qfalse);
+			*resampledBuffer = (byte *)ri.Malloc(scaled_width * scaled_height * 4, TAG_IMAGE_T, qtrue, 0);
 			ResampleTexture(*data, width, height, *resampledBuffer, scaled_width, scaled_height);
 			*data = *resampledBuffer;
 		}
@@ -2110,7 +2110,7 @@ static void Upload32(byte *data, int width, int height, imgType_t type, int flag
 		RawImage_ScaleToPower2(&data, &width, &height, &scaled_width, &scaled_height, type, flags, &resampledBuffer);
 	}
 
-	scaledBuffer = (byte *)R_Malloc(sizeof(unsigned) * scaled_width * scaled_height, TAG_TEMP_WORKSPACE, qfalse);
+	scaledBuffer = (byte *)ri.Malloc(sizeof(unsigned) * scaled_width * scaled_height, TAG_IMAGE_T, qtrue, 0);
 
 	//
 	// scan the texture for each channel's max values
@@ -2229,9 +2229,9 @@ done:
 	GL_CheckErrors();
 
 	if (scaledBuffer != 0)
-		R_Free(scaledBuffer);
+		ri.Z_Free(scaledBuffer);
 	if (resampledBuffer != 0)
-		R_Free(resampledBuffer);
+		ri.Z_Free(resampledBuffer);
 }
 
 
@@ -2503,7 +2503,7 @@ void R_UpdateSubImage(image_t *image, byte *pic, int x, int y, int width, int he
 
 	RawImage_ScaleToPower2(&pic, &width, &height, &scaled_width, &scaled_height, image->type, image->flags, &resampledBuffer);
 
-	scaledBuffer = (byte *)R_Malloc(sizeof(unsigned) * scaled_width * scaled_height, TAG_TEMP_WORKSPACE, qfalse);
+	scaledBuffer = (byte *)ri.Malloc(sizeof(unsigned) * scaled_width * scaled_height, TAG_IMAGE_T, qtrue, 0);
 
 	GL_SelectTexture(image->TMU);
 	GL_Bind(image);
@@ -2565,115 +2565,72 @@ done:
 	GL_CheckErrors();
 
 	if (scaledBuffer != 0)
-		R_Free(scaledBuffer);
+		ri.Z_Free(scaledBuffer);
 	if (resampledBuffer != 0)
-		R_Free(resampledBuffer);
+		ri.Z_Free(resampledBuffer);
 }
 
-#if 0
-static void R_CreateNormalMap(const char *name, byte *pic, int width, int height, int flags)
+const char *StringContains(const char *str1, const char *str2, int casesensitive)
 {
-	char normalName[MAX_QPATH];
-	image_t *normalImage;
-	int normalWidth, normalHeight;
-	int normalFlags;
+	int len, i, j;
 
-	normalFlags = (flags & ~(IMGFLAG_GENNORMALMAP | IMGFLAG_SRGB)) | IMGFLAG_NOLIGHTSCALE;
-
-	COM_StripExtension(name, normalName, MAX_QPATH);
-	Q_strcat(normalName, MAX_QPATH, "_n");
-
-	// find normalmap in case it's there
-	normalImage = R_FindImageFile(normalName, IMGTYPE_NORMAL, normalFlags);
-
-	// if not, generate it
-	if (normalImage == NULL)
-	{
-		byte *normalPic;
-		int x, y;
-
-		normalWidth = width;
-		normalHeight = height;
-		normalPic = (byte *)R_Malloc(width * height * 4, TAG_TEMP_WORKSPACE);
-		RGBAtoNormal(pic, normalPic, width, height, (qboolean)(flags & IMGFLAG_CLAMPTOEDGE));
-
-#if 1
-		// Brighten up the original image to work with the normal map
-		RGBAtoYCoCgA(pic, pic, width, height);
-		for (y = 0; y < height; y++)
-		{
-			byte *picbyte = pic + y * width * 4;
-			byte *normbyte = normalPic + y * width * 4;
-			for (x = 0; x < width; x++)
-			{
-				int div = MAX(normbyte[2] - 127, 16);
-				picbyte[0] = CLAMP(picbyte[0] * 128 / div, 0, 255);
-				picbyte += 4;
-				normbyte += 4;
-			}
-		}
-		YCoCgAtoRGBA(pic, pic, width, height);
-#else
-		// Blur original image's luma to work with the normal map
-		{
-			byte *blurPic;
-
-			RGBAtoYCoCgA(pic, pic, width, height);
-			blurPic = ri.Malloc(width * height);
-
-			for (y = 1; y < height - 1; y++)
-			{
-				byte *picbyte = pic + y * width * 4;
-				byte *blurbyte = blurPic + y * width;
-
-				picbyte += 4;
-				blurbyte += 1;
-
-				for (x = 1; x < width - 1; x++)
-				{
-					int result;
-
-					result = *(picbyte - (width + 1) * 4) + *(picbyte - width * 4) + *(picbyte - (width - 1) * 4) +
-						*(picbyte - 1 * 4) + *(picbyte)+*(picbyte + 1 * 4) +
-						*(picbyte + (width - 1) * 4) + *(picbyte + width * 4) + *(picbyte + (width + 1) * 4);
-
-					result /= 9;
-
-					*blurbyte = result;
-					picbyte += 4;
-					blurbyte += 1;
+	len = strlen(str1) - strlen(str2);
+	for (i = 0; i <= len; i++, str1++) {
+		for (j = 0; str2[j]; j++) {
+			if (casesensitive) {
+				if (str1[j] != str2[j]) {
+					break;
 				}
 			}
-
-			// FIXME: do borders
-
-			for (y = 1; y < height - 1; y++)
-			{
-				byte *picbyte = pic + y * width * 4;
-				byte *blurbyte = blurPic + y * width;
-
-				picbyte += 4;
-				blurbyte += 1;
-
-				for (x = 1; x < width - 1; x++)
-				{
-					picbyte[0] = *blurbyte;
-					picbyte += 4;
-					blurbyte += 1;
+			else {
+				if (toupper(str1[j]) != toupper(str2[j])) {
+					break;
 				}
 			}
-
-			ri->Free(blurPic);
-
-			YCoCgAtoRGBA(pic, pic, width, height);
 		}
-#endif
-
-		R_CreateImage(normalName, normalPic, normalWidth, normalHeight, IMGTYPE_NORMAL, normalFlags, 0);
-		R_Free(normalPic);
+		if (!str2[j]) {
+			return str1;
+		}
 	}
+	return NULL;
 }
-#endif
+
+qboolean StringContainsWord(const char *str, const char *word)
+{
+	return StringContains(str, word, 0) ? qtrue : qfalse;
+}
+
+qboolean StringsContainWord(const char *str, const char *str2, const char *word)
+{
+	if (StringContains(str, word, 0) ? qtrue : qfalse) return qtrue;
+	if (StringContains(str2, word, 0) ? qtrue : qfalse) return qtrue;
+
+	return qfalse;
+}
+
+static qboolean R_ShouldMipMap(const char *name)
+{
+	//if (!(StringContainsWord(name, "textures/") || StringContainsWord(name, "models/")))
+	//	return qfalse;
+
+	if (StringContainsWord(name, "gfx/"))
+	{
+		if (StringContainsWord(name, "2d")) return qfalse;
+		if (StringContainsWord(name, "colors")) return qfalse;
+		if (StringContainsWord(name, "console")) return qfalse;
+		if (StringContainsWord(name, "hud")) return qfalse;
+		if (StringContainsWord(name, "jkg")) return qfalse;
+		if (StringContainsWord(name, "menus")) return qfalse;
+		if (StringContainsWord(name, "mp")) return qfalse;
+	}
+
+	if (StringContainsWord(name, "fonts/")) return qfalse;
+	if (StringContainsWord(name, "levelshots/")) return qfalse;
+	if (StringContainsWord(name, "menu/")) return qfalse;
+	if (StringContainsWord(name, "ui/")) return qfalse;
+
+	return qtrue;
+}
 
 /*
 ===============
@@ -2683,6 +2640,9 @@ Finds or loads the given image.
 Returns NULL if it fails, not a default image.
 ==============
 */
+
+char previous_name_loaded[256];
+
 image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 {
 	image_t	*image;
@@ -2690,7 +2650,7 @@ image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 	byte	*pic;
 	long	hash;
 
-	if (!name) {
+	if (!name || ri.Cvar_VariableIntegerValue("dedicated")) {
 		return NULL;
 	}
 
@@ -2715,18 +2675,39 @@ image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 	// load the pic from disk
 	//
 	R_LoadImage(name, &pic, &width, &height);
+
 	if (pic == NULL) {
 		return NULL;
 	}
 
-	/*if (r_normalMapping->integer && !(type == IMGTYPE_NORMAL) &&
-		(flags & IMGFLAG_PICMIP) && (flags & IMGFLAG_MIPMAP) && (flags & IMGFLAG_GENNORMALMAP))
-	{
-		R_CreateNormalMap(name, pic, width, height, flags);
-	}*/
+	if (!(flags & IMGFLAG_MIPMAP) && R_ShouldMipMap(name))
+	{// UQ: Testing mipmap all...
+		flags |= IMGFLAG_MIPMAP;
+	}
 
-	image = R_CreateImage(name, pic, width, height, type, flags, 0);
-	R_Free(pic);
+	if ((flags & IMGFLAG_NO_COMPRESSION))
+	{// UQ: Testing compress all...
+		flags &= ~IMGFLAG_NO_COMPRESSION;
+	}
+
+	image = R_CreateImage(name, pic, width, height, type, IMGFLAG_NOLIGHTSCALE | IMGFLAG_NO_COMPRESSION, GL_RGBA8);
+
+	if (name[0] != '*' && name[0] != '!' && name[0] != '$' && name[0] != '_'
+		&& type != IMGTYPE_NORMAL
+		&& !(flags & IMGFLAG_CUBEMAP))
+	{
+		if (r_normalMapping->integer >= 2)
+		{
+			if (image
+				&& !(StringContainsWord(name, "sky") || StringContainsWord(name, "skies") || StringContainsWord(name, "cloud") || StringContainsWord(name, "glow") || StringContainsWord(name, "gfx/")))
+			{
+				//GL_Bind(image);
+				//R_CreateNormalMap(name, pic, width, height, flags, image);
+			}
+		}
+	}
+
+	ri.Z_Free(pic);
 
 	return image;
 }
@@ -2745,8 +2726,8 @@ static void R_CreateDlightImage(void) {
 	R_LoadImage("gfx/2d/dlight", &pic, &width, &height);
 	if (pic)
 	{
-		tr.dlightImage = R_CreateImage("*dlight", pic, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, 0);
-		R_Free(pic);
+		tr.dlightImage = R_CreateImage("*dlight", pic, width, height, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE, 0);
+		ri.Z_Free(pic);
 	}
 	else
 	{	// if we dont get a successful load
@@ -2774,7 +2755,7 @@ static void R_CreateDlightImage(void) {
 				data[y][x][3] = 255;
 			}
 		}
-		tr.dlightImage = R_CreateImage("*dlight", (byte *)data, DLIGHT_SIZE, DLIGHT_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, 0);
+		tr.dlightImage = R_CreateImage("*dlight", (byte *)data, DLIGHT_SIZE, DLIGHT_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE, 0);
 	}
 }
 
@@ -2846,7 +2827,7 @@ static void R_CreateFogImage(void) {
 	float	d;
 	float	borderColor[4];
 
-	data = (byte *)R_Malloc(FOG_S * FOG_T * 4, TAG_TEMP_WORKSPACE, qfalse);
+	data = (byte *)ri.Malloc(FOG_S * FOG_T * 4, TAG_IMAGE_T, qtrue, 0);
 
 	// S is distance, T is depth
 	for (x = 0; x<FOG_S; x++) {
@@ -2863,7 +2844,7 @@ static void R_CreateFogImage(void) {
 	// the border color at the edges.  OpenGL 1.2 has clamp-to-edge, which does
 	// what we want.
 	tr.fogImage = R_CreateImage("*fog", (byte *)data, FOG_S, FOG_T, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE, 0);
-	R_Free(data);
+	ri.Z_Free(data);
 
 	borderColor[0] = 1.0;
 	borderColor[1] = 1.0;
@@ -2917,12 +2898,15 @@ R_CreateBuiltinImages
 void R_CreateBuiltinImages(void) {
 	int		x, y;
 	byte	data[DEFAULT_SIZE][DEFAULT_SIZE][4];
+	byte	data2[DEFAULT_SIZE][DEFAULT_SIZE][4];
 
 	R_CreateDefaultImage();
 
 	// we use a solid white image instead of disabling texturing
 	Com_Memset(data, 255, sizeof(data));
 	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, IMGTYPE_COLORALPHA, IMGFLAG_NONE, 0);
+
+	Com_Memset(data2, 0, sizeof(data2));
 
 	if (r_dlightMode->integer >= 2)
 	{
@@ -2966,9 +2950,30 @@ void R_CreateBuiltinImages(void) {
 	rgbFormat = GL_RGBA8;
 
 	tr.renderImage = R_CreateImage("_render", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+	//tr.previousRenderImage = R_CreateImage("_renderPreviousFrame", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
 
-	tr.glowImage = R_CreateImage("*glow", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
-
+	{
+		if (hdrFormat == GL_RGBA8)
+		{
+			byte	*gData = (byte *)ri.Malloc(width * height * 4 * sizeof(byte), TAG_IMAGE_T, qtrue, 0);
+			memset(gData, 0, width * height * 4 * sizeof(byte));
+			tr.glowImage = R_CreateImage("*glow", gData, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+			ri.Z_Free(gData);
+		}
+		else
+		{
+			byte	*gData = (byte *)ri.Malloc(width * height * 8 * sizeof(byte), TAG_IMAGE_T, qtrue, 0);
+			memset(gData, 0, width * height * 8 * sizeof(byte));
+			tr.glowImage = R_CreateImage("*glow", gData, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+			ri.Z_Free(gData);
+		}
+	}
+#if 0
+	tr.glowImageScaled[0] = R_CreateImage("*glowScaled0", NULL, width / 2, height / 2, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+	tr.glowImageScaled[1] = R_CreateImage("*glowScaled1", NULL, width / 4, height / 4, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+	tr.glowImageScaled[2] = R_CreateImage("*glowScaled2a", NULL, width / 8, height / 8, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+	tr.glowImageScaled[3] = R_CreateImage("*glowScaled2b", NULL, width / 8, height / 8, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+#else
 	int glowImageWidth = width;
 	int glowImageHeight = height;
 	for (int i = 0; i < ARRAY_LEN(tr.glowImageScaled); i++)
@@ -2977,12 +2982,14 @@ void R_CreateBuiltinImages(void) {
 		glowImageWidth = Q_max(1, glowImageWidth >> 1);
 		glowImageHeight = Q_max(1, glowImageHeight >> 1);
 	}
+#endif
 
 	if (r_drawSunRays->integer)
 		tr.sunRaysImage = R_CreateImage("*sunRays", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, rgbFormat);
 
 	tr.renderDepthImage = R_CreateImage("*renderdepth", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
 	tr.textureDepthImage = R_CreateImage("*texturedepth", NULL, PSHADOW_MAP_SIZE, PSHADOW_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
+
 
 	{
 		unsigned short sdata[4];
@@ -3033,7 +3040,7 @@ void R_CreateBuiltinImages(void) {
 		}
 	}
 
-	if (r_sunlightMode->integer)
+	if (r_sunlightMode->integer >= 2)
 	{
 		for (x = 0; x < 3; x++)
 		{
@@ -3043,9 +3050,22 @@ void R_CreateBuiltinImages(void) {
 		tr.screenShadowImage = R_CreateImage("*screenShadow", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_RGBA8);
 	}
 
-	if (r_cubeMapping->integer)
+#ifdef __DYNAMIC_SHADOWS__
+	for (int y = 0; y < MAX_DYNAMIC_SHADOWS; y++)
 	{
-		tr.renderCubeImage = R_CreateImage("*renderCube", NULL, CUBE_MAP_SIZE, CUBE_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
+		for (x = 0; x < 3; x++)
+		{
+			tr.dlightShadowDepthImage[y][x] = R_CreateImage(va("*dlightshadowdepth%i_%i", y, x), NULL, r_shadowMapSize->integer, r_shadowMapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
+		}
+	}
+
+	//tr.screenDlightShadowImage = R_CreateImage("*screenDlightShadow", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_RGBA8);
+#endif // __DYNAMIC_SHADOWS__
+
+	if (r_cubeMapping->integer >= 1)
+	{
+		//tr.renderCubeImage = R_CreateImage("*renderCube", NULL, CUBE_MAP_SIZE, CUBE_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
+		tr.renderCubeImage = R_CreateImage("*renderCube", NULL, 256, 256, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
 	}
 }
 
@@ -3130,23 +3150,17 @@ void R_SetColorMappings(void) {
 }
 
 /*
-Initialise the images pool allocator
+===============
+R_InitImages
+===============
 */
-void R_InitImagesPool()
-{
+void	R_InitImages(void) {
 	Com_Memset(hashTable, 0, sizeof(hashTable));
 
 	imagesPool = NULL;
 	tr.imagesFreeList = NULL;
 	R_ExtendImagesPool();
-}
 
-/*
-===============
-R_InitImages
-===============
-*/
-void R_InitImages(void) {
 	// build brightness translation tables
 	R_SetColorMappings();
 
@@ -3173,8 +3187,8 @@ void R_DeleteTextures(void) {
 	while (imagesPool)
 	{
 		ImagesPool *pNext = imagesPool->pNext;
-		R_Free(imagesPool->pPool);
-		R_Free(imagesPool);
+		ri.Z_Free(imagesPool->pPool);
+		ri.Z_Free(imagesPool);
 
 		imagesPool = pNext;
 	}

@@ -1762,19 +1762,19 @@ void R_Init(void) {
 		RE_SetLightStyle(i, -1);
 	}
 
-	R_InitImagesPool();
+	//R_InitImagesPool();
 
 	InitOpenGL();
+
+	R_InitImages();
 
 	R_InitVBOs();
 
 	R_InitBackEndFrameData();
-	R_InitImages();
-
+	
 	FBO_Init();
 
 	int shadersStartTime = GLSL_BeginLoadGPUShaders();
-
 
 	R_InitShaders();
 

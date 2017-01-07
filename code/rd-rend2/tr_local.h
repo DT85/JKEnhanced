@@ -2656,7 +2656,7 @@ void	R_ScreenShotJPEG_f( void );
 
 void	R_InitFogTable( void );
 float	R_FogFactor( float s, float t );
-void	R_InitImagesPool();
+//void	R_InitImagesPool();
 void	R_InitImages( void );
 void	R_DeleteTextures( void );
 int		R_SumOfUsedImages( void );

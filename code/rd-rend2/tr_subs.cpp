@@ -77,7 +77,7 @@ void Com_DPrintf(const char *format, ...)
 //}
 
 // ZONE
-
+#if 0 //SP
 void *R_Malloc(int iSize, memtag_t eTag, qboolean bZeroit) {
 	return ri.Malloc(iSize, eTag, bZeroit, 4);
 }
@@ -97,3 +97,47 @@ void R_MorphMallocTag(void *pvBuffer, memtag_t eDesiredTag) {
 void *R_Hunk_Alloc(int iSize, qboolean bZeroit) {
 	return ri.Malloc(iSize, TAG_HUNKALLOC, bZeroit, 4);
 }
+
+#else // UniqueOne's Version
+
+void *R_Malloc(int iSize, memtag_t eTag, qboolean bZeroit) {
+#ifndef __USE_MALLOC__
+	return ri.Malloc(iSize, eTag, qtrue/*bZeroit*/, 4);
+#else
+	void *mem = malloc(iSize);
+
+	//if (bZeroit)
+	{
+		memset(mem, 0, iSize);
+	}
+
+	return mem;
+#endif
+}
+
+void R_Free(void *ptr) {
+#ifndef __USE_MALLOC__
+	ri.Z_Free(ptr);
+#else
+	free(ptr);
+#endif
+}
+
+int R_MemSize(memtag_t eTag) {
+	return ri.Z_MemSize(eTag);
+}
+
+void R_MorphMallocTag(void *pvBuffer, memtag_t eDesiredTag) {
+#ifndef __USE_MALLOC__
+	ri.Z_MorphMallocTag(pvBuffer, eDesiredTag);
+#endif
+}
+
+void *R_Hunk_Alloc(int iSize, qboolean bZeroit) {
+#ifndef __USE_MALLOC__
+	return ri.Malloc(iSize, TAG_HUNKALLOC, qtrue/*bZeroit*/, 4);
+#else
+	return R_Malloc(iSize, TAG_HUNKALLOC, bZeroit);
+#endif
+}
+#endif
