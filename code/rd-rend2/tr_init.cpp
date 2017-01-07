@@ -1950,12 +1950,26 @@ void C_LevelLoadEnd(void)
 	ri.S_RestartMusic();
 }
 
+//bool inServer = false;
+void RE_SVModelInit(void)
+{
+	tr.numModels = 0;
+	tr.numShaders = 0;
+	tr.numSkins = 0;
+	R_InitImages();
+	//inServer = true;
+	R_InitShaders();
+	//inServer = false;
+	R_ModelInit();
+}
+
 /*
 @@@@@@@@@@@@@@@@@@@@@
 GetRefAPI
 
 @@@@@@@@@@@@@@@@@@@@@
 */
+extern void R_SVModelInit(void); //tr_model.cpp
 extern qboolean R_inPVS(vec3_t p1, vec3_t p2);
 extern void G2API_AnimateG2Models(CGhoul2Info_v &ghoul2, int AcurrentTime, CRagDollUpdateParams *params);
 extern qboolean G2API_GetRagBonePos(CGhoul2Info_v &ghoul2, const char *boneName, vec3_t pos, vec3_t entAngles, vec3_t entPos, vec3_t entScale);
@@ -2049,7 +2063,7 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI(int apiVersion, refimport_t *ri
 	re.WorldEffectCommand = stub_RE_WorldEffectCommand;
 	//REX(GetModelBounds);
 
-	re.SVModelInit = R_SVModelInit;
+	re.SVModelInit = RE_SVModelInit;
 
 	REX(RegisterFont);
 	REX(Font_HeightPixels);
