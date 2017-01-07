@@ -2738,6 +2738,11 @@ static qboolean UI_ParseColorData(char* buf, playerSpeciesInfo_t &species)
 	species.ColorMax = 16;
 	species.Color = (playerColor_t *)malloc(species.ColorMax * sizeof(playerColor_t));
 
+	//Always have RGB colour choice first!
+	Q_strncpyz(species.Color[0].shader, "gfx/menus/players/rgbtint", 64);
+	Q_strncpyz(species.Color[0].actionText, "open character_rgb\n", 128);
+	species.ColorCount++;
+	
 	while ( p )
 	{
 		token = COM_ParseExt( &p, qtrue );	//looking for the shader
@@ -7403,8 +7408,8 @@ static void UI_UpdateCharacter( qboolean changedModel )
 		UI_FeederSelection(FEEDER_PLAYER_SKIN_HEAD, 0, item);	//fixme, this is not really the right item!!
 		UI_FeederSelection(FEEDER_PLAYER_SKIN_TORSO, 0, item);
 		UI_FeederSelection(FEEDER_PLAYER_SKIN_LEGS, 0, item);
-		UI_FeederSelection(FEEDER_COLORCHOICES, 0, item);
-		UI_FeederSelection(FEEDER_COLORCHOICES2, 0, item);
+		//UI_FeederSelection(FEEDER_COLORCHOICES, 0, item); //Don't bother with these for now - allow colours left over from last species
+		//UI_FeederSelection(FEEDER_COLORCHOICES2, 0, item);
 	}
 	UI_UpdateCharacterSkin();
 }
