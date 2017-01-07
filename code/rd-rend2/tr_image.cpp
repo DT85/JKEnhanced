@@ -2570,68 +2570,6 @@ done:
 		ri.Z_Free(resampledBuffer);
 }
 
-const char *StringContains(const char *str1, const char *str2, int casesensitive)
-{
-	int len, i, j;
-
-	len = strlen(str1) - strlen(str2);
-	for (i = 0; i <= len; i++, str1++) {
-		for (j = 0; str2[j]; j++) {
-			if (casesensitive) {
-				if (str1[j] != str2[j]) {
-					break;
-				}
-			}
-			else {
-				if (toupper(str1[j]) != toupper(str2[j])) {
-					break;
-				}
-			}
-		}
-		if (!str2[j]) {
-			return str1;
-		}
-	}
-	return NULL;
-}
-
-qboolean StringContainsWord(const char *str, const char *word)
-{
-	return StringContains(str, word, 0) ? qtrue : qfalse;
-}
-
-qboolean StringsContainWord(const char *str, const char *str2, const char *word)
-{
-	if (StringContains(str, word, 0) ? qtrue : qfalse) return qtrue;
-	if (StringContains(str2, word, 0) ? qtrue : qfalse) return qtrue;
-
-	return qfalse;
-}
-
-static qboolean R_ShouldMipMap(const char *name)
-{
-	//if (!(StringContainsWord(name, "textures/") || StringContainsWord(name, "models/")))
-	//	return qfalse;
-
-	if (StringContainsWord(name, "gfx/"))
-	{
-		if (StringContainsWord(name, "2d")) return qfalse;
-		if (StringContainsWord(name, "colors")) return qfalse;
-		if (StringContainsWord(name, "console")) return qfalse;
-		if (StringContainsWord(name, "hud")) return qfalse;
-		if (StringContainsWord(name, "jkg")) return qfalse;
-		if (StringContainsWord(name, "menus")) return qfalse;
-		if (StringContainsWord(name, "mp")) return qfalse;
-	}
-
-	if (StringContainsWord(name, "fonts/")) return qfalse;
-	if (StringContainsWord(name, "levelshots/")) return qfalse;
-	if (StringContainsWord(name, "menu/")) return qfalse;
-	if (StringContainsWord(name, "ui/")) return qfalse;
-
-	return qtrue;
-}
-
 /*
 ===============
 R_FindImageFile
@@ -2675,38 +2613,17 @@ image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 	// load the pic from disk
 	//
 	R_LoadImage(name, &pic, &width, &height);
-
 	if (pic == NULL) {
 		return NULL;
 	}
 
-	if (!(flags & IMGFLAG_MIPMAP) && R_ShouldMipMap(name))
-	{// UQ: Testing mipmap all...
-		flags |= IMGFLAG_MIPMAP;
-	}
-
-	if ((flags & IMGFLAG_NO_COMPRESSION))
-	{// UQ: Testing compress all...
-		flags &= ~IMGFLAG_NO_COMPRESSION;
-	}
-
-	image = R_CreateImage(name, pic, width, height, type, IMGFLAG_NOLIGHTSCALE | IMGFLAG_NO_COMPRESSION, GL_RGBA8);
-
-	if (name[0] != '*' && name[0] != '!' && name[0] != '$' && name[0] != '_'
-		&& type != IMGTYPE_NORMAL
-		&& !(flags & IMGFLAG_CUBEMAP))
+	/*if (r_normalMapping->integer && !(type == IMGTYPE_NORMAL) &&
+		(flags & IMGFLAG_PICMIP) && (flags & IMGFLAG_MIPMAP) && (flags & IMGFLAG_GENNORMALMAP))
 	{
-		if (r_normalMapping->integer >= 2)
-		{
-			if (image
-				&& !(StringContainsWord(name, "sky") || StringContainsWord(name, "skies") || StringContainsWord(name, "cloud") || StringContainsWord(name, "glow") || StringContainsWord(name, "gfx/")))
-			{
-				//GL_Bind(image);
-				//R_CreateNormalMap(name, pic, width, height, flags, image);
-			}
-		}
-	}
+		R_CreateNormalMap(name, pic, width, height, flags);
+	}*/
 
+	image = R_CreateImage(name, pic, width, height, type, flags, 0);
 	ri.Z_Free(pic);
 
 	return image;
@@ -2898,15 +2815,12 @@ R_CreateBuiltinImages
 void R_CreateBuiltinImages(void) {
 	int		x, y;
 	byte	data[DEFAULT_SIZE][DEFAULT_SIZE][4];
-	byte	data2[DEFAULT_SIZE][DEFAULT_SIZE][4];
 
 	R_CreateDefaultImage();
 
 	// we use a solid white image instead of disabling texturing
 	Com_Memset(data, 255, sizeof(data));
 	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, IMGTYPE_COLORALPHA, IMGFLAG_NONE, 0);
-
-	Com_Memset(data2, 0, sizeof(data2));
 
 	if (r_dlightMode->integer >= 2)
 	{
@@ -2950,30 +2864,9 @@ void R_CreateBuiltinImages(void) {
 	rgbFormat = GL_RGBA8;
 
 	tr.renderImage = R_CreateImage("_render", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
-	//tr.previousRenderImage = R_CreateImage("_renderPreviousFrame", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
 
-	{
-		if (hdrFormat == GL_RGBA8)
-		{
-			byte	*gData = (byte *)ri.Malloc(width * height * 4 * sizeof(byte), TAG_IMAGE_T, qtrue, 0);
-			memset(gData, 0, width * height * 4 * sizeof(byte));
-			tr.glowImage = R_CreateImage("*glow", gData, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
-			ri.Z_Free(gData);
-		}
-		else
-		{
-			byte	*gData = (byte *)ri.Malloc(width * height * 8 * sizeof(byte), TAG_IMAGE_T, qtrue, 0);
-			memset(gData, 0, width * height * 8 * sizeof(byte));
-			tr.glowImage = R_CreateImage("*glow", gData, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
-			ri.Z_Free(gData);
-		}
-	}
-#if 0
-	tr.glowImageScaled[0] = R_CreateImage("*glowScaled0", NULL, width / 2, height / 2, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
-	tr.glowImageScaled[1] = R_CreateImage("*glowScaled1", NULL, width / 4, height / 4, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
-	tr.glowImageScaled[2] = R_CreateImage("*glowScaled2a", NULL, width / 8, height / 8, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
-	tr.glowImageScaled[3] = R_CreateImage("*glowScaled2b", NULL, width / 8, height / 8, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
-#else
+	tr.glowImage = R_CreateImage("*glow", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+
 	int glowImageWidth = width;
 	int glowImageHeight = height;
 	for (int i = 0; i < ARRAY_LEN(tr.glowImageScaled); i++)
@@ -2982,14 +2875,12 @@ void R_CreateBuiltinImages(void) {
 		glowImageWidth = Q_max(1, glowImageWidth >> 1);
 		glowImageHeight = Q_max(1, glowImageHeight >> 1);
 	}
-#endif
 
 	if (r_drawSunRays->integer)
 		tr.sunRaysImage = R_CreateImage("*sunRays", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, rgbFormat);
 
 	tr.renderDepthImage = R_CreateImage("*renderdepth", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
 	tr.textureDepthImage = R_CreateImage("*texturedepth", NULL, PSHADOW_MAP_SIZE, PSHADOW_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
-
 
 	{
 		unsigned short sdata[4];
@@ -3002,7 +2893,7 @@ void R_CreateBuiltinImages(void) {
 			sdata[2] = FloatToHalf(1.0f);
 			sdata[3] = FloatToHalf(1.0f);
 			p = &sdata[0];
-		}
+	}
 		else
 		{
 			data[0][0][0] = 0;
@@ -3015,7 +2906,7 @@ void R_CreateBuiltinImages(void) {
 		tr.calcLevelsImage = R_CreateImage("*calcLevels", (byte *)p, 1, 1, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
 		tr.targetLevelsImage = R_CreateImage("*targetLevels", (byte *)p, 1, 1, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
 		tr.fixedLevelsImage = R_CreateImage("*fixedLevels", (byte *)p, 1, 1, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
-	}
+}
 
 	for (x = 0; x < 2; x++)
 	{
@@ -3040,7 +2931,7 @@ void R_CreateBuiltinImages(void) {
 		}
 	}
 
-	if (r_sunlightMode->integer >= 2)
+	if (r_sunlightMode->integer)
 	{
 		for (x = 0; x < 3; x++)
 		{
@@ -3050,22 +2941,9 @@ void R_CreateBuiltinImages(void) {
 		tr.screenShadowImage = R_CreateImage("*screenShadow", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_RGBA8);
 	}
 
-#ifdef __DYNAMIC_SHADOWS__
-	for (int y = 0; y < MAX_DYNAMIC_SHADOWS; y++)
+	if (r_cubeMapping->integer)
 	{
-		for (x = 0; x < 3; x++)
-		{
-			tr.dlightShadowDepthImage[y][x] = R_CreateImage(va("*dlightshadowdepth%i_%i", y, x), NULL, r_shadowMapSize->integer, r_shadowMapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
-		}
-	}
-
-	//tr.screenDlightShadowImage = R_CreateImage("*screenDlightShadow", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_RGBA8);
-#endif // __DYNAMIC_SHADOWS__
-
-	if (r_cubeMapping->integer >= 1)
-	{
-		//tr.renderCubeImage = R_CreateImage("*renderCube", NULL, CUBE_MAP_SIZE, CUBE_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
-		tr.renderCubeImage = R_CreateImage("*renderCube", NULL, 256, 256, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
+		tr.renderCubeImage = R_CreateImage("*renderCube", NULL, CUBE_MAP_SIZE, CUBE_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
 	}
 }
 
