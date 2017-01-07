@@ -8181,7 +8181,7 @@ extern vmCvar_t	cg_thirdPersonAlpha;
 										shader = cgi_R_RegisterShader( "gfx/effects/sabers/flare1black" );
 									}
 									
-									FX_AddSprite( org_, cent->gent->client->ps.velocity, NULL, 40.0f, 0.0f, 1.0f, 0.7f, RGB, RGB, random() * 360, 0.0f, 100.0f, shader, FX_USE_ALPHA );
+									FX_AddSprite( org_, cent->gent->client->ps.velocity, NULL, 40.0f, 0.0f, 1.0f, 0.7f, RGB, RGB, Q_flrand(0.0f, 1.0f) * 360, 0.0f, 100.0f, shader, FX_USE_ALPHA );
 								}
 
 							}
