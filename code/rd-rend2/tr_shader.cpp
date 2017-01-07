@@ -4785,7 +4785,7 @@ static void CreateInternalShaders( void ) {
 
 static void CreateExternalShaders( void ) {
 	tr.projectionShadowShader = R_FindShader( "projectionShadow", lightmapsNone, stylesDefault, qtrue );
-	tr.flareShader = R_FindShader( "flareShader", lightmapsNone, stylesDefault, qtrue );
+	/*tr.flareShader = R_FindShader( "flareShader", lightmapsNone, stylesDefault, qtrue );
 
 	// Hack to make fogging work correctly on flares. Fog colors are calculated
 	// in tr_flare.c already.
@@ -4798,11 +4798,11 @@ static void CreateExternalShaders( void ) {
 			tr.flareShader->stages[index]->adjustColorsForFog = ACFF_NONE;
 			tr.flareShader->stages[index]->stateBits |= GLS_DEPTHTEST_DISABLE;
 		}
-	}
+	}*/
 
 	tr.sunShader = R_FindShader( "sun", lightmapsNone, stylesDefault, qtrue );
 
-	tr.sunFlareShader = R_FindShader( "gfx/2d/sunflare", lightmapsNone, stylesDefault, qtrue);
+	/*tr.sunFlareShader = R_FindShader( "gfx/2d/sunflare", lightmapsNone, stylesDefault, qtrue);
 
 	// HACK: if sunflare is missing, make one using the flare image or dlight image
 	if (tr.sunFlareShader->defaultShader)
@@ -4824,7 +4824,7 @@ static void CreateExternalShaders( void ) {
 		stages[0].active = qtrue;
 		stages[0].stateBits = GLS_DEFAULT;
 		tr.sunFlareShader = FinishShader();
-	}
+	}*/
 
 }
 
