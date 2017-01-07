@@ -380,6 +380,7 @@ void NPC_SetMiscDefaultData( gentity_t *ent )
 		if ( ent->client->ps.weapon == WP_SABER )
 		{//this is our current weapon, add the models now
 			WP_SaberAddG2SaberModels( ent );
+			G_RemoveHolsterModels( ent );
 		}
 		Jedi_ClearTimers( ent );
 	}
@@ -452,6 +453,7 @@ void NPC_SetMiscDefaultData( gentity_t *ent )
 				&& (!(ent->NPC->aiFlags&NPCAI_MATCHPLAYERWEAPON)||!ent->weaponModel[0]) )//they do this themselves
 			{
 				G_CreateG2AttachedWeaponModel( ent, weaponData[ent->client->ps.weapon].weaponMdl, ent->handRBolt, 0 );
+				WP_SaberAddHolsteredG2SaberModels( ent );
 			}
 			switch ( ent->client->ps.weapon )
 			{
@@ -553,6 +555,7 @@ void NPC_SetMiscDefaultData( gentity_t *ent )
 					&& (!(ent->NPC->aiFlags&NPCAI_MATCHPLAYERWEAPON)||!ent->weaponModel[0]) )//they do this themselves
 				{
 					G_CreateG2AttachedWeaponModel( ent, weaponData[ent->client->ps.weapon].weaponMdl, ent->handRBolt, 0 );
+					WP_SaberAddHolsteredG2SaberModels( ent );
 				}
 				switch ( ent->client->ps.weapon )
 				{
@@ -629,6 +632,7 @@ void NPC_SetMiscDefaultData( gentity_t *ent )
 			&& (!(ent->NPC->aiFlags&NPCAI_MATCHPLAYERWEAPON)||!ent->weaponModel[0]) )//they do this themselves
 		{
 			G_CreateG2AttachedWeaponModel( ent, weaponData[ent->client->ps.weapon].weaponMdl, ent->handRBolt, 0 );
+			WP_SaberAddHolsteredG2SaberModels( ent );
 		}
 		break;
 	}

@@ -937,6 +937,15 @@ typedef enum
 	SS_NUM_SABER_STYLES
 } saber_styles_t;
 
+typedef enum
+{
+	HOLSTER_INVALID = -1,
+	HOLSTER_NONE = 0,
+	HOLSTER_HIPS,
+	HOLSTER_BACK,
+	HOLSTER_LHIP
+} holster_locations_t;
+
 //SABER FLAGS
 //Old bools converted to a flag now
 #define SFL_NOT_LOCKABLE			(1<<0)//can't get into a saberlock
@@ -1043,6 +1052,8 @@ typedef struct
 	int	meditateAnim;			//-1 - anim to use when hit "meditate"
 	int	flourishAnim;			//-1 - anim to use when hit "flourish"
 	int	gloatAnim;				//-1 - anim to use when hit "gloat"
+	
+	holster_locations_t holsterPlace;
 
 	//***NOTE: you can only have a maximum of 2 "styles" of blades, so this next value, "bladeStyle2Start" is the number of the first blade to use these value on... all blades before this use the normal values above, all blades at and after this number use the secondary values below***
 	int			bladeStyle2Start;			//0 - if set, blades from this number and higher use the following values (otherwise, they use the normal values already set)

@@ -8945,7 +8945,7 @@ static void PM_BeginWeaponChange( int weapon ) {
 			}
 			if (!G_IsRidingVehicle(pm->gent))
 			{
-				PM_SetSaberMove(LS_PUTAWAY);
+			//	PM_SetSaberMove(LS_PUTAWAY);
 			}
 		}
 		//put this back in because saberActive isn't being set somewhere else anymore
@@ -9003,6 +9003,8 @@ static void PM_FinishWeaponChange( void ) {
 		if ( pm->gent )
 		{// remove gun if we had it.
 			G_RemoveWeaponModels( pm->gent );
+			//and remove holstered saber models
+			G_RemoveHolsterModels( pm->gent );
 		}
 
 		if ( !pm->ps->saberInFlight || pm->ps->dualSabers )
@@ -9043,7 +9045,14 @@ static void PM_FinishWeaponChange( void ) {
 		{//actually did switch weapons, play anim
 			if (!G_IsRidingVehicle(pm->gent))
 			{
-				PM_SetSaberMove(LS_DRAW);
+				if ( pm->ps->saber[0].holsterPlace == HOLSTER_BACK )
+				{
+					//TODO: nice draw move from back holster
+				}
+				else
+				{
+					PM_SetSaberMove(LS_DRAW);
+				}
 			}
 		}
 	}
@@ -9053,6 +9062,8 @@ static void PM_FinishWeaponChange( void ) {
 		{
 			// remove the sabre if we had it.
 			G_RemoveWeaponModels( pm->gent );
+			//holster sabers
+			WP_SaberAddHolsteredG2SaberModels( pm->gent );
 			if (weaponData[weapon].weaponMdl[0]) {	//might be NONE, so check if it has a model
 				G_CreateG2AttachedWeaponModel( pm->gent, weaponData[weapon].weaponMdl, pm->gent->handRBolt, 0 );
 			}
@@ -9265,7 +9276,20 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 			pm->ps->saberMove = newMove;
 			return;
 		}
-		if ( pm->ps->saber[0].drawAnim != -1 )
+		if ( pm->ps->saber[0].holsterPlace == HOLSTER_LHIP && !pm->ps->dualSabers && pm->ps->saber[0].drawAnim == -1 )
+		{
+			//TODO: left hip draw anim
+		}
+		else if ( pm->ps->saber[0].holsterPlace == HOLSTER_LHIP
+				 && pm->ps->dualSabers
+				 && ((pm->ps->saber[1].holsterPlace == HOLSTER_LHIP) || (pm->ps->saber[1].holsterPlace == HOLSTER_HIPS))
+				 && !(pm->ps->saber[0].stylesForbidden&(1<<SS_DUAL))
+				 && !(pm->ps->saber[1].stylesForbidden&(1<<SS_DUAL)) )
+		{
+			anim = BOTH_S1_S6;
+			//TODO: nice cross draw anim
+		}
+		else if ( pm->ps->saber[0].drawAnim != -1 )
 		{
 			anim = pm->ps->saber[0].drawAnim;
 		}
@@ -9273,6 +9297,11 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 			&& pm->ps->saber[1].drawAnim != -1 )
 		{
 			anim = pm->ps->saber[1].drawAnim;
+		}
+		else if ( pm->ps->saber[0].holsterPlace == HOLSTER_BACK )
+		{
+			//TODO: nice back draw anim
+			anim = BOTH_S1_S7;
 		}
 		else if ( pm->ps->saber[0].stylesLearned==(1<<SS_STAFF) )
 		{
@@ -9291,7 +9320,21 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 	}
 	else if ( newMove == LS_PUTAWAY )
 	{
-		if ( pm->ps->saber[0].putawayAnim != -1 )
+		if ( pm->ps->saber[0].holsterPlace == HOLSTER_LHIP && !pm->ps->dualSabers && pm->ps->saber[0].putawayAnim == -1 )
+		{
+			//TODO: left hip putaway anim
+		}
+		else if ( pm->ps->saber[0].holsterPlace == HOLSTER_LHIP
+				 && pm->ps->dualSabers
+				 && ((pm->ps->saber[1].holsterPlace == HOLSTER_LHIP) || (pm->ps->saber[1].holsterPlace == HOLSTER_HIPS))
+				 && !(pm->ps->saber[0].stylesForbidden&(1<<SS_DUAL))
+				 && !(pm->ps->saber[1].stylesForbidden&(1<<SS_DUAL))
+				 && pm->ps->saber[1].Active() )
+		{
+			anim = BOTH_S6_S1;
+			//TODO: nice cross putaway anim
+		}
+		else if ( pm->ps->saber[0].putawayAnim != -1 )
 		{
 			anim = pm->ps->saber[0].putawayAnim;
 		}
@@ -9299,6 +9342,10 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 			&& pm->ps->saber[1].putawayAnim != -1 )
 		{
 			anim = pm->ps->saber[1].putawayAnim;
+		}
+		else if ( pm->ps->saber[0].holsterPlace == HOLSTER_BACK )
+		{
+			anim = BOTH_S7_S1;
 		}
 		else if ( pm->ps->saber[0].stylesLearned==(1<<SS_STAFF)
 			&& pm->ps->saber[0].blade[1].active )

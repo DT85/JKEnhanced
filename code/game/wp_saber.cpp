@@ -163,6 +163,7 @@ extern cvar_t	*g_saberAutoBlocking;
 extern cvar_t	*g_saberRealisticCombat;
 extern cvar_t	*g_saberDamageCapping;
 extern cvar_t	*g_saberNewControlScheme;
+extern cvar_t	*g_flippedHolsters;
 extern int g_crosshairEntNum;
 
 qboolean g_saberNoEffects = qfalse;
@@ -358,6 +359,76 @@ stringID_table_t SaberStyleTable[] =
 
 //SABER INITIALIZATION======================================================================
 
+void G_CreateG2HolsteredWeaponModel( gentity_t *ent, const char *psWeaponModel, int boltNum, int weaponNum, vec3_t angles, vec3_t offset )
+{
+	if (!psWeaponModel)
+	{
+		assert (psWeaponModel);
+		return;
+	}
+	if ( ent->playerModel == -1 )
+	{
+		return;
+	}
+	if ( boltNum == -1 )
+	{
+		return;
+	}
+	
+	if ( weaponNum < 0 || weaponNum >= MAX_INHAND_WEAPONS )
+	{
+		return;
+	}
+	char weaponModel[64];
+	
+	strcpy (weaponModel, psWeaponModel);
+	if (char *spot = strstr(weaponModel, ".md3") ) {
+		*spot = 0;
+		spot = strstr(weaponModel, "_w");//i'm using the in view weapon array instead of scanning the item list, so put the _w back on
+		if (!spot&&!strstr(weaponModel, "noweap"))
+		{
+			strcat (weaponModel, "_w");
+		}
+		strcat (weaponModel, ".glm");	//and change to ghoul2
+	}
+		
+	// give us a saber model
+	int wModelIndex = G_ModelIndex( weaponModel );
+	if ( wModelIndex )
+	{
+		ent->holsterModel[weaponNum] = gi.G2API_InitGhoul2Model(ent->ghoul2, weaponModel, wModelIndex, NULL_HANDLE, NULL_HANDLE, 0, 0 );
+		if ( ent->holsterModel[weaponNum] != -1 )
+		{
+			// attach it to the hip. need some correction of rotation first though!
+			int holsterorigin = gi.G2API_AddBolt(&ent->ghoul2[ent->holsterModel[weaponNum]], "*holsterorigin");
+			mdxaBone_t boltMatrix2;
+			if (holsterorigin != -1)
+			{
+				vec3_t origin = {0, 0, 0};
+				gi.G2API_GetBoltMatrix(ent->ghoul2, ent->holsterModel[weaponNum], holsterorigin, &boltMatrix2,
+									   origin, origin, 0,
+									   NULL, ent->s.modelScale);
+			}
+			gi.G2API_AttachG2Model(&ent->ghoul2[ent->holsterModel[weaponNum]], &ent->ghoul2[ent->playerModel],
+								   boltNum, ent->playerModel);
+			if (holsterorigin == -1)
+			{
+				gi.G2API_SetBoneAnglesOffset(&ent->ghoul2[ent->holsterModel[weaponNum]], "ModView internal default", angles, BONE_ANGLES_PREMULT, POSITIVE_X, NEGATIVE_Y, NEGATIVE_Z, NULL, 0, 0, offset);
+			}
+			else
+			{
+				boltMatrix2.matrix[1][3] -= 1.0f;//TODO: this is no good for back holstered weapons
+				gi.G2API_SetBoneAnglesMatrix(&ent->ghoul2[ent->holsterModel[weaponNum]], "ModView internal default", boltMatrix2, BONE_ANGLES_PREMULT,
+											 NULL, 0, 0);
+				
+			}
+			gi.G2API_AddBolt(&ent->ghoul2[ent->holsterModel[weaponNum]], "*flash");
+	  		//gi.G2API_SetLodBias( &ent->ghoul2[ent->weaponModel[weaponNum]], 0 );
+		}
+	}
+	
+}
+
 void G_CreateG2AttachedWeaponModel( gentity_t *ent, const char *psWeaponModel, int boltNum, int weaponNum )
 {
 	if (!psWeaponModel)
@@ -469,6 +540,119 @@ void WP_SaberAddG2SaberModels( gentity_t *ent, int specificSaberNum )
 				// put it in the config strings
 				// and set the ghoul2 model to use it
 				gi.G2API_SetSkin( &ent->ghoul2[ent->weaponModel[saberNum]], G_SkinIndex( ent->client->ps.saber[saberNum].skin ), saberSkin );
+			}
+		}
+	}
+}
+
+void WP_SaberAddHolsteredG2SaberModels( gentity_t *ent, int specificSaberNum )
+{
+	int saberNum = 0, maxSaber = 1;
+	if (!(ent && ent->client && (ent->client->ps.stats[STAT_WEAPONS] & ( 1 << WP_SABER ))))
+	{
+		return;
+	}
+	if ( specificSaberNum != -1 && specificSaberNum <= maxSaber )
+	{
+		saberNum = maxSaber = specificSaberNum;
+	}
+	for ( ; saberNum <= maxSaber; saberNum++ )
+	{
+		if ( ent->holsterModel[saberNum] > 0 )
+		{//we already have a weapon model in this slot
+			//remove it
+			gi.G2API_SetSkin( &ent->ghoul2[ent->holsterModel[saberNum]], -1, 0 );
+			gi.G2API_RemoveGhoul2Model( ent->ghoul2, ent->holsterModel[saberNum] );
+			ent->holsterModel[saberNum] = -1;
+		}
+		if ( saberNum > 0 )
+		{//second saber
+			if ( !ent->client->ps.dualSabers )
+			{//only have one saber or riding a vehicle and can only use one saber
+				return;
+			}
+		}
+		else if ( saberNum == 0 )
+		{//first saber
+			if ( ent->client->ps.saberInFlight )
+			{//it's still out there somewhere, don't add it
+				//FIXME: call it back?
+				continue;
+			}
+		}
+		else if ( ent->client->ps.saber[saberNum].holsterPlace == HOLSTER_NONE )
+		{
+			continue;
+		}
+		int handBolt = -1;
+		holster_locations_t holsterPlace = ent->client->ps.saber[saberNum].holsterPlace;
+		vec3_t offset = { 0.0f, 0.0f, 0.0f };
+		vec3_t angles = { 0.0f, 0.0f, 0.0f };
+		if ( holsterPlace == HOLSTER_HIPS )
+		{
+			angles[PITCH] = 180.0f;
+			angles[YAW] = 0.0f;
+			angles[ROLL] = 180.0f;
+			if (g_flippedHolsters && g_flippedHolsters->integer > 0)
+			{
+				angles[YAW] = 180.0f;
+			}
+			VectorSet(offset, 0.0f, -1.0f, -5.0f);
+		}
+		else if ( holsterPlace == HOLSTER_BACK )
+		{
+			angles[YAW] = 180.0f;
+			angles[PITCH] = 22.5f;
+			VectorSet(offset, 0.0f, -2.0f, 4.0f);
+		}
+		if ( saberNum == 0 )
+		{
+			if ( holsterPlace == HOLSTER_LHIP )
+			{
+				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_l" );
+			}
+			else if ( holsterPlace == HOLSTER_HIPS )
+			{
+				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_r" );
+			}
+			else if ( holsterPlace == HOLSTER_BACK )
+			{
+				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*back" );
+			}
+		}
+		else
+		{
+			if ( holsterPlace == HOLSTER_HIPS || holsterPlace == HOLSTER_LHIP )
+			{
+				if ( ent->client->ps.saber[0].holsterPlace == HOLSTER_LHIP )
+				{
+					handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_r" );
+				}
+				else
+				{
+					handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_l" );
+				}
+			}
+			else if ( holsterPlace == HOLSTER_BACK )
+			{
+				if ( ent->client->ps.saber[0].holsterPlace == HOLSTER_BACK )
+				{
+					continue;
+				}
+				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*back" );
+			}
+		}
+		G_CreateG2HolsteredWeaponModel( ent, ent->client->ps.saber[saberNum].model, handBolt, saberNum, angles, offset );
+		
+		if ( ent->client->ps.saber[saberNum].skin != NULL )
+		{//if this saber has a customSkin, use it
+			// lets see if it's out there
+			int saberSkin = gi.RE_RegisterSkin( ent->client->ps.saber[saberNum].skin );
+			if ( saberSkin )
+			{
+				// put it in the config strings
+				// and set the ghoul2 model to use it
+				gi.G2API_SetSkin( &ent->ghoul2[ent->holsterModel[saberNum]], G_SkinIndex( ent->client->ps.saber[saberNum].skin ), saberSkin );
 			}
 		}
 	}

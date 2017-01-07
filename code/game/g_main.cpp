@@ -231,6 +231,7 @@ cvar_t	*g_navSafetyChecks;
 cvar_t	*g_broadsword;
 
 cvar_t	*g_allowBunnyhopping;
+cvar_t	*g_flippedHolsters;
 
 qboolean	stop_icarus = qfalse;
 
@@ -721,7 +722,8 @@ void G_InitCvars( void ) {
 	gi.cvar( "ui_prisonerobj_maxtotal", "0", CVAR_ROM|CVAR_SAVEGAME|CVAR_NORESTART);
 
 	gi.cvar( "g_clearstats", "1", CVAR_ROM|CVAR_NORESTART);
-
+	
+	g_flippedHolsters = gi.cvar( "g_flippedHolsters", "0", CVAR_ARCHIVE );//if 1, saber faces up when holstered not down
 }
 /*
 ============
