@@ -146,6 +146,7 @@ extern cvar_t	*g_debugMelee;
 extern cvar_t	*g_saberNewControlScheme;
 extern cvar_t	*g_stepSlideFix;
 extern cvar_t	*g_saberAutoBlocking;
+extern cvar_t	*g_noIgniteTwirl;
 
 static void PM_SetWaterLevelAtPoint( vec3_t org, int *waterlevel, int *watertype );
 
@@ -8229,6 +8230,7 @@ static void PM_Footsteps( void )
 			}
 			else if ( (pm->ps->weapon == WP_SABER
 				&&pm->ps->SaberLength()>0
+				&& (pm->ps->SaberActive() || !g_noIgniteTwirl->integer)
 				&&!pm->ps->saberInFlight
 				&&!PM_SaberDrawPutawayAnim( pm->ps->legsAnim )) )
 			{
@@ -9045,14 +9047,7 @@ static void PM_FinishWeaponChange( void ) {
 		{//actually did switch weapons, play anim
 			if (!G_IsRidingVehicle(pm->gent))
 			{
-				if ( pm->ps->saber[0].holsterPlace == HOLSTER_BACK )
-				{
-					//TODO: nice draw move from back holster
-				}
-				else
-				{
-					PM_SetSaberMove(LS_DRAW);
-				}
+				PM_SetSaberMove(LS_DRAW);
 			}
 		}
 	}
