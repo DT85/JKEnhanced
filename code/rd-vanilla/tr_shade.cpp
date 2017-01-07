@@ -1528,6 +1528,25 @@ static void ComputeColors( shaderStage_t *pStage, alphaGen_t forceAlphaGen, colo
 				baDest->ui = baSource->ui;
 			}
 			break;
+		case CGEN_ENTITY_NEW:
+			RB_CalcColorFromEntityNew( ( unsigned char * ) tess.svars.colors, pStage->rgbGenEntIndex );
+			if ( forceAlphaGen == AGEN_IDENTITY &&
+				backEnd.currentEntity->e.newShaderRGBA[0][3] == 0xff
+				)
+			{
+				forceAlphaGen = AGEN_SKIP;	//already got it in this set since it does all 4 components
+			}
+			break;
+		case CGEN_LIGHTING_DIFFUSE_ENTITY_NEW:
+			RB_CalcDiffuseEntityColorNew( ( unsigned char * ) tess.svars.colors, pStage->rgbGenEntIndex );
+			
+			if ( forceAlphaGen == AGEN_IDENTITY &&
+				backEnd.currentEntity->e.shaderRGBA[3] == 0xff
+				)
+			{
+				forceAlphaGen = AGEN_SKIP;	//already got it in this set since it does all 4 components
+			}
+			break;
 		}
 
 	//

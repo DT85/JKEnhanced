@@ -1477,7 +1477,20 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			}
 			else if ( !Q_stricmp( token, "entity" ) )
 			{
-				stage->rgbGen = CGEN_ENTITY;
+				token = COM_ParseExt( text, qfalse );
+				if ( token[0] == 0 )
+				{
+					stage->rgbGen = CGEN_ENTITY;
+				}
+				else
+				{
+					stage->rgbGen = CGEN_ENTITY_NEW;
+					stage->rgbGenEntIndex = atoi( token );
+					if (stage->rgbGenEntIndex >= MAX_NEW_ENT_RGB)
+					{
+						stage->rgbGenEntIndex = MAX_NEW_ENT_RGB - 1;
+					}
+				}
 			}
 			else if ( !Q_stricmp( token, "oneMinusEntity" ) )
 			{
@@ -1512,7 +1525,20 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 				{
 					ri.Printf( PRINT_ERROR, "ERROR: rgbGen lightingDiffuseEntity used on a misc_model! in shader '%s'\n", shader.name );
 				}
-				stage->rgbGen = CGEN_LIGHTING_DIFFUSE_ENTITY;
+				token = COM_ParseExt( text, qfalse );
+				if ( token[0] == 0 )
+				{
+					stage->rgbGen = CGEN_LIGHTING_DIFFUSE_ENTITY;
+				}
+				else
+				{
+					stage->rgbGen = CGEN_LIGHTING_DIFFUSE_ENTITY_NEW;
+					stage->rgbGenEntIndex = atoi( token );
+					if (stage->rgbGenEntIndex >= MAX_NEW_ENT_RGB)
+					{
+						stage->rgbGenEntIndex = MAX_NEW_ENT_RGB - 1;
+					}
+				}
 			}
 			else if ( !Q_stricmp( token, "oneMinusVertex" ) )
 			{

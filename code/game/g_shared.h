@@ -230,6 +230,7 @@ public:
 
 	//Fields to apply to entire model set, individual model's equivalents will modify this value
 	byte	customRGBA[4];//Red Green Blue, 0 = don't apply
+	byte	newCustomRGBA[MAX_NEW_ENT_RGB][4];
 
 	//Allow up to 4 PCJ lookup values to be stored here.
 	//The resolve to configstrings which contain the name of the
