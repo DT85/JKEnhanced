@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // tr_init.c -- functions that are not called every frame
 
 #include "tr_local.h"
+#include "tr_stl.h"
 //#include "ghoul2/g2_local.h"
 #include "tr_cache.h"
 #include "tr_allocator.h"
@@ -142,7 +143,7 @@ cvar_t  *r_pshadowDist;
 cvar_t  *r_imageUpsample;
 cvar_t  *r_imageUpsampleMaxSize;
 cvar_t  *r_imageUpsampleType;
-//cvar_t  *r_genNormalMaps;
+cvar_t  *r_genNormalMaps;
 cvar_t  *r_forceSun;
 cvar_t  *r_forceSunMapLightScale;
 cvar_t  *r_forceSunLightScale;
@@ -1427,7 +1428,7 @@ void R_Register(void)
 	r_imageUpsample = ri.Cvar_Get("r_imageUpsample", "0", CVAR_ARCHIVE | CVAR_LATCH);
 	r_imageUpsampleMaxSize = ri.Cvar_Get("r_imageUpsampleMaxSize", "1024", CVAR_ARCHIVE | CVAR_LATCH);
 	r_imageUpsampleType = ri.Cvar_Get("r_imageUpsampleType", "1", CVAR_ARCHIVE | CVAR_LATCH);
-	//r_genNormalMaps = ri.Cvar_Get("r_genNormalMaps", "0", CVAR_ARCHIVE | CVAR_LATCH);
+	r_genNormalMaps = ri.Cvar_Get("r_genNormalMaps", "0", CVAR_ARCHIVE | CVAR_LATCH);
 
 	r_forceSun = ri.Cvar_Get("r_forceSun", "0", CVAR_CHEAT);
 	r_forceSunMapLightScale = ri.Cvar_Get("r_forceSunMapLightScale", "1.0", CVAR_CHEAT);
@@ -1694,6 +1695,8 @@ void R_Init(void) {
 
 	ri.Printf(PRINT_ALL, "----- R_Init -----\n");
 
+	ShaderEntryPtrs_Clear();
+
 	// clear all our internal state
 	Com_Memset(&tr, 0, sizeof(tr));
 	Com_Memset(&backEnd, 0, sizeof(backEnd));
@@ -1762,19 +1765,19 @@ void R_Init(void) {
 		RE_SetLightStyle(i, -1);
 	}
 
-	//R_InitImagesPool();
+	R_InitImagesPool();
 
 	InitOpenGL();
-
-	R_InitImages();
 
 	R_InitVBOs();
 
 	R_InitBackEndFrameData();
+	R_InitImages();
 	
 	FBO_Init();
 
 	int shadersStartTime = GLSL_BeginLoadGPUShaders();
+
 
 	R_InitShaders();
 

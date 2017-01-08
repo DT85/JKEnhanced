@@ -45,8 +45,8 @@ Extends the size of the images pool allocator
 */
 static void R_ExtendImagesPool()
 {
-	ImagesPool *pool = (ImagesPool *)ri.Malloc(sizeof(*pool), TAG_IMAGE_T, qtrue, 0);
-	image_t *freeImages = (image_t *)ri.Malloc(sizeof(*freeImages) * NUM_IMAGES_PER_POOL_ALLOC, TAG_IMAGE_T, qtrue, 0);
+	ImagesPool *pool = (ImagesPool *)R_Malloc(sizeof(*pool), TAG_TEMP_WORKSPACE);
+	image_t *freeImages = (image_t *)R_Malloc(sizeof(*freeImages) * NUM_IMAGES_PER_POOL_ALLOC, TAG_IMAGE_T, qtrue);
 
 	for (int i = 0; i < (NUM_IMAGES_PER_POOL_ALLOC - 1); i++)
 	{
@@ -1319,7 +1319,7 @@ static void R_MipMap2(byte *in, int inWidth, int inHeight) {
 
 	outWidth = inWidth >> 1;
 	outHeight = inHeight >> 1;
-	temp = (unsigned int *)ri.Malloc(outWidth * outHeight * 4, TAG_IMAGE_T, qtrue, 0);
+	temp = (unsigned int *)R_Malloc(outWidth * outHeight * 4, TAG_TEMP_WORKSPACE, qfalse);
 
 	inWidthMask = inWidth - 1;
 	inHeightMask = inHeight - 1;
@@ -1354,7 +1354,7 @@ static void R_MipMap2(byte *in, int inWidth, int inHeight) {
 	}
 
 	Com_Memcpy(in, temp, outWidth * outHeight * 4);
-	ri.Z_Free(temp);
+	R_Free(temp);
 }
 
 
@@ -1366,7 +1366,7 @@ static void R_MipMapsRGB(byte *in, int inWidth, int inHeight)
 
 	outWidth = inWidth >> 1;
 	outHeight = inHeight >> 1;
-	temp = (byte *)ri.Malloc(outWidth * outHeight * 4, TAG_IMAGE_T, qtrue, 0);
+	temp = (byte *)R_Malloc(outWidth * outHeight * 4, TAG_TEMP_WORKSPACE, qfalse);
 
 	for (i = 0; i < outHeight; i++) {
 		byte *outbyte = temp + (i          * outWidth) * 4;
@@ -1396,7 +1396,7 @@ static void R_MipMapsRGB(byte *in, int inWidth, int inHeight)
 	}
 
 	Com_Memcpy(in, temp, outWidth * outHeight * 4);
-	ri.Z_Free(temp);
+	R_Free(temp);
 }
 
 /*
@@ -1632,7 +1632,7 @@ static void RawImage_ScaleToPower2(byte **data, int *inout_width, int *inout_hei
 		int finalwidth, finalheight;
 		//int startTime, endTime;
 
-		//startTime = ri.Milliseconds();
+		//startTime = ri->Milliseconds();
 
 		finalwidth = scaled_width << r_imageUpsample->integer;
 		finalheight = scaled_height << r_imageUpsample->integer;
@@ -1649,7 +1649,7 @@ static void RawImage_ScaleToPower2(byte **data, int *inout_width, int *inout_hei
 			finalheight >>= 1;
 		}
 
-		*resampledBuffer = (byte *)ri.Malloc(finalwidth * finalheight * 4, TAG_IMAGE_T, qtrue, 0);
+		*resampledBuffer = (byte *)R_Malloc(finalwidth * finalheight * 4, TAG_TEMP_WORKSPACE, qfalse);
 
 		if (scaled_width != width || scaled_height != height)
 		{
@@ -1690,7 +1690,7 @@ static void RawImage_ScaleToPower2(byte **data, int *inout_width, int *inout_hei
 		}
 
 
-		//endTime = ri.Milliseconds();
+		//endTime = ri->Milliseconds();
 
 		//ri.Printf(PRINT_ALL, "upsampled %dx%d to %dx%d in %dms\n", width, height, scaled_width, scaled_height, endTime - startTime);
 
@@ -1701,7 +1701,7 @@ static void RawImage_ScaleToPower2(byte **data, int *inout_width, int *inout_hei
 	else if (scaled_width != width || scaled_height != height) {
 		if (data && resampledBuffer)
 		{
-			*resampledBuffer = (byte *)ri.Malloc(scaled_width * scaled_height * 4, TAG_IMAGE_T, qtrue, 0);
+			*resampledBuffer = (byte *)R_Malloc(scaled_width * scaled_height * 4, TAG_TEMP_WORKSPACE, qfalse);
 			ResampleTexture(*data, width, height, *resampledBuffer, scaled_width, scaled_height);
 			*data = *resampledBuffer;
 		}
@@ -2110,7 +2110,7 @@ static void Upload32(byte *data, int width, int height, imgType_t type, int flag
 		RawImage_ScaleToPower2(&data, &width, &height, &scaled_width, &scaled_height, type, flags, &resampledBuffer);
 	}
 
-	scaledBuffer = (byte *)ri.Malloc(sizeof(unsigned) * scaled_width * scaled_height, TAG_IMAGE_T, qtrue, 0);
+	scaledBuffer = (byte *)R_Malloc(sizeof(unsigned) * scaled_width * scaled_height, TAG_TEMP_WORKSPACE, qfalse);
 
 	//
 	// scan the texture for each channel's max values
@@ -2229,9 +2229,9 @@ done:
 	GL_CheckErrors();
 
 	if (scaledBuffer != 0)
-		ri.Z_Free(scaledBuffer);
+		R_Free(scaledBuffer);
 	if (resampledBuffer != 0)
-		ri.Z_Free(resampledBuffer);
+		R_Free(resampledBuffer);
 }
 
 
@@ -2503,7 +2503,7 @@ void R_UpdateSubImage(image_t *image, byte *pic, int x, int y, int width, int he
 
 	RawImage_ScaleToPower2(&pic, &width, &height, &scaled_width, &scaled_height, image->type, image->flags, &resampledBuffer);
 
-	scaledBuffer = (byte *)ri.Malloc(sizeof(unsigned) * scaled_width * scaled_height, TAG_IMAGE_T, qtrue, 0);
+	scaledBuffer = (byte *)R_Malloc(sizeof(unsigned) * scaled_width * scaled_height, TAG_TEMP_WORKSPACE, qfalse);
 
 	GL_SelectTexture(image->TMU);
 	GL_Bind(image);
@@ -2565,9 +2565,112 @@ done:
 	GL_CheckErrors();
 
 	if (scaledBuffer != 0)
-		ri.Z_Free(scaledBuffer);
+		R_Free(scaledBuffer);
 	if (resampledBuffer != 0)
-		ri.Z_Free(resampledBuffer);
+		R_Free(resampledBuffer);
+}
+
+static void R_CreateNormalMap(const char *name, byte *pic, int width, int height, int flags)
+{
+	char normalName[MAX_QPATH];
+	image_t *normalImage;
+	int normalWidth, normalHeight;
+	int normalFlags;
+
+	normalFlags = (flags & ~(IMGFLAG_GENNORMALMAP | IMGFLAG_SRGB)) | IMGFLAG_NOLIGHTSCALE;
+
+	COM_StripExtension(name, normalName, MAX_QPATH);
+	Q_strcat(normalName, MAX_QPATH, "_n");
+
+	// find normalmap in case it's there
+	normalImage = R_FindImageFile(normalName, IMGTYPE_NORMAL, normalFlags);
+
+	// if not, generate it
+	if (normalImage == NULL)
+	{
+		byte *normalPic;
+		int x, y;
+
+		normalWidth = width;
+		normalHeight = height;
+		normalPic = (byte *)R_Malloc(width * height * 4, TAG_TEMP_WORKSPACE);
+		RGBAtoNormal(pic, normalPic, width, height, (qboolean)(flags & IMGFLAG_CLAMPTOEDGE));
+
+#if 1
+		// Brighten up the original image to work with the normal map
+		RGBAtoYCoCgA(pic, pic, width, height);
+		for (y = 0; y < height; y++)
+		{
+			byte *picbyte = pic + y * width * 4;
+			byte *normbyte = normalPic + y * width * 4;
+			for (x = 0; x < width; x++)
+			{
+				int div = MAX(normbyte[2] - 127, 16);
+				picbyte[0] = CLAMP(picbyte[0] * 128 / div, 0, 255);
+				picbyte += 4;
+				normbyte += 4;
+			}
+		}
+		YCoCgAtoRGBA(pic, pic, width, height);
+#else
+		// Blur original image's luma to work with the normal map
+		{
+			byte *blurPic;
+
+			RGBAtoYCoCgA(pic, pic, width, height);
+			blurPic = ri.Malloc(width * height);
+
+			for (y = 1; y < height - 1; y++)
+			{
+				byte *picbyte = pic + y * width * 4;
+				byte *blurbyte = blurPic + y * width;
+
+				picbyte += 4;
+				blurbyte += 1;
+
+				for (x = 1; x < width - 1; x++)
+				{
+					int result;
+
+					result = *(picbyte - (width + 1) * 4) + *(picbyte - width * 4) + *(picbyte - (width - 1) * 4) +
+						*(picbyte - 1 * 4) + *(picbyte)+*(picbyte + 1 * 4) +
+						*(picbyte + (width - 1) * 4) + *(picbyte + width * 4) + *(picbyte + (width + 1) * 4);
+
+					result /= 9;
+
+					*blurbyte = result;
+					picbyte += 4;
+					blurbyte += 1;
+				}
+			}
+
+			// FIXME: do borders
+
+			for (y = 1; y < height - 1; y++)
+			{
+				byte *picbyte = pic + y * width * 4;
+				byte *blurbyte = blurPic + y * width;
+
+				picbyte += 4;
+				blurbyte += 1;
+
+				for (x = 1; x < width - 1; x++)
+				{
+					picbyte[0] = *blurbyte;
+					picbyte += 4;
+					blurbyte += 1;
+				}
+			}
+
+			ri->Free(blurPic);
+
+			YCoCgAtoRGBA(pic, pic, width, height);
+		}
+#endif
+
+		R_CreateImage(normalName, normalPic, normalWidth, normalHeight, IMGTYPE_NORMAL, normalFlags, 0);
+		R_Free(normalPic);
+	}
 }
 
 /*
@@ -2578,9 +2681,6 @@ Finds or loads the given image.
 Returns NULL if it fails, not a default image.
 ==============
 */
-
-char previous_name_loaded[256];
-
 image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 {
 	image_t	*image;
@@ -2588,7 +2688,7 @@ image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 	byte	*pic;
 	long	hash;
 
-	if (!name || ri.Cvar_VariableIntegerValue("dedicated")) {
+	if (!name) {
 		return NULL;
 	}
 
@@ -2617,14 +2717,14 @@ image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 		return NULL;
 	}
 
-	/*if (r_normalMapping->integer && !(type == IMGTYPE_NORMAL) &&
+	if (r_normalMapping->integer && !(type == IMGTYPE_NORMAL) &&
 		(flags & IMGFLAG_PICMIP) && (flags & IMGFLAG_MIPMAP) && (flags & IMGFLAG_GENNORMALMAP))
 	{
 		R_CreateNormalMap(name, pic, width, height, flags);
-	}*/
+	}
 
 	image = R_CreateImage(name, pic, width, height, type, flags, 0);
-	ri.Z_Free(pic);
+	R_Free(pic);
 
 	return image;
 }
@@ -2643,8 +2743,8 @@ static void R_CreateDlightImage(void) {
 	R_LoadImage("gfx/2d/dlight", &pic, &width, &height);
 	if (pic)
 	{
-		tr.dlightImage = R_CreateImage("*dlight", pic, width, height, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE, 0);
-		ri.Z_Free(pic);
+		tr.dlightImage = R_CreateImage("*dlight", pic, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, 0);
+		R_Free(pic);
 	}
 	else
 	{	// if we dont get a successful load
@@ -2672,7 +2772,7 @@ static void R_CreateDlightImage(void) {
 				data[y][x][3] = 255;
 			}
 		}
-		tr.dlightImage = R_CreateImage("*dlight", (byte *)data, DLIGHT_SIZE, DLIGHT_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE, 0);
+		tr.dlightImage = R_CreateImage("*dlight", (byte *)data, DLIGHT_SIZE, DLIGHT_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, 0);
 	}
 }
 
@@ -2744,7 +2844,7 @@ static void R_CreateFogImage(void) {
 	float	d;
 	float	borderColor[4];
 
-	data = (byte *)ri.Malloc(FOG_S * FOG_T * 4, TAG_IMAGE_T, qtrue, 0);
+	data = (byte *)R_Malloc(FOG_S * FOG_T * 4, TAG_TEMP_WORKSPACE, qfalse);
 
 	// S is distance, T is depth
 	for (x = 0; x<FOG_S; x++) {
@@ -2761,7 +2861,7 @@ static void R_CreateFogImage(void) {
 	// the border color at the edges.  OpenGL 1.2 has clamp-to-edge, which does
 	// what we want.
 	tr.fogImage = R_CreateImage("*fog", (byte *)data, FOG_S, FOG_T, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE, 0);
-	ri.Z_Free(data);
+	R_Free(data);
 
 	borderColor[0] = 1.0;
 	borderColor[1] = 1.0;
@@ -2893,7 +2993,7 @@ void R_CreateBuiltinImages(void) {
 			sdata[2] = FloatToHalf(1.0f);
 			sdata[3] = FloatToHalf(1.0f);
 			p = &sdata[0];
-	}
+		}
 		else
 		{
 			data[0][0][0] = 0;
@@ -2906,7 +3006,7 @@ void R_CreateBuiltinImages(void) {
 		tr.calcLevelsImage = R_CreateImage("*calcLevels", (byte *)p, 1, 1, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
 		tr.targetLevelsImage = R_CreateImage("*targetLevels", (byte *)p, 1, 1, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
 		tr.fixedLevelsImage = R_CreateImage("*fixedLevels", (byte *)p, 1, 1, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
-}
+	}
 
 	for (x = 0; x < 2; x++)
 	{
@@ -3028,17 +3128,23 @@ void R_SetColorMappings(void) {
 }
 
 /*
-===============
-R_InitImages
-===============
+Initialise the images pool allocator
 */
-void	R_InitImages(void) {
+void R_InitImagesPool()
+{
 	Com_Memset(hashTable, 0, sizeof(hashTable));
 
 	imagesPool = NULL;
 	tr.imagesFreeList = NULL;
 	R_ExtendImagesPool();
+}
 
+/*
+===============
+R_InitImages
+===============
+*/
+void R_InitImages(void) {
 	// build brightness translation tables
 	R_SetColorMappings();
 
@@ -3065,8 +3171,8 @@ void R_DeleteTextures(void) {
 	while (imagesPool)
 	{
 		ImagesPool *pNext = imagesPool->pNext;
-		ri.Z_Free(imagesPool->pPool);
-		ri.Z_Free(imagesPool);
+		R_Free(imagesPool->pPool);
+		R_Free(imagesPool);
 
 		imagesPool = pNext;
 	}
@@ -3077,3 +3183,4 @@ void R_DeleteTextures(void) {
 	GL_SelectTexture(0);
 	qglBindTexture(GL_TEXTURE_2D, 0);
 }
+
