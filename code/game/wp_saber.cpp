@@ -11484,8 +11484,8 @@ void ForceLightningDamage( gentity_t *self, gentity_t *traceEnt, vec3_t dir, flo
 					
 					//randomise direction a bit
 					MakeNormalVectors(fwd, right, up);
-					VectorMA(fwd, random(), right, fwd);
-					VectorMA(fwd, random(), up, fwd);
+					VectorMA(fwd, Q_flrand(0.0f, 1.0f), right, fwd);
+					VectorMA(fwd, Q_flrand(0.0f, 1.0f), up, fwd);
 					VectorNormalize(fwd);
 					
 					VectorMA( traceEnt->client->ps.saber[0].blade[0].muzzlePoint, traceEnt->client->ps.saber[0].blade[0].length*Q_flrand(0, 1), traceEnt->client->ps.saber[0].blade[0].muzzleDir, end );//FIXME: pick a random blade?
