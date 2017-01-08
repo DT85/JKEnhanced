@@ -1,27 +1,27 @@
 version: 1.0.{build}
 
 branches:
-only:
-- master
-
+  only:
+  - master
+  
 os: Visual Studio 2013
 
 configuration: Release
 
 install:
 - cmd: >-
-if not exist build mkdir build
-
-cd build
-
-cmake -G "Visual Studio 12" -T v120_xp -DCMAKE_INSTALL_PREFIX=DESTDIR ..
-
+    if not exist build mkdir build
+    
+    cd build
+    
+    cmake -G "Visual Studio 12" -T v120_xp -DCMAKE_INSTALL_PREFIX=DESTDIR ..
+    
 build_script:
 - cmd: cmake --build . --target ALL_BUILD --config Release
 
 after_build:
-- cmd: cmake --build . --target INSTALL --config Release
-- cmd: 7z a jaenhanced-win32.zip DESTDIR/JediAcademy/*.exe DESTDIR/JediAcademy/jaenhanced/*.dll DESTDIR/JediAcademy/*.dll
-
+  - cmd: cmake --build . --target INSTALL --config Release
+  - cmd: 7z a jaenhanced-win32.zip DESTDIR/JediAcademy/*.exe DESTDIR/JediAcademy/jaenhanced/*.dll DESTDIR/JediAcademy/*.dll
+    
 artifacts:
-- path: build/jaenhanced-win32.zip
+ - path: build/jaenhanced-win32.zip

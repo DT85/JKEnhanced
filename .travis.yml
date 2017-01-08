@@ -1,49 +1,49 @@
 language: cpp
 
 addons:
-apt:
-packages:
-- libsdl2-dev
-- libjpeg-turbo8-dev
-- zlib1g-dev
-- libpng12-dev
+  apt:
+    packages:
+      - libsdl2-dev
+      - libjpeg-turbo8-dev
+      - zlib1g-dev
+      - libpng12-dev
 
 before_install:
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install sdl2 --universal; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install sdl2 --universal; fi
 
 script:
-- ./tools/travis-build.sh "${host:-native}" "${flavour:-Release}" $opts
+  - ./tools/travis-build.sh "${host:-native}" "${flavour:-Release}" $opts
 
 matrix:
-include:
-- os: linux
-dist: trusty
-sudo: required
-compiler: gcc
-- os: linux
-dist: trusty
-sudo: required
-compiler: clang
-- os: osx
-osx_image: xcode7.3
-compiler: clang
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      compiler: gcc
+    - os: linux
+      dist: trusty
+      sudo: required
+      compiler: clang
+    - os: osx
+      osx_image: xcode7.3
+      compiler: clang
 
 before_deploy:
-- export DEPLOY_FILE_NAME=jaenhanced_$TRAVIS_OS_NAME-$CC.zip
-- echo "zipping into $DEPLOY_FILE_NAME"
-- cd $(pwd)/build/install
-- zip -r $DEPLOY_FILE_NAME . -i \*
-- echo "deploying $DEPLOY_FILE_NAME to GitHub"
+  - export DEPLOY_FILE_NAME=jaenhanced_$TRAVIS_OS_NAME-$CC.zip
+  - echo "zipping into $DEPLOY_FILE_NAME"
+  - cd $(pwd)/build/install
+  - zip -r $DEPLOY_FILE_NAME . -i \*
+  - echo "deploying $DEPLOY_FILE_NAME to GitHub"
 
 deploy:
-provider: releases
-api_key: $GITHUB_KEY
-overwrite: true
-file: "$DEPLOY_FILE_NAME"
-skip_cleanup: true
-on:
-tags: true
+  provider: releases
+  api_key: $GITHUB_KEY
+  overwrite: true
+  file: "$DEPLOY_FILE_NAME"
+  skip_cleanup: true
+  on:
+    tags: true
 
 
 #dist: trusty
