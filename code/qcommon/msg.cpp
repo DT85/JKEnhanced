@@ -1152,7 +1152,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 	}
 	if ( powerupbits ) {
 		MSG_WriteBits( msg, 1, 1 );	// changed
-		MSG_WriteShort( msg, powerupbits );
+		MSG_WriteLong( msg, powerupbits );
 		for (i=0 ; i<MAX_POWERUPS ; i++)
 			if (powerupbits & (1<<i) )
 				MSG_WriteLong( msg, to->powerups[i] );
@@ -1288,7 +1288,7 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 	// parse powerups
 	if ( MSG_ReadBits( msg, 1 ) ) {
 		LOG("PS_POWERUPS");
-		bits = MSG_ReadShort (msg);
+		bits = MSG_ReadLong (msg);
 		for (i=0 ; i<MAX_POWERUPS ; i++) {
 			if (bits & (1<<i) ) {
 				to->powerups[i] = MSG_ReadLong(msg);
