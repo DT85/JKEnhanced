@@ -3452,8 +3452,8 @@ static void UI_BuildPlayerModel_List( qboolean inGameLoad )
 			char filelist[2048];
 			playerSpeciesInfo_t *species = NULL;
 
-			std::vector<char> buffer(filelen + 1);
-			ui.FS_Read(&buffer[0], filelen, f);
+			char buffer[2048];
+			ui.FS_Read(&buffer, filelen, f);
 			ui.FS_FCloseFile(f);
 
 			buffer[filelen] = 0;
@@ -3468,7 +3468,7 @@ static void UI_BuildPlayerModel_List( qboolean inGameLoad )
 			memset(species, 0, sizeof(playerSpeciesInfo_t));
 			Q_strncpyz( species->Name, dirptr, MAX_QPATH );
 
-			if (!UI_ParseColorData(buffer.data(),*species))
+			if (!UI_ParseColorData(buffer,*species))
 			{
 				ui.Printf( "UI_BuildPlayerModel_List: Errors parsing '%s'\n", fpath );
 			}
@@ -3492,7 +3492,7 @@ static void UI_BuildPlayerModel_List( qboolean inGameLoad )
 				ui.FS_Read(&buffer, filelen, f);
 				ui.FS_FCloseFile(f);
 				buffer[filelen] = 0;	//ensure trailing NULL
-				if (!UI_ParseColor2Data(buffer.data(),*species))
+				if (!UI_ParseColor2Data(buffer,*species))
 				{
 					ui.Printf( "UI_BuildPlayerModel_List: Errors parsing '%s'\n", fpath );
 				}
@@ -3539,7 +3539,7 @@ static void UI_BuildPlayerModel_List( qboolean inGameLoad )
 							ui.FS_Read(&buffer, headSwapFileLen, f);
 							ui.FS_FCloseFile(f);
 							buffer[headSwapFileLen] = 0;
-							UI_ParseHeadSwapData(buffer.data(),*species);
+							UI_ParseHeadSwapData(buffer,*species);
 						}
 					} else
 					if (Q_stricmpn(skinname,"torso_",6) == 0)
