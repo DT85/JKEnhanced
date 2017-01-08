@@ -9057,6 +9057,25 @@ static void PM_FinishWeaponChange( void ) {
 	}
 	else
 	{//switched away from saber
+	 //DT EDIT: Ghoul2 viewmodels - START
+		if (pm->gent)
+		{
+			// remove the sabre if we had it.
+			G_RemoveWeaponModels(pm->gent);
+			if (weaponData[weapon].weaponMdl[0])
+			{
+				//might be NONE, so check if it has a model
+				G_CreateG2AttachedWeaponModel(pm->gent, weaponData[weapon].weaponMdl, pm->gent->handRBolt, 0);
+			}
+
+			else if (weaponData[weapon].worldModel[0])
+			{
+				//might be NONE, so check if it has a model
+				G_CreateG2AttachedWeaponModel(pm->gent, weaponData[weapon].worldModel, pm->gent->handRBolt, 0);
+			}
+		}
+		//DT EDIT: Ghoul2 viewmodels - END
+
 		if ( pm->gent )
 		{
 			// remove the sabre if we had it.

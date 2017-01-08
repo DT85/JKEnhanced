@@ -1822,6 +1822,48 @@ typedef enum //# animNumber_e
 
 #define SABER_ANIM_GROUP_SIZE (BOTH_A2_T__B_ - BOTH_A1_T__B_)
 
+//DT EDIT: Ghoul2 viewmodels - START
+/*
+======================================
+Viewmodel Animations
+======================================
+*/
+
+typedef enum {
+	VM_READY,
+	VM_IDLE,
+	VM_RAISE,
+	VM_LOWER,
+	VM_FIRE,
+
+	VM_FPUSH,
+	VM_FPULL,
+	VM_FGRIP,
+	VM_FGRIP_HOLD,
+	VM_FGRIP_RELEASE,
+	VM_FGRIP_THROW,
+	VM_FHEAL_QUICK,
+	VM_FHEAL_START,
+	VM_FHEAL_STOP,
+	VM_FLIGHTNING,
+	VM_FLIGHTNING_START,
+	VM_FLIGHTNING_HOLD,
+	VM_FLIGHTNING_RELEASE,
+	VM_FRESISTPUSH,
+	VM_FMINDTRICK1,
+	VM_FMINDTRICK2,
+
+
+	MAX_VIEWMODEL_ANIMATIONS
+};
+
+typedef struct {
+	char			filename[MAX_QPATH];
+	animation_t		animations[MAX_VIEWMODEL_ANIMATIONS];
+} viewModelAnimSet_t;
+
+extern stringID_table_t vmAnimTable[MAX_VIEWMODEL_ANIMATIONS + 1];
+//DT EDIT: Ghoul2 viewmodels - END
 
 #endif// #ifndef __ANIMS_H__
 
