@@ -13771,22 +13771,22 @@ static void PM_Weapon( void )
 						{
 							if (pm->cmd.buttons & BUTTON_ATTACK)
 							{
-								anim = BOTH_GAMM_ATTACK2;
+								anim = BOTH_GAM_ATTACK2;
 							}
 							else
 							{
-								anim = BOTH_GAMM_ATTACK1;
+								anim = BOTH_GAM_ATTACK1;
 							}
 						}
 						else
 						{
-							anim = BOTH_GAMM_ATTACK2;
+							anim = BOTH_GAM_ATTACK2;
 						}
 					}
 					{// npc
 						if (pm->cmd.buttons & BUTTON_ALT_ATTACK)
 						{
-							anim = BOTH_GAMM_ATTACK1;
+							anim = BOTH_GAM_ATTACK1;
 							if (pm->ps->torsoAnimTimer>0)
 							{
 								flags &= ~SETANIM_FLAG_RESTART;
@@ -13794,7 +13794,7 @@ static void PM_Weapon( void )
 						}
 						else
 						{
-							anim = PM_PickAnim(pm->gent, BOTH_GAMM_ATTACK2, BOTH_GAMM_ATTACK1);
+							anim = PM_PickAnim(pm->gent, BOTH_GAM_ATTACK2, BOTH_GAM_ATTACK1);
 						}
 					}
 					if (VectorCompare(pm->ps->velocity, vec3_origin) && pm->cmd.upmove >= 0)

@@ -1616,8 +1616,8 @@ typedef enum //# animNumber_e
 	BOTH_TUSKENTAUNT1,
 
 	//DT EDIT: DF2 - START - Added Gamorrean weapon anims
-	BOTH_GAMM_ATTACK1,
-	BOTH_GAMM_ATTACK2,
+	BOTH_GAM_ATTACK1,
+	BOTH_GAM_ATTACK2,
 	//DT EDIT: DF2 - END
 
 	BOTH_COWER1_START,		//# cower start
