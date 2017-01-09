@@ -3251,7 +3251,7 @@ static void R_MergeLeafSurfaces(world_t *worldData)
 		numIboIndexes = 0;
 
 		// allocate indexes
-   		iboIndexes = outIboIndexes = (glIndex_t*)R_Malloc(numIndexes * sizeof(*outIboIndexes), TAG_BSP);
+   		iboIndexes = outIboIndexes = (glIndex_t*)R_Malloc(numIndexes * sizeof(*outIboIndexes), TAG_BSP, qfalse);
 
 		// Merge surfaces (indexes) and calculate bounds
 		ClearBounds(bounds[0], bounds[1]);

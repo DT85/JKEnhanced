@@ -433,7 +433,7 @@ static const char *TruncateGLExtensionsString(const char *extensionsString, int 
 		extensionsLen = p - extensionsString - 1;
 	}
 
-	truncatedExtensions = (char *)R_Malloc(extensionsLen + 1, TAG_TEMP_WORKSPACE, qfalse);
+	truncatedExtensions = (char *)R_Malloc(extensionsLen + 1, TAG_GP2, qfalse);
 	Q_strncpyz(truncatedExtensions, extensionsString, extensionsLen + 1);
 
 	return truncatedExtensions;
@@ -450,7 +450,7 @@ static const char *GetGLExtensionsString()
 		extensionStringLen += strlen((const char *)qglGetStringi(GL_EXTENSIONS, i)) + 1;
 	}
 
-	char *extensionString = (char *)R_Malloc(extensionStringLen + 1, TAG_TEMP_WORKSPACE, qfalse);
+	char *extensionString = (char *)R_Malloc(extensionStringLen + 1, TAG_GP2, qfalse);
 	char *p = extensionString;
 	for (int i = 0; i < numExtensions; i++)
 	{
@@ -1870,8 +1870,6 @@ extern qboolean gG2_GBMUseSPMethod;
 
 //static float GetDistanceCull(void) { return tr.distanceCull; }
 
-extern void R_SVModelInit(void); //tr_model.cpp
-
 /*static void GetRealRes(int *w, int *h) {
 	*w = glConfig.vidWidth;
 	*h = glConfig.vidHeight;
@@ -1972,7 +1970,6 @@ GetRefAPI
 
 @@@@@@@@@@@@@@@@@@@@@
 */
-extern void R_SVModelInit(void); //tr_model.cpp
 extern qboolean R_inPVS(vec3_t p1, vec3_t p2);
 extern void G2API_AnimateG2Models(CGhoul2Info_v &ghoul2, int AcurrentTime, CRagDollUpdateParams *params);
 extern qboolean G2API_GetRagBonePos(CGhoul2Info_v &ghoul2, const char *boneName, vec3_t pos, vec3_t entAngles, vec3_t entPos, vec3_t entScale);

@@ -4688,7 +4688,26 @@ static void ScanAndLoadShaderFiles(void)
 	{
 		char filename[MAX_QPATH];
 
-		Com_sprintf(filename, sizeof(filename), "shaders/%s", shaderFiles[i]);
+		// look for a .mtr file first
+		{
+			char *ext;
+			Com_sprintf(filename, sizeof(filename), "shaders/%s", shaderFiles[i]);
+			if ((ext = strrchr(filename, '.')))
+			{
+				strcpy(ext, ".mtr");
+			}
+
+			if (ri.FS_ReadFile(filename, NULL) <= 0)
+			{
+				Com_sprintf(filename, sizeof(filename), "shaders/%s", shaderFiles[i]);			
+			}
+
+			if (!Q_stricmp(ext, ".mtr"))
+			{
+				ri.Printf(PRINT_ALL, "...loading MTR shader '%s'\n", filename);
+			}
+		}
+
 		//ri.Printf( PRINT_DEVELOPER, "...loading '%s'\n", filename );
 		// Looks like stripping out crap in the shaders will save about 200k
 		summand = ri.FS_ReadFile(filename, (void **)&buffers[i]);

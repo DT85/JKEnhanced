@@ -794,7 +794,7 @@ static qboolean R_LoadMD3(model_t * mod, int lod, void *buffer, const char *modN
 			ofs_st = dataSize;
 			dataSize += surf->numVerts * sizeof(*texcoords);
 
-			data = (byte *)R_Malloc(dataSize, TAG_MODEL_MD3);
+			data = (byte *)R_Malloc(dataSize, TAG_MODEL_MD3, qfalse);
 
 			verts = (vec3_t *)(data + ofs_xyz);
 			normals = (uint32_t *)(data + ofs_normal);
@@ -1231,11 +1231,6 @@ void RE_BeginRegistration(glconfig_t *glconfigOut) {
 }
 
 //=============================================================================
-
-void R_SVModelInit()
-{
-	R_ModelInit();
-}
 
 /*
 ===============

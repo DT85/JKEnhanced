@@ -45,7 +45,7 @@ Extends the size of the images pool allocator
 */
 static void R_ExtendImagesPool()
 {
-	ImagesPool *pool = (ImagesPool *)R_Malloc(sizeof(*pool), TAG_TEMP_WORKSPACE);
+	ImagesPool *pool = (ImagesPool *)R_Malloc(sizeof(*pool), TAG_GP2, qfalse);
 	image_t *freeImages = (image_t *)R_Malloc(sizeof(*freeImages) * NUM_IMAGES_PER_POOL_ALLOC, TAG_IMAGE_T, qtrue);
 
 	for (int i = 0; i < (NUM_IMAGES_PER_POOL_ALLOC - 1); i++)
@@ -2570,6 +2570,7 @@ done:
 		R_Free(resampledBuffer);
 }
 
+
 static void R_CreateNormalMap(const char *name, byte *pic, int width, int height, int flags)
 {
 	char normalName[MAX_QPATH];
@@ -2593,7 +2594,7 @@ static void R_CreateNormalMap(const char *name, byte *pic, int width, int height
 
 		normalWidth = width;
 		normalHeight = height;
-		normalPic = (byte *)R_Malloc(width * height * 4, TAG_TEMP_WORKSPACE);
+		normalPic = (byte *)R_Malloc(width * height * 4, TAG_GP2, qfalse);
 		RGBAtoNormal(pic, normalPic, width, height, (qboolean)(flags & IMGFLAG_CLAMPTOEDGE));
 
 #if 1
@@ -2673,6 +2674,7 @@ static void R_CreateNormalMap(const char *name, byte *pic, int width, int height
 	}
 }
 
+
 /*
 ===============
 R_FindImageFile
@@ -2717,6 +2719,7 @@ image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 		return NULL;
 	}
 
+	
 	if (r_normalMapping->integer && !(type == IMGTYPE_NORMAL) &&
 		(flags & IMGFLAG_PICMIP) && (flags & IMGFLAG_MIPMAP) && (flags & IMGFLAG_GENNORMALMAP))
 	{
