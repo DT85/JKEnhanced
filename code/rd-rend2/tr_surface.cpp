@@ -2173,6 +2173,73 @@ static void RB_SurfaceSprites( srfSprites_t *surf )
 	qglDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0, surf->numSprites);
 }
 
+void RB_Refractive(srfVBOMDVMesh_t * surface)
+{
+	GLimp_LogComment("--- RB_Refractive ---\n");
+	
+	if (!r_refraction->integer || !surface->vbo || !surface->ibo)
+	{
+		return;
+	}
+	
+	RB_EndSurface();
+	
+	R_BindVBO(surface->vbo);
+	R_BindIBO(surface->ibo);
+	
+	shader_t *shader = tess.shader;
+	shaderStage_t *firstStage = shader->stages[0];
+	
+	DrawItem newRefractiveItem;
+	newRefractiveItem.program = &tr.refractionShader;
+	newRefractiveItem.stateBits = firstStage->stateBits;
+	newRefractiveItem.cullType = CT_FRONT_SIDED;
+	//newRefractiveItem.maxDepthRange = 1.0f;
+	newRefractiveItem.depthRange.maxDepth = 1.0f;
+	newRefractiveItem.numSamplerBindings = 2;
+	newRefractiveItem.ibo = surface->ibo;
+	
+	VertexArraysProperties vertexArrays;
+	vertexAttribute_t attribs[ATTR_INDEX_MAX] = {};
+	
+	CalculateVertexArraysFromVBO(shader->vertexAttribs, surface->vbo, &vertexArrays);
+	GL_VertexArraysToAttribs(attribs, ARRAY_LEN(attribs), &vertexArrays);
+	newRefractiveItem.numAttributes = vertexArrays.numVertexArrays;
+	newRefractiveItem.attributes = attribs;
+	
+	UniformDataWriter uniformDataWriter;
+	uniformDataWriter.Start(&tr.refractionShader);
+	uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
+	uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELMATRIX, backEnd.ori.modelMatrix);
+	uniformDataWriter.SetUniformVec3(UNIFORM_VIEWORIGIN, backEnd.viewParms.ori.origin);
+	uniformDataWriter.SetUniformVec3(UNIFORM_LOCALVIEWORIGIN, backEnd.ori.viewOrigin);
+	
+	vec4_t viewInfo;
+	float zmax = backEnd.viewParms.zFar;
+	float zmin = r_znear->value;
+	float x = tr.refractiveImage->width;
+	float y = tr.refractiveImage->height;
+	VectorSet4(viewInfo, zmax / zmin, zmax, x, y);
+	uniformDataWriter.SetUniformVec4(UNIFORM_VIEWINFO, viewInfo);
+	
+	newRefractiveItem.uniformData = uniformDataWriter.Finish(*backEndData->perFrameMemory);
+	
+	SamplerBindingsWriter samplerBindingsWriter;
+	samplerBindingsWriter.AddAnimatedImage(&firstStage->bundle[TB_DIFFUSEMAP], TB_COLORMAP);
+	samplerBindingsWriter.AddStaticImage(tr.renderImage, TB_DIFFUSEMAP);
+	newRefractiveItem.samplerBindings = samplerBindingsWriter.Finish(
+	*backEndData->perFrameMemory, (int *)&newRefractiveItem.numSamplerBindings);
+	
+	newRefractiveItem.draw.primitiveType = GL_TRIANGLES;
+	newRefractiveItem.draw.numInstances = 1;
+	
+	newRefractiveItem.draw.type = DRAW_COMMAND_INDEXED;
+	newRefractiveItem.draw.params.indexed.firstIndex = (glIndex_t)0;
+	newRefractiveItem.draw.params.indexed.numIndices = surface->numIndexes;
+	
+	RB_AddDrawItem(NULL, 0, newRefractiveItem);
+}
+
 void (*rb_surfaceTable[SF_NUM_SURFACE_TYPES])( void *) = {
 	(void(*)(void*))RB_SurfaceBad,			// SF_BAD, 
 	(void(*)(void*))RB_SurfaceSkip,			// SF_SKIP, 
@@ -2189,4 +2256,5 @@ void (*rb_surfaceTable[SF_NUM_SURFACE_TYPES])( void *) = {
 	(void(*)(void*))RB_SurfaceVBOMesh,	    // SF_VBO_MESH,
 	(void(*)(void*))RB_SurfaceVBOMDVMesh,   // SF_VBO_MDVMESH
 	(void(*)(void*))RB_SurfaceSprites,      // SF_SPRITES
+	(void(*)(void*))RB_Refractive,			// SF_REFRACTIVE
 };

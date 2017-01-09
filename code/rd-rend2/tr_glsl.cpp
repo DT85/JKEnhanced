@@ -38,6 +38,7 @@ extern const GPUProgramDesc fallback_pshadowProgram;
 extern const GPUProgramDesc fallback_shadowfillProgram;
 extern const GPUProgramDesc fallback_shadowmaskProgram;
 extern const GPUProgramDesc fallback_ssaoProgram;
+extern const GPUProgramDesc fallback_refractionProgram;
 extern const GPUProgramDesc fallback_texturecolorProgram;
 extern const GPUProgramDesc fallback_tonemapProgram;
 extern const GPUProgramDesc fallback_dglow_downsampleProgram;
@@ -1677,6 +1678,17 @@ int GLSL_BeginLoadGPUShaders(void)
 
 
 	/////////////////////////////////////////////////////////////////////////////
+	programDesc = LoadProgramSource("refraction", allocator, fallback_refractionProgram);
+	attribs = ATTR_POSITION | ATTR_NORMAL | ATTR_TEXCOORD0;
+	
+	if (!GLSL_BeginLoadGPUShader(&tr.refractionShader, "refraction", attribs, qtrue, nullptr, *programDesc))
+	{
+		ri.Error(ERR_FATAL, "Could not load refraction shader!");
+	}
+	allocator.Reset();
+
+	
+	/////////////////////////////////////////////////////////////////////////////
 	programDesc = LoadProgramSource("ssao", allocator, fallback_ssaoProgram);
 	attribs = ATTR_POSITION | ATTR_TEXCOORD0;
 
@@ -2019,6 +2031,23 @@ void GLSL_EndLoadGPUShaders ( int startTime )
 	
 	numEtcShaders++;
 
+
+	if (!GLSL_EndLoadGPUShader(&tr.refractionShader))
+	{
+		ri.Error(ERR_FATAL, "Could not load refraction shader!");
+	}
+	
+	GLSL_InitUniforms(&tr.refractionShader);
+	
+	qglUseProgram(tr.refractionShader.program);
+	//GLSL_SetUniformInt(&tr.refractionShader, UNIFORM_SCREENDEPTHMAP, TB_COLORMAP);
+	qglUseProgram(0);
+	
+	GLSL_FinishGPUShader(&tr.refractionShader);
+	
+	numEtcShaders++;
+
+
 	if (!GLSL_EndLoadGPUShader(&tr.ssaoShader))
 	{
 		ri.Error(ERR_FATAL, "Could not load ssao shader!");
@@ -2164,6 +2193,7 @@ void GLSL_ShutdownGPUShaders(void)
 	for ( i = 0; i < 2; i++)
 		GLSL_DeleteGPUShader(&tr.calclevels4xShader[i]);
 
+	GLSL_DeleteGPUShader(&tr.refractionShader);
 	GLSL_DeleteGPUShader(&tr.shadowmaskShader);
 	GLSL_DeleteGPUShader(&tr.ssaoShader);
 

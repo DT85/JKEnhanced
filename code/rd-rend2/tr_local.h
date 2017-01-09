@@ -151,6 +151,7 @@ extern cvar_t  *r_forceAutoExposureMax;
 
 extern cvar_t  *r_srgb;
 
+extern cvar_t  *r_refraction;
 extern cvar_t  *r_depthPrepass;
 extern cvar_t  *r_ssao;
 
@@ -1440,6 +1441,7 @@ typedef enum {
 	SF_VBO_MESH,
 	SF_VBO_MDVMESH,
 	SF_SPRITES,
+	SF_REFRACTIVE,
 
 	SF_NUM_SURFACE_TYPES,
 	SF_MAX = 0x7fffffff			// ensures that sizeof( surfaceType_t ) == sizeof( int )
@@ -2139,6 +2141,9 @@ typedef struct {
 	trRefEntity_t	*currentEntity;
 	qboolean	skyRenderedThisView;	// flag for drawing sun
 
+	drawSurf_t*	refractiveSurfs[MAX_DRAWSURFS];
+	int			numRefractiveSurfs;
+
 	qboolean	projection2D;	// if qtrue, drawstretchpic doesn't need to change modes
 	float		color2D[4];
 	trRefEntity_t	entity2D;	// currentEntity will point at this when doing 2D rendering
@@ -2200,6 +2205,7 @@ typedef struct trGlobals_s {
 	image_t					*renderImage;
 	image_t					*glowImage;
 	image_t					*glowImageScaled[6];
+	image_t					*refractiveImage;
 	image_t					*sunRaysImage;
 	image_t					*renderDepthImage;
 	image_t					*pshadowMaps[MAX_DRAWN_PSHADOWS];
@@ -2217,6 +2223,7 @@ typedef struct trGlobals_s {
 	image_t					*textureDepthImage;
 
 	FBO_t					*renderFbo;
+	FBO_t					*refractiveFbo;
 	FBO_t					*glowFboScaled[6];
 	FBO_t					*msaaResolveFbo;
 	FBO_t					*sunRaysFbo;
@@ -2266,6 +2273,7 @@ typedef struct trGlobals_s {
 	shaderProgram_t fogShader[FOGDEF_COUNT];
 	shaderProgram_t dlightShader[DLIGHTDEF_COUNT];
 	shaderProgram_t lightallShader[LIGHTDEF_COUNT];
+	shaderProgram_t refractionShader;
 	shaderProgram_t shadowmapShader;
 	shaderProgram_t pshadowShader;
 	shaderProgram_t down4xShader;
@@ -2783,6 +2791,7 @@ void RB_CheckOverflow( int verts, int indexes );
 void R_DrawElementsVBO( int numIndexes, glIndex_t firstIndex, glIndex_t minIndex, glIndex_t maxIndex );
 void RB_StageIteratorGeneric( void );
 void RB_StageIteratorSky( void );
+void RB_DrawRefractive();
 
 void RB_AddQuadStamp( vec3_t origin, vec3_t left, vec3_t up, float color[4] );
 void RB_AddQuadStampExt( vec3_t origin, vec3_t left, vec3_t up, float color[4], float s1, float t1, float s2, float t2 );

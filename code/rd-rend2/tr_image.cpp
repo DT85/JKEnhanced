@@ -3026,6 +3026,11 @@ void R_CreateBuiltinImages(void) {
 		tr.hdrDepthImage = R_CreateImage("*hdrDepth", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_INTENSITY32F_ARB);
 	}
 
+	if (r_refraction->integer) 
+	{
+		tr.refractiveImage = R_CreateImage("*refractiveFbo", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, rgbFormat);		
+	}
+
 	if (r_shadows->integer == 4)
 	{
 		for (x = 0; x < MAX_DRAWN_PSHADOWS; x++)
