@@ -2093,10 +2093,6 @@ static const void	*RB_DrawSurfs( const void *data ) {
 		GL_SelectTexture(0);
 	}
 
-	if (r_refraction->integer && !(backEnd.viewParms.flags & VPF_SHADOWMAP) && !(backEnd.depthFill)) 
-	{
-	}
-
 	return (const void *)(cmd + 1);
 }
 
