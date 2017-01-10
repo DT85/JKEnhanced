@@ -264,6 +264,25 @@ void	R_AddPostProcessCmd( ) {
 	cmd->viewParms = tr.viewParms;
 }
 
+/*
+=============
+R_WorldEffectsCmd
+
+=============
+*/
+
+void RE_RenderWorldEffects(void)
+{
+	worldEffectsCommand_t	*cmd;
+
+	cmd = (worldEffectsCommand_t *)R_GetCommandBuffer(sizeof(*cmd));
+	if (!cmd) {
+		return;
+	}
+	cmd->commandId = RC_WORLD_EFFECTS;
+}
+
+
 qhandle_t R_BeginTimedBlockCmd( const char *name )
 {
 	beginTimedBlockCommand_t *cmd;

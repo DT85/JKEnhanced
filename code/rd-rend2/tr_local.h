@@ -2561,6 +2561,7 @@ void R_RenderDlightCubemaps(const refdef_t *fd);
 void R_RenderPshadowMaps(const refdef_t *fd);
 void R_RenderSunShadowMaps(const refdef_t *fd, int level);
 void R_RenderCubemapSide( int cubemapIndex, int cubemapSide, qboolean subscene );
+void RE_RenderWorldEffects( void );
 
 void R_AddMD3Surfaces( trRefEntity_t *e, int entityNum );
 void R_AddNullModelSurfaces( trRefEntity_t *e, int entityNum );
@@ -3268,6 +3269,10 @@ typedef struct endTimedBlockCommand_s {
 	qhandle_t timerHandle;
 } endTimedBlockCommand_t;
 
+typedef struct worldEffectsCommand_s {
+	int commandId;
+} worldEffectsCommand_t;
+
 typedef enum {
 	RC_END_OF_LIST,
 	RC_SET_COLOR,
@@ -3285,7 +3290,8 @@ typedef enum {
 	RC_CAPSHADOWMAP,
 	RC_POSTPROCESS,
 	RC_BEGIN_TIMED_BLOCK,
-	RC_END_TIMED_BLOCK
+	RC_END_TIMED_BLOCK,
+	RC_WORLD_EFFECTS
 } renderCommand_t;
 
 struct gpuTimer_t

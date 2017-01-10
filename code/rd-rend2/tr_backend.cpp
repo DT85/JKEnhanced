@@ -2638,6 +2638,21 @@ static const void *RB_EndTimedBlock( const void *data )
 	return (const void *)(cmd + 1);
 }
 
+const void	*RB_WorldEffects(const void *data)
+{
+	const worldEffectsCommand_t *cmd = (const worldEffectsCommand_t *)data;
+
+	// Always flush the tess buffer
+	if (tess.shader && tess.numIndexes)
+	{
+		RB_EndSurface();
+	}
+
+	ri.Printf(PRINT_ALL, "Weather? Where?\n");
+	//RB_RenderWorldEffects();
+
+	return (const void *)(cmd + 1);
+}
 
 /*
 ====================
@@ -2700,6 +2715,9 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			break;
 		case RC_END_TIMED_BLOCK:
 			data = RB_EndTimedBlock(data);
+			break;
+		case RC_WORLD_EFFECTS:
+			data = RB_WorldEffects(data);
 			break;
 		case RC_END_OF_LIST:
 		default:
