@@ -1164,12 +1164,6 @@ static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 				oldEntityNum = entityNum;
 			}
 
-			if (backEnd.currentEntity->e.renderfx & RF_DISTORTION) {
-				backEnd.refractiveSurfs[backEnd.numRefractiveSurfs] = drawSurf;
-				backEnd.numRefractiveSurfs++;
-				continue;
-			}
-
 			// add the triangles for this surface
 			rb_surfaceTable[*drawSurf->surface](drawSurf->surface);
 		}
@@ -1301,6 +1295,12 @@ static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 				}
 
 				oldEntityNum = entityNum;
+			}
+
+			if (backEnd.currentEntity->e.renderfx & RF_DISTORTION) {
+				backEnd.refractiveSurfs[backEnd.numRefractiveSurfs] = drawSurf;
+				backEnd.numRefractiveSurfs++;
+				continue;
 			}
 
 			// add the triangles for this surface
@@ -2091,10 +2091,6 @@ static const void	*RB_DrawSurfs( const void *data ) {
 		GL_BindToTMU(tr.cubemaps[backEnd.viewParms.targetFboCubemapIndex], TB_CUBEMAP);
 		qglGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 		GL_SelectTexture(0);
-	}
-
-	if (r_refraction->integer && !(backEnd.viewParms.flags & VPF_SHADOWMAP) && !(backEnd.depthFill)) 
-	{
 	}
 
 	return (const void *)(cmd + 1);

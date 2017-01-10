@@ -2193,8 +2193,8 @@ void RB_Refractive(srfVBOMDVMesh_t * surface)
 	DrawItem newRefractiveItem;
 	newRefractiveItem.program = &tr.refractionShader;
 	newRefractiveItem.stateBits = firstStage->stateBits;
-	newRefractiveItem.cullType = CT_FRONT_SIDED;
-	//newRefractiveItem.maxDepthRange = 1.0f;
+	newRefractiveItem.cullType = CT_TWO_SIDED;
+	newRefractiveItem.depthRange.minDepth = 0.0f;
 	newRefractiveItem.depthRange.maxDepth = 1.0f;
 	newRefractiveItem.numSamplerBindings = 2;
 	newRefractiveItem.ibo = surface->ibo;
@@ -2215,11 +2215,12 @@ void RB_Refractive(srfVBOMDVMesh_t * surface)
 	uniformDataWriter.SetUniformVec3(UNIFORM_LOCALVIEWORIGIN, backEnd.ori.viewOrigin);
 	
 	vec4_t viewInfo;
+	float alpha = (backEnd.currentEntity->e.shaderRGBA[3]/255.0f);
 	float zmax = backEnd.viewParms.zFar;
 	float zmin = r_znear->value;
 	float x = tr.refractiveImage->width;
 	float y = tr.refractiveImage->height;
-	VectorSet4(viewInfo, zmax / zmin, zmax, x, y);
+	VectorSet4(viewInfo, zmax / zmin, zmax, x, alpha);
 	uniformDataWriter.SetUniformVec4(UNIFORM_VIEWINFO, viewInfo);
 	
 	newRefractiveItem.uniformData = uniformDataWriter.Finish(*backEndData->perFrameMemory);
