@@ -2643,7 +2643,7 @@ qhandle_t	RE_RegisterSkin( const char *name );
 int			RE_GetAnimationCFG(const char *psCFGFilename, char *psDest, int iDestSize);
 void		RE_Shutdown( qboolean destroyWindow );
 
-//qboolean	R_GetEntityToken( char *buffer, int size );
+qboolean	R_GetEntityToken( char *buffer, int size );
 
 model_t		*R_AllocModel( void );
 

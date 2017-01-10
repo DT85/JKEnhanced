@@ -2811,7 +2811,7 @@ void R_LoadEntities( world_t *worldData, lump_t *l ) {
 R_GetEntityToken
 =================
 */
-/*qboolean R_GetEntityToken( char *buffer, int size ) {
+qboolean R_GetEntityToken( char *buffer, int size ) {
 	char	*s;
 	world_t *worldData = &s_worldData;
 
@@ -2829,13 +2829,14 @@ R_GetEntityToken
 	} else {
 		return qtrue;
 	}
-}*/
+}
 
 #ifndef MAX_SPAWN_VARS
 #define MAX_SPAWN_VARS 64
 #endif
 
 // derived from G_ParseSpawnVars() in g_spawn.c
+#if 1
 static qboolean R_ParseSpawnVars( char *spawnVarChars, int maxSpawnVarChars, int *numSpawnVars, char *spawnVars[MAX_SPAWN_VARS][2] )
 {
 	char    keyname[MAX_TOKEN_CHARS];
@@ -2845,10 +2846,10 @@ static qboolean R_ParseSpawnVars( char *spawnVarChars, int maxSpawnVarChars, int
 	*numSpawnVars = 0;
 
 	// parse the opening brace
-	/*if ( !R_GetEntityToken( com_token, sizeof( com_token ) ) ) {
+	if ( !R_GetEntityToken( com_token, sizeof( com_token ) ) ) {
 		// end of spawn string
 		return qfalse;
-	}*/
+	}
 	if ( com_token[0] != '{' ) {
 		ri.Printf( PRINT_ALL, "R_ParseSpawnVars: found %s when expecting {\n",com_token );
 		return qfalse;
@@ -2859,20 +2860,20 @@ static qboolean R_ParseSpawnVars( char *spawnVarChars, int maxSpawnVarChars, int
 		int keyLength, tokenLength;
 
 		// parse key
-		/*if ( !R_GetEntityToken( keyname, sizeof( keyname ) ) ) {
+		if ( !R_GetEntityToken( keyname, sizeof( keyname ) ) ) {
 			ri.Printf( PRINT_ALL, "R_ParseSpawnVars: EOF without closing brace\n" );
 			return qfalse;
-		}*/
+		}
 
 		if ( keyname[0] == '}' ) {
 			break;
 		}
 
 		// parse value  
-		/*if ( !R_GetEntityToken( com_token, sizeof( com_token ) ) ) {
+		if ( !R_GetEntityToken( com_token, sizeof( com_token ) ) ) {
 			ri.Printf( PRINT_ALL, "R_ParseSpawnVars: EOF without closing brace\n" );
 			return qfalse;
-		}*/
+		}
 
 		if ( com_token[0] == '}' ) {
 			ri.Printf( PRINT_ALL, "R_ParseSpawnVars: closing brace without data\n" );
@@ -2906,6 +2907,71 @@ static qboolean R_ParseSpawnVars( char *spawnVarChars, int maxSpawnVarChars, int
 
 	return qtrue;
 }
+
+#else // SP
+
+//qboolean R_ParseSpawnVars(const char **data) {
+static qboolean R_ParseSpawnVars(char *spawnVarChars, int maxSpawnVarChars, int *numSpawnVars, char *spawnVars[MAX_SPAWN_VARS][2]){
+
+	char		keyname[MAX_STRING_CHARS];
+	const char	*com_token;
+
+	*numSpawnVars = 0;
+	int numSpawnVarChars = 0;
+
+	const char **data;
+
+	// parse the opening brace
+	//COM_BeginParseSession();
+	com_token = COM_Parse(data);
+	if (!*data) {
+		// end of spawn string
+		//COM_EndParseSession();
+		return qfalse;
+	}
+	if (com_token[0] != '{') {
+		//COM_EndParseSession();
+		ri.Printf(PRINT_ALL, "R_ParseSpawnVars: found %s when expecting {\n", com_token);
+	}
+
+	// go through all the key / value pairs
+	while (1) {
+		// parse key
+		com_token = COM_Parse(data);
+		if (!*data) {
+			//COM_EndParseSession();
+			ri.Printf(PRINT_ALL, "R_ParseSpawnVars: EOF without closing brace\n");
+		}
+
+		if (com_token[0] == '}') {
+			break;
+		}
+
+		Q_strncpyz(keyname, com_token, sizeof(keyname));
+
+		// parse value
+		com_token = COM_Parse(data);
+		if (!*data) {
+			//COM_EndParseSession();
+			ri.Printf(PRINT_ALL, "R_ParseSpawnVars: EOF without closing brace\n");
+		}
+		if (com_token[0] == '}') {
+			//COM_EndParseSession();
+			ri.Printf(PRINT_ALL, "R_ParseSpawnVars: closing brace without data\n");
+		}
+		if (*numSpawnVars == MAX_SPAWN_VARS) {
+			//COM_EndParseSession();
+			ri.Printf(PRINT_ALL, "R_ParseSpawnVars: MAX_SPAWN_VARS\n");
+		}
+		spawnVars[*numSpawnVars][0] = spawnVarChars + numSpawnVarChars;
+		spawnVars[*numSpawnVars][1] = spawnVarChars + numSpawnVarChars;
+		numSpawnVars++;
+	}
+
+	//COM_EndParseSession();
+	return qtrue;
+}
+#endif
 
 static void R_LoadCubemapEntities(const char *cubemapEntityName)
 {

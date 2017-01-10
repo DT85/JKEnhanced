@@ -2094,7 +2094,7 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI(int apiVersion, refimport_t *ri
 	re.TheGhoul2InfoArray = TheGhoul2InfoArray;
 
 	//re.RemapShader = R_RemapShader;
-	//re.GetEntityToken = R_GetEntityToken;
+	re.GetEntityToken = R_GetEntityToken;
 	//re.SetRefractionProperties = RE_SetRefractionProperties;
 	//re.GetDistanceCull = GetDistanceCull;
 	//re.GetRealRes = GetRealRes;

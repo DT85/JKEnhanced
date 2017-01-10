@@ -159,7 +159,7 @@ typedef struct {
 	void(*AddDecalToScene)(qhandle_t shader, const vec3_t origin, const vec3_t dir, float orientation, float r, float g, float b, float a, qboolean alphaFade, float radius, qboolean temporary);
 	int(*LightForPoint)(vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir);
 	void(*AddAdditiveLightToScene)(const vec3_t org, float intensity, float r, float g, float b);
-	//qboolean(*GetEntityToken)(char *buffer, int size);
+	qboolean(*GetEntityToken)(char *buffer, int size);
 	//void(*SetRefractionProperties)(float distortionAlpha, float distortionStretch, qboolean distortionPrePost, qboolean distortionNegate);
 	//float(*GetDistanceCull)(void);
 	//void(*GetRealRes)(int *w, int *h);
