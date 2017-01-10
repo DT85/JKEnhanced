@@ -1453,6 +1453,16 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input, const VertexArrays
 				useAlphaTestGE192 = true;
 			}
 
+			if (backEnd.currentEntity->e.renderfx & RF_ALPHA_FADE)
+			{
+				// eg ForceSpeed Doppelgängers
+				if (backEnd.currentEntity->e.shaderRGBA[3] < 255)
+				{
+					stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+					forceAlphaGen = AGEN_ENTITY;
+				}
+			}
+
 			if ( backEnd.currentEntity->e.renderfx & RF_RGB_TINT )
 			{//want to use RGBGen from ent
 				forceRGBGen = CGEN_ENTITY;
