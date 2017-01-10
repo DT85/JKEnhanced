@@ -1164,12 +1164,6 @@ static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 				oldEntityNum = entityNum;
 			}
 
-			if (backEnd.currentEntity->e.renderfx & RF_DISTORTION) {
-				backEnd.refractiveSurfs[backEnd.numRefractiveSurfs] = drawSurf;
-				backEnd.numRefractiveSurfs++;
-				continue;
-			}
-
 			// add the triangles for this surface
 			rb_surfaceTable[*drawSurf->surface](drawSurf->surface);
 		}
@@ -1301,6 +1295,12 @@ static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 				}
 
 				oldEntityNum = entityNum;
+			}
+
+			if (backEnd.currentEntity->e.renderfx & RF_DISTORTION) {
+				backEnd.refractiveSurfs[backEnd.numRefractiveSurfs] = drawSurf;
+				backEnd.numRefractiveSurfs++;
+				continue;
 			}
 
 			// add the triangles for this surface
