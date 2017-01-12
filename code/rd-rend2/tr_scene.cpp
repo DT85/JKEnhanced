@@ -551,10 +551,6 @@ void RE_RenderScene( const refdef_t *fd ) {
 	R_RenderView( &parms );
 	R_EndTimedBlockCmd( timer );
 
-	timer = R_BeginTimedBlockCmd("World Effects Render");
-	RE_RenderWorldEffects();
-	R_EndTimedBlockCmd(timer);
-
 	if(!( fd->rdflags & RDF_NOWORLDMODEL ))
 	{
 		qhandle_t timer = R_BeginTimedBlockCmd( "Post processing" );
