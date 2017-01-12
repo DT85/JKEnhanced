@@ -549,6 +549,7 @@ public:
 		saved_game.write<int32_t>(mSkelFrameNum);
 		saved_game.write<int32_t>(mMeshFrameNum);
 		saved_game.write<int32_t>(mFlags);
+        saved_game.write<int32_t>(tintType);
 	}
 
 	void sg_import(
@@ -577,6 +578,7 @@ public:
 		saved_game.read<int32_t>(mSkelFrameNum);
 		saved_game.read<int32_t>(mMeshFrameNum);
 		saved_game.read<int32_t>(mFlags);
+        saved_game.read<int32_t>(tintType);
 	}
 };
 

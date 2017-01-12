@@ -310,6 +310,7 @@ public:
 		saved_game.write<float>(legsFpsMod);
 		saved_game.write<float>(torsoFpsMod);
 		saved_game.write<uint8_t>(customRGBA);
+        saved_game.write<uint8_t>(newCustomRGBA);
 		saved_game.write<int32_t>(boneIndex1);
 		saved_game.write<int32_t>(boneIndex2);
 		saved_game.write<int32_t>(boneIndex3);
@@ -367,6 +368,7 @@ public:
 		saved_game.read<float>(legsFpsMod);
 		saved_game.read<float>(torsoFpsMod);
 		saved_game.read<uint8_t>(customRGBA);
+        saved_game.read<uint8_t>(newCustomRGBA);
 		saved_game.read<int32_t>(boneIndex1);
 		saved_game.read<int32_t>(boneIndex2);
 		saved_game.read<int32_t>(boneIndex3);

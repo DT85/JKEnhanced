@@ -853,7 +853,9 @@ typedef struct
 		saved_game.write<int32_t>(duration);
 		saved_game.write<int32_t>(lastTime);
 		saved_game.write<float>(base);
+        saved_game.write<float>(dualbase);
 		saved_game.write<float>(tip);
+        saved_game.write<float>(dualtip);
 		saved_game.write<int32_t>(haveOldPos);
 		saved_game.write<float>(oldPos);
 		saved_game.write<float>(oldNormal);
@@ -866,7 +868,9 @@ typedef struct
 		saved_game.read<int32_t>(duration);
 		saved_game.read<int32_t>(lastTime);
 		saved_game.read<float>(base);
+        saved_game.read<float>(dualbase);
 		saved_game.read<float>(tip);
+        saved_game.read<float>(dualtip);
 		saved_game.read<int32_t>(haveOldPos);
 		saved_game.read<float>(oldPos);
 		saved_game.read<float>(oldNormal);
@@ -1295,6 +1299,12 @@ typedef struct
 		saved_game.write<int32_t>(meditateAnim);
 		saved_game.write<int32_t>(flourishAnim);
 		saved_game.write<int32_t>(gloatAnim);
+        saved_game.write<int32_t>(crystals);
+        saved_game.write<int32_t>(holsterPlace);
+        saved_game.write<int8_t>(ignitionFlare);
+        saved_game.write<int8_t>(ignitionFlare2);
+        saved_game.write<int8_t>(blackIgnitionFlare);
+        saved_game.write<int8_t>(blackIgnitionFlare2);
 		saved_game.write<int32_t>(bladeStyle2Start);
 		saved_game.write<int32_t>(trailStyle);
 		saved_game.write<int8_t>(g2MarksShader);
@@ -1376,6 +1386,12 @@ typedef struct
 		saved_game.read<int32_t>(meditateAnim);
 		saved_game.read<int32_t>(flourishAnim);
 		saved_game.read<int32_t>(gloatAnim);
+        saved_game.read<int32_t>(crystals);
+        saved_game.read<int32_t>(holsterPlace);
+        saved_game.read<int8_t>(ignitionFlare);
+        saved_game.read<int8_t>(ignitionFlare2);
+        saved_game.read<int8_t>(blackIgnitionFlare);
+        saved_game.read<int8_t>(blackIgnitionFlare2);
 		saved_game.read<int32_t>(bladeStyle2Start);
 		saved_game.read<int32_t>(trailStyle);
 		saved_game.read<int8_t>(g2MarksShader);
@@ -2174,7 +2190,7 @@ public:
 		saved_game.read<int32_t>(ammo);
 		saved_game.read<int32_t>(inventory);
 		saved_game.read<int8_t>(security_key_message);
-		saved_game.write<int8_t>(weapons);
+		saved_game.read<int8_t>(weapons);
 		saved_game.read<float>(serverViewOrg);
 		saved_game.read<int32_t>(saberInFlight);
 
