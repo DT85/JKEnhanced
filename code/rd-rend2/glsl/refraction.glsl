@@ -33,16 +33,10 @@ const float fresnelPower = 2.0;
 const float F = ((1.0 - etaG) * (1.0 - etaG)) / ((1.0 + etaG) * (1.0 + etaG));
 
 uniform sampler2D u_DiffuseMap;
-uniform sampler2D u_ColorMap;
-uniform sampler2D depthTexture;
-uniform sampler2D colorBufferTexture;
 uniform vec4 u_Color;
-uniform vec4 u_ViewInfo;
 
-in vec2 var_Tex1;
 in vec2 fragpos;
 in vec3 normal;
-in vec3 position;
 in vec3 viewDir;
 
 out vec4 out_Color;
@@ -50,10 +44,8 @@ out vec4 out_Color;
 void main()
 {	
 	vec3 i = normalize(viewDir);
-	vec3 n = normal;
-	vec4 color = vec4(1.0);
+	vec3 n = normalize(normal);
 
-	float alpha = u_ViewInfo.a;
 	
 	float ratio = F + (1.0 - F) * pow(1.0 - dot(-i, n), fresnelPower);
 	vec3 refractR = normalize(refract(i, n, etaR));
@@ -65,7 +57,7 @@ void main()
 	refractColor.g  = texture(u_DiffuseMap, fragpos + refractG.xy * 0.05).g;
 	refractColor.b  = texture(u_DiffuseMap, fragpos + refractB.xy * 0.05).b;
 	
-	vec3 combinedColor = mix(refractColor, texture(u_ColorMap,var_Tex1).rgb, ratio);
+	vec3 combinedColor = mix(refractColor, u_Color.rgb, ratio);
 
-	out_Color = vec4(combinedColor, alpha);
+	out_Color = vec4(refractColor , u_Color.a);
 }
