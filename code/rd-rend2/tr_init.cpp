@@ -1859,14 +1859,14 @@ Touch all images to make sure they are resident
 */
 void RE_EndRegistration(void) {
 	R_IssuePendingRenderCommands();
-	/*if (!ri.Sys_LowPhysicalMemory()) */{
+	/*if (!ri.Sys_LowPhysicalMemory()) {
 		RB_ShowImages();
-	}
+	}*/
 }
 
 // HACK
-extern qboolean gG2_GBMNoReconstruct;
-extern qboolean gG2_GBMUseSPMethod;
+//extern qboolean gG2_GBMNoReconstruct;
+//extern qboolean gG2_GBMUseSPMethod;
 //static void G2API_BoltMatrixReconstruction(qboolean reconstruct) { gG2_GBMNoReconstruct = (qboolean)!reconstruct; }
 //static void G2API_BoltMatrixSPMethod(qboolean spMethod) { gG2_GBMUseSPMethod = spMethod; }
 
@@ -2053,8 +2053,8 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI(int apiVersion, refimport_t *ri
 
 	re.GetScreenShot = stub_RE_GetScreenShot;
 
-	//REX(TempRawImage_ReadFromFile);
-	//REX(TempRawImage_CleanUp);
+	//REX(TempRawImage_ReadFromFile);  //JK2 only
+	//REX(TempRawImage_CleanUp);  //JK2 only
 
 	re.MarkFragments = R_MarkFragments;
 	re.LerpTag = R_LerpTag;
@@ -2063,7 +2063,7 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI(int apiVersion, refimport_t *ri
 	REX(SetLightStyle);
 	re.GetBModelVerts = stub_RE_GetBModelVerts;
 	re.WorldEffectCommand = stub_RE_WorldEffectCommand;
-	//REX(GetModelBounds);
+	//REX(GetModelBounds);  //Not used by game code, do we really need it?
 
 	re.SVModelInit = RE_SVModelInit;
 
@@ -2093,17 +2093,17 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI(int apiVersion, refimport_t *ri
 
 	re.TheGhoul2InfoArray = TheGhoul2InfoArray;
 
-	//re.RemapShader = R_RemapShader;
-	re.GetEntityToken = R_GetEntityToken;
-	//re.SetRefractionProperties = RE_SetRefractionProperties;
-	//re.GetDistanceCull = GetDistanceCull;
-	//re.GetRealRes = GetRealRes;
-	// R_AutomapElevationAdjustment
-	//re.InitializeWireframeAutomap = stub_InitializeWireframeAutomap;		
-	//re.TakeVideoFrame = RE_TakeVideoFrame;
-	//re.InitSkins = R_InitSkins;
-	//re.InitShaders = R_InitShaders;		
-	//re.HunkClearCrap = RE_HunkClearCrap;
+	//re.RemapShader = R_RemapShader;  //MP only
+	re.GetEntityToken = R_GetEntityToken;  //MP only, but need this for cubemaps...
+	//re.SetRefractionProperties = RE_SetRefractionProperties;  //MP only
+	//re.GetDistanceCull = GetDistanceCull;  //MP only
+	//re.GetRealRes = GetRealRes;  //MP only
+	// R_AutomapElevationAdjustment  //MP only
+	//re.InitializeWireframeAutomap = stub_InitializeWireframeAutomap;  //MP only		
+	//re.TakeVideoFrame = RE_TakeVideoFrame;  //MP only
+	//re.InitSkins = R_InitSkins;  //MP only
+	//re.InitShaders = R_InitShaders;  //MP only		
+	//re.HunkClearCrap = RE_HunkClearCrap;  //MP only
 
 #define G2EX(x)	re.G2API_##x = G2API_##x
 
