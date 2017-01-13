@@ -131,7 +131,7 @@ void SV_Player_EndOfLevelSave(void)
 						);
 #else
 				//				|general info				  |-force powers |-saber 1		|-saber 2										  |-general saber
-				s = va("%i %i %i %i %i %i %f %f %f %i %i %i %i %i %s %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %s %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i",
+				s = va("%i %i %i %i %i %i %f %f %f %i %i %i %i %i %s %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %s %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i &i %i %i %i %i",
 						pState->stats[STAT_HEALTH],
 						pState->stats[STAT_ARMOR],
 						pState->stats[STAT_ITEMS],
@@ -165,6 +165,7 @@ void SV_Player_EndOfLevelSave(void)
 						pState->saber[0].blade[5].color,
 						pState->saber[0].blade[6].color,
 						pState->saber[0].blade[7].color,
+                        pState->saber[0].crystals,
 						//saber 2 data
 						pState->saber[1].name,
 						pState->saber[1].blade[0].active,
@@ -183,6 +184,7 @@ void SV_Player_EndOfLevelSave(void)
 						pState->saber[1].blade[5].color,
 						pState->saber[1].blade[6].color,
 						pState->saber[1].blade[7].color,
+                        pState->saber[1].crystals,
 						//general saber data
 						pState->saberStylesKnown,
 						pState->saberAnimLevel,

@@ -735,8 +735,10 @@ static void Player_RestoreFromPrevLevel(gentity_t *ent, SavedGameJustLoaded_e eS
 			int saber2BladeActive[8];
 			unsigned int saber1BladeColor[8];
 			unsigned int saber2BladeColor[8];
+            int saber1Crystals;
+            int saber2Crystals;
 
-			sscanf( s, "%i %i %i %i %i %i %f %f %f %i %i %i %i %i %s %i %i %i %i %i %i %i %i %u %u %u %u %u %u %u %u %s %i %i %i %i %i %i %i %i %u %u %u %u %u %u %u %u %i %i %i %i",
+			sscanf( s, "%i %i %i %i %i %i %f %f %f %i %i %i %i %i %s %i %i %i %i %i %i %i %i %u %u %u %u %u %u %u %u %i %s %i %i %i %i %i %i %i %i %u %u %u %u %u %u %u %u %i %i %i %i %i",
 								&client->ps.stats[STAT_HEALTH],
 								&client->ps.stats[STAT_ARMOR],
 								&client->ps.stats[STAT_ITEMS],
@@ -770,6 +772,7 @@ static void Player_RestoreFromPrevLevel(gentity_t *ent, SavedGameJustLoaded_e eS
 								&saber1BladeColor[5],
 								&saber1BladeColor[6],
 								&saber1BladeColor[7],
+                                &saber1Crystals,
 								//saber 2 data
 								saber1Name,
 								&saber2BladeActive[0],
@@ -788,6 +791,7 @@ static void Player_RestoreFromPrevLevel(gentity_t *ent, SavedGameJustLoaded_e eS
 								&saber2BladeColor[5],
 								&saber2BladeColor[6],
 								&saber2BladeColor[7],
+                                &saber2Crystals,
 								//general saber data
 								&client->ps.saberStylesKnown,
 								&client->ps.saberAnimLevel,
@@ -801,6 +805,9 @@ static void Player_RestoreFromPrevLevel(gentity_t *ent, SavedGameJustLoaded_e eS
 				client->ps.saber[1].blade[j].active = saber2BladeActive[j] ? qtrue : qfalse;
 				client->ps.saber[1].blade[j].color = (saber_colors_t)saber2BladeColor[j];
 			}
+            
+            client->ps.saber[0].crystals = (saber_crystals_t)saber1Crystals;
+            client->ps.saber[1].crystals = (saber_crystals_t)saber2Crystals;
 
 			ent->health = client->ps.stats[STAT_HEALTH];
 
