@@ -19,16 +19,18 @@ void main()
 	var_Tex1 		= attr_TexCoord0.st;
 	fragpos 		= (gl_Position.xy / gl_Position.w )* 0.5 + 0.5; //perspective divide/normalize
 
-	position  		= (u_ModelMatrix * vec4(attr_Position, 1.0)).xyz;
-	normal    		= (u_ModelMatrix * vec4(attr_Normal,   0.0)).xyz;
-	viewDir 		= u_ViewOrigin - position;
+	position  		= (u_ModelMatrix * vec4(attr_Position , 1.0)).xyz;
+	normal    		= attr_Normal;
+	normal			= normal  * 2.0 - vec3(1.0);
+	normal    		= ((u_ModelMatrix * vec4(normal , 0.0)).xyz);
+	viewDir			= u_ViewOrigin - position;
 }
 
 /*[Fragment]*/
 
-const float etaR = 1.14;
-const float etaG = 1.12;
-const float etaB = 1.10;
+const float etaR = 0.65;
+const float etaG = 0.67; // Ratio of indices of refraction
+const float etaB = 0.69;
 const float fresnelPower = 2.0;
 const float F = ((1.0 - etaG) * (1.0 - etaG)) / ((1.0 + etaG) * (1.0 + etaG));
 
@@ -48,14 +50,17 @@ void main()
 
 	
 	float ratio = F + (1.0 - F) * pow(1.0 - dot(-i, n), fresnelPower);
-	vec3 refractR = normalize(refract(i, n, etaR));
-	vec3 refractG = normalize(refract(i, n, etaG));
-	vec3 refractB = normalize(refract(i, n, etaB));
+	vec3	refractR = normalize(refract(i, n, etaR));
+	vec3	refractG = normalize(refract(i, n, etaG));
+	vec3	refractB = normalize(refract(i, n, etaB));
 	
+	refractR = refractR - i;
+	refractG = refractG - i; 
+	refractB = refractB - i;
 	vec3 refractColor;
-	refractColor.r	= texture(u_DiffuseMap, fragpos + refractR.xy * 0.05).r;
-	refractColor.g  = texture(u_DiffuseMap, fragpos + refractG.xy * 0.05).g;
-	refractColor.b  = texture(u_DiffuseMap, fragpos + refractB.xy * 0.05).b;
+	refractColor.r	= texture(u_DiffuseMap, fragpos + (refractR.xy * 0.1)).r;
+	refractColor.g  = texture(u_DiffuseMap, fragpos + (refractG.xy * 0.1)).g;
+	refractColor.b  = texture(u_DiffuseMap, fragpos + (refractB.xy * 0.1)).b;
 	
 	vec3 combinedColor = mix(refractColor, u_Color.rgb, ratio);
 
