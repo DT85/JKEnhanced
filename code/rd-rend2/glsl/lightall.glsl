@@ -646,7 +646,7 @@ void main()
 	shadowValue = mix(0.0, shadowValue, dot(N, primaryLightDir) > 0.0);
 
     #if defined(SHADOWMAP_MODULATE)
-	lightColor = mix(u_PrimaryLightAmbient * lightColor, lightColor, shadowValue);
+	lightColor *= shadowValue * (1.0 - u_PrimaryLightAmbient.r) + u_PrimaryLightAmbient.r;
     #endif
   #endif
 
