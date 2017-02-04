@@ -541,7 +541,9 @@ vec3 CalcIBLContribution(
 	vec3 parallax = u_CubeMapInfo.xyz + u_CubeMapInfo.w * viewDir;
 
 	vec3 cubeLightColor = textureLod(u_CubeMap, R + parallax, roughness * 7.0).rgb * u_EnableTextures.w;
-
+	#if defined(USE_PBR)
+		cubeLightColor = pow(cubeLightColor, vec3(2.2));
+	#endif
 	return cubeLightColor * reflectance;
 #else
 	return vec3(0.0);
@@ -634,6 +636,11 @@ void main()
 	attenuation = 1.0;
   #endif
 
+  #if defined(USE_PBR)
+	lightColor   = pow(lightColor,   vec3(2.2));
+	ambientColor = pow(ambientColor, vec3(2.2));
+  #endif
+
 	N = CalcNormal(var_Normal.xyz, texCoords, tangentToWorld);
 	L /= sqrt(sqrLightDist);
 
@@ -659,7 +666,7 @@ void main()
 
 	// Recover any unused light as ambient, in case attenuation is over 4x or
 	// light is below the surface
-	ambientColor = clamp(ambientColor - lightColor * surfNL, 0.0, 1.0);
+	ambientColor = max(ambientColor - lightColor * surfNL, vec3(0.0));
   #endif
 
 	vec4 specular = vec4(1.0);
@@ -669,20 +676,20 @@ void main()
   #endif
 	specular *= u_SpecularScale;
 
-	float gloss = specular.a;
-  #if defined(GLOSS_IS_ROUGHNESS)
-	float roughness = gloss;
-  #else
-	float roughness = exp2(-3.0 * gloss);
+  #if defined(USE_PBR)
+	diffuse.rgb = pow(diffuse.rgb, vec3(2.2));
   #endif
 
-  #if defined(SPECULAR_IS_METALLIC)
+	float gloss = specular.a;
+  #if defined(USE_PBR)
+	float roughness = 1.0 - specular.r;
 	// diffuse is actually base color, and green of specular is metallicness
 	float metallic = specular.g;
 
 	specular.rgb = metallic * diffuse.rgb + vec3(0.04 - 0.04 * metallic);
 	diffuse.rgb *= 1.0 - metallic;
   #else
+	float roughness = exp2(-3.0 * gloss);
 	// adjust diffuse by specular reflectance, to maintain energy conservation
 	diffuse.rgb *= vec3(1.0) - specular.rgb;
   #endif
@@ -717,13 +724,21 @@ void main()
 	reflectance += CalcSpecular(specular.rgb, NH2, NL2, NE, L2H2, roughness);
 
 	lightColor = u_PrimaryLightColor * var_Color.rgb;
+
+	#if defined(USE_PBR)
+		lightColor = pow(lightColor, vec3(2.2));
+	#endif
     #if defined(USE_SHADOWMAP)
-	lightColor *= shadowValue;
+		lightColor *= shadowValue;
     #endif
 
 	out_Color.rgb += lightColor * reflectance * NL2;
   #endif
 	
+  #if defined(USE_PBR)
+	out_Color.rgb = pow(out_Color.rgb, vec3(1.0 / 2.2));
+  #endif
+
 	out_Color.rgb += CalcIBLContribution(roughness, N, E, viewDir, NE, specular.rgb);
 
 #else
