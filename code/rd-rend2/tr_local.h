@@ -365,6 +365,12 @@ typedef struct image_s {
 	struct image_s *poolNext;
 } image_t;
 
+typedef struct cubemap_s {
+	vec3_t origin;
+	float parallaxRadius;
+	image_t *image;
+} cubemap_t;
+
 typedef struct dlight_s {
 	vec3_t	origin;
 	vec3_t	color;				// range from 0.0 to 1.0, should be color normalized
@@ -2258,7 +2264,7 @@ typedef struct trGlobals_s {
 
 	int                     numCubemaps;
 	vec3_t                  *cubemapOrigins;
-	image_t                 **cubemaps;
+	cubemap_t               *cubemaps;
 
 	trRefEntity_t			*currentEntity;
 	trRefEntity_t			worldEntity;		// point currentEntity at this when rendering world
@@ -2500,6 +2506,8 @@ extern  cvar_t  *r_specularMapping;
 extern  cvar_t  *r_deluxeMapping;
 extern  cvar_t  *r_parallaxMapping;
 extern  cvar_t  *r_cubeMapping;
+extern  cvar_t  *r_specularIsMetallic;
+extern  cvar_t  *r_glossIsRoughness;
 extern  cvar_t  *r_baseNormalX;
 extern  cvar_t  *r_baseNormalY;
 extern  cvar_t  *r_baseParallax;

@@ -1429,6 +1429,12 @@ int GLSL_BeginLoadGPUShaders(void)
 		if (r_dlightMode->integer >= 2)
 			Q_strcat(extradefines, sizeof(extradefines), "#define USE_SHADOWMAP\n");
 
+		if (r_specularIsMetallic->value)
+			Q_strcat(extradefines, 1024, "#define SPECULAR_IS_METALLIC\n");
+
+		if (r_glossIsRoughness->value)
+			Q_strcat(extradefines, 1024, "#define GLOSS_IS_ROUGHNESS\n");
+
 		if (1)
 			Q_strcat(extradefines, sizeof(extradefines), "#define SWIZZLE_NORMALMAP\n");
 
