@@ -143,6 +143,7 @@ cvar_t  *r_baseNormalY;
 cvar_t  *r_baseParallax;
 cvar_t  *r_baseSpecular;
 cvar_t  *r_baseGloss;
+cvar_t  *r_glossType;
 cvar_t  *r_mergeLightmaps;
 cvar_t  *r_dlightMode;
 cvar_t  *r_pshadowDist;
@@ -1432,6 +1433,7 @@ void R_Register(void)
 	r_baseParallax = ri.Cvar_Get("r_baseParallax", "0.05", CVAR_ARCHIVE | CVAR_LATCH);
 	r_baseSpecular = ri.Cvar_Get("r_baseSpecular", "0.04", CVAR_ARCHIVE | CVAR_LATCH);
 	r_baseGloss = ri.Cvar_Get("r_baseGloss", "0.1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_glossType = ri.Cvar_Get("r_glossType", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_dlightMode = ri.Cvar_Get("r_dlightMode", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_pshadowDist = ri.Cvar_Get("r_pshadowDist", "128", CVAR_ARCHIVE);
 	r_mergeLightmaps = ri.Cvar_Get("r_mergeLightmaps", "0", CVAR_ARCHIVE | CVAR_LATCH);
