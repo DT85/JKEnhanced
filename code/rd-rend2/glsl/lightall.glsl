@@ -642,8 +642,7 @@ void main()
 	float shadowValue = texture(u_ShadowMap, shadowTex).r;
 
 	// surfaces not facing the light are always shadowed
-	vec3 primaryLightDir = normalize(var_PrimaryLightDir.xyz);
-	shadowValue = mix(0.0, shadowValue, dot(N, primaryLightDir) > 0.0);
+	shadowValue *= clamp(dot(N, var_PrimaryLightDir.xyz), 0.0, 1.0);
 
     #if defined(SHADOWMAP_MODULATE)
 	lightColor *= shadowValue * (1.0 - u_PrimaryLightAmbient.r) + u_PrimaryLightAmbient.r;
