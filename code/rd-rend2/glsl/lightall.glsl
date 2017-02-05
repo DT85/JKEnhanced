@@ -481,13 +481,31 @@ vec3 EnvironmentBRDF(float roughness, float NE, vec3 specular)
 	return vec3(v) + specular;
 }
 
-vec3 CalcSpecular(vec3 specular, float NH, float EH, float roughness)
+float CalcVisibility( in float NL, in float NE, in float roughness )
+{
+	float alphaSq = roughness*roughness;
+
+	float lambdaE = NL * sqrt((-NE * alphaSq + NE) * NE + alphaSq);
+	float lambdaL = NE * sqrt((-NL * alphaSq + NL) * NL + alphaSq);
+
+	return 0.5 / (lambdaE + lambdaL);
+}
+
+// http://www.frostbite.com/2014/11/moving-frostbite-to-pbr/
+vec3 CalcSpecular(
+	in vec3 specular,
+	in float NH,
+	in float NL,
+	in float NE,
+	in float LH,
+	in float roughness
+)
 {
 	// from http://community.arm.com/servlet/JiveServlet/download/96891546-19496/siggraph2015-mmg-renaldas-slides.pdf
 	float rr = roughness*roughness;
 	float rrrr = rr*rr;
 	float d = (NH * NH) * (rrrr - 1.0) + 1.0;
-	float v = (EH * EH) * (roughness + 0.5);
+	float v = CalcVisibility(NL, NE, roughness);
 	return specular * (rrrr / (4.0 * d * d * v));
 }
 
@@ -539,8 +557,6 @@ void main()
 	viewDir = vec3(var_Normal.w, var_Tangent.w, var_Bitangent.w);
 	E = normalize(viewDir);
 #endif
-
-	lightColor = var_Color.rgb;
 
 #if defined(USE_LIGHTMAP)
 	vec4 lightmapColor = texture(u_LightMap, var_TexCoords.zw);
@@ -661,22 +677,27 @@ void main()
   #elif defined(GLOSS_IS_SMOOTHNESS)
 	float roughness = 1.0 - gloss;
   #elif defined(GLOSS_IS_ROUGHNESS)
-	float roughness = gloss;
+	float roughness = max(gloss, 0.01);
   #elif defined(GLOSS_IS_SHININESS)
 	float roughness = pow(2.0 / (8190.0 * gloss + 2.0), 0.25);
   #endif
 
+    
 	reflectance  = CalcDiffuse(diffuse.rgb, NH, EH, roughness);
 
   #if defined(USE_LIGHT_VECTOR)
-	vec3 H3 = normalize(L + E);
-	float NH3 = clamp(dot(N, H3), 0.0, 1.0);
-	float EH3 = clamp(dot(E, H3), 0.0, 1.0);
-	reflectance += CalcSpecular(specular.rgb, NH3, EH3, roughness);
+    H  = normalize(L + E);
+	NL = clamp(dot(N, L), 0.0, 1.0);
+	NE = abs(dot(N, E)) + 1e-5;
+	float LH = clamp(dot(L, H), 0.0, 1.0);
+	NH = clamp(dot(N, H), 0.0, 1.0);
+
+	reflectance += CalcSpecular(specular.rgb, NH, NL, NE, LH, roughness);
   #endif
 
 	out_Color.rgb  = lightColor   * reflectance * (attenuation * NL);
 	out_Color.rgb += ambientColor * diffuse.rgb;
+
 
   #if defined(USE_CUBEMAP)
 	reflectance = EnvironmentBRDF(roughness, NE, specular.rgb);
@@ -707,7 +728,7 @@ void main()
 
   #if defined(USE_PRIMARY_LIGHT) || defined(SHADOWMAP_MODULATE)
 	vec3 L2, H2;
-	float NL2, EH2, NH2;
+	float NL2, EH2, NH2, L2H2;
 
 	L2 = var_PrimaryLightDir.xyz;
 
@@ -718,9 +739,10 @@ void main()
 	NL2 = clamp(dot(N, L2), 0.0, 1.0);
 	H2 = normalize(L2 + E);
 	EH2 = clamp(dot(E, H2), 0.0, 1.0);
+	L2H2 = clamp(dot(L2, H2), 0.0, 1.0);
 	NH2 = clamp(dot(N, H2), 0.0, 1.0);
 
-	reflectance  = CalcSpecular(specular.rgb, NH2, EH2, roughness);
+	reflectance  = CalcSpecular(specular.rgb, NH2, NL2, NE, L2H2, roughness);
 
 	// bit of a hack, with modulated shadowmaps, ignore diffuse
     #if !defined(SHADOWMAP_MODULATE)
@@ -744,7 +766,7 @@ void main()
   #endif
 
 #else
-
+	lightColor = var_Color.rgb;
 	out_Color.rgb = diffuse.rgb * lightColor;
 
 #endif

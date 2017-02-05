@@ -136,8 +136,6 @@ cvar_t  *r_parallaxMapping;
 cvar_t  *r_cubeMapping;
 cvar_t  *r_cubemapSize;
 cvar_t  *r_pbr;
-cvar_t  *r_specularIsMetallic;
-cvar_t  *r_glossIsRoughness;
 cvar_t  *r_baseNormalX;
 cvar_t  *r_baseNormalY;
 cvar_t  *r_baseParallax;

@@ -1594,7 +1594,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 				ri.Printf( PRINT_WARNING, "WARNING: missing parameter for specular reflectance in shader '%s'\n", shader.name );
 				continue;
 			}
-			if (r_pbr->integer)
+			if (0)//if (r_pbr->integer)
 				{
 					// interpret specularReflectance < 0.5 as nonmetal
 					stage->specularScale[1] = (atof(token) < 0.5f) ? 0.0f : 1.0f;
