@@ -3051,7 +3051,7 @@ void R_CreateBuiltinImages(void) {
 
 	if (r_cubeMapping->integer)
 	{
-		tr.renderCubeImage = R_CreateImage("*renderCube", NULL, CUBE_MAP_SIZE, CUBE_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
+		tr.renderCubeImage = R_CreateImage("*renderCube", NULL, r_cubemapSize->integer, r_cubemapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
 	}
 }
 
@@ -3075,6 +3075,12 @@ void R_SetColorMappings(void) {
 	}
 	else if (tr.overbrightBits < 0) {
 		tr.overbrightBits = 0;
+	}
+
+	// don't allow more overbright bits than map overbright bits
+	if (tr.overbrightBits > r_mapOverBrightBits->integer) 
+	{
+		tr.overbrightBits = r_mapOverBrightBits->integer;
 	}
 
 	tr.identityLight = 1.0f / (1 << tr.overbrightBits);

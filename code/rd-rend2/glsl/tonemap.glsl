@@ -57,6 +57,9 @@ vec3 FilmicTonemap(vec3 x)
 void main()
 {
 	vec4 color = texture(u_TextureMap, var_TexCoords) * u_Color;
+	#if defined(USE_PBR)
+		color.rgb = pow(color.rgb, vec3(2.2));
+	#endif
 	vec3 minAvgMax = texture(u_LevelsMap, var_TexCoords).rgb;
 	vec3 logMinAvgMaxLum = clamp(minAvgMax * 20.0 - 10.0, -u_AutoExposureMinMax.y, -u_AutoExposureMinMax.x);
 		
@@ -69,6 +72,10 @@ void main()
 	vec3 fWhite = 1.0 / FilmicTonemap(vec3(u_ToneMinAvgMaxLinear.z - u_ToneMinAvgMaxLinear.x));
 	color.rgb = FilmicTonemap(color.rgb) * fWhite;
 	//color.rgb = LinearTosRGB(color.rgb);
+
+#if defined(USE_PBR)
+	color.rgb = pow(color.rgb, vec3(1.0 / 2.2));
+#endif
 	
 	out_Color = clamp(color, 0.0, 1.0);
 }

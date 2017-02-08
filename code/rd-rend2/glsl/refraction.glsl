@@ -19,30 +19,26 @@ void main()
 	var_Tex1 		= attr_TexCoord0.st;
 	fragpos 		= (gl_Position.xy / gl_Position.w )* 0.5 + 0.5; //perspective divide/normalize
 
-	position  		= (u_ModelMatrix * vec4(attr_Position, 1.0)).xyz;
-	normal    		= (u_ModelMatrix * vec4(attr_Normal,   0.0)).xyz;
-	viewDir 		= u_ViewOrigin - position;
+	position  		= (u_ModelMatrix * vec4(attr_Position , 1.0)).xyz;
+	normal    		= attr_Normal;
+	normal			= normal  * 2.0 - vec3(1.0);
+	normal    		= ((u_ModelMatrix * vec4(normal , 0.0)).xyz);
+	viewDir			= u_ViewOrigin - position;
 }
 
 /*[Fragment]*/
 
-const float etaR = 1.14;
-const float etaG = 1.12;
-const float etaB = 1.10;
+const float etaR = 0.65;
+const float etaG = 0.67; // Ratio of indices of refraction
+const float etaB = 0.69;
 const float fresnelPower = 2.0;
 const float F = ((1.0 - etaG) * (1.0 - etaG)) / ((1.0 + etaG) * (1.0 + etaG));
 
 uniform sampler2D u_DiffuseMap;
-uniform sampler2D u_ColorMap;
-uniform sampler2D depthTexture;
-uniform sampler2D colorBufferTexture;
 uniform vec4 u_Color;
-uniform vec4 u_ViewInfo;
 
-in vec2 var_Tex1;
 in vec2 fragpos;
 in vec3 normal;
-in vec3 position;
 in vec3 viewDir;
 
 out vec4 out_Color;
@@ -50,22 +46,23 @@ out vec4 out_Color;
 void main()
 {	
 	vec3 i = normalize(viewDir);
-	vec3 n = normal;
-	vec4 color = vec4(1.0);
+	vec3 n = normalize(normal);
 
-	float alpha = u_ViewInfo.a;
 	
 	float ratio = F + (1.0 - F) * pow(1.0 - dot(-i, n), fresnelPower);
-	vec3 refractR = normalize(refract(i, n, etaR));
-	vec3 refractG = normalize(refract(i, n, etaG));
-	vec3 refractB = normalize(refract(i, n, etaB));
+	vec3	refractR = normalize(refract(i, n, etaR));
+	vec3	refractG = normalize(refract(i, n, etaG));
+	vec3	refractB = normalize(refract(i, n, etaB));
 	
+	refractR = refractR - i;
+	refractG = refractG - i; 
+	refractB = refractB - i;
 	vec3 refractColor;
-	refractColor.r	= texture(u_DiffuseMap, fragpos + refractR.xy * 0.05).r;
-	refractColor.g  = texture(u_DiffuseMap, fragpos + refractG.xy * 0.05).g;
-	refractColor.b  = texture(u_DiffuseMap, fragpos + refractB.xy * 0.05).b;
+	refractColor.r	= texture(u_DiffuseMap, fragpos + (refractR.xy * 0.1)).r;
+	refractColor.g  = texture(u_DiffuseMap, fragpos + (refractG.xy * 0.1)).g;
+	refractColor.b  = texture(u_DiffuseMap, fragpos + (refractB.xy * 0.1)).b;
 	
-	vec3 combinedColor = mix(refractColor, texture(u_ColorMap,var_Tex1).rgb, ratio);
+	vec3 combinedColor = mix(refractColor, u_Color.rgb, ratio);
 
-	out_Color = vec4(combinedColor, alpha);
+	out_Color = vec4(refractColor , u_Color.a);
 }

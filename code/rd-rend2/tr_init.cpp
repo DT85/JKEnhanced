@@ -134,10 +134,14 @@ cvar_t  *r_specularMapping;
 cvar_t  *r_deluxeMapping;
 cvar_t  *r_parallaxMapping;
 cvar_t  *r_cubeMapping;
+cvar_t  *r_cubemapSize;
+cvar_t  *r_pbr;
 cvar_t  *r_baseNormalX;
 cvar_t  *r_baseNormalY;
 cvar_t  *r_baseParallax;
 cvar_t  *r_baseSpecular;
+cvar_t  *r_baseGloss;
+cvar_t  *r_glossType;
 cvar_t  *r_mergeLightmaps;
 cvar_t  *r_dlightMode;
 cvar_t  *r_pshadowDist;
@@ -1396,7 +1400,7 @@ void R_Register(void)
 	r_hdr = ri.Cvar_Get("r_hdr", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_floatLightmap = ri.Cvar_Get("r_floatLightmap", "0", CVAR_ARCHIVE | CVAR_LATCH);
 
-	r_toneMap = ri.Cvar_Get("r_toneMap", "1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_toneMap = ri.Cvar_Get("r_toneMap", "1", CVAR_ARCHIVE);
 	r_forceToneMap = ri.Cvar_Get("r_forceToneMap", "0", CVAR_CHEAT);
 	r_forceToneMapMin = ri.Cvar_Get("r_forceToneMapMin", "-8.0", CVAR_CHEAT);
 	r_forceToneMapAvg = ri.Cvar_Get("r_forceToneMapAvg", "-2.0", CVAR_CHEAT);
@@ -1420,10 +1424,14 @@ void R_Register(void)
 	r_deluxeMapping = ri.Cvar_Get("r_deluxeMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_parallaxMapping = ri.Cvar_Get("r_parallaxMapping", "0", CVAR_ARCHIVE | CVAR_LATCH);
 	r_cubeMapping = ri.Cvar_Get("r_cubeMapping", "0", CVAR_ARCHIVE | CVAR_LATCH);
+	r_cubemapSize = ri.Cvar_Get("r_cubemapSize", "128", CVAR_ARCHIVE | CVAR_LATCH);
+	r_pbr = ri.Cvar_Get("r_pbr", "0", CVAR_ARCHIVE | CVAR_LATCH);
 	r_baseNormalX = ri.Cvar_Get("r_baseNormalX", "1.0", CVAR_ARCHIVE | CVAR_LATCH);
 	r_baseNormalY = ri.Cvar_Get("r_baseNormalY", "1.0", CVAR_ARCHIVE | CVAR_LATCH);
 	r_baseParallax = ri.Cvar_Get("r_baseParallax", "0.05", CVAR_ARCHIVE | CVAR_LATCH);
 	r_baseSpecular = ri.Cvar_Get("r_baseSpecular", "0.04", CVAR_ARCHIVE | CVAR_LATCH);
+	r_baseGloss = ri.Cvar_Get("r_baseGloss", "0.1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_glossType = ri.Cvar_Get("r_glossType", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_dlightMode = ri.Cvar_Get("r_dlightMode", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_pshadowDist = ri.Cvar_Get("r_pshadowDist", "128", CVAR_ARCHIVE);
 	r_mergeLightmaps = ri.Cvar_Get("r_mergeLightmaps", "0", CVAR_ARCHIVE | CVAR_LATCH);

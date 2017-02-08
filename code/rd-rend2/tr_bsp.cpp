@@ -2997,16 +2997,16 @@ static void R_LoadCubemapEntities(const char *cubemapEntityName)
 		return;
 
 	tr.numCubemaps = numCubemaps;
-	tr.cubemapOrigins = (vec3_t *)R_Hunk_Alloc( tr.numCubemaps * sizeof(*tr.cubemapOrigins), qtrue);
-	tr.cubemaps = (image_t **)R_Hunk_Alloc( tr.numCubemaps * sizeof(*tr.cubemaps), qtrue);
+	tr.cubemaps = (cubemap_t *)R_Hunk_Alloc( tr.numCubemaps * sizeof(*tr.cubemaps), qtrue);
 
 	numCubemaps = 0;
 	while(R_ParseSpawnVars(spawnVarChars, sizeof(spawnVarChars), &numSpawnVars, spawnVars))
 	{
 		int i;
 		qboolean isCubemap = qfalse;
-		qboolean positionSet = qfalse;
+		qboolean originSet = qfalse;
 		vec3_t origin;
+		float parallaxRadius = 1000.0f;
 
 		for (i = 0; i < numSpawnVars; i++)
 		{
@@ -3016,14 +3016,19 @@ static void R_LoadCubemapEntities(const char *cubemapEntityName)
 			if (!Q_stricmp(spawnVars[i][0], "origin"))
 			{
 				sscanf(spawnVars[i][1], "%f %f %f", &origin[0], &origin[1], &origin[2]);
-				positionSet = qtrue;
+				originSet = qtrue;
+			}
+			else if (!Q_stricmp(spawnVars[i][0], "radius"))
+			{
+				sscanf(spawnVars[i][1], "%f", &parallaxRadius);
 			}
 		}
 
-		if (isCubemap && positionSet)
+		if (isCubemap && originSet)
 		{
 			//ri.Printf(PRINT_ALL, "cubemap at %f %f %f\n", origin[0], origin[1], origin[2]);
-			VectorCopy(origin, tr.cubemapOrigins[numCubemaps]);
+			VectorCopy(origin, tr.cubemaps[numCubemaps].origin);
+			tr.cubemaps[numCubemaps].parallaxRadius = parallaxRadius;
 			numCubemaps++;
 		}
 	}
@@ -3075,7 +3080,7 @@ static void R_RenderAllCubemaps(void)
 
 	for (i = 0; i < tr.numCubemaps; i++)
 	{
-		tr.cubemaps[i] = R_CreateImage (va ("*cubeMap%d", i), NULL, CUBE_MAP_SIZE, CUBE_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, cubemapFormat);
+		tr.cubemaps[i].image = R_CreateImage (va ("*cubeMap%d", i), NULL, r_cubemapSize->integer, r_cubemapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, cubemapFormat);
 	}
 	
 	for (i = 0; i < tr.numCubemaps; i++)

@@ -1726,15 +1726,14 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input, const VertexArrays
 		if ( enableCubeMaps )
 		{
 			vec4_t vec;
+			cubemap_t *cubemap = &tr.cubemaps[input->cubemapIndex - 1];
 
-			samplerBindingsWriter.AddStaticImage(tr.cubemaps[input->cubemapIndex - 1], TB_CUBEMAP);
+			samplerBindingsWriter.AddStaticImage(cubemap->image, TB_CUBEMAP);
 
-			vec[0] = tr.cubemapOrigins[input->cubemapIndex - 1][0] - backEnd.viewParms.ori.origin[0];
-			vec[1] = tr.cubemapOrigins[input->cubemapIndex - 1][1] - backEnd.viewParms.ori.origin[1];
-			vec[2] = tr.cubemapOrigins[input->cubemapIndex - 1][2] - backEnd.viewParms.ori.origin[2];
+			VectorSubtract(cubemap->origin, backEnd.viewParms.ori.origin, vec);
 			vec[3] = 1.0f;
 
-			VectorScale4(vec, 1.0f / 1000.0f, vec);
+			VectorScale4(vec, 1.0f / cubemap->parallaxRadius, vec);
 
 			uniformDataWriter.SetUniformVec4(UNIFORM_CUBEMAPINFO, vec);
 		}

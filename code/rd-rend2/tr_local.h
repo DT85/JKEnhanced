@@ -60,8 +60,6 @@ typedef unsigned int glIndex_t;
 #define MAX_CALC_PSHADOWS    64
 #define MAX_DRAWN_PSHADOWS    16 // do not increase past 32, because bit flags are used on surfaces
 #define PSHADOW_MAP_SIZE      512
-#define CUBE_MAP_MIPS      7
-#define CUBE_MAP_SIZE      (1 << CUBE_MAP_MIPS)
 
 /*
 =====================================================
@@ -364,6 +362,12 @@ typedef struct image_s {
 	struct image_s *next;
 	struct image_s *poolNext;
 } image_t;
+
+typedef struct cubemap_s {
+	vec3_t origin;
+	float parallaxRadius;
+	image_t *image;
+} cubemap_t;
 
 typedef struct dlight_s {
 	vec3_t	origin;
@@ -2258,7 +2262,7 @@ typedef struct trGlobals_s {
 
 	int                     numCubemaps;
 	vec3_t                  *cubemapOrigins;
-	image_t                 **cubemaps;
+	cubemap_t               *cubemaps;
 
 	trRefEntity_t			*currentEntity;
 	trRefEntity_t			worldEntity;		// point currentEntity at this when rendering world
@@ -2500,10 +2504,14 @@ extern  cvar_t  *r_specularMapping;
 extern  cvar_t  *r_deluxeMapping;
 extern  cvar_t  *r_parallaxMapping;
 extern  cvar_t  *r_cubeMapping;
+extern  cvar_t  *r_cubemapSize;
+extern  cvar_t  *r_pbr;
 extern  cvar_t  *r_baseNormalX;
 extern  cvar_t  *r_baseNormalY;
 extern  cvar_t  *r_baseParallax;
 extern  cvar_t  *r_baseSpecular;
+extern  cvar_t  *r_baseGloss;
+extern  cvar_t  *r_glossType;
 extern  cvar_t  *r_dlightMode;
 extern  cvar_t  *r_pshadowDist;
 extern  cvar_t  *r_recalcMD3Normals;
@@ -2791,7 +2799,6 @@ void RB_CheckOverflow( int verts, int indexes );
 void R_DrawElementsVBO( int numIndexes, glIndex_t firstIndex, glIndex_t minIndex, glIndex_t maxIndex );
 void RB_StageIteratorGeneric( void );
 void RB_StageIteratorSky( void );
-void RB_DrawRefractive();
 
 void RB_AddQuadStamp( vec3_t origin, vec3_t left, vec3_t up, float color[4] );
 void RB_AddQuadStampExt( vec3_t origin, vec3_t left, vec3_t up, float color[4], float s1, float t1, float s2, float t2 );
