@@ -42,12 +42,8 @@ option(BuildMPCGame "Whether to create projects for the MP clientside gamecode (
 option(BuildMPUI "Whether to create projects for the MP UI code (uix86.dll)" OFF)
 option(BuildSPEngine "Whether to create projects for the SP engine (opendf2_sp.exe)" ON)
 option(BuildSPGame "Whether to create projects for the SP gamecode (df2gamex86.dll)" ON)
-option(BuildSPRdVanilla "Whether to create projects for the SP default renderer (rddf2sp-vanilla_x86.dll)" ON)
-option(BuildSPRdRend2 "Whether to create projects for the SP Rend2 renderer (rddf2sp-rend2_x86.dll)" ON)
-
-option(BuildJK2SPEngine "Whether to create projects for the jk2 SP engine (openjo_sp.exe)" OFF)
-option(BuildJK2SPGame "Whether to create projects for the jk2 sp gamecode mod (jk2gamex86.dll)" OFF)
-option(BuildJK2SPRdVanilla "Whether to create projects for the jk2 sp renderer (rdjosp-vanilla_x86.dll)" OFF)
+option(BuildSPRdGL1 "Whether to create projects for the SP default OpenGL 1 renderer (rdsp-GL1_x86.dll)" ON)
+option(BuildSPRdGL2 "Whether to create projects for the SP OpenGL 2 renderer (rdsp-GL2_x86.dll)" ON)
 
 option(BuildTests "Whether to build automatic unit tests (requires Boost)" OFF)
 
@@ -146,17 +142,14 @@ message("Git revision is ${GIT_SHA1}")
 # Binary names
 set(SPEngine "opendf2_sp.${Architecture}")
 set(SPGame "df2game${Architecture}")
-set(SPRDVanillaRenderer "rddf2sp-vanilla_${Architecture}")
-set(SPRDRend2Renderer "rddf2sp-rend2_${Architecture}")
+set(SPRDGL1Renderer "rdsp-GL1_${Architecture}")
+set(SPRDGL2Renderer "rdsp-GL2_${Architecture}")
 set(MPEngine "openjk.${Architecture}")
 set(MPVanillaRenderer "rd-vanilla_${Architecture}")
 set(MPDed "openjkded.${Architecture}")
 set(MPGame "jampgame${Architecture}")
 set(MPCGame "cgame${Architecture}")
 set(MPUI "ui${Architecture}")
-set(JK2SPEngine "openjo_sp.${Architecture}")
-set(JK2SPGame "jospgame${Architecture}")
-set(JK2SPVanillaRenderer "rdjosp-vanilla_${Architecture}")
 set(AssetsPk3 "opendf2-${Architecture}.pk3")
 # Library names
 set(MPBotLib "botlib")
@@ -167,7 +160,6 @@ set(SharedLib "shared")
 # Paths
 set(SPDir "${CMAKE_SOURCE_DIR}/code")
 set(MPDir "${CMAKE_SOURCE_DIR}/codemp")
-set(JK2SPDir "${CMAKE_SOURCE_DIR}/codeJK2")
 set(SharedDir ${CMAKE_SOURCE_DIR}/shared)
 set(OpenJKLibDir "${CMAKE_SOURCE_DIR}/lib")
 set(GSLIncludeDirectory "${OpenJKLibDir}/gsl-lite/include")
@@ -348,9 +340,6 @@ add_subdirectory(lib/minizip)
 
 # Add projects
 add_subdirectory(${SPDir})
-if(BuildJK2SPGame)
-	add_subdirectory("${JK2SPDir}/game")
-endif()
 add_subdirectory(${MPDir})
 # Windows Symbol Server tools
 if(BuildSymbolServer)
