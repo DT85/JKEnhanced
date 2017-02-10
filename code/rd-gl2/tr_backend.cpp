@@ -2167,8 +2167,9 @@ void RB_ShowImages( void ) {
 
 	start = ri.Milliseconds();
 
-	image = tr.images;
-	for ( i=0 ; i < tr.numImages; i++, image = image->poolNext ) {
+	for (i = 0; i<tr.numImages; i++) {
+		image = tr.images[i];
+
 		w = glConfig.vidWidth / 20;
 		h = glConfig.vidHeight / 15;
 		x = i % 20 * w;
