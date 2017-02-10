@@ -384,6 +384,12 @@ static void GLSL_GetShaderHeader( GLenum shaderType, const GLcharARB *extra, int
 		Q_strcat(dest, size, va("#define ROUGHNESS_MIPS float(%d)\n", numRoughnessMips));
 	}
 
+	if (r_horizonFade->integer)
+	{
+		float fade = 1 + (0.1*r_horizonFade->integer);
+		Q_strcat(dest, size, va("#define HORIZON_FADE float(%f)\n", fade));
+	}
+
 	if (extra)
 	{
 		Q_strcat(dest, size, extra);

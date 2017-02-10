@@ -715,6 +715,15 @@ void main()
 	//vec3 cubeLightDiffuse = max(textureLod(u_CubeMap, N, 7).rgb, 0.5 / 255.0);
 	//cubeLightColor /= dot(cubeLightDiffuse, vec3(0.2125, 0.7154, 0.0721));
 
+	float horiz = 1.0;
+	// from http://marmosetco.tumblr.com/post/81245981087
+	#if defined(HORIZON_FADE)
+		const float horizonFade = HORIZON_FADE;
+		horiz = clamp( 1.0 + horizonFade * dot(R,var_Normal.xyz), 0.0, 1.0 );
+		horiz = 1.0 - horiz;
+		horiz *= horiz;
+	#endif
+
     #if defined(USE_PBR)
 	cubeLightColor *= cubeLightColor;
     #endif
@@ -723,7 +732,7 @@ void main()
 	// not technically correct, but helps make reflections look less unnatural
 	//cubeLightColor *= lightColor * (attenuation * NL) + ambientColor;
 
-	out_Color.rgb += cubeLightColor * reflectance;
+	out_Color.rgb += cubeLightColor * reflectance * horiz;
   #endif
 
   #if defined(USE_PRIMARY_LIGHT) || defined(SHADOWMAP_MODULATE)
