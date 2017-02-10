@@ -1775,8 +1775,6 @@ void R_Init(void) {
 		RE_SetLightStyle(i, -1);
 	}
 
-	R_InitImagesPool();
-
 	InitOpenGL();
 
 	R_InitVBOs();
