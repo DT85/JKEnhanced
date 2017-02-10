@@ -27,11 +27,11 @@ if(BuildSPGame)
 endif(BuildSPGame)
 
 #    Add Modular Renderer project
-add_subdirectory("${SPDir}/rd-vanilla")
-add_subdirectory("${SPDir}/rd-rend2")
+add_subdirectory("${SPDir}/rd-gl1")
+add_subdirectory("${SPDir}/rd-gl2")
 
 #    Add Engine Project
-if(BuildSPEngine OR BuildJK2SPEngine)
+if(BuildSPEngine)
 	# Libraries
 	if(WIN32)
 		set(SPEngineLibraries "winmm")
@@ -369,7 +369,7 @@ if(BuildSPEngine OR BuildJK2SPEngine)
     list(APPEND SPEngineIncludeDirectories ${ZLIB_INCLUDE_DIR})
     list(APPEND SPEngineLibraries          ${ZLIB_LIBRARIES})
 
-	# project macro so we can invoke it twice: for jk2 and for ja
+	# project macro so we can invoke it twice: for ja
 	function(add_sp_project ProjectName Label SPDirName InstallDir Component)
 		if(MakeApplicationBundles)
 			set_source_files_properties(${SPDirName}/macosx/OpenJK.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
@@ -431,9 +431,5 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 	if(BuildSPEngine)
 		add_sp_project(${SPEngine} "SP Client" ${SPDir} ${JKAInstallDir} ${JKASPClientComponent})
 	endif(BuildSPEngine)
-	if(BuildJK2SPEngine)
-		set(SPEngineDefines ${SPEngineDefines} "JK2_MODE")
-		add_sp_project(${JK2SPEngine} "JK2 SP Client" ${JK2SPDir} ${JK2InstallDir} ${JK2SPClientComponent})
-	endif(BuildJK2SPEngine)
 
-endif(BuildSPEngine OR BuildJK2SPEngine)
+endif(BuildSPEngine)
