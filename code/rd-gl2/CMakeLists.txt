@@ -120,6 +120,7 @@ if(BuildSPRdGL2)
 		"${SPDir}/rd-gl2/tr_glsl.cpp"
 		"${SPDir}/rd-gl2/tr_glsl_parse.cpp"
 		"${SPDir}/rd-gl2/tr_image.cpp"
+		"${SPDir}/rd-gl2/tr_image_dds.cpp"
 		"${SPDir}/rd-gl2/tr_init.cpp"
 		"${SPDir}/rd-gl2/tr_light.cpp"
 		"${SPDir}/rd-gl2/tr_local.h"
