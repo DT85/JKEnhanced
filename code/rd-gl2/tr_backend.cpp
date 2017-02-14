@@ -2613,6 +2613,73 @@ static const void *RB_EndTimedBlock( const void *data )
 	return (const void *)(cmd + 1);
 }
 
+/*
+=============
+RB_ExportCubemaps
+
+=============
+*/
+const void *RB_ExportCubemaps(const void *data)
+{
+	const exportCubemapsCommand_t *cmd = (exportCubemapsCommand_t *)data;
+
+	// finish any 2D drawing if needed
+	if (tess.numIndexes)
+		RB_EndSurface();
+
+	if (!tr.world || tr.numCubemaps == 0)
+	{
+		// do nothing
+		ri.Printf(PRINT_ALL, "Nothing to export!\n");
+		return (const void *)(cmd + 1);
+	}
+
+	if (cmd)
+	{
+		FBO_t *oldFbo = glState.currentFBO;
+		int sideSize = r_cubemapSize->integer * r_cubemapSize->integer * 4;
+		byte *cubemapPixels = (byte *)R_Malloc(sideSize * 6, TAG_TEMP_WORKSPACE);
+		int i, j;
+
+		FBO_Bind(tr.renderCubeFbo);
+
+		for (i = 0; i < tr.numCubemaps; i++)
+		{
+			char filename[MAX_QPATH];
+			cubemap_t *cubemap = &tr.cubemaps[i];
+			byte *p = cubemapPixels;
+
+			for (j = 0; j < 6; j++)
+			{
+				//FBO_AttachImage(tr.renderCubeFbo, cubemap->image, GL_COLOR_ATTACHMENT0_EXT, j);
+				qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + j, cubemap->image->texnum, 0);
+
+				qglReadPixels(0, 0, r_cubemapSize->integer, r_cubemapSize->integer, GL_RGBA, GL_UNSIGNED_BYTE, p);
+				p += sideSize;
+			}
+
+			if (cubemap->name[0])
+			{
+				COM_StripExtension(cubemap->name, filename, MAX_QPATH);
+				Q_strcat(filename, MAX_QPATH, ".jpg");
+			}
+			else
+			{
+				Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%03d.jpg", tr.world->baseName, i);
+			}
+
+			R_SaveDDS(filename, cubemapPixels, r_cubemapSize->integer, r_cubemapSize->integer, 6);
+			ri.Printf(PRINT_ALL, "Saved cubemap %d as %s\n", i, filename);
+		}
+
+		FBO_Bind(oldFbo);
+
+		R_Free(cubemapPixels);
+	}
+
+	return (const void *)(cmd + 1);
+}
+
 
 /*
 ====================
@@ -2669,6 +2736,9 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			break;
 		case RC_POSTPROCESS:
 			data = RB_PostProcess(data);
+			break;
+		case RC_EXPORT_CUBEMAPS:
+			data = RB_ExportCubemaps(data);
 			break;
 		case RC_BEGIN_TIMED_BLOCK:
 			data = RB_BeginTimedBlock(data);
