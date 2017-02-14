@@ -363,6 +363,7 @@ typedef struct image_s {
 } image_t;
 
 typedef struct cubemap_s {
+	char name[MAX_QPATH];
 	vec3_t origin;
 	float parallaxRadius;
 	image_t *image;
@@ -3138,6 +3139,7 @@ RENDERER BACK END FUNCTIONS
 */
 
 void RB_ExecuteRenderCommands( const void *data );
+void R_SaveDDS(const char *filename, byte *pic, int width, int height, int depth);
 
 /*
 =============================================================
@@ -3262,6 +3264,10 @@ typedef struct postProcessCommand_s {
 	viewParms_t	viewParms;
 } postProcessCommand_t;
 
+typedef struct {
+	int commandId;
+} exportCubemapsCommand_t;
+
 typedef struct beginTimedBlockCommand_s {
 	int commandId;
 	qhandle_t timerHandle;
@@ -3289,6 +3295,7 @@ typedef enum {
 	RC_CLEARDEPTH,
 	RC_CAPSHADOWMAP,
 	RC_POSTPROCESS,
+	RC_EXPORT_CUBEMAPS,
 	RC_BEGIN_TIMED_BLOCK,
 	RC_END_TIMED_BLOCK
 } renderCommand_t;

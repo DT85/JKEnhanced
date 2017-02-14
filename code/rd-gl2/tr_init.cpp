@@ -1018,6 +1018,35 @@ void R_ScreenShotJPEG_f(void) {
 
 /*
 ==================
+R_ExportCubemaps
+==================
+*/
+void R_ExportCubemaps(void)
+{
+	exportCubemapsCommand_t	*cmd;
+
+	cmd = (exportCubemapsCommand_t	*)R_GetCommandBuffer(sizeof(*cmd));
+	if (!cmd) {
+		return;
+	}
+	cmd->commandId = RC_EXPORT_CUBEMAPS;
+}
+
+
+/*
+==================
+R_ExportCubemaps_f
+==================
+*/
+void R_ExportCubemaps_f(void)
+{
+	R_ExportCubemaps();
+}
+
+//============================================================================
+
+/*
+==================
 RB_TakeVideoFrameCmd
 ==================
 */
@@ -1338,6 +1367,7 @@ static consoleCommand_t	commands[] = {
 	//{ "modelcacheinfo",		RE_RegisterModels_Info_f },
 	{ "vbolist",			R_VBOList_f },
 	{ "capframes",			R_CaptureFrameData_f },
+	{ "exportCubemaps",		R_ExportCubemaps_f },
 };
 
 static const size_t numCommands = ARRAY_LEN(commands);

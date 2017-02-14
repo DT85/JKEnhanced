@@ -22,6 +22,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // tr_map.c
 
 #include "tr_local.h"
+
+#define JSON_IMPLEMENTATION
+#include "json.h"
+#undef JSON_IMPLEMENTATION
+
 #include "tr_cache.h"
 #include <vector>
 
@@ -2811,33 +2816,34 @@ void R_LoadEntities( world_t *worldData, lump_t *l ) {
 R_GetEntityToken
 =================
 */
-qboolean R_GetEntityToken( char *buffer, int size ) {
+qboolean R_GetEntityToken(char *buffer, int size) {
 	char	*s;
 	world_t *worldData = &s_worldData;
-
+	
 	if (size == -1)
-	{ //force reset
+	{ //force reset 
 		worldData->entityParsePoint = worldData->entityString;
 		return qtrue;
 	}
 
-	s = COM_Parse( (const char **)&worldData->entityParsePoint );
-	Q_strncpyz( buffer, s, size );
-	if ( !worldData->entityParsePoint && !s[0] ) {
+	s = COM_Parse((const char **)&worldData->entityParsePoint);
+	Q_strncpyz(buffer, s, size);
+	if (!worldData->entityParsePoint && !s[0]) {
 		worldData->entityParsePoint = worldData->entityString;
 		return qfalse;
-	} else {
+	}
+	else {
 		return qtrue;
 	}
 }
+
 
 #ifndef MAX_SPAWN_VARS
 #define MAX_SPAWN_VARS 64
 #endif
 
 // derived from G_ParseSpawnVars() in g_spawn.c
-#if 1
-static qboolean R_ParseSpawnVars( char *spawnVarChars, int maxSpawnVarChars, int *numSpawnVars, char *spawnVars[MAX_SPAWN_VARS][2] )
+qboolean R_ParseSpawnVars( char *spawnVarChars, int maxSpawnVarChars, int *numSpawnVars, char *spawnVars[MAX_SPAWN_VARS][2] )
 {
 	char    keyname[MAX_TOKEN_CHARS];
 	char	com_token[MAX_TOKEN_CHARS];
@@ -2908,72 +2914,79 @@ static qboolean R_ParseSpawnVars( char *spawnVarChars, int maxSpawnVarChars, int
 	return qtrue;
 }
 
-#else // SP
+void R_LoadEnvironmentJson(const char *baseName)
+{
+	char filename[MAX_QPATH];
 
-//qboolean R_ParseSpawnVars(const char **data) {
-static qboolean R_ParseSpawnVars(char *spawnVarChars, int maxSpawnVarChars, int *numSpawnVars, char *spawnVars[MAX_SPAWN_VARS][2]){
+	union {
+		char *c;
+		void *v;
+	} buffer;
+	char *bufferEnd;
 
-	char		keyname[MAX_STRING_CHARS];
-	const char	*com_token;
+	const char *cubemapArrayJson;
+	int filelen, i;
 
-	*numSpawnVars = 0;
-	int numSpawnVarChars = 0;
+	Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/env.json", baseName);
 
-	const char **data;
+	filelen = ri.FS_ReadFile(filename, &buffer.v);
+	if (!buffer.c)
+		return;
+	bufferEnd = buffer.c + filelen;
 
-	// parse the opening brace
-	//COM_BeginParseSession();
-	com_token = COM_Parse(data);
-	if (!*data) {
-		// end of spawn string
-		//COM_EndParseSession();
-		return qfalse;
-	}
-	if (com_token[0] != '{') {
-		//COM_EndParseSession();
-		ri.Printf(PRINT_ALL, "R_ParseSpawnVars: found %s when expecting {\n", com_token);
-	}
-
-	// go through all the key / value pairs
-	while (1) {
-		// parse key
-		com_token = COM_Parse(data);
-		if (!*data) {
-			//COM_EndParseSession();
-			ri.Printf(PRINT_ALL, "R_ParseSpawnVars: EOF without closing brace\n");
-		}
-
-		if (com_token[0] == '}') {
-			break;
-		}
-
-		Q_strncpyz(keyname, com_token, sizeof(keyname));
-
-		// parse value
-		com_token = COM_Parse(data);
-		if (!*data) {
-			//COM_EndParseSession();
-			ri.Printf(PRINT_ALL, "R_ParseSpawnVars: EOF without closing brace\n");
-		}
-		if (com_token[0] == '}') {
-			//COM_EndParseSession();
-			ri.Printf(PRINT_ALL, "R_ParseSpawnVars: closing brace without data\n");
-		}
-		if (*numSpawnVars == MAX_SPAWN_VARS) {
-			//COM_EndParseSession();
-			ri.Printf(PRINT_ALL, "R_ParseSpawnVars: MAX_SPAWN_VARS\n");
-		}
-		spawnVars[*numSpawnVars][0] = spawnVarChars + numSpawnVarChars;
-		spawnVars[*numSpawnVars][1] = spawnVarChars + numSpawnVarChars;
-		numSpawnVars++;
+	if (JSON_ValueGetType(buffer.c, bufferEnd) != JSONTYPE_OBJECT)
+	{
+		ri.Printf(PRINT_ALL, "Bad %s: does not start with a object\n", filename);
+		ri.FS_FreeFile(buffer.v);
+		return;
 	}
 
-	//COM_EndParseSession();
-	return qtrue;
+	cubemapArrayJson = JSON_ObjectGetNamedValue(buffer.c, bufferEnd, "Cubemaps");
+	if (!cubemapArrayJson)
+	{
+		ri.Printf(PRINT_ALL, "Bad %s: no Cubemaps\n", filename);
+		ri.FS_FreeFile(buffer.v);
+		return;
+	}
+
+	if (JSON_ValueGetType(cubemapArrayJson, bufferEnd) != JSONTYPE_ARRAY)
+	{
+		ri.Printf(PRINT_ALL, "Bad %s: Cubemaps not an array\n", filename);
+		ri.FS_FreeFile(buffer.v);
+		return;
+	}
+
+	tr.numCubemaps = JSON_ArrayGetIndex(cubemapArrayJson, bufferEnd, NULL, 0);
+	tr.cubemaps = (cubemap_t *)R_Hunk_Alloc(tr.numCubemaps * sizeof(*tr.cubemaps), qtrue);
+	memset(tr.cubemaps, 0, tr.numCubemaps * sizeof(*tr.cubemaps));
+
+	for (i = 0; i < tr.numCubemaps; i++)
+	{
+		cubemap_t *cubemap = &tr.cubemaps[i];
+		const char *cubemapJson, *keyValueJson, *indexes[3];
+		int j;
+
+		cubemapJson = JSON_ArrayGetValue(cubemapArrayJson, bufferEnd, i);
+
+		keyValueJson = JSON_ObjectGetNamedValue(cubemapJson, bufferEnd, "Name");
+		if (!JSON_ValueGetString(keyValueJson, bufferEnd, cubemap->name, MAX_QPATH))
+			cubemap->name[0] = '\0';
+
+		keyValueJson = JSON_ObjectGetNamedValue(cubemapJson, bufferEnd, "Position");
+		JSON_ArrayGetIndex(keyValueJson, bufferEnd, indexes, 3);
+		for (j = 0; j < 3; j++)
+			cubemap->origin[j] = JSON_ValueGetFloat(indexes[j], bufferEnd);
+
+		cubemap->parallaxRadius = 1000.0f;
+		keyValueJson = JSON_ObjectGetNamedValue(cubemapJson, bufferEnd, "Radius");
+		if (keyValueJson)
+			cubemap->parallaxRadius = JSON_ValueGetFloat(keyValueJson, bufferEnd);
+	}
+
+	ri.FS_FreeFile(buffer.v);
 }
-#endif
 
-static void R_LoadCubemapEntities(const char *cubemapEntityName)
+void R_LoadCubemapEntities(char *cubemapEntityName)
 {
 	char spawnVarChars[2048];
 	int numSpawnVars;
@@ -2982,7 +2995,7 @@ static void R_LoadCubemapEntities(const char *cubemapEntityName)
 
 	// count cubemaps
 	numCubemaps = 0;
-	while(R_ParseSpawnVars(spawnVarChars, sizeof(spawnVarChars), &numSpawnVars, spawnVars))
+	while (R_ParseSpawnVars(spawnVarChars, sizeof(spawnVarChars), &numSpawnVars, spawnVars))
 	{
 		int i;
 
@@ -2997,21 +3010,27 @@ static void R_LoadCubemapEntities(const char *cubemapEntityName)
 		return;
 
 	tr.numCubemaps = numCubemaps;
-	tr.cubemaps = (cubemap_t *)R_Hunk_Alloc( tr.numCubemaps * sizeof(*tr.cubemaps), qtrue);
+	tr.cubemaps = (cubemap_t *)R_Hunk_Alloc(tr.numCubemaps * sizeof(*tr.cubemaps), qtrue);
+	memset(tr.cubemaps, 0, tr.numCubemaps * sizeof(*tr.cubemaps));
 
 	numCubemaps = 0;
-	while(R_ParseSpawnVars(spawnVarChars, sizeof(spawnVarChars), &numSpawnVars, spawnVars))
+	while (R_ParseSpawnVars(spawnVarChars, sizeof(spawnVarChars), &numSpawnVars, spawnVars))
 	{
 		int i;
+		char name[MAX_QPATH];
 		qboolean isCubemap = qfalse;
 		qboolean originSet = qfalse;
 		vec3_t origin;
 		float parallaxRadius = 1000.0f;
 
+		name[0] = '\0';
 		for (i = 0; i < numSpawnVars; i++)
 		{
 			if (!Q_stricmp(spawnVars[i][0], "classname") && !Q_stricmp(spawnVars[i][1], cubemapEntityName))
 				isCubemap = qtrue;
+
+			if (!Q_stricmp(spawnVars[i][0], "name"))
+				Q_strncpyz(name, spawnVars[i][1], MAX_QPATH);
 
 			if (!Q_stricmp(spawnVars[i][0], "origin"))
 			{
@@ -3026,15 +3045,16 @@ static void R_LoadCubemapEntities(const char *cubemapEntityName)
 
 		if (isCubemap && originSet)
 		{
-			//ri.Printf(PRINT_ALL, "cubemap at %f %f %f\n", origin[0], origin[1], origin[2]);
-			VectorCopy(origin, tr.cubemaps[numCubemaps].origin);
-			tr.cubemaps[numCubemaps].parallaxRadius = parallaxRadius;
+			cubemap_t *cubemap = &tr.cubemaps[numCubemaps];
+			Q_strncpyz(cubemap->name, name, MAX_QPATH);
+			VectorCopy(origin, cubemap->origin);
+			cubemap->parallaxRadius = parallaxRadius;
 			numCubemaps++;
 		}
 	}
 }
 
-static void R_AssignCubemapsToWorldSurfaces(world_t *worldData)
+void R_AssignCubemapsToWorldSurfaces(world_t *worldData)
 {
 	world_t	*w;
 	int i;
@@ -3067,30 +3087,38 @@ static void R_AssignCubemapsToWorldSurfaces(world_t *worldData)
 	}
 }
 
+void R_LoadCubemaps(void)
+{
+	int i;
 
-static void R_RenderAllCubemaps(void)
+	for (i = 0; i < tr.numCubemaps; i++)
+	{
+		char filename[MAX_QPATH];
+		cubemap_t *cubemap = &tr.cubemaps[i];
+
+		Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%03d.jpg", tr.world->baseName, i);
+
+		cubemap->image = R_FindImageFile(filename, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_NOLIGHTSCALE | IMGFLAG_CUBEMAP);
+	}
+}
+
+void R_RenderMissingCubemaps(void)
 {
 	int i, j;
-	GLenum cubemapFormat = GL_RGBA8;
-
-	if ( r_hdr->integer )
-	{
-		cubemapFormat = GL_RGBA16F;
-	}
 
 	for (i = 0; i < tr.numCubemaps; i++)
 	{
-		tr.cubemaps[i].image = R_CreateImage (va ("*cubeMap%d", i), NULL, r_cubemapSize->integer, r_cubemapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, cubemapFormat);
-	}
-	
-	for (i = 0; i < tr.numCubemaps; i++)
-	{
-		for (j = 0; j < 6; j++)
+		if (!tr.cubemaps[i].image)
 		{
-			RE_ClearScene();
-			R_RenderCubemapSide(i, j, qfalse);
-			R_IssuePendingRenderCommands();
-			R_InitNextFrame();
+			tr.cubemaps[i].image = R_CreateImage(va("*cubeMap%d", i), NULL, r_cubemapSize->integer, r_cubemapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, GL_RGBA8);
+
+			for (j = 0; j < 6; j++)
+			{
+				RE_ClearScene();
+				R_RenderCubemapSide(i, j, qfalse);
+				R_IssuePendingRenderCommands();
+				R_InitNextFrame();
+			}
 		}
 	}
 }
@@ -3785,7 +3813,8 @@ void RE_LoadWorldMap( const char *name ) {
 	// Render all cubemaps
 	if (r_cubeMapping->integer && tr.numCubemaps)
 	{
-		R_RenderAllCubemaps();
+		R_LoadCubemaps();
+		R_RenderMissingCubemaps();
 	}
 
     ri.FS_FreeFile( buffer.v );
