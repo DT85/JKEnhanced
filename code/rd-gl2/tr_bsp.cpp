@@ -2928,6 +2928,7 @@ void R_LoadEnvironmentJson(const char *baseName)
 	int filelen, i;
 
 	Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/env.json", baseName);
+	ri.Printf(PRINT_ALL, "Loaded Enviroment JSON: %s\n", i, filename);
 
 	filelen = ri.FS_ReadFile(filename, &buffer.v);
 	if (!buffer.c)
@@ -3781,6 +3782,9 @@ void RE_LoadWorldMap( const char *name ) {
 	// load cubemaps
 	if (r_cubeMapping->integer)
 	{
+		// Try loading an env.json file first
+		R_LoadEnvironmentJson(s_worldData.baseName);
+
 		R_LoadCubemapEntities("misc_cubemap");
 		if (!tr.numCubemaps)
 		{
