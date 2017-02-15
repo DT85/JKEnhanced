@@ -2660,8 +2660,7 @@ const void *RB_ExportCubemaps(const void *data)
 
 			if (cubemap->name[0])
 			{
-				COM_StripExtension(cubemap->name, filename, MAX_QPATH);
-				Q_strcat(filename, MAX_QPATH, ".dds");
+				Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%s.dds", tr.world->baseName, cubemap->name);
 			}
 			else
 			{
