@@ -3096,7 +3096,7 @@ void R_LoadCubemaps(void)
 		char filename[MAX_QPATH];
 		cubemap_t *cubemap = &tr.cubemaps[i];
 
-		Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%03d.jpg", tr.world->baseName, i);
+		Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%03d.dds", tr.world->baseName, i);
 
 		cubemap->image = R_FindImageFile(filename, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_NOLIGHTSCALE | IMGFLAG_CUBEMAP);
 	}
