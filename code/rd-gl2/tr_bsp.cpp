@@ -2928,7 +2928,7 @@ void R_LoadEnvironmentJson(const char *baseName)
 	int filelen, i;
 
 	Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/env.json", baseName);
-	ri.Printf(PRINT_ALL, "Loaded Enviroment JSON: %s\n", i, filename);
+	ri.Printf(PRINT_ALL, "Loaded Enviroment JSON: %s\n", filename);
 
 	filelen = ri.FS_ReadFile(filename, &buffer.v);
 	if (!buffer.c)
