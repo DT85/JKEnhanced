@@ -2934,6 +2934,8 @@ void R_LoadEnvironmentJson(const char *baseName)
 		return;
 	bufferEnd = buffer.c + filelen;
 
+	ri.Printf(PRINT_ALL, "Loaded Enviroment JSON: %s\n", filename);
+
 	if (JSON_ValueGetType(buffer.c, bufferEnd) != JSONTYPE_OBJECT)
 	{
 		ri.Printf(PRINT_ALL, "Bad %s: does not start with a object\n", filename);
@@ -3096,7 +3098,7 @@ void R_LoadCubemaps(void)
 		char filename[MAX_QPATH];
 		cubemap_t *cubemap = &tr.cubemaps[i];
 
-		Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%03d.jpg", tr.world->baseName, i);
+		Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%03d.dds", tr.world->baseName, i);
 
 		cubemap->image = R_FindImageFile(filename, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_NOLIGHTSCALE | IMGFLAG_CUBEMAP);
 	}
@@ -3781,6 +3783,9 @@ void RE_LoadWorldMap( const char *name ) {
 	// load cubemaps
 	if (r_cubeMapping->integer)
 	{
+		// Try loading an env.json file first
+		R_LoadEnvironmentJson(s_worldData.baseName);
+
 		R_LoadCubemapEntities("misc_cubemap");
 		if (!tr.numCubemaps)
 		{

@@ -2660,12 +2660,11 @@ const void *RB_ExportCubemaps(const void *data)
 
 			if (cubemap->name[0])
 			{
-				COM_StripExtension(cubemap->name, filename, MAX_QPATH);
-				Q_strcat(filename, MAX_QPATH, ".jpg");
+				Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%s.dds", tr.world->baseName, cubemap->name);
 			}
 			else
 			{
-				Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%03d.jpg", tr.world->baseName, i);
+				Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%03d.dds", tr.world->baseName, i);
 			}
 
 			R_SaveDDS(filename, cubemapPixels, r_cubemapSize->integer, r_cubemapSize->integer, 6);
