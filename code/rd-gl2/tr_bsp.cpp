@@ -2587,9 +2587,9 @@ static	void R_LoadFogs( world_t *worldData, lump_t *l, lump_t *brushesLump, lump
 		out->parms = shader->fogParms;
 
 		VectorSet4(out->color,
-			shader->fogParms.color[0] * tr.identityLight, 
-			shader->fogParms.color[1] * tr.identityLight, 
-			shader->fogParms.color[2] * tr.identityLight,
+			shader->fogParms.color[0], 
+			shader->fogParms.color[1], 
+			shader->fogParms.color[2],
 			1.0);
 
 		d = shader->fogParms.depthForOpaque < 1 ? 1 : shader->fogParms.depthForOpaque;
