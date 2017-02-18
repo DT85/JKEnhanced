@@ -3063,10 +3063,22 @@ static void CollapseStagesToLightall(shaderStage_t *diffuse,
 			image_t *normalImg;
 			int normalFlags = (diffuseImg->flags & ~(IMGFLAG_GENNORMALMAP | IMGFLAG_SRGB)) | IMGFLAG_NOLIGHTSCALE;
 
+			// try a normalheight image first
 			COM_StripExtension( diffuseImg->imgName, normalName, sizeof( normalName ) );
-			Q_strcat( normalName, sizeof( normalName ), "_n" );
+			Q_strcat( normalName, sizeof( normalName ), "_nh" );
 
-			normalImg = R_FindImageFile(normalName, IMGTYPE_NORMAL, normalFlags);
+			normalImg = R_FindImageFile(normalName, IMGTYPE_NORMALHEIGHT, normalFlags);
+
+			if (normalImg)
+			{
+				parallax = qtrue;
+			}
+			else
+			{
+				// try a normal image ("_n" suffix)
+				normalName[strlen(normalName) - 1] = '\0';
+				normalImg = R_FindImageFile(normalName, IMGTYPE_NORMAL, normalFlags);
+			}
 
 			if (normalImg)
 			{

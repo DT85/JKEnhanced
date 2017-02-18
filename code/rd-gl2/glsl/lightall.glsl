@@ -685,7 +685,7 @@ void main()
     
 	reflectance  = CalcDiffuse(diffuse.rgb, NH, EH, roughness);
 
-  #if defined(USE_LIGHT_VECTOR)
+  #if defined(USE_LIGHT_VECTOR) || defined(USE_DELUXEMAP)
     H  = normalize(L + E);
 	NL = clamp(dot(N, L), 0.0, 1.0);
 	NE = abs(dot(N, E)) + 1e-5;
