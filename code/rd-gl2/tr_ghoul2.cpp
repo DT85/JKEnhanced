@@ -3604,6 +3604,18 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 			}
 
 			mdxmTriangle_t *t = (mdxmTriangle_t *)((byte *)surf + surf->ofsTriangles);
+
+			// fugly but it works, pls fix!
+			for (int k = 0; k < surf->numTriangles; k++)
+			{
+				VectorClear(tangentsf[baseVertexes[n] + t[k].indexes[0]]);
+				VectorClear(tangentsf[baseVertexes[n] + t[k].indexes[1]]);
+				VectorClear(tangentsf[baseVertexes[n] + t[k].indexes[2]]);
+				VectorClear(bitangentsf[baseVertexes[n] + t[k].indexes[0]]);
+				VectorClear(bitangentsf[baseVertexes[n] + t[k].indexes[1]]);
+				VectorClear(bitangentsf[baseVertexes[n] + t[k].indexes[2]]);
+			}
+
 			for (int k = 0; k < surf->numTriangles; k++)
 			{
 				int index[3];
@@ -3614,15 +3626,7 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 
 				index[0] = t[k].indexes[0];
 				index[1] = t[k].indexes[1];
-				index[2] = t[k].indexes[2];
-
-				// fugly but it works, pls fix!
-				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, tangentsf[baseVertexes[n] + index[0]]);
-				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, tangentsf[baseVertexes[n] + index[1]]);
-				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, tangentsf[baseVertexes[n] + index[2]]);
-				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, bitangentsf[baseVertexes[n] + index[0]]);
-				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, bitangentsf[baseVertexes[n] + index[1]]);
-				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, bitangentsf[baseVertexes[n] + index[2]]);
+				index[2] = t[k].indexes[2];	
 
 				v0 = v[index[0]].vertCoords;
 				v1 = v[index[1]].vertCoords;
