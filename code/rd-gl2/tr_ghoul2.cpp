@@ -3509,7 +3509,7 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 		baseVertexes[mdxm->numSurfaces] = numVerts;
 
 		tangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qfalse);
-		bitangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qfalse);;
+		bitangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qfalse);
 
 		dataSize += numVerts * sizeof(*verts);
 		dataSize += numVerts * sizeof(*normals);
@@ -3615,6 +3615,11 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 				index[0] = t[k].indexes[0];
 				index[1] = t[k].indexes[1];
 				index[2] = t[k].indexes[2];
+
+				// fugly but it works, pls fix!
+				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, tangentsf[baseVertexes[n] + index[0]]);
+				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, tangentsf[baseVertexes[n] + index[1]]);
+				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, tangentsf[baseVertexes[n] + index[2]]);
 
 				v0 = v[index[0]].vertCoords;
 				v1 = v[index[1]].vertCoords;

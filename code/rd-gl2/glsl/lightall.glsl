@@ -63,10 +63,8 @@ uniform mat4x3 u_BoneMatrices[20];
 #if defined(USE_LIGHT_VECTOR)
 uniform vec4 u_LightOrigin;
 uniform float u_LightRadius;
-  #if defined(USE_FAST_LIGHT)
 uniform vec3 u_DirectedLight;
 uniform vec3 u_AmbientLight;
-  #endif
 #endif
 
 #if defined(USE_PRIMARY_LIGHT) || defined(USE_SHADOWMAP)
@@ -79,7 +77,6 @@ uniform float u_FXVolumetricBase;
 
 out vec4 var_TexCoords;
 out vec4 var_Color;
-out vec3 var_N;
 
 #if defined(PER_PIXEL_LIGHTING)
 out vec4 var_Normal;
@@ -176,10 +173,10 @@ void main()
 	vec4 normal4 = vec4(0.0);
 	vec4 originalPosition = vec4(attr_Position, 1.0);
 	vec4 originalNormal = vec4(attr_Normal - vec3 (0.5), 0.0);
-#if defined(PER_PIXEL_LIGHTING)
-	vec4 tangent4 = vec4(0.0);
-	vec4 originalTangent = vec4(attr_Tangent.xyz - vec3(0.5), 0.0);
-#endif
+	#if defined(PER_PIXEL_LIGHTING)
+		vec4 tangent4 = vec4(0.0);
+		vec4 originalTangent = vec4(attr_Tangent.xyz - vec3(0.5), 0.0);
+	#endif
 
 	for (int i = 0; i < 4; i++)
 	{
