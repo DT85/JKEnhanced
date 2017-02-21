@@ -3620,6 +3620,9 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, tangentsf[baseVertexes[n] + index[0]]);
 				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, tangentsf[baseVertexes[n] + index[1]]);
 				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, tangentsf[baseVertexes[n] + index[2]]);
+				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, bitangentsf[baseVertexes[n] + index[0]]);
+				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, bitangentsf[baseVertexes[n] + index[1]]);
+				VectorCopy(vec3_t{ 0.0f, 0.0f, 0.0f }, bitangentsf[baseVertexes[n] + index[2]]);
 
 				v0 = v[index[0]].vertCoords;
 				v1 = v[index[1]].vertCoords;
