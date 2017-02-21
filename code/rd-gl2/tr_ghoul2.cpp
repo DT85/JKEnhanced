@@ -3485,7 +3485,7 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 		vec3_t *bitangentsf;
 
 		// +1 to add total vertex count
-		int *baseVertexes = (int *)R_Malloc(sizeof(int) * (mdxm->numSurfaces + 1), TAG_TEMP_WORKSPACE, qfalse);
+		int *baseVertexes = (int *)R_Malloc(sizeof(int)* (mdxm->numSurfaces + 1), TAG_TEMP_WORKSPACE, qfalse);
 		int *indexOffsets = (int *)R_Malloc(sizeof(int)* mdxm->numSurfaces, TAG_TEMP_WORKSPACE, qfalse);
 
 		vboModel->numVBOMeshes = mdxm->numSurfaces;
@@ -3508,8 +3508,8 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 
 		baseVertexes[mdxm->numSurfaces] = numVerts;
 
-		tangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qfalse);
-		bitangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qfalse);
+		tangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qtrue);
+		bitangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qtrue);
 
 		dataSize += numVerts * sizeof(*verts);
 		dataSize += numVerts * sizeof(*normals);
@@ -3604,18 +3604,6 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 			}
 
 			mdxmTriangle_t *t = (mdxmTriangle_t *)((byte *)surf + surf->ofsTriangles);
-
-			// fugly but it works, pls fix!
-			for (int k = 0; k < surf->numTriangles; k++)
-			{
-				VectorClear(tangentsf[baseVertexes[n] + t[k].indexes[0]]);
-				VectorClear(tangentsf[baseVertexes[n] + t[k].indexes[1]]);
-				VectorClear(tangentsf[baseVertexes[n] + t[k].indexes[2]]);
-				VectorClear(bitangentsf[baseVertexes[n] + t[k].indexes[0]]);
-				VectorClear(bitangentsf[baseVertexes[n] + t[k].indexes[1]]);
-				VectorClear(bitangentsf[baseVertexes[n] + t[k].indexes[2]]);
-			}
-
 			for (int k = 0; k < surf->numTriangles; k++)
 			{
 				int index[3];
