@@ -362,6 +362,7 @@ typedef struct itemDef_s {
 	int			textStyle;					// ( optional ) style, normal and shadowed are it for now
 	char		*text;						// display text
 	char		*text2;						// display text2
+	int			descFont;					// Description FONT_SMALL,FONT_MEDIUM,FONT_LARGE
 	const char		*descText;				//	Description text
 	void		*parent;					// menu owner
 	qhandle_t	asset;						// handle to asset
@@ -401,6 +402,7 @@ typedef struct itemDef_s {
 typedef struct {
 	Window window;
 	const char  *font;						// font
+	const char  *descFont;					// Description font
 	qboolean	fullScreen;					// covers entire screen
 	int			itemCount;					// number of items;
 	int			fontIndex;					//
@@ -427,7 +429,7 @@ typedef struct {
 	vec4_t		descColor;					// description text color for items
 	int			descAlignment;				// Description of alignment
 	float		descScale;					// Description scale
-	int			descTextStyle;					// ( optional ) style, normal and shadowed are it for now
+	int			descTextStyle;				// ( optional ) style, normal and shadowed are it for now
 
 
 } menuDef_t;

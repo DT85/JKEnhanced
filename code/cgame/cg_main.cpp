@@ -2599,6 +2599,24 @@ qboolean CG_Asset_Parse(const char **p)
 			continue;
 		}
 
+		// descFont
+		if (Q_stricmp(token, "descFont") == 0)
+		{
+			/*
+			int pointSize;
+
+			cgi_UI_Parse_String(tempStr);
+			cgi_UI_Parse_Int(&pointSize);
+
+			if (!tempStr || !pointSize)
+			{
+			return qfalse;
+			}
+			*/
+			//			cgDC.registerFont(tempStr, pointSize, &cgDC.Assets.textFont);
+			continue;
+		}
+
 		// smallFont
 		if (Q_stricmp(token, "smallFont") == 0)
 		{
