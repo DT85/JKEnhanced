@@ -3485,7 +3485,7 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 		vec3_t *bitangentsf;
 
 		// +1 to add total vertex count
-		int *baseVertexes = (int *)R_Malloc(sizeof(int) * (mdxm->numSurfaces + 1), TAG_TEMP_WORKSPACE, qfalse);
+		int *baseVertexes = (int *)R_Malloc(sizeof(int)* (mdxm->numSurfaces + 1), TAG_TEMP_WORKSPACE, qfalse);
 		int *indexOffsets = (int *)R_Malloc(sizeof(int)* mdxm->numSurfaces, TAG_TEMP_WORKSPACE, qfalse);
 
 		vboModel->numVBOMeshes = mdxm->numSurfaces;
@@ -3508,8 +3508,8 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 
 		baseVertexes[mdxm->numSurfaces] = numVerts;
 
-		tangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qfalse);
-		bitangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qfalse);;
+		tangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qtrue);
+		bitangentsf = (vec3_t *)R_Malloc(sizeof(vec3_t)* numVerts, TAG_TEMP_WORKSPACE, qtrue);
 
 		dataSize += numVerts * sizeof(*verts);
 		dataSize += numVerts * sizeof(*normals);
@@ -3614,7 +3614,7 @@ qboolean R_LoadMDXM(model_t *mod, void *buffer, const char *mod_name, qboolean &
 
 				index[0] = t[k].indexes[0];
 				index[1] = t[k].indexes[1];
-				index[2] = t[k].indexes[2];
+				index[2] = t[k].indexes[2];	
 
 				v0 = v[index[0]].vertCoords;
 				v1 = v[index[1]].vertCoords;
