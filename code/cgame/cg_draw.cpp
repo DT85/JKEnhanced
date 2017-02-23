@@ -2364,12 +2364,12 @@ static void CG_DrawZoomMask( void )
 	{
 		level = (float)(80.0f - cg_zoomFov) / 80.0f;
 
-		if (cg_widescreen.integer) {
+		/*if (cg_widescreen.integer) 
+		{
 			cgi_R_SetColor(colorTable[CT_BLACK]);
-			CG_DrawPic(0, 0, 40, 480, cgs.media.whiteShader);
-			CG_DrawPic(720 - 40, 0, 40, 480, cgs.media.whiteShader);
-		}
-
+			CG_DrawPic(0, 0, 70, 480, cgs.media.whiteShader); //left side fill
+			CG_DrawPic(570, 0, 70, 480, cgs.media.whiteShader); //right side fill
+		}*/
 
 		// ...so we'll clamp it
 		if (level < 0.0f)
@@ -2387,14 +2387,7 @@ static void CG_DrawZoomMask( void )
 		// Draw target mask
 		cgi_R_SetColor(colorTable[CT_WHITE]);
 
-		if (cg_widescreen.integer)
-		{
-			CG_DrawPic(40, 0, 640, 480, cgs.media.disruptorMask);
-		}
-		else
-		{
-			CG_DrawPic(0, 0, 640, 480, cgs.media.disruptorMask);
-		}
+		CG_DrawPic(0, 0, 640, 480, cgs.media.disruptorMask);
 
 		// apparently 99.0f is the full zoom level
 		if ( level >= 99 )
@@ -2410,14 +2403,7 @@ static void CG_DrawZoomMask( void )
 
 		// Draw rotating insert
 
-		if (cg_widescreen.integer)
-		{
-			CG_DrawRotatePic2(360, 240, 640, 480, -level, cgs.media.disruptorInsert);
-		}
-		else
-		{
-			CG_DrawRotatePic2(320, 240, 640, 480, -level, cgs.media.disruptorInsert);
-		}
+		CG_DrawRotatePic2(320, 240, 640, 480, -level, cgs.media.disruptorInsert);
 
 		float cx, cy;
 		float max;
@@ -2456,16 +2442,8 @@ static void CG_DrawZoomMask( void )
 
 		for ( float i = 18.5f; i <= 18.5f + max; i+= 3 ) // going from 15 to 45 degrees, with 5 degree increments
 		{
-			if (cg_widescreen.integer) 
-			{
-				cx = 360 + sin((i + 90.0f) / 57.296f) * 190;
-				cy = 240 + cos((i + 90.0f) / 57.296f) * 190;
-			}
-			else
-			{
-				cx = 320 + sin((i + 90.0f) / 57.296f) * 190;
-				cy = 240 + cos((i + 90.0f) / 57.296f) * 190;
-			}
+			cx = 320 + sin((i + 90.0f) / 57.296f) * 190;
+			cy = 240 + cos((i + 90.0f) / 57.296f) * 190;
 
 			CG_DrawRotatePic2( cx, cy, 12, 24, 90 - i, cgs.media.disruptorInsertTick );
 		}
@@ -2483,14 +2461,7 @@ static void CG_DrawZoomMask( void )
 				max = 1.0f;
 			}
 
-			if (cg_widescreen.integer)
-			{
-				CG_DrawPic2(297, 435, 134 * max, 34, 0, 0, max, 1, cgi_R_RegisterShaderNoMip("gfx/2d/crop_charge"));
-			}
-			else
-			{
-				CG_DrawPic2(257, 435, 134 * max, 34, 0, 0, max, 1, cgi_R_RegisterShaderNoMip("gfx/2d/crop_charge"));
-			}
+			CG_DrawPic2(257, 435, 134 * max, 34, 0, 0, max, 1, cgi_R_RegisterShaderNoMip("gfx/2d/crop_charge"));
 		}
 	}
 	//-----------
@@ -2950,7 +2921,15 @@ static void CG_DrawCrosshair( vec3_t worldPoint )
 		}
 	}
 
-	w = h = cg_crosshairSize.value;
+	if (cg_widescreen.integer)
+	{
+		w = cg_crosshairSize.value - 5;
+		h = cg_crosshairSize.value;
+	}
+	else
+	{
+		w = h = cg_crosshairSize.value;
+	}
 
 	// pulse the size of the crosshair when picking up items
 	f = cg.time - cg.itemPickupBlendTime;
@@ -2990,37 +2969,18 @@ static void CG_DrawCrosshair( vec3_t worldPoint )
 		if ( !Q_stricmp( "misc_panel_turret", g_entities[cg.snap->ps.viewEntity].classname ))
 		{
 			// draws a custom crosshair that is twice as large as normal
-			if (cg_widescreen.integer)
-			{
-				cgi_R_DrawStretchPic(x + cg.refdef.x + 360 - w,
-					y + cg.refdef.y + 240 - h,
-					w * 2, h * 2, 0, 0, 1, 1, cgs.media.turretCrossHairShader);
-			}
-			else
-			{
-				cgi_R_DrawStretchPic(x + cg.refdef.x + 320 - w,
-					y + cg.refdef.y + 240 - h,
-					w * 2, h * 2, 0, 0, 1, 1, cgs.media.turretCrossHairShader);
-			}
-
+			cgi_R_DrawStretchPic(x + cg.refdef.x + 320 - w,
+				y + cg.refdef.y + 240 - h,
+				w * 2, h * 2, 0, 0, 1, 1, cgs.media.turretCrossHairShader);
 		}
 	}
 	else
 	{
 		hShader = cgs.media.crosshairShader[ cg_drawCrosshair.integer % NUM_CROSSHAIRS ];
 
-		if (cg_widescreen.integer)
-		{
-			cgi_R_DrawStretchPic(x + cg.refdef.x + 0.5 * (720 - w),
-				y + cg.refdef.y + 0.5 * (480 - h),
-				w, h, 0, 0, 1, 1, hShader);
-		}
-		else
-		{
-			cgi_R_DrawStretchPic(x + cg.refdef.x + 0.5 * (640 - w),
-				y + cg.refdef.y + 0.5 * (480 - h),
-				w, h, 0, 0, 1, 1, hShader);
-		}
+		cgi_R_DrawStretchPic(x + cg.refdef.x + 0.5 * (640 - w),
+			y + cg.refdef.y + 0.5 * (480 - h),
+			w, h, 0, 0, 1, 1, hShader);
 	}
 
 	if ( cg.forceCrosshairStartTime && cg_crosshairForceHint.integer ) // drawing extra bits
@@ -3033,20 +2993,10 @@ static void CG_DrawCrosshair( vec3_t worldPoint )
 		w *= 2.0f;
 		h *= 2.0f;
 
-		if (cg_widescreen.integer)
-		{
-			cgi_R_DrawStretchPic(x + cg.refdef.x + 0.5f * (720 - w), y + cg.refdef.y + 0.5f * (480 - h),
-				w, h,
-				0, 0, 1, 1,
-				cgs.media.forceCoronaShader);
-		}
-		else
-		{
-			cgi_R_DrawStretchPic(x + cg.refdef.x + 0.5f * (640 - w), y + cg.refdef.y + 0.5f * (480 - h),
-				w, h,
-				0, 0, 1, 1,
-				cgs.media.forceCoronaShader);
-		}
+		cgi_R_DrawStretchPic(x + cg.refdef.x + 0.5f * (640 - w), y + cg.refdef.y + 0.5f * (480 - h),
+			w, h,
+			0, 0, 1, 1,
+			cgs.media.forceCoronaShader);
 	}
 
 	cgi_R_SetColor( NULL );
