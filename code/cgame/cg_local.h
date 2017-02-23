@@ -660,6 +660,8 @@ extern	vmCvar_t		cg_fovViewmodelAdjust;
 
 extern	vmCvar_t		cg_scaleVehicleSensitivity;
 
+extern  vmCvar_t		cg_widescreen;
+
 void CG_NewClientinfo( int clientNum );
 //
 // cg_main.c
