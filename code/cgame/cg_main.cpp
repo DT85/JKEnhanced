@@ -344,6 +344,8 @@ vmCvar_t	cg_fovViewmodelAdjust;
 
 vmCvar_t	cg_scaleVehicleSensitivity;
 
+vmCvar_t	cg_widescreen;
+
 typedef struct {
 	vmCvar_t	*vmCvar;
 	const char	*cvarName;
@@ -465,6 +467,8 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_fovViewmodelAdjust, "cg_fovViewmodelAdjust", "1", CVAR_ARCHIVE },
 
 	{ &cg_scaleVehicleSensitivity, "cg_scaleVehicleSensitivity", "1", CVAR_ARCHIVE },
+
+	{ &cg_widescreen, "cg_widescreen", "0", CVAR_ARCHIVE },
 };
 
 static const size_t cvarTableSize = ARRAY_LEN( cvarTable );
@@ -2596,6 +2600,24 @@ qboolean CG_Asset_Parse(const char **p)
 			}
 */
 //			cgDC.registerFont(tempStr, pointSize, &cgDC.Assets.textFont);
+			continue;
+		}
+
+		// descFont
+		if (Q_stricmp(token, "descFont") == 0)
+		{
+			/*
+			int pointSize;
+
+			cgi_UI_Parse_String(tempStr);
+			cgi_UI_Parse_Int(&pointSize);
+
+			if (!tempStr || !pointSize)
+			{
+			return qfalse;
+			}
+			*/
+			//			cgDC.registerFont(tempStr, pointSize, &cgDC.Assets.textFont);
 			continue;
 		}
 

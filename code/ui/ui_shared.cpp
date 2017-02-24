@@ -705,6 +705,28 @@ qboolean MenuParse_appearanceIncrement( itemDef_t *item)
 }
 
 
+/*
+=================
+MenuParse_descFont
+=================
+*/
+qboolean MenuParse_descFont(itemDef_t *item)
+{
+	menuDef_t *menu = (menuDef_t*)item;
+
+	if (!PC_ParseStringMem(&menu->descFont))
+	{
+		return qfalse;
+	}
+
+	if (!DC->Assets.fontRegistered)
+	{
+		DC->Assets.qhMediumFont = DC->registerFont(menu->descFont);
+		DC->Assets.fontRegistered = qtrue;
+	}
+	return qtrue;
+}
+
 
 /*
 =================
@@ -1071,6 +1093,7 @@ keywordHash_t menuParseKeywords[] = {
 	{"bordercolor",			MenuParse_bordercolor,	},
 	{"borderSize",			MenuParse_borderSize,	},
 	{"cinematic",			MenuParse_cinematic,	},
+	{"descFont",			MenuParse_descFont		},
 	{"descAlignment",		MenuParse_descAlignment	},
 	{"descTextStyle",		MenuParse_descTextStyle	},
 	{"desccolor",			MenuParse_descColor		},
@@ -3013,6 +3036,24 @@ qboolean ItemParse_descText( itemDef_t *item)
 	return qtrue;
 }
 
+
+/*
+===============
+ItemParse_descFont
+value <int>
+===============
+*/
+
+qboolean ItemParse_descFont(itemDef_t *item)
+{
+	if (PC_ParseInt(&item->descFont))
+	{
+		return qfalse;
+	}
+	return qtrue;
+}
+
+
 /*
 ===============
 ItemParse_text
@@ -4789,6 +4830,7 @@ keywordHash_t itemParseKeywords[] = {
 	{"cvarStrList",		ItemParse_cvarStrList,		},
 	{"cvarTest",		ItemParse_cvarTest,			},
 	{"decoration",		ItemParse_decoration,		},
+	{"descFont",		ItemParse_descFont,			},
 	{"desctext",		ItemParse_descText			},
 	{"disableCvar",		ItemParse_disableCvar,		},
 	{"doubleclick",		ItemParse_doubleClick,		},
@@ -8148,8 +8190,7 @@ static qboolean Item_Paint(itemDef_t *item, qboolean bDraw)
 				float fDescScaleCopy = fDescScale;
 				while (1)
 				{
-					// FIXME - add some type of parameter in the menu file like descfont to specify the font for the descriptions for this menu.
-					textWidth = DC->textWidth(textPtr, fDescScale, 4);	//  item->font);
+					textWidth = DC->textWidth(textPtr, fDescScale, item->descFont);
 
 					if (parent->descAlignment == ITEM_ALIGN_RIGHT)
 					{
@@ -8184,8 +8225,7 @@ static qboolean Item_Paint(itemDef_t *item, qboolean bDraw)
 						iYadj = iOriginalTextHeight - DC->textHeight(textPtr, fDescScale, uiInfo.uiDC.Assets.qhMediumFont);
 					}
 
-					// FIXME - add some type of parameter in the menu file like descfont to specify the font for the descriptions for this menu.
-					DC->drawText(xPos, parent->descY + iYadj, fDescScale, parent->descColor, textPtr, 0, parent->descTextStyle, 4);	//item->font);
+					DC->drawText(xPos, parent->descY + iYadj, fDescScale, parent->descColor, textPtr, 0, parent->descTextStyle, item->descFont);
 					break;
 				}
 			}

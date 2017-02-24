@@ -546,9 +546,10 @@ typedef enum //# hunkAllocType_e
 #define GLYPH_COUNT			256
 
 // Must match define in stmparse.h
-#define STYLE_DROPSHADOW	0x80000000
-#define STYLE_BLINK			0x40000000
-#define	SET_MASK			0x00ffffff
+#define STYLE_DROPSHADOWDARK	0x80000000
+#define STYLE_DROPSHADOW		0x40000000
+#define STYLE_BLINK				0x20000000
+#define	SET_MASK				0x00ffffff
 
 typedef struct
 {
