@@ -227,6 +227,19 @@ int					cg_numpermanents = 0;
 weaponInfo_t		cg_weapons[MAX_WEAPONS];
 itemInfo_t			cg_items[MAX_ITEMS];
 
+extern void trap_R_FontRatioFix(float ratio);
+static void CG_Set2DRatio(void) {
+	if (cg_ratioFix.integer)
+		cgs.widthRatioCoef = (float)(SCREEN_WIDTH * cgs.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * cgs.glconfig.vidWidth);
+	else
+		cgs.widthRatioCoef = 1.0f;
+
+	if (cg_ratioFix.integer == 2)
+		trap_R_FontRatioFix(1.0f);
+	else
+		trap_R_FontRatioFix(cgs.widthRatioCoef);
+}
+
 typedef struct {
 	qboolean		registered;		// Has the player picked it up
 	qboolean		active;			// Is it the chosen inventory item
@@ -344,7 +357,7 @@ vmCvar_t	cg_fovViewmodelAdjust;
 
 vmCvar_t	cg_scaleVehicleSensitivity;
 
-vmCvar_t	cg_widescreen;
+vmCvar_t	cg_ratioFix;
 
 typedef struct {
 	vmCvar_t	*vmCvar;
@@ -468,7 +481,7 @@ static cvarTable_t cvarTable[] = {
 
 	{ &cg_scaleVehicleSensitivity, "cg_scaleVehicleSensitivity", "1", CVAR_ARCHIVE },
 
-	{ &cg_widescreen, "cg_widescreen", "0", CVAR_ARCHIVE },
+	{ &cg_ratioFix, "cg_ratioFix", "1", CVAR_ARCHIVE },
 };
 
 static const size_t cvarTableSize = ARRAY_LEN( cvarTable );
@@ -484,6 +497,11 @@ void CG_RegisterCvars( void ) {
 
 	for ( i=0, cv=cvarTable; i<cvarTableSize; i++, cv++ ) {
 		cgi_Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
+		if (!Q_stricmp(cv->cvarName, "cg_ratioFix"))
+		{
+			cgi_Cvar_Update(cv->vmCvar);
+			CG_Set2DRatio();
+		}
 	}
 }
 
@@ -499,6 +517,9 @@ void CG_UpdateCvars( void ) {
 	for ( i=0, cv=cvarTable; i<cvarTableSize; i++, cv++ ) {
 		if ( cv->vmCvar ) {
 			cgi_Cvar_Update( cv->vmCvar );
+			if (!Q_stricmp(cv->cvarName, "cg_ratioFix")) {
+				CG_Set2DRatio();
+			}
 		}
 	}
 }

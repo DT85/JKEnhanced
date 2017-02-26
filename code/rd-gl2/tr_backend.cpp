@@ -1729,6 +1729,25 @@ static const void *RB_RotatePic ( const void *data )
 
 /*
 =============
+RB_RotatePic2RatioFix
+=============
+*/
+static float ratio = 1.0f;
+static const void *RB_RotatePic2RatioFix ( const void *data )
+{
+	const rotatePicRatioFixCommand_t *cmd;
+
+	cmd = (const rotatePicRatioFixCommand_t *)data;
+
+	if (cmd->ratio <= 0.0f)
+		ratio = 1.0f;
+	else
+		ratio = cmd->ratio;
+	return (const void *)(cmd + 1);
+}
+
+/*
+=============
 RB_DrawRotatePic2
 =============
 */
@@ -2705,6 +2724,9 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			break;
 		case RC_ROTATE_PIC2:
 			data = RB_RotatePic2( data );
+			break;
+		case RC_ROTATE_PIC2_RATIOFIX:
+			data = RB_RotatePic2RatioFix( data );
 			break;
 		case RC_SCISSOR:
 			data = RB_Scissor(data);

@@ -2077,6 +2077,7 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI(int apiVersion, refimport_t *ri
 	re.DrawStretchPic = RE_StretchPic;
 	re.DrawRotatePic = RE_RotatePic;
 	re.DrawRotatePic2 = RE_RotatePic2;
+	re.RotatePic2RatioFix = RE_RotatePic2RatioFix;
 	REX(LAGoggles);
 	REX(Scissor);
 
@@ -2110,6 +2111,7 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI(int apiVersion, refimport_t *ri
 	REX(Font_StrLenPixels);
 	REX(Font_DrawString);
 	REX(Font_StrLenChars);
+	re.FontRatioFix = RE_FontRatioFix;
 	re.Language_IsAsian = Language_IsAsian;
 	re.Language_UsesSpaces = Language_UsesSpaces;
 	re.AnyLanguage_ReadCharFromString = AnyLanguage_ReadCharFromString;

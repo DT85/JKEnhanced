@@ -310,8 +310,6 @@ void UI_Init( int apiVersion, uiimport_t *uiimport, qboolean inGameLoad )
 	ui.Cvar_Create( "cg_bobroll", "0.002", CVAR_ARCHIVE );
 
 	ui.Cvar_Create( "ui_disableWeaponSway", "0", CVAR_ARCHIVE );
-
-	ui.Cvar_Create( "cg_widescreen", "0", CVAR_ARCHIVE );
 #endif
 
 

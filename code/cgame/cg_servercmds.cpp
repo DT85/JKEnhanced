@@ -185,14 +185,7 @@ static void CG_CaptionText_f( void ) {
 }
 
 static void CG_ScrollText_f( void ) {
-	if (cg_widescreen.integer)
-	{
-		CG_ScrollText(CG_Argv(1), 720 - 16);
-	}
-	else
-	{
-		CG_ScrollText(CG_Argv(1), SCREEN_WIDTH - 16);
-	}
+	CG_ScrollText(CG_Argv(1), SCREEN_WIDTH - 16);
 }
 
 static void CG_LCARSText_f( void ) {

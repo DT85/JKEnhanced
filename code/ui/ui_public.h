@@ -154,6 +154,8 @@ typedef struct {
 
 	int			(*Milliseconds)( void );
 	void		(*Draw_DataPad)(int HUDType);
+
+	void		(*R_FontRatioFix)(float ratio);
 } uiimport_t;
 
 typedef enum {
@@ -260,7 +262,8 @@ typedef enum {
 	UI_ATAN2,
 	UI_SQRT,
 	UI_FLOOR,
-	UI_CEIL
+	UI_CEIL,
+	UI_R_FONTRATIOFIX = 400
 } uiImport_t;
 
 #endif

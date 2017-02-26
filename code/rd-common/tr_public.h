@@ -204,6 +204,8 @@ typedef struct {
 		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
 	void	(*DrawRotatePic2) ( float x, float y, float w, float h,
 		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
+	void	(*RotatePic2RatioFix) (float ratio);
+	void	(*FontRatioFix) (float ratio);
 	void	(*LAGoggles)(void);
 	void	(*Scissor) ( float x, float y, float w, float h);	// 0 = white
 

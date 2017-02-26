@@ -381,6 +381,20 @@ vmCvar_t	ui_char_color_green;
 vmCvar_t	ui_char_color_blue;
 vmCvar_t	ui_PrecacheModels;
 
+extern void trap_R_FontRatioFix( float ratio );
+static vmCvar_t cg_ratioFix;
+static void CG_Set2DRatio(void) {
+	if (cg_ratioFix.integer)
+		uiInfo.uiDC.widthRatioCoef = (float)(SCREEN_WIDTH * uiInfo.uiDC.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * uiInfo.uiDC.glconfig.vidWidth);
+	else
+		uiInfo.uiDC.widthRatioCoef = 1.0f;
+
+	if (cg_ratioFix.integer == 2)
+		trap_R_FontRatioFix(1.0f);
+	else
+		trap_R_FontRatioFix(uiInfo.uiDC.widthRatioCoef);
+}
+
 static cvarTable_t cvarTable[] =
 {
 	{ &ui_menuFiles,			"ui_menuFiles",			"ui/menus.txt", CVAR_ARCHIVE },
@@ -408,6 +422,8 @@ static cvarTable_t cvarTable[] =
 	{ &ui_char_color_blue,		"ui_char_color_blue",	"", 0},
 
 	{ &ui_PrecacheModels,		"ui_PrecacheModels",	"1", CVAR_ARCHIVE},
+
+	{ &cg_ratioFix,			"cg_ratioFix",			"1", CVAR_ARCHIVE},
 };
 
 #define FP_UPDATED_NONE -1
@@ -483,7 +499,7 @@ void _UI_Refresh( int realtime )
 	{
 		if (uiInfo.uiDC.cursorShow == qtrue)
 		{
-			UI_DrawHandlePic( uiInfo.uiDC.cursorx, uiInfo.uiDC.cursory, 48, 48, uiInfo.uiDC.Assets.cursor);
+			UI_DrawHandlePic((float)uiInfo.uiDC.cursorx, (float)uiInfo.uiDC.cursory, 40.0f*uiInfo.uiDC.widthRatioCoef, 40.0f, uiInfo.uiDC.Assets.cursor);
 		}
 	}
 }
@@ -2727,6 +2743,11 @@ static void UI_RegisterCvars( void )
 	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ )
 	{
 		Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
+		if (!Q_stricmp(cv->cvarName, "cg_ratioFix")) 
+		{
+			Cvar_Update(cv->vmCvar);
+			CG_Set2DRatio();
+		}
 	}
 }
 
@@ -3600,6 +3621,10 @@ void UI_UpdateCvars( void )
 	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ )
 	{
 		Cvar_Update( cv->vmCvar );
+		if (!Q_stricmp(cv->cvarName, "cg_ratioFix")) 
+		{
+			CG_Set2DRatio();
+		}
 	}
 }
 
