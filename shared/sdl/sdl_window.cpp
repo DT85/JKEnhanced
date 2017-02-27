@@ -734,21 +734,21 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_allowSoftwareGL	= Cvar_Get( "r_allowSoftwareGL",	"0",		CVAR_ARCHIVE|CVAR_LATCH );
 
 	// Window cvars
-	r_fullscreen		= Cvar_Get( "r_fullscreen",			"0",		CVAR_ARCHIVE|CVAR_LATCH );
+	r_fullscreen		= Cvar_Get( "r_fullscreen",			"1",		CVAR_ARCHIVE|CVAR_LATCH );
 	r_noborder			= Cvar_Get( "r_noborder",			"0",		CVAR_ARCHIVE|CVAR_LATCH );
 	r_centerWindow		= Cvar_Get( "r_centerWindow",		"0",		CVAR_ARCHIVE|CVAR_LATCH );
-	r_customwidth		= Cvar_Get( "r_customwidth",		"1600",		CVAR_ARCHIVE|CVAR_LATCH );
-	r_customheight		= Cvar_Get( "r_customheight",		"1024",		CVAR_ARCHIVE|CVAR_LATCH );
-	r_swapInterval		= Cvar_Get( "r_swapInterval",		"0",		CVAR_ARCHIVE );
+	r_customwidth		= Cvar_Get( "r_customwidth",		"1280",		CVAR_ARCHIVE|CVAR_LATCH );
+	r_customheight		= Cvar_Get( "r_customheight",		"720",		CVAR_ARCHIVE|CVAR_LATCH );
+	r_swapInterval		= Cvar_Get( "r_swapInterval",		"1",		CVAR_ARCHIVE );
 	r_stereo			= Cvar_Get( "r_stereo",				"0",		CVAR_ARCHIVE|CVAR_LATCH );
-	r_mode				= Cvar_Get( "r_mode",				"7",		CVAR_ARCHIVE|CVAR_LATCH );
+	r_mode				= Cvar_Get( "r_mode",				"13",		CVAR_ARCHIVE|CVAR_LATCH );
 	r_displayRefresh	= Cvar_Get( "r_displayRefresh",		"0",		CVAR_LATCH );
 	Cvar_CheckRange( r_displayRefresh, 0, 240, qtrue );
 
 	// Window render surface cvars
 	r_stencilbits		= Cvar_Get( "r_stencilbits",		"8",		CVAR_ARCHIVE|CVAR_LATCH );
-	r_depthbits			= Cvar_Get( "r_depthbits",			"0",		CVAR_ARCHIVE|CVAR_LATCH );
-	r_colorbits			= Cvar_Get( "r_colorbits",			"0",		CVAR_ARCHIVE|CVAR_LATCH );
+	r_depthbits			= Cvar_Get( "r_depthbits",			"24",		CVAR_ARCHIVE|CVAR_LATCH );
+	r_colorbits			= Cvar_Get( "r_colorbits",			"32",		CVAR_ARCHIVE|CVAR_LATCH );
 	r_ignorehwgamma		= Cvar_Get( "r_ignorehwgamma",		"0",		CVAR_ARCHIVE|CVAR_LATCH );
 	r_ext_multisample	= Cvar_Get( "r_ext_multisample",	"0",		CVAR_ARCHIVE|CVAR_LATCH );
 	Cvar_Get( "r_availableModes", "", CVAR_ROM );

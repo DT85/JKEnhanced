@@ -3378,7 +3378,7 @@ static void CG_DrawRocketLocking( int lockEntNum, int lockTime )
 		if ( dif == 8 )
 		{
 			//since we have hardcoded rotated pic with ratio fix above,
-			//we want undepended (on cg_ratioFix) hardcoded coef here too
+			//we want undepended (on r_ratioFix) hardcoded coef here too
 			float ratioFix = ((float)SCREEN_WIDTH*cgs.glconfig.vidHeight) / ((float)SCREEN_HEIGHT*cgs.glconfig.vidWidth);
 
 			color[0] = color[1] = color[2] = sin( cg.time * 0.05f ) * 0.5f + 0.5f;
