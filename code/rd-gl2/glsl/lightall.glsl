@@ -478,34 +478,56 @@ vec3 EnvironmentBRDF(float roughness, float NE, vec3 specular)
 	return vec3(v) + specular;
 }
 
-float CalcVisibility( in float NL, in float NE, in float roughness )
+float spec_D(
+  float NH,
+  float roughness)
 {
-	float alphaSq = roughness*roughness;
-
-	float lambdaE = NL * sqrt((-NE * alphaSq + NE) * NE + alphaSq);
-	float lambdaL = NE * sqrt((-NL * alphaSq + NL) * NL + alphaSq);
-
-	return 0.5 / (lambdaE + lambdaL);
+  // normal distribution
+  // from http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+  float alpha = roughness * roughness;
+  float quotient = alpha / max(1e-8,(NH*NH*(alpha*alpha-1.0)+1.0));
+  return (quotient * quotient) / M_PI;
 }
 
-// http://www.frostbite.com/2014/11/moving-frostbite-to-pbr/
+vec3 spec_F(
+  float EH,
+  vec3 F0)
+{
+  // Fresnel
+  // from http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+  float pow2 = pow(2.0, (-5.55473*EH - 6.98316) * EH);
+  return F0 + (vec3(1.0) - F0) * pow2;
+}
+
+float G1(
+  float NV,
+  float k)
+{
+  return NV / (NV*(1.0-k) +  k);
+}
+
+float spec_G(float NL, float NE, float roughness )
+{
+  // GXX Schlick
+  // from http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+  float k = max(((roughness + 1.0) * (roughness + 1.0)) / 8.0, 1e-5);
+  return G1(NL,k)*G1(NE,k);
+}
+
 vec3 CalcSpecular(
 	in vec3 specular,
 	in float NH,
 	in float NL,
 	in float NE,
-	in float LH,
+	in float EH,
 	in float roughness
 )
 {
-	// from http://community.arm.com/servlet/JiveServlet/download/96891546-19496/siggraph2015-mmg-renaldas-slides.pdf
-	float rr = roughness*roughness;
-	float rrrr = rr*rr;
-	float d = (NH * NH) * (rrrr - 1.0) + 1.0;
-	float v = CalcVisibility(NL, NE, roughness);
-	return specular * (rrrr / (4.0 * d * d * v));
+	float distrib = spec_D(NH,roughness);
+	vec3 fresnel = spec_F(EH,specular);
+	float vis = spec_G(NL, NE, roughness);
+	return (distrib * fresnel * vis);
 }
-
 
 float CalcLightAttenuation(float point, float normDist)
 {
@@ -684,12 +706,13 @@ void main()
 
   #if defined(USE_LIGHT_VECTOR) || defined(USE_DELUXEMAP)
     H  = normalize(L + E);
-	NL = clamp(dot(N, L), 0.0, 1.0);
+    NL = clamp(dot(N, L), 0.0, 1.0);
+    NL = max(1e-8, abs(NL) );
+    EH = max(1e-8, dot(E, H));
+    NH = max(1e-8, dot(N, H));
 	NE = abs(dot(N, E)) + 1e-5;
-	float LH = clamp(dot(L, H), 0.0, 1.0);
-	NH = clamp(dot(N, H), 0.0, 1.0);
 
-	reflectance += CalcSpecular(specular.rgb, NH, NL, NE, LH, roughness);
+	reflectance += CalcSpecular(specular.rgb, NH, NL, NE, EH, roughness);
   #endif
 
 	out_Color.rgb  = lightColor   * reflectance * (attenuation * NL);
