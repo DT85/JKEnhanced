@@ -1501,8 +1501,11 @@ int GLSL_BeginLoadGPUShaders(void)
 				Q_strcat(extradefines, sizeof(extradefines), "#define USE_NORMALMAP\n");
 
 				if ((i & LIGHTDEF_USE_PARALLAXMAP) && r_parallaxMapping->integer)
+				{
 					Q_strcat(extradefines, sizeof(extradefines), "#define USE_PARALLAXMAP\n");
-
+					if (r_parallaxMapping->integer > 1)
+						Q_strcat(extradefines, sizeof(extradefines), "#define USE_RELIEFMAP\n");
+				}
 				attribs |= ATTR_TANGENT;
 			}
 
