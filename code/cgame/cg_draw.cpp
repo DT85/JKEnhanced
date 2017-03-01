@@ -2132,7 +2132,7 @@ static void CG_DrawZoomMask( void )
 
 			cgi_R_SetColor( color1 );
 
-			CG_DrawPic( 82, 94, 16*ratio, 16, cgs.media.binocularCircle );
+			CG_DrawPic( 82, 94, 16 * ratio, 16, cgs.media.binocularCircle );
 		}
 
 		CG_DrawPic( 0, 0, 640, 480, cgs.media.binocularMask );
@@ -2191,13 +2191,6 @@ static void CG_DrawZoomMask( void )
 	{
 		level = (float)(80.0f - cg_zoomFov) / 80.0f;
 
-		/*if (cg_widescreen.integer) 
-		{
-			cgi_R_SetColor(colorTable[CT_BLACK]);
-			CG_DrawPic(0, 0, 70, 480, cgs.media.whiteShader); //left side fill
-			CG_DrawPic(570, 0, 70, 480, cgs.media.whiteShader); //right side fill
-		}*/
-
 		// ...so we'll clamp it
 		if (level < 0.0f)
 		{
@@ -2214,20 +2207,20 @@ static void CG_DrawZoomMask( void )
 		// Draw target mask
 		cgi_R_SetColor(colorTable[CT_WHITE]);
 
-		CG_DrawPic(SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2)*ratio, 0, SCREEN_WIDTH*ratio, SCREEN_HEIGHT, cgs.media.disruptorMask);
+		CG_DrawPic(SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2) * ratio, 0, SCREEN_WIDTH * ratio, SCREEN_HEIGHT, cgs.media.disruptorMask);
 
 		if (ratio != 1.0f) {
 			cgi_R_SetColor(colorTable[CT_BLACK]);
 			if (cgs.media.zoomLeft) {
-				CG_DrawPic(0, 0, SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2)*ratio, SCREEN_HEIGHT, cgs.media.zoomLeft);
+				CG_DrawPic(0, 0, SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2) * ratio, SCREEN_HEIGHT, cgs.media.zoomLeft);
 				if (!cgs.media.zoomRight) {
-					CG_DrawPic(SCREEN_WIDTH, 0, -(SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2)*ratio), SCREEN_HEIGHT, cgs.media.zoomLeft);
+					CG_DrawPic(SCREEN_WIDTH, 0, -(SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2) * ratio), SCREEN_HEIGHT, cgs.media.zoomLeft);
 				}
 			}
 			if (cgs.media.zoomRight) {
-				CG_DrawPic(SCREEN_WIDTH / 2 + (SCREEN_WIDTH / 2)*ratio, 0, SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2)*ratio, SCREEN_HEIGHT, cgs.media.zoomRight);
+				CG_DrawPic(SCREEN_WIDTH / 2 + (SCREEN_WIDTH / 2) * ratio, 0, SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2) * ratio, SCREEN_HEIGHT, cgs.media.zoomRight);
 				if (!cgs.media.zoomLeft) {
-					CG_DrawPic(SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2)*ratio, 0, -(SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2)*ratio), SCREEN_HEIGHT, cgs.media.zoomRight);
+					CG_DrawPic(SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2) * ratio, 0, -(SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2) * ratio), SCREEN_HEIGHT, cgs.media.zoomRight);
 				}
 			}
 		}
@@ -2248,7 +2241,6 @@ static void CG_DrawZoomMask( void )
 		// Draw rotating insert
 		trap_R_RotatePic2RatioFix(ratio);
 		CG_DrawRotatePic2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT, -level, cgs.media.disruptorInsert);
-
 
 		float cx, cy;
 		float max;
@@ -2307,7 +2299,7 @@ static void CG_DrawZoomMask( void )
 				max = 1.0f;
 			}
 
-			cgi_R_DrawStretchPic(SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2 - 257)*ratio, 435, 134 * max*ratio, 34, 0, 0, max, 1, cgi_R_RegisterShaderNoMip("gfx/2d/crop_charge"));
+			cgi_R_DrawStretchPic(SCREEN_WIDTH / 2 - (SCREEN_WIDTH / 2 - 257) * ratio, 435, 134 * max * ratio, 34, 0, 0, max, 1, cgi_R_RegisterShaderNoMip("gfx/2d/crop_charge"));
 		}
 	}
 	//-----------
