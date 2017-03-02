@@ -1789,7 +1789,7 @@ static const void *RB_RotatePic2 ( const void *data )
 
 	matrix3_t m = {
 		{ c*ratio, s, 0.0f },
-		{ -s, c, 0.0f },
+		{ -s*ratio, c, 0.0f },
 		{ cmd->x, cmd->y, 1.0f }
 	};
 
