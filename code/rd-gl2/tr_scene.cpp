@@ -496,9 +496,30 @@ void RE_RenderScene( const refdef_t *fd ) {
 	if(r_sunlightMode->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) && (r_forceSun->integer || tr.sunShadows))
 	{
 		qhandle_t timer = R_BeginTimedBlockCmd( "Shadow cascades" );
-		R_RenderSunShadowMaps(fd, 0);
-		R_RenderSunShadowMaps(fd, 1);
-		R_RenderSunShadowMaps(fd, 2);
+		if (r_shadowCascadeZFar != 0)
+		{
+			R_RenderSunShadowMaps(fd, 0);
+			R_RenderSunShadowMaps(fd, 1);
+			R_RenderSunShadowMaps(fd, 2);
+		}
+		else
+		{
+			Matrix16Zero(tr.refdef.sunShadowMvp[0]);
+			Matrix16Zero(tr.refdef.sunShadowMvp[1]);
+			Matrix16Zero(tr.refdef.sunShadowMvp[2]);
+		}
+
+		// only rerender last cascade if sun has changed position
+		if (r_forceSun->integer == 2 || !VectorCompare(tr.refdef.sunDir, tr.lastCascadeSunDirection))
+		{
+			VectorCopy(tr.refdef.sunDir, tr.lastCascadeSunDirection);
+			R_RenderSunShadowMaps(fd, 3);
+			Matrix16Copy(tr.refdef.sunShadowMvp[3], tr.lastCascadeSunMvp);
+		}
+		else
+		{
+			Matrix16Copy(tr.lastCascadeSunMvp, tr.refdef.sunShadowMvp[3]);
+		}
 		R_EndTimedBlockCmd( timer );
 	}
 

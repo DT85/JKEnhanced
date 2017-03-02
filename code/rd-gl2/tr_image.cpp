@@ -2959,7 +2959,7 @@ void R_CreateBuiltinImages(void) {
 
 	if (r_sunlightMode->integer)
 	{
-		for (x = 0; x < 3; x++)
+		for (x = 0; x < 4; x++)
 		{
 			tr.sunShadowDepthImage[x] = R_CreateImage(va("*sunshadowdepth%i", x), NULL, r_shadowMapSize->integer, r_shadowMapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
 		}

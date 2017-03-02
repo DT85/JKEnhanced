@@ -765,13 +765,13 @@ void main()
 	//sqrLightDist = dot(L2, L2);
 	//L2 /= sqrt(sqrLightDist);
 
-	NL2 = clamp(dot(N, L2), 0.0, 1.0);
-	H2 = normalize(L2 + E);
-	EH2 = clamp(dot(E, H2), 0.0, 1.0);
-	L2H2 = clamp(dot(L2, H2), 0.0, 1.0);
-	NH2 = clamp(dot(N, H2), 0.0, 1.0);
-
-	reflectance  = CalcSpecular(specular.rgb, NH2, NL2, NE, L2H2, roughness);
+	H2  = normalize(L2 + E);
+    NL2 = clamp(dot(N, L2), 0.0, 1.0);
+    NL2 = max(1e-8, abs(NL2) );
+    EH2 = max(1e-8, dot(E, H2));
+    NH2 = max(1e-8, dot(N, H2));
+	
+	reflectance  = CalcSpecular(specular.rgb, NH2, NL2, NE, EH2, roughness);
 
 	// bit of a hack, with modulated shadowmaps, ignore diffuse
     #if !defined(SHADOWMAP_MODULATE)

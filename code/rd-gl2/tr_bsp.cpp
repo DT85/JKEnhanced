@@ -3726,6 +3726,8 @@ void RE_LoadWorldMap( const char *name ) {
 	tr.toneMinAvgMaxLevel[1] = -2.0f;
 	tr.toneMinAvgMaxLevel[2] = 0.0f;
 
+	VectorClear(tr.lastCascadeSunDirection);
+
 	tr.worldMapLoaded = qtrue;
 
 	// load it
