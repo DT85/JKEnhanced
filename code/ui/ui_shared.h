@@ -239,6 +239,8 @@ typedef struct {
 	qhandle_t	gradientImage;
 	float FPS;
 
+	float		widthRatioCoef; //to make 2Ds be not stretched
+
 } displayContextDef_t;
 
 void UI_InitMemory( void );

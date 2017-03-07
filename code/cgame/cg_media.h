@@ -304,6 +304,10 @@ typedef struct {
 	sfxHandle_t	zoomEnd;
 	sfxHandle_t	disruptorZoomLoop;
 
+	// Zoom ratio fix helpers
+	qhandle_t	zoomLeft;
+	qhandle_t	zoomRight;
+
 	//new stuff for Jedi Academy
 	sfxHandle_t	drainSound;
 
@@ -407,6 +411,7 @@ typedef struct {
 	// effects
 	cgEffects_t		effects;
 
+	float			widthRatioCoef;			// to make 2D images be not stretched
 } cgs_t;
 
 extern	cgs_t			cgs;
