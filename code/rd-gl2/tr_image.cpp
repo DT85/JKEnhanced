@@ -2949,6 +2949,11 @@ void R_CreateBuiltinImages(void) {
 		tr.refractiveImage = R_CreateImage("*refractiveFbo", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, rgbFormat);		
 	}
 
+	if (r_pbr->integer)
+	{
+		tr.prefilterEnvMapImage = R_CreateImage("*prefilterEnvMapFbo", NULL, r_cubemapSize->integer / 2, r_cubemapSize->integer / 2, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+	}
+
 	if (r_shadows->integer == 4)
 	{
 		for (x = 0; x < MAX_DRAWN_PSHADOWS; x++)
@@ -2969,7 +2974,7 @@ void R_CreateBuiltinImages(void) {
 
 	if (r_cubeMapping->integer)
 	{
-		tr.renderCubeImage = R_CreateImage("*renderCube", NULL, r_cubemapSize->integer, r_cubemapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
+		tr.renderCubeImage = R_CreateImage("*renderCube", NULL, r_cubemapSize->integer, r_cubemapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, hdrFormat);
 	}
 }
 
