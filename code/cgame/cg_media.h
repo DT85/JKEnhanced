@@ -99,6 +99,8 @@ typedef enum
 	OHB_SCANLINE_RIGHT,
 	OHB_FRAME_LEFT,
 	OHB_FRAME_RIGHT,
+	OHB_INNERFRAME_LEFT,
+	OHB_INNERFRAME_RIGHT,
 	OHB_MAX
 } otherhudbits_t;
 
@@ -224,6 +226,8 @@ typedef struct {
 	//
 	qhandle_t	qhFontSmall;
 	qhandle_t	qhFontMedium;
+	qhandle_t	qhFontArimo;
+	qhandle_t	qhFontArimob;
 
 	// special effects models / etc.
 	qhandle_t	personalShieldShader;

@@ -565,7 +565,7 @@ static void CG_DrawArmor(const int x,const int y,const int w,const int h)
 		otherHUDBits[OHB_ARMORAMOUNT].xPos*cgs.widthRatioCoef,
 		otherHUDBits[OHB_ARMORAMOUNT].yPos,
 		3,
-		ps->stats[STAT_HEALTH],
+		ps->stats[STAT_ARMOR],
 		otherHUDBits[OHB_ARMORAMOUNT].width*cgs.widthRatioCoef,
 		otherHUDBits[OHB_ARMORAMOUNT].height,
 		NUM_FONT_SMALL,
@@ -1865,17 +1865,6 @@ static void CG_DrawHUD( centity_t *cent )
 			CG_DrawSmallStringColor(sectionXPos+5, sectionYPos - 40,va("Health:%d",cg.snap->ps.stats[STAT_HEALTH]), colorTable[CT_HUD_GREEN] );
 		}
 
-		// Print scanline
-		cgi_R_SetColor( otherHUDBits[OHB_SCANLINE_LEFT].color);
-
-		CG_DrawPic(
-			otherHUDBits[OHB_SCANLINE_LEFT].xPos*cgs.widthRatioCoef,
-			otherHUDBits[OHB_SCANLINE_LEFT].yPos,
-			otherHUDBits[OHB_SCANLINE_LEFT].width*cgs.widthRatioCoef,
-			otherHUDBits[OHB_SCANLINE_LEFT].height,
-			otherHUDBits[OHB_SCANLINE_LEFT].background
-		);
-
 		// Print frame
 		cgi_R_SetColor(otherHUDBits[OHB_FRAME_LEFT].color);
 		CG_DrawPic(
@@ -1886,9 +1875,29 @@ static void CG_DrawHUD( centity_t *cent )
 			otherHUDBits[OHB_FRAME_LEFT].background
 		);
 
+		// Print innerframe
+		cgi_R_SetColor(otherHUDBits[OHB_INNERFRAME_LEFT].color);
+		CG_DrawPic(
+			otherHUDBits[OHB_INNERFRAME_LEFT].xPos*cgs.widthRatioCoef,
+			otherHUDBits[OHB_INNERFRAME_LEFT].yPos,
+			otherHUDBits[OHB_INNERFRAME_LEFT].width*cgs.widthRatioCoef,
+			otherHUDBits[OHB_INNERFRAME_LEFT].height,
+			otherHUDBits[OHB_INNERFRAME_LEFT].background
+		);
+
 		CG_DrawArmor(sectionXPos,sectionYPos,sectionWidth,sectionHeight);
 
 		CG_DrawHealth(sectionXPos,sectionYPos,sectionWidth,sectionHeight);
+
+		// Print scanline
+		cgi_R_SetColor(otherHUDBits[OHB_SCANLINE_LEFT].color);
+		CG_DrawPic(
+			otherHUDBits[OHB_SCANLINE_LEFT].xPos*cgs.widthRatioCoef,
+			otherHUDBits[OHB_SCANLINE_LEFT].yPos,
+			otherHUDBits[OHB_SCANLINE_LEFT].width*cgs.widthRatioCoef,
+			otherHUDBits[OHB_SCANLINE_LEFT].height,
+			otherHUDBits[OHB_SCANLINE_LEFT].background
+		);
 	}
 
 
@@ -1911,14 +1920,6 @@ static void CG_DrawHUD( centity_t *cent )
 			CG_DrawSmallStringColor(sectionXPos, sectionYPos - 40,va("Force:%d",cent->gent->client->ps.forcePower), colorTable[CT_HUD_GREEN] );
 		}
 
-		CG_DrawPic(
-			SCREEN_WIDTH - (SCREEN_WIDTH - otherHUDBits[OHB_SCANLINE_RIGHT].xPos)*cgs.widthRatioCoef,
-			otherHUDBits[OHB_SCANLINE_RIGHT].yPos,
-			otherHUDBits[OHB_SCANLINE_RIGHT].width*cgs.widthRatioCoef,
-			otherHUDBits[OHB_SCANLINE_RIGHT].height,
-			otherHUDBits[OHB_SCANLINE_RIGHT].background
-		);
-
 		// Print frame
 		cgi_R_SetColor(otherHUDBits[OHB_FRAME_RIGHT].color);
 		CG_DrawPic(
@@ -1927,6 +1928,16 @@ static void CG_DrawHUD( centity_t *cent )
 			otherHUDBits[OHB_FRAME_RIGHT].width*cgs.widthRatioCoef,
 			otherHUDBits[OHB_FRAME_RIGHT].height,
 			otherHUDBits[OHB_FRAME_RIGHT].background
+		);
+
+		// Print innerframe
+		cgi_R_SetColor(otherHUDBits[OHB_INNERFRAME_RIGHT].color);
+		CG_DrawPic(
+			SCREEN_WIDTH - (SCREEN_WIDTH - otherHUDBits[OHB_INNERFRAME_RIGHT].xPos)*cgs.widthRatioCoef,
+			otherHUDBits[OHB_INNERFRAME_RIGHT].yPos,
+			otherHUDBits[OHB_INNERFRAME_RIGHT].width*cgs.widthRatioCoef,
+			otherHUDBits[OHB_INNERFRAME_RIGHT].height,
+			otherHUDBits[OHB_INNERFRAME_RIGHT].background
 		);
 
 		CG_DrawForcePower(cent,sectionXPos,sectionYPos);
@@ -1940,6 +1951,16 @@ static void CG_DrawHUD( centity_t *cent )
 		{
 			CG_DrawAmmo(cent,sectionXPos,sectionYPos);
 		}
+
+		// Print scanline
+		cgi_R_SetColor(otherHUDBits[OHB_SCANLINE_RIGHT].color);
+		CG_DrawPic(
+			SCREEN_WIDTH - (SCREEN_WIDTH - otherHUDBits[OHB_SCANLINE_RIGHT].xPos)*cgs.widthRatioCoef,
+			otherHUDBits[OHB_SCANLINE_RIGHT].yPos,
+			otherHUDBits[OHB_SCANLINE_RIGHT].width*cgs.widthRatioCoef,
+			otherHUDBits[OHB_SCANLINE_RIGHT].height,
+			otherHUDBits[OHB_SCANLINE_RIGHT].background
+		);
 //		CG_DrawMessageLit(cent,x,y);
 	}
 }

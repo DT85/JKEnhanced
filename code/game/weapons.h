@@ -131,6 +131,7 @@ typedef struct weaponData_s
 	int		altRange;			// Range of alt-fire
 
 	char	weaponIcon[64];		// Name of weapon icon file
+	char	dp_weaponIcon[64];		// Name of datapad weapon icon file
 	int		numBarrels;			// how many barrels should we expect for this weapon?
 
 	char	missileMdl[64];		// Missile Model

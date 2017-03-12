@@ -144,6 +144,12 @@ void CG_RegisterWeapon(int weaponNum) {
 		weaponInfo->weaponIconNoAmmo = cgi_R_RegisterShaderNoMip( va("%s_na",weaponData[weaponNum].weaponIcon));
 	}
 
+	if (weaponData[weaponNum].dp_weaponIcon[0])
+	{
+		weaponInfo->dp_weaponIcon = cgi_R_RegisterShaderNoMip(weaponData[weaponNum].dp_weaponIcon);
+		weaponInfo->dp_weaponIconNoAmmo = cgi_R_RegisterShaderNoMip(va("%s_na", weaponData[weaponNum].dp_weaponIcon));
+	}
+
 	for ( ammo = bg_itemlist + 1 ; ammo->classname ; ammo++ ) {
 		if ( ammo->giType == IT_AMMO && ammo->giTag == weaponData[weaponNum].ammoIndex) {
 			break;
@@ -1917,8 +1923,9 @@ void CG_DrawDataPadWeaponSelect( void )
 	const int bigPad = 64;
 	const int pad = 32;
 
-	const int centerXPos = 320;
-	const int graphicYPos = 340;
+	const int centerXPos = 317;
+	const int graphicYPos = 343;
+	const int centergraphicYPos = 333;
 
 
 	// Left side ICONS
@@ -1954,7 +1961,7 @@ void CG_DrawDataPadWeaponSelect( void )
 
 		++iconCnt;					// Good icon
 
-		if (weaponData[weaponSelectI].weaponIcon[0])
+		if (weaponData[weaponSelectI].dp_weaponIcon[0])
 		{
 			weaponInfo_t	*weaponInfo;
 			CG_RegisterWeapon( weaponSelectI );
@@ -1962,11 +1969,11 @@ void CG_DrawDataPadWeaponSelect( void )
 
 			if (!CG_WeaponCheck(weaponSelectI))
 			{
-				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->weaponIconNoAmmo );
+				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->dp_weaponIconNoAmmo );
 			}
 			else
 			{
-				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->weaponIcon );
+				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->dp_weaponIcon );
 			}
 
 			holdX -= (smallIconSize + pad)*cgs.widthRatioCoef;
@@ -1982,7 +1989,7 @@ void CG_DrawDataPadWeaponSelect( void )
 	// Current Center Icon
 	cgi_R_SetColor(colorTable[CT_WHITE]);
 
-	if (weaponData[cg.DataPadWeaponSelect].weaponIcon[0])
+	if (weaponData[cg.DataPadWeaponSelect].dp_weaponIcon[0])
 	{
 		weaponInfo_t	*weaponInfo;
 		CG_RegisterWeapon( cg.DataPadWeaponSelect );
@@ -1991,11 +1998,11 @@ void CG_DrawDataPadWeaponSelect( void )
 			// Draw graphic to show weapon has ammo or no ammo
 		if (!CG_WeaponCheck(cg.DataPadWeaponSelect))
 		{
-			CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (graphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, weaponInfo->weaponIconNoAmmo );
+			CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (centergraphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, weaponInfo->dp_weaponIconNoAmmo );
 		}
 		else
 		{
-			CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (graphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, weaponInfo->weaponIcon);
+			CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (centergraphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, weaponInfo->dp_weaponIcon);
 		}
 	}
 
@@ -2044,7 +2051,7 @@ void CG_DrawDataPadWeaponSelect( void )
 
 		++iconCnt;					// Good icon
 
-		if (weaponData[weaponSelectI].weaponIcon[0])
+		if (weaponData[weaponSelectI].dp_weaponIcon[0])
 		{
 			weaponInfo_t	*weaponInfo;
 			CG_RegisterWeapon( weaponSelectI );
@@ -2053,11 +2060,11 @@ void CG_DrawDataPadWeaponSelect( void )
 			// Draw graphic to show weapon has ammo or no ammo
 			if (!CG_WeaponCheck(i))
 			{
-				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->weaponIconNoAmmo);
+				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->dp_weaponIconNoAmmo);
 			}
 			else
 			{
-				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->weaponIcon);
+				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->dp_weaponIcon);
 			}
 
 			holdX += (smallIconSize + pad)*cgs.widthRatioCoef;
@@ -2074,20 +2081,19 @@ void CG_DrawDataPadWeaponSelect( void )
 
 	if (text[0])
 	{
-		const short textboxXPos = 40;
-		const short textboxYPos = 60;
+		const short textboxXPos = 35;
+		const short textboxYPos = 85;
 		const int	textboxWidth = 560;
 		const int	textboxHeight = 300;
-		const float	textScale = 1.0f;
+		const float	textScale = 0.35f;
 
 		CG_DisplayBoxedText(
 			textboxXPos, textboxYPos,
 			textboxWidth, textboxHeight,
 			text,
-			4,
+			cgs.media.qhFontArimob,
 			textScale,
-			colorTable[CT_WHITE]
-				);
+			colorTable[CT_HUD_GREEN]);
 	}
 
 	cgi_R_SetColor( NULL );

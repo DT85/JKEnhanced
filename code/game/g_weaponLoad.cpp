@@ -132,6 +132,7 @@ void WPN_SelectSnd (const char **holdBuf);
 void WPN_Range (const char **holdBuf);
 void WPN_WeaponClass ( const char **holdBuf);
 void WPN_WeaponIcon (const char **holdBuf);
+void WPN_DP_WeaponIcon(const char **holdBuf);
 void WPN_WeaponModel (const char **holdBuf);
 void WPN_WeaponType (const char **holdBuf);
 void WPN_AltEnergyPerShot (const char **holdBuf);
@@ -437,6 +438,7 @@ wpnParms_t WpnParms[] =
 	{ "range",			WPN_Range },
 	{ "weaponclass",		WPN_WeaponClass },
 	{ "weaponicon",		WPN_WeaponIcon },
+	{ "dp_weaponicon",		WPN_DP_WeaponIcon },
 	{ "weaponmodel",		WPN_WeaponModel },
 	{ "weapontype",		WPN_WeaponType },
 	{ "altenergypershot",	WPN_AltEnergyPerShot },
@@ -690,6 +692,28 @@ void WPN_WeaponIcon(const char **holdBuf)
 	}
 
 	Q_strncpyz(weaponData[wpnParms.weaponNum].weaponIcon,tokenStr,len);
+}
+
+//--------------------------------------------
+void WPN_DP_WeaponIcon(const char **holdBuf)
+{
+	int len;
+	const char	*tokenStr;
+
+	if (COM_ParseString(holdBuf, &tokenStr))
+	{
+		return;
+	}
+
+	len = strlen(tokenStr);
+	len++;
+	if (len > 64)
+	{
+		len = 64;
+		gi.Printf(S_COLOR_YELLOW"WARNING: dp_weaponIcon too long in external WEAPONS.DAT '%s'\n", tokenStr);
+	}
+
+	Q_strncpyz(weaponData[wpnParms.weaponNum].dp_weaponIcon, tokenStr, len);
 }
 
 //--------------------------------------------
