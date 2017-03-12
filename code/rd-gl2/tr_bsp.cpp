@@ -3101,6 +3101,7 @@ void R_LoadCubemaps(void)
 		Com_sprintf(filename, MAX_QPATH, "cubemaps/%s/%03d.dds", tr.world->baseName, i);
 
 		cubemap->image = R_FindImageFile(filename, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_NOLIGHTSCALE | IMGFLAG_CUBEMAP);
+		cubemap->mipmapped = 0;
 	}
 }
 
@@ -3113,7 +3114,7 @@ void R_RenderMissingCubemaps(void)
 		if (!tr.cubemaps[i].image)
 		{
 			tr.cubemaps[i].image = R_CreateImage(va("*cubeMap%d", i), NULL, r_cubemapSize->integer, r_cubemapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, GL_RGBA8);
-
+			tr.cubemaps[i].mipmapped = 0;
 			for (j = 0; j < 6; j++)
 			{
 				RE_ClearScene();

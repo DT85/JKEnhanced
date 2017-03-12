@@ -28,6 +28,7 @@ void GLSL_BindNullProgram(void);
 extern const GPUProgramDesc fallback_bokehProgram;
 extern const GPUProgramDesc fallback_calclevels4xProgram;
 extern const GPUProgramDesc fallback_depthblurProgram;
+extern const GPUProgramDesc fallback_prefilterEnvMapProgram;
 extern const GPUProgramDesc fallback_dlightProgram;
 extern const GPUProgramDesc fallback_down4xProgram;
 extern const GPUProgramDesc fallback_fogpassProgram;
@@ -374,6 +375,7 @@ static void GLSL_GetShaderHeader( GLenum shaderType, const GLcharARB *extra, int
 
 	if (r_cubeMapping->integer)
 	{
+		//copy in tr_backend for prefiltering the mipmaps
 		int cubeMipSize = r_cubemapSize->integer;
 		int numRoughnessMips = 0;
 		
@@ -383,6 +385,8 @@ static void GLSL_GetShaderHeader( GLenum shaderType, const GLcharARB *extra, int
 			numRoughnessMips++;
 		}
 		numRoughnessMips = MAX(1, numRoughnessMips - 2);
+		if (r_pbrIBL->integer != 0 && r_pbr->integer)
+			numRoughnessMips = MAX(1, numRoughnessMips - 5);
 		Q_strcat(dest, size, va("#define ROUGHNESS_MIPS float(%d)\n", numRoughnessMips));
 	}
 
@@ -1515,6 +1519,9 @@ int GLSL_BeginLoadGPUShaders(void)
 			if (r_cubeMapping->integer)
 				Q_strcat(extradefines, sizeof(extradefines), "#define USE_CUBEMAP\n");
 
+			if (r_pbrIBL->integer)
+				Q_strcat(extradefines, sizeof(extradefines), "#define USE_IBL\n");
+
 			switch (r_glossType->integer)
 			{
 			case 0:
@@ -1766,6 +1773,21 @@ int GLSL_BeginLoadGPUShaders(void)
 	}
 	allocator.Reset();
 
+	/////////////////////////////////////////////////////////////////////////////
+	
+	programDesc = LoadProgramSource("prefilterEnvMap", allocator, fallback_prefilterEnvMapProgram);
+
+	attribs = ATTR_POSITION | ATTR_TEXCOORD0;
+	extradefines[0] = '\0';
+
+	if (!GLSL_BeginLoadGPUShader(&tr.prefilterEnvMapShader, "prefilterEnvMap", attribs, qtrue,
+		extradefines, *programDesc))
+	{
+		ri.Error(ERR_FATAL, "Could not load prefilterEnvMap shader!");
+	}
+	
+	allocator.Reset();
+	
 
 	/////////////////////////////////////////////////////////////////////////////
 	programDesc = LoadProgramSource("gaussian_blur", allocator, fallback_gaussian_blurProgram);
@@ -2127,7 +2149,22 @@ void GLSL_EndLoadGPUShaders ( int startTime )
 
 		numEtcShaders++;
 	}
+	
+	if (!GLSL_EndLoadGPUShader(&tr.prefilterEnvMapShader))
+	{
+		ri.Error(ERR_FATAL, "Could not load prefilterEnvMap shader!");
+	}
 
+	GLSL_InitUniforms(&tr.prefilterEnvMapShader);
+
+	qglUseProgram(tr.prefilterEnvMapShader.program);
+	GLSL_SetUniformInt(&tr.prefilterEnvMapShader, UNIFORM_CUBEMAP, TB_CUBEMAP);
+	qglUseProgram(0);
+
+	GLSL_FinishGPUShader(&tr.prefilterEnvMapShader);
+
+	numEtcShaders++;
+	
 	for (i = 0; i < 2; i++)
 	{
 		if (!GLSL_EndLoadGPUShader(&tr.gaussianBlurShader[i]))
@@ -2246,6 +2283,7 @@ void GLSL_ShutdownGPUShaders(void)
 	for ( i = 0; i < 2; i++)
 		GLSL_DeleteGPUShader(&tr.depthBlurShader[i]);
 
+	GLSL_DeleteGPUShader(&tr.prefilterEnvMapShader);
 	glState.currentProgram = 0;
 	qglUseProgram(0);
 }

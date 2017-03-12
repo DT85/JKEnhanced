@@ -367,6 +367,7 @@ typedef struct cubemap_s {
 	vec3_t origin;
 	float parallaxRadius;
 	image_t *image;
+	int mipmapped;
 } cubemap_t;
 
 typedef struct dlight_s {
@@ -2226,6 +2227,7 @@ typedef struct trGlobals_s {
 	image_t                 *screenSsaoImage;
 	image_t					*hdrDepthImage;
 	image_t                 *renderCubeImage;
+	image_t                 *prefilterEnvMapImage;
 	
 	image_t					*textureDepthImage;
 
@@ -2245,6 +2247,7 @@ typedef struct trGlobals_s {
 	FBO_t					*screenSsaoFbo;
 	FBO_t					*hdrDepthFbo;
 	FBO_t                   *renderCubeFbo;
+	FBO_t					*preFilterEnvMapFbo;
 
 	shader_t				*defaultShader;
 	shader_t				*shadowShader;
@@ -2291,6 +2294,7 @@ typedef struct trGlobals_s {
 	shaderProgram_t ssaoShader;
 	shaderProgram_t depthBlurShader[2];
 	shaderProgram_t testcubeShader;
+	shaderProgram_t prefilterEnvMapShader;
 	shaderProgram_t gaussianBlurShader[2];
 	shaderProgram_t glowCompositeShader;
 	shaderProgram_t dglowDownsample;
@@ -2511,6 +2515,7 @@ extern  cvar_t  *r_cubeMapping;
 extern  cvar_t  *r_horizonFade;
 extern  cvar_t  *r_cubemapSize;
 extern  cvar_t  *r_pbr;
+extern  cvar_t  *r_pbrIBL;
 extern  cvar_t  *r_baseNormalX;
 extern  cvar_t  *r_baseNormalY;
 extern  cvar_t  *r_baseParallax;
