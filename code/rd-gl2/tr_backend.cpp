@@ -1917,7 +1917,7 @@ void RB_PrefilterEnvMap() {
 	FBO_Bind(tr.preFilterEnvMapFbo);
 	GL_BindToTMU(cubemap->image, TB_CUBEMAP);
 	GL_State(GLS_DEPTHTEST_DISABLE);
-
+	
 	GLSL_BindProgram(&tr.prefilterEnvMapShader);
 
 	for (int level = 1; level <= numMips; level++) {
@@ -2038,22 +2038,13 @@ static const void	*RB_DrawSurfs( const void *data ) {
 			GLSL_BindProgram(&tr.shadowmaskShader);
 
 			GL_BindToTMU(tr.renderDepthImage, TB_COLORMAP);
-			if (r_shadowCascadeZFar->integer != 0) {
-				GL_BindToTMU(tr.sunShadowDepthImage[0], TB_SHADOWMAP);
-				GL_BindToTMU(tr.sunShadowDepthImage[1], TB_SHADOWMAP2);
-				GL_BindToTMU(tr.sunShadowDepthImage[2], TB_SHADOWMAP3);
-				GL_BindToTMU(tr.sunShadowDepthImage[3], TB_SHADOWMAP4);
+			GL_BindToTMU(tr.sunShadowDepthImage[0], TB_SHADOWMAP);
+			GL_BindToTMU(tr.sunShadowDepthImage[1], TB_SHADOWMAP2);
+			GL_BindToTMU(tr.sunShadowDepthImage[2], TB_SHADOWMAP3);
 
-				GLSL_SetUniformMatrix4x4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP, backEnd.refdef.sunShadowMvp[0]);
-				GLSL_SetUniformMatrix4x4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP2, backEnd.refdef.sunShadowMvp[1]);
-				GLSL_SetUniformMatrix4x4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP3, backEnd.refdef.sunShadowMvp[2]);
-				GLSL_SetUniformMatrix4x4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP4, backEnd.refdef.sunShadowMvp[3]);
-			}
-			else
-			{
-				GL_BindToTMU(tr.sunShadowDepthImage[3], TB_SHADOWMAP);
-				GLSL_SetUniformMatrix4x4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP, backEnd.refdef.sunShadowMvp[3]);
-			}
+			GLSL_SetUniformMatrix4x4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP,  backEnd.refdef.sunShadowMvp[0]);
+			GLSL_SetUniformMatrix4x4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP2, backEnd.refdef.sunShadowMvp[1]);
+			GLSL_SetUniformMatrix4x4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP3, backEnd.refdef.sunShadowMvp[2]);
 			
 			GLSL_SetUniformVec3(&tr.shadowmaskShader, UNIFORM_VIEWORIGIN,  backEnd.refdef.vieworg);
 			{
@@ -2619,8 +2610,6 @@ const void *RB_PostProcess(const void *data)
 		FBO_BlitFromTexture(tr.sunShadowDepthImage[1], NULL, NULL, NULL, dstBox, NULL, NULL, 0);
 		VectorSet4(dstBox, 256, 0, 128, 128);
 		FBO_BlitFromTexture(tr.sunShadowDepthImage[2], NULL, NULL, NULL, dstBox, NULL, NULL, 0);
-		VectorSet4(dstBox, 384, 0, 128, 128);
-		FBO_BlitFromTexture(tr.sunShadowDepthImage[3], NULL, NULL, NULL, dstBox, NULL, NULL, 0);
 	}
 
 	if (0)

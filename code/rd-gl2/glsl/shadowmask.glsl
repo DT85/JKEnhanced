@@ -25,17 +25,15 @@ uniform sampler2D u_ShadowMap;
 #if defined(USE_SHADOW_CASCADE)
 uniform sampler2D u_ShadowMap2;
 uniform sampler2D u_ShadowMap3;
-uniform sampler2D u_ShadowMap4;
 #endif
 
-uniform mat4      u_ShadowMvp;
+uniform mat4 u_ShadowMvp;
 #if defined(USE_SHADOW_CASCADE)
-uniform mat4      u_ShadowMvp2;
-uniform mat4      u_ShadowMvp3;
-uniform mat4      u_ShadowMvp4;
+uniform mat4 u_ShadowMvp2;
+uniform mat4 u_ShadowMvp3;
 #endif
 
-uniform vec3   u_ViewOrigin;
+uniform vec3 u_ViewOrigin;
 uniform vec4 u_ViewInfo; // zfar / znear, zfar
 
 in vec2 var_DepthTex;
@@ -93,60 +91,65 @@ float PCF(const sampler2D shadowmap, const vec2 st, const float dist)
 #else
 	mult = step(dist, texture(shadowmap, st).r);
 #endif
-
+		
 	return mult;
 }
 
 float getLinearDepth(sampler2D depthMap, vec2 tex, float zFarDivZNear)
 {
-	float sampleZDivW = texture(depthMap, tex).r - DEPTH_MAX_ERROR;
+	float sampleZDivW = texture(depthMap, tex).r;
+	sampleZDivW -= DEPTH_MAX_ERROR;
 	return 1.0 / mix(zFarDivZNear, 1.0, sampleZDivW);
 }
 
 void main()
 {
 	float result;
-
+	
 	float depth = getLinearDepth(u_ScreenDepthMap, var_DepthTex, u_ViewInfo.x);
+	float sampleZ = u_ViewInfo.y * depth;
+
 	vec4 biasPos = vec4(u_ViewOrigin + var_ViewDir * (depth - 0.5 / u_ViewInfo.x), 1.0);
-
+	
 	vec4 shadowpos = u_ShadowMvp * biasPos;
-
+	
 #if defined(USE_SHADOW_CASCADE)
-	if (all(lessThan(abs(shadowpos.xyz), vec3(abs(shadowpos.w)))))
-	{
+	const float fadeTo = 1.0;
+	result = fadeTo;
+#else
+	result = 0.0;
 #endif
-		shadowpos.xyz = shadowpos.xyz * (0.5 / shadowpos.w) + vec3(0.5);
+
+	if (all(lessThanEqual(abs(shadowpos.xyz), vec3(abs(shadowpos.w)))))
+	{
+		shadowpos.xyz = shadowpos.xyz / shadowpos.w * 0.5 + 0.5;
 		result = PCF(u_ShadowMap, shadowpos.xy, shadowpos.z);
-#if defined(USE_SHADOW_CASCADE)
 	}
+#if defined(USE_SHADOW_CASCADE)
 	else
 	{
 		shadowpos = u_ShadowMvp2 * biasPos;
 
-		if (all(lessThan(abs(shadowpos.xyz), vec3(abs(shadowpos.w)))))
+		if (all(lessThanEqual(abs(shadowpos.xyz), vec3(abs(shadowpos.w)))))
 		{
-			shadowpos.xyz = shadowpos.xyz * (0.5 / shadowpos.w) + vec3(0.5);
+			shadowpos.xyz = shadowpos.xyz / shadowpos.w * 0.5 + 0.5;
 			result = PCF(u_ShadowMap2, shadowpos.xy, shadowpos.z);
 		}
 		else
 		{
 			shadowpos = u_ShadowMvp3 * biasPos;
 
-			if (all(lessThan(abs(shadowpos.xyz), vec3(abs(shadowpos.w)))))
+			if (all(lessThanEqual(abs(shadowpos.xyz), vec3(abs(shadowpos.w)))))
 			{
-				shadowpos.xyz = shadowpos.xyz * (0.5 / shadowpos.w) + vec3(0.5);
+				shadowpos.xyz = shadowpos.xyz / shadowpos.w * 0.5 + 0.5;
 				result = PCF(u_ShadowMap3, shadowpos.xy, shadowpos.z);
-			}
-			else
-			{
-				shadowpos = u_ShadowMvp4 * biasPos;
-				shadowpos.xyz = shadowpos.xyz * (0.5 / shadowpos.w) + vec3(0.5);
-				result = PCF(u_ShadowMap4, shadowpos.xy, shadowpos.z);
+
+				float fade = clamp(sampleZ / r_shadowCascadeZFar * 10.0 - 9.0, 0.0, 1.0);
+				result = mix(result, fadeTo, fade);
 			}
 		}
 	}
 #endif
-
+		
 	out_Color = vec4(vec3(result), 1.0);
 }

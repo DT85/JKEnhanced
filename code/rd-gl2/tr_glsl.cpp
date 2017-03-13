@@ -79,12 +79,10 @@ static uniformInfo_t uniformsInfo[] =
 	{ "u_ShadowMap",  GLSL_INT, 1 },
 	{ "u_ShadowMap2", GLSL_INT, 1 },
 	{ "u_ShadowMap3", GLSL_INT, 1 },
-	{ "u_ShadowMap4", GLSL_INT, 1 },
 
 	{ "u_ShadowMvp",  GLSL_MAT4x4, 1 },
 	{ "u_ShadowMvp2", GLSL_MAT4x4, 1 },
 	{ "u_ShadowMvp3", GLSL_MAT4x4, 1 },
-	{ "u_ShadowMvp4", GLSL_MAT4x4, 1 },
 
 	{ "u_EnableTextures", GLSL_VEC4, 1 },
 	{ "u_DiffuseTexMatrix",  GLSL_VEC4, 1 },
@@ -1716,8 +1714,7 @@ int GLSL_BeginLoadGPUShaders(void)
 	if (r_shadowFilter->integer >= 2)
 		Q_strcat(extradefines, sizeof(extradefines), "#define USE_SHADOW_FILTER2\n");
 
-	if (r_shadowCascadeZFar->integer != 0)
-		Q_strcat(extradefines, sizeof(extradefines), "#define USE_SHADOW_CASCADE\n");
+	Q_strcat(extradefines, sizeof(extradefines), "#define USE_SHADOW_CASCADE\n");
 
 	Q_strcat(extradefines, sizeof(extradefines), va("#define r_shadowMapSize %d\n", r_shadowMapSize->integer));
 	Q_strcat(extradefines, sizeof(extradefines), va("#define r_shadowCascadeZFar %f\n", r_shadowCascadeZFar->value));
@@ -2094,7 +2091,6 @@ void GLSL_EndLoadGPUShaders ( int startTime )
 	GLSL_SetUniformInt(&tr.shadowmaskShader, UNIFORM_SHADOWMAP,  TB_SHADOWMAP);
 	GLSL_SetUniformInt(&tr.shadowmaskShader, UNIFORM_SHADOWMAP2, TB_SHADOWMAP2);
 	GLSL_SetUniformInt(&tr.shadowmaskShader, UNIFORM_SHADOWMAP3, TB_SHADOWMAP3);
-	GLSL_SetUniformInt(&tr.shadowmaskShader, UNIFORM_SHADOWMAP4, TB_SHADOWMAP4);
 	qglUseProgram(0);
 
 	GLSL_FinishGPUShader(&tr.shadowmaskShader);

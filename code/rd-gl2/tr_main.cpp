@@ -2627,17 +2627,14 @@ void R_RenderSunShadowMaps(const refdef_t *fd, int level)
 			//splitZFar  = 3072;
 			break;
 	}
-	
-	if (level != 3)
-		VectorCopy(fd->vieworg, lightOrigin);
-	else
-		VectorCopy(tr.world->lightGridOrigin, lightOrigin);
+			
+	VectorCopy(fd->vieworg, lightOrigin);
 
 
 	// Make up a projection
 	VectorScale(lightDir, -1.0f, lightViewAxis[0]);
 
-	if (level == 3 || lightViewIndependentOfCameraView)
+	if (lightViewIndependentOfCameraView)
 	{
 		// Use world up as light view up
 		VectorSet(lightViewAxis[2], 0, 0, 1);
@@ -2657,7 +2654,7 @@ void R_RenderSunShadowMaps(const refdef_t *fd, int level)
 	// Check if too close to parallel to light direction
 	if (fabs(DotProduct(lightViewAxis[2], lightViewAxis[0])) > 0.9f)
 	{
-		if (level == 3 || lightViewIndependentOfCameraView)
+		if (lightViewIndependentOfCameraView)
 		{
 			// Use world left as light view up
 			VectorSet(lightViewAxis[2], 0, 1, 0);
@@ -2694,116 +2691,56 @@ void R_RenderSunShadowMaps(const refdef_t *fd, int level)
 
 		ClearBounds(lightviewBounds[0], lightviewBounds[1]);
 
-		if (level != 3)
-		{
-			// add view near plane
-			lx = splitZNear * tan(fd->fov_x * M_PI / 360.0f);
-			ly = splitZNear * tan(fd->fov_y * M_PI / 360.0f);
-			VectorMA(fd->vieworg, splitZNear, fd->viewaxis[0], base);
+		// add view near plane
+		lx = splitZNear * tan(fd->fov_x * M_PI / 360.0f);
+		ly = splitZNear * tan(fd->fov_y * M_PI / 360.0f);
+		VectorMA(fd->vieworg, splitZNear, fd->viewaxis[0], base);
 
-			VectorMA(base, lx, fd->viewaxis[1], point);
-			VectorMA(point, ly, fd->viewaxis[2], point);
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
+		VectorMA(base,   lx, fd->viewaxis[1], point);
+		VectorMA(point,  ly, fd->viewaxis[2], point);
+		Matrix16Transform(lightViewMatrix, point, lightViewPoint);
+		AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
 
-			VectorMA(base, -lx, fd->viewaxis[1], point);
-			VectorMA(point, ly, fd->viewaxis[2], point);
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
+		VectorMA(base,  -lx, fd->viewaxis[1], point);
+		VectorMA(point,  ly, fd->viewaxis[2], point);
+		Matrix16Transform(lightViewMatrix, point, lightViewPoint);
+		AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
 
-			VectorMA(base, lx, fd->viewaxis[1], point);
-			VectorMA(point, -ly, fd->viewaxis[2], point);
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
+		VectorMA(base,   lx, fd->viewaxis[1], point);
+		VectorMA(point, -ly, fd->viewaxis[2], point);
+		Matrix16Transform(lightViewMatrix, point, lightViewPoint);
+		AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
 
-			VectorMA(base, -lx, fd->viewaxis[1], point);
-			VectorMA(point, -ly, fd->viewaxis[2], point);
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
+		VectorMA(base,  -lx, fd->viewaxis[1], point);
+		VectorMA(point, -ly, fd->viewaxis[2], point);
+		Matrix16Transform(lightViewMatrix, point, lightViewPoint);
+		AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
+		
 
+		// add view far plane
+		lx = splitZFar * tan(fd->fov_x * M_PI / 360.0f);
+		ly = splitZFar * tan(fd->fov_y * M_PI / 360.0f);
+		VectorMA(fd->vieworg, splitZFar, fd->viewaxis[0], base);
 
-			// add view far plane
-			lx = splitZFar * tan(fd->fov_x * M_PI / 360.0f);
-			ly = splitZFar * tan(fd->fov_y * M_PI / 360.0f);
-			VectorMA(fd->vieworg, splitZFar, fd->viewaxis[0], base);
+		VectorMA(base,   lx, fd->viewaxis[1], point);
+		VectorMA(point,  ly, fd->viewaxis[2], point);
+		Matrix16Transform(lightViewMatrix, point, lightViewPoint);
+		AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
 
-			VectorMA(base, lx, fd->viewaxis[1], point);
-			VectorMA(point, ly, fd->viewaxis[2], point);
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
+		VectorMA(base,  -lx, fd->viewaxis[1], point);
+		VectorMA(point,  ly, fd->viewaxis[2], point);
+		Matrix16Transform(lightViewMatrix, point, lightViewPoint);
+		AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
 
-			VectorMA(base, -lx, fd->viewaxis[1], point);
-			VectorMA(point, ly, fd->viewaxis[2], point);
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
+		VectorMA(base,   lx, fd->viewaxis[1], point);
+		VectorMA(point, -ly, fd->viewaxis[2], point);
+		Matrix16Transform(lightViewMatrix, point, lightViewPoint);
+		AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
 
-			VectorMA(base, lx, fd->viewaxis[1], point);
-			VectorMA(point, -ly, fd->viewaxis[2], point);
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
-
-			VectorMA(base, -lx, fd->viewaxis[1], point);
-			VectorMA(point, -ly, fd->viewaxis[2], point);
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
-		}
-		else
-		{
-			// use light grid size as level size
-			// FIXME: could be tighter
-			vec3_t bounds;
-			
-			bounds[0] = tr.world->lightGridSize[0] * tr.world->lightGridBounds[0];
-			bounds[1] = tr.world->lightGridSize[1] * tr.world->lightGridBounds[1];
-			bounds[2] = tr.world->lightGridSize[2] * tr.world->lightGridBounds[2];
-			point[0] = tr.world->lightGridOrigin[0];
-			point[1] = tr.world->lightGridOrigin[1];
-			point[2] = tr.world->lightGridOrigin[2];
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
-			
-			point[0] = tr.world->lightGridOrigin[0] + bounds[0];
-			point[1] = tr.world->lightGridOrigin[1];
-			point[2] = tr.world->lightGridOrigin[2];
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
-			
-			point[0] = tr.world->lightGridOrigin[0];
-			point[1] = tr.world->lightGridOrigin[1] + bounds[1];
-			point[2] = tr.world->lightGridOrigin[2];
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
-			
-			point[0] = tr.world->lightGridOrigin[0] + bounds[0];
-			point[1] = tr.world->lightGridOrigin[1] + bounds[1];
-			point[2] = tr.world->lightGridOrigin[2];
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
-			
-			point[0] = tr.world->lightGridOrigin[0];
-			point[1] = tr.world->lightGridOrigin[1];
-			point[2] = tr.world->lightGridOrigin[2] + bounds[2];
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
-			
-			point[0] = tr.world->lightGridOrigin[0] + bounds[0];
-			point[1] = tr.world->lightGridOrigin[1];
-			point[2] = tr.world->lightGridOrigin[2] + bounds[2];
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
-			
-			point[0] = tr.world->lightGridOrigin[0];
-			point[1] = tr.world->lightGridOrigin[1] + bounds[1];
-			point[2] = tr.world->lightGridOrigin[2] + bounds[2];
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
-			
-			point[0] = tr.world->lightGridOrigin[0] + bounds[0];
-			point[1] = tr.world->lightGridOrigin[1] + bounds[1];
-			point[2] = tr.world->lightGridOrigin[2] + bounds[2];
-			Matrix16Transform(lightViewMatrix, point, lightViewPoint);
-			AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
-		}
+		VectorMA(base,  -lx, fd->viewaxis[1], point);
+		VectorMA(point, -ly, fd->viewaxis[2], point);
+		Matrix16Transform(lightViewMatrix, point, lightViewPoint);
+		AddPointToBounds(lightViewPoint, lightviewBounds[0], lightviewBounds[1]);
 
 		// Moving the Light in Texel-Sized Increments
 		// from http://msdn.microsoft.com/en-us/library/windows/desktop/ee416324%28v=vs.85%29.aspx
@@ -2960,7 +2897,6 @@ void R_RenderCubemapSide( int cubemapIndex, int cubemapSide, qboolean subscene )
 			R_RenderSunShadowMaps(&refdef, 0);
 			R_RenderSunShadowMaps(&refdef, 1);
 			R_RenderSunShadowMaps(&refdef, 2);
-			R_RenderSunShadowMaps(&refdef, 3);
 		}
 	}
 
