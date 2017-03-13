@@ -350,6 +350,7 @@ uniform vec4      u_SpecularScale;
 #if defined(USE_LIGHT) && !defined(USE_FAST_LIGHT)
 #if defined(USE_CUBEMAP)
 uniform vec4      u_CubeMapInfo;
+uniform sampler2D u_EnvBrdfMap;
 #endif
 #endif
 
@@ -457,19 +458,6 @@ float RayIntersectDisplaceMap(vec2 dp, vec2 ds, sampler2D normalMap)
 }
 #endif
 
-vec3 CalcDiffuse(vec3 diffuseAlbedo, float NH, float EH, float roughness)
-{
-#if defined(USE_BURLEY)
-	// modified from https://disney-animation.s3.amazonaws.com/library/s2012_pbs_disney_brdf_notes_v2.pdf
-	float fd90 = -0.5 + EH * EH * roughness;
-	float burley = 1.0 + fd90 * 0.04 / NH;
-	burley *= burley;
-	return diffuseAlbedo * burley;
-#else
-	return diffuseAlbedo;
-#endif
-}
-
 vec3 EnvironmentBRDF(float roughness, float NE, vec3 specular)
 {
 	// from http://community.arm.com/servlet/JiveServlet/download/96891546-19496/siggraph2015-mmg-renaldas-slides.pdf
@@ -499,6 +487,11 @@ vec3 spec_F(
   return F0 + (vec3(1.0) - F0) * pow2;
 }
 
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+} 
+
 float G1(
   float NV,
   float k)
@@ -512,6 +505,19 @@ float spec_G(float NL, float NE, float roughness )
   // from http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
   float k = max(((roughness + 1.0) * (roughness + 1.0)) / 8.0, 1e-5);
   return G1(NL,k)*G1(NE,k);
+}
+
+vec3 CalcDiffuse(vec3 diffuseAlbedo, float NH, float EH, float roughness, float ao)
+{
+#if defined(USE_BURLEY)
+	// modified from https://disney-animation.s3.amazonaws.com/library/s2012_pbs_disney_brdf_notes_v2.pdf
+	float fd90 = -0.5 + EH * EH * roughness;
+	float burley = 1.0 + fd90 * 0.04 / NH;
+	burley *= burley;
+	return diffuseAlbedo * burley * ao;
+#else
+	return diffuseAlbedo * ao;
+#endif
 }
 
 vec3 CalcSpecular(
@@ -673,14 +679,17 @@ void main()
 	diffuse.rgb *= diffuse.rgb;
   #endif
 
+  float ao = 1.0;
   #if defined(USE_PBR)
 	// diffuse rgb is base color
 	// specular red is gloss
 	// specular green is metallicness
-	float gloss = specular.r;
-	float metal = specular.g;
-	specular.rgb = metal * diffuse.rgb + vec3(0.04 - 0.04 * metal);
-	diffuse.rgb *= 1.0 - metal;
+	// specular blue is ao
+	float gloss		= specular.r;
+	float metal		= specular.g;
+	ao				= specular.b;
+	specular.rgb	= metal * diffuse.rgb + vec3(0.04 - 0.04 * metal);
+	diffuse.rgb    *= 1.0 - metal;
   #else
 	// diffuse rgb is diffuse
 	// specular rgb is specular reflectance at normal incidence
@@ -696,13 +705,12 @@ void main()
   #elif defined(GLOSS_IS_SMOOTHNESS)
 	float roughness = 1.0 - gloss;
   #elif defined(GLOSS_IS_ROUGHNESS)
-	float roughness = max(gloss, 0.01);
+	float roughness = max(gloss, 0.04);
   #elif defined(GLOSS_IS_SHININESS)
 	float roughness = pow(2.0 / (8190.0 * gloss + 2.0), 0.25);
   #endif
 
-    
-	reflectance  = CalcDiffuse(diffuse.rgb, NH, EH, roughness);
+	reflectance  = CalcDiffuse(diffuse.rgb, NH, EH, roughness, ao);
 
   #if defined(USE_LIGHT_VECTOR) || defined(USE_DELUXEMAP)
     H  = normalize(L + E);
@@ -720,7 +728,8 @@ void main()
 
 
   #if defined(USE_CUBEMAP)
-	reflectance = EnvironmentBRDF(roughness, NE, specular.rgb);
+	NE = clamp(dot(N, E), 0.0, 1.0);
+	vec3 EnvBRDF = texture(u_EnvBrdfMap, vec2(1.0 - roughness, NE)).rgb;
 
 	vec3 R = reflect(E, N);
 
@@ -732,7 +741,7 @@ void main()
 
 	// normalize cubemap based on last roughness mip (~diffuse)
 	// multiplying cubemap values by lighting below depends on either this or the cubemap being normalized at generation
-	//vec3 cubeLightDiffuse = max(textureLod(u_CubeMap, N, 7).rgb, 0.5 / 255.0);
+	//vec3 cubeLightDiffuse = max(textureLod(u_CubeMap, N, ROUGHNESS_MIPS).rgb, 0.5 / 255.0);
 	//cubeLightColor /= dot(cubeLightDiffuse, vec3(0.2125, 0.7154, 0.0721));
 
 	float horiz = 1.0;
@@ -745,14 +754,14 @@ void main()
 	#endif
 
     #if defined(USE_PBR)
-	cubeLightColor *= cubeLightColor;
+		cubeLightColor *= cubeLightColor;
     #endif
 
 	// multiply cubemap values by lighting
 	// not technically correct, but helps make reflections look less unnatural
 	//cubeLightColor *= lightColor * (attenuation * NL) + ambientColor;
 
-	out_Color.rgb += cubeLightColor * reflectance * horiz;
+	out_Color.rgb += cubeLightColor * (specular.rgb * EnvBRDF.x + EnvBRDF.y) * horiz;
   #endif
 
   #if defined(USE_PRIMARY_LIGHT) || defined(SHADOWMAP_MODULATE)
@@ -775,7 +784,7 @@ void main()
 
 	// bit of a hack, with modulated shadowmaps, ignore diffuse
     #if !defined(SHADOWMAP_MODULATE)
-	reflectance += CalcDiffuse(diffuse.rgb, NH2, EH2, roughness);
+	reflectance += CalcDiffuse(diffuse.rgb, NH2, EH2, roughness, 1.0);
     #endif
 
 	lightColor = u_PrimaryLightColor * var_Color.rgb;

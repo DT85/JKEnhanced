@@ -71,6 +71,7 @@ static uniformInfo_t uniformsInfo[] =
 	{ "u_TextureMap", GLSL_INT, 1 },
 	{ "u_LevelsMap",  GLSL_INT, 1 },
 	{ "u_CubeMap",    GLSL_INT, 1 },
+	{ "u_EnvBrdfMap", GLSL_INT, 1 },
 
 	{ "u_ScreenImageMap", GLSL_INT, 1 },
 	{ "u_ScreenDepthMap", GLSL_INT, 1 },
@@ -1984,6 +1985,7 @@ void GLSL_EndLoadGPUShaders ( int startTime )
 		GLSL_SetUniformInt(&tr.lightallShader[i], UNIFORM_SPECULARMAP, TB_SPECULARMAP);
 		GLSL_SetUniformInt(&tr.lightallShader[i], UNIFORM_SHADOWMAP,   TB_SHADOWMAP);
 		GLSL_SetUniformInt(&tr.lightallShader[i], UNIFORM_CUBEMAP,     TB_CUBEMAP);
+		GLSL_SetUniformInt(&tr.lightallShader[i], UNIFORM_ENVBRDFMAP,  TB_ENVBRDFMAP);
 		qglUseProgram(0);
 
 		GLSL_FinishGPUShader(&tr.lightallShader[i]);

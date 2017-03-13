@@ -717,7 +717,8 @@ enum
 	TB_SHADOWMAP   = 5,
 	TB_CUBEMAP     = 6,
 	TB_SHADOWMAP4  = 6,
-	NUM_TEXTURE_BUNDLES = 7
+	TB_ENVBRDFMAP  = 7,
+	NUM_TEXTURE_BUNDLES = 8
 };
 
 typedef enum
@@ -1178,6 +1179,7 @@ typedef enum
 	UNIFORM_TEXTUREMAP,
 	UNIFORM_LEVELSMAP,
 	UNIFORM_CUBEMAP,
+	UNIFORM_ENVBRDFMAP,
 
 	UNIFORM_SCREENIMAGEMAP,
 	UNIFORM_SCREENDEPTHMAP,
@@ -2228,6 +2230,7 @@ typedef struct trGlobals_s {
 	image_t					*hdrDepthImage;
 	image_t                 *renderCubeImage;
 	image_t                 *prefilterEnvMapImage;
+	image_t                 *envBrdfImage;
 	
 	image_t					*textureDepthImage;
 

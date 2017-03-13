@@ -1737,6 +1737,7 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input, const VertexArrays
 
 			uniformDataWriter.SetUniformVec4(UNIFORM_CUBEMAPINFO, vec);
 		}
+		samplerBindingsWriter.AddStaticImage(tr.envBrdfImage, TB_ENVBRDFMAP);
 
 		CaptureDrawData(input, pStage, index, stage);
 

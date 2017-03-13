@@ -2224,7 +2224,9 @@ void RB_Refractive(srfVBOMDVMesh_t * surface)
 	float r = backEnd.currentEntity->e.shaderRGBA[0];
 	float g = backEnd.currentEntity->e.shaderRGBA[1];
 	float b = backEnd.currentEntity->e.shaderRGBA[2];
-	float alpha = (backEnd.currentEntity->e.shaderRGBA[3]-10)/255.0f;
+	float alpha = 0;
+	if (backEnd.currentEntity->e.shaderRGBA[3] > 10)
+		alpha = (backEnd.currentEntity->e.shaderRGBA[3]) / 255.0f;
 	float x = tr.refractiveImage->width;
 	float y = tr.refractiveImage->height;
 	VectorSet4(shaderRGBA, r, g, b, alpha);
