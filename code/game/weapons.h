@@ -38,6 +38,7 @@ typedef enum //# weapon_e
 	// Player weapons
 	WP_SABER,			// player and NPC weapon
 	WP_BLASTER_PISTOL,	// player and NPC weapon
+	WP_BRYAR_PISTOL,	// player weapon
 	WP_BLASTER,			// player and NPC weapon
 	WP_DISRUPTOR,		// player and NPC weapon
 	WP_BOWCASTER,		// NPC weapon - player can pick this up, but never starts with them
@@ -61,8 +62,6 @@ typedef enum //# weapon_e
 	WP_STUN_BATON,		// stupid weapon, should remove
 
 	//NPC weapons
-	WP_BRYAR_PISTOL,	// NPC weapon - player can pick this up, but never starts with them
-
 	WP_EMPLACED_GUN,
 
 	WP_BOT_LASER,		// Probe droid	- Laser blast
@@ -131,6 +130,7 @@ typedef struct weaponData_s
 	int		altRange;			// Range of alt-fire
 
 	char	weaponIcon[64];		// Name of weapon icon file
+	char	dp_weaponIcon[64];		// Name of datapad weapon icon file
 	int		numBarrels;			// how many barrels should we expect for this weapon?
 
 	char	missileMdl[64];		// Missile Model

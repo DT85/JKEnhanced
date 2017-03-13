@@ -4820,7 +4820,7 @@ static void	UI_RecordWeapons( void )
 	int wpns = 0;
 	// always add blaster and saber
 	wpns |= (1<<WP_SABER);
-	wpns |= (1<<WP_BLASTER_PISTOL);
+	wpns |= (1<<WP_BRYAR_PISTOL);
 	wpns |= (1<< uiInfo.selectedWeapon1);
 	wpns |= (1<< uiInfo.selectedWeapon2);
 	wpns |= (1<< uiInfo.selectedThrowWeapon);

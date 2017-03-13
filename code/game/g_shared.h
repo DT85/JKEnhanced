@@ -1682,6 +1682,9 @@ typedef struct weaponInfo_s {
 
 	vec3_t			weaponMidpoint;		// so it will rotate centered instead of by tag
 
+	qhandle_t		dp_weaponIcon;			// The version of the icon for the datapad
+	qhandle_t		dp_weaponIconNoAmmo;	// The version of the icon for the datapad with no ammo warning
+
 	qhandle_t		weaponIcon;			// The version of the icon with a glowy background
 	qhandle_t		weaponIconNoAmmo;	// The version of the icon with no ammo warning
 	qhandle_t		ammoIcon;

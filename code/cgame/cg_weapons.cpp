@@ -144,6 +144,12 @@ void CG_RegisterWeapon(int weaponNum) {
 		weaponInfo->weaponIconNoAmmo = cgi_R_RegisterShaderNoMip( va("%s_na",weaponData[weaponNum].weaponIcon));
 	}
 
+	if (weaponData[weaponNum].dp_weaponIcon[0])
+	{
+		weaponInfo->dp_weaponIcon = cgi_R_RegisterShaderNoMip(weaponData[weaponNum].dp_weaponIcon);
+		weaponInfo->dp_weaponIconNoAmmo = cgi_R_RegisterShaderNoMip(va("%s_na", weaponData[weaponNum].dp_weaponIcon));
+	}
+
 	for ( ammo = bg_itemlist + 1 ; ammo->classname ; ammo++ ) {
 		if ( ammo->giType == IT_AMMO && ammo->giTag == weaponData[weaponNum].ammoIndex) {
 			break;
@@ -1814,10 +1820,11 @@ int CG_WeaponCheck( int weaponIndex )
 
 int cgi_UI_GetItemText(char *menuFile,char *itemName, char *text);
 
-const char *weaponDesc[13] =
+const char *weaponDesc[14] =
 {
 "SABER_DESC",
-"NEW_BLASTER_PISTOL_DESC",
+"BLASTER_PISTOL_DESC",
+"BRYAR_BLASTER_PISTOL_DESC",
 "BLASTER_RIFLE_DESC",
 "DISRUPTOR_RIFLE_DESC",
 "BOWCASTER_DESC",
@@ -1893,9 +1900,9 @@ void CG_DrawDataPadWeaponSelect( void )
 	{
 		cg.DataPadWeaponSelect = FIRST_WEAPON;
 	}
-	else if (cg.DataPadWeaponSelect>13)
+	else if (cg.DataPadWeaponSelect>14)
 	{
-		cg.DataPadWeaponSelect = 13;
+		cg.DataPadWeaponSelect = 14;
 	}
 
 	// What weapon does the player currently have selected
@@ -1909,7 +1916,7 @@ void CG_DrawDataPadWeaponSelect( void )
 	}
 	if (weaponSelectI<1)
 	{
-		weaponSelectI = 13;
+		weaponSelectI = 14;
 	}
 
 	const int smallIconSize = 40;
@@ -1917,8 +1924,9 @@ void CG_DrawDataPadWeaponSelect( void )
 	const int bigPad = 64;
 	const int pad = 32;
 
-	const int centerXPos = 320;
-	const int graphicYPos = 340;
+	const int centerXPos = 317;
+	const int graphicYPos = 343;
+	const int centergraphicYPos = 333;
 
 
 	// Left side ICONS
@@ -1939,7 +1947,7 @@ void CG_DrawDataPadWeaponSelect( void )
 
 		if (weaponSelectI<1)
 		{
-			weaponSelectI = 13;
+			weaponSelectI = 14;
 		}
 
 		if ( !(weaponBitFlag & ( 1 << weaponSelectI )))	// Does he have this weapon?
@@ -1954,7 +1962,7 @@ void CG_DrawDataPadWeaponSelect( void )
 
 		++iconCnt;					// Good icon
 
-		if (weaponData[weaponSelectI].weaponIcon[0])
+		if (weaponData[weaponSelectI].dp_weaponIcon[0])
 		{
 			weaponInfo_t	*weaponInfo;
 			CG_RegisterWeapon( weaponSelectI );
@@ -1962,11 +1970,11 @@ void CG_DrawDataPadWeaponSelect( void )
 
 			if (!CG_WeaponCheck(weaponSelectI))
 			{
-				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->weaponIconNoAmmo );
+				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->dp_weaponIconNoAmmo );
 			}
 			else
 			{
-				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->weaponIcon );
+				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->dp_weaponIcon );
 			}
 
 			holdX -= (smallIconSize + pad)*cgs.widthRatioCoef;
@@ -1982,7 +1990,7 @@ void CG_DrawDataPadWeaponSelect( void )
 	// Current Center Icon
 	cgi_R_SetColor(colorTable[CT_WHITE]);
 
-	if (weaponData[cg.DataPadWeaponSelect].weaponIcon[0])
+	if (weaponData[cg.DataPadWeaponSelect].dp_weaponIcon[0])
 	{
 		weaponInfo_t	*weaponInfo;
 		CG_RegisterWeapon( cg.DataPadWeaponSelect );
@@ -1991,11 +1999,11 @@ void CG_DrawDataPadWeaponSelect( void )
 			// Draw graphic to show weapon has ammo or no ammo
 		if (!CG_WeaponCheck(cg.DataPadWeaponSelect))
 		{
-			CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (graphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, weaponInfo->weaponIconNoAmmo );
+			CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (centergraphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, weaponInfo->dp_weaponIconNoAmmo );
 		}
 		else
 		{
-			CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (graphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, weaponInfo->weaponIcon);
+			CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (centergraphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, weaponInfo->dp_weaponIcon);
 		}
 	}
 
@@ -2008,7 +2016,7 @@ void CG_DrawDataPadWeaponSelect( void )
 		weaponSelectI = cg.DataPadWeaponSelect + 1;
 	}
 
-	if (weaponSelectI> 13)
+	if (weaponSelectI> 14)
 	{
 		weaponSelectI = 1;
 	}
@@ -2027,7 +2035,7 @@ void CG_DrawDataPadWeaponSelect( void )
 		{
 			weaponSelectI = WP_CONCUSSION;
 		}
-		if (weaponSelectI>13)
+		if (weaponSelectI>14)
 		{
 			weaponSelectI = 1;
 		}
@@ -2044,7 +2052,7 @@ void CG_DrawDataPadWeaponSelect( void )
 
 		++iconCnt;					// Good icon
 
-		if (weaponData[weaponSelectI].weaponIcon[0])
+		if (weaponData[weaponSelectI].dp_weaponIcon[0])
 		{
 			weaponInfo_t	*weaponInfo;
 			CG_RegisterWeapon( weaponSelectI );
@@ -2053,11 +2061,11 @@ void CG_DrawDataPadWeaponSelect( void )
 			// Draw graphic to show weapon has ammo or no ammo
 			if (!CG_WeaponCheck(i))
 			{
-				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->weaponIconNoAmmo);
+				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->dp_weaponIconNoAmmo);
 			}
 			else
 			{
-				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->weaponIcon);
+				CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, weaponInfo->dp_weaponIcon);
 			}
 
 			holdX += (smallIconSize + pad)*cgs.widthRatioCoef;
@@ -2074,20 +2082,19 @@ void CG_DrawDataPadWeaponSelect( void )
 
 	if (text[0])
 	{
-		const short textboxXPos = 40;
-		const short textboxYPos = 60;
-		const int	textboxWidth = 560;
+		const short textboxXPos = 35;
+		const short textboxYPos = 85;
+		const int	textboxWidth = 540;
 		const int	textboxHeight = 300;
-		const float	textScale = 1.0f;
+		const float	textScale = 0.35f;
 
 		CG_DisplayBoxedText(
 			textboxXPos, textboxYPos,
 			textboxWidth, textboxHeight,
 			text,
-			4,
+			cgs.media.qhFontArimob,
 			textScale,
-			colorTable[CT_WHITE]
-				);
+			colorTable[CT_HUD_GREEN]);
 	}
 
 	cgi_R_SetColor( NULL );

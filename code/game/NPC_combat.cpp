@@ -292,6 +292,9 @@ void G_AttackDelay( gentity_t *self, gentity_t *enemy )
 			break;
 		case WP_BRYAR_PISTOL:
 			break;
+		case WP_BLASTER_PISTOL:	// apparently some enemy only version of the blaster
+			attDelay -= Q_irand(500, 1500);
+			break;
 		case WP_BLASTER:
 			if ( self->NPC->scriptFlags & SCF_ALT_FIRE )
 			{//rapid-fire blasters
@@ -319,9 +322,6 @@ void G_AttackDelay( gentity_t *self, gentity_t *enemy )
 			break;
 		case WP_CONCUSSION:
 			attDelay += Q_irand( 500, 1500 );
-			break;
-		case WP_BLASTER_PISTOL:	// apparently some enemy only version of the blaster
-			attDelay -= Q_irand( 500, 1500 );
 			break;
 		case WP_DISRUPTOR://sniper's don't delay?
 			return;

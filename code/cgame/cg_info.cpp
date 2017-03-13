@@ -135,16 +135,16 @@ static void ObjectivePrint_Line(const int color, const int objectIndex, int &mis
 		//
 		if (pixelLen < objectiveTextBoxWidth)	// One shot - small enough to print entirely on one line
 		{
-			y =objectiveStartingYpos + (iYPixelsPerLine * (missionYcnt));
+			y = 105 + (iYPixelsPerLine * (missionYcnt));
 
 			cgi_R_Font_DrawString (
-				objectiveStartingXpos,
+				60,
 				y,
 				str,
 				colorTable[color],
-				cgs.media.qhFontMedium,
+				cgs.media.qhFontArimob,
 				-1,
-				1.0f);
+				0.35f);
 
 			++missionYcnt;
 		}
@@ -253,10 +253,10 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 	int		i,totalY;
 	int		iYPixelsPerLine = cgi_R_Font_HeightPixels(cgs.media.qhFontMedium, 1.0f);
 
-	const short titleXPos = objectiveStartingXpos - 22;		// X starting position for title text
-	const short titleYPos = objectiveStartingYpos - 23;		// Y starting position for title text
-	const short graphic_size = 16;							// Size (width and height) of graphic used to show status of objective
-	const short graphicXpos = objectiveStartingXpos - graphic_size - 8;	// Amount of X to backup from text starting position
+	const short titleXPos = objectiveStartingXpos - 22;					// X starting position for title text
+	const short titleYPos = objectiveStartingYpos - 23;					// Y starting position for title text
+	const short graphic_size = 16;										// Size (width and height) of graphic used to show status of objective
+	const short graphicXpos = 67 - graphic_size - 8;					// Amount of X to backup from text starting position
 	const short graphicYOffset = (iYPixelsPerLine - graphic_size)/2;	// Amount of Y to raise graphic so it's in the center of the text line
 
 	missionInfo_Updated = qfalse;		// This will stop the text from flashing
@@ -270,8 +270,10 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 
 	// Title Text at the top
 	char text[1024]={0};
+	/*
 	cgi_SP_GetStringTextString( "SP_INGAME_OBJECTIVES", text, sizeof(text) );
 	cgi_R_Font_DrawString (titleXPos, titleYPos, text, colorTable[CT_TITLE], cgs.media.qhFontMedium, -1, 1.0f);
+	*/
 
 	int missionYcnt = 0;
 
@@ -282,18 +284,18 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 		if (cent->gent->client->sess.mission_objectives[i].display)
 		{
 			// Calculate the Y position
-			totalY = objectiveStartingYpos + (iYPixelsPerLine * (missionYcnt))+(iYPixelsPerLine/2);
+			totalY = 100 + (iYPixelsPerLine * (missionYcnt))+(iYPixelsPerLine/2);
 
 			//	Draw graphics that show if mission has been accomplished or not
-			cgi_R_SetColor(colorTable[CT_BLUE3]);
-			CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size,  graphic_size, cgs.media.messageObjCircle);	// Circle in front
+			cgi_R_SetColor(colorTable[CT_HUD_GREEN]);
+			CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size*cgs.widthRatioCoef,  graphic_size, cgs.media.messageObjCircle);	// Circle in front
 			if (cent->gent->client->sess.mission_objectives[i].status == OBJECTIVE_STAT_SUCCEEDED)
 			{
-				CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size,  graphic_size, cgs.media.messageLitOn);	// Center Dot
+				CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size*cgs.widthRatioCoef,  graphic_size, cgs.media.messageLitOn);	// Center Dot
 			}
 
 			// Print current objective text
-			ObjectivePrint_Line(CT_WHITE, i, missionYcnt );
+			ObjectivePrint_Line(CT_HUD_GREEN, i, missionYcnt );
 		}
 	}
 
@@ -303,17 +305,17 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 		// Set the message a quarter of the way down and in the center of the text box
 		int messageYPosition = objectiveStartingYpos + (objectiveTextBoxHeight / 4);
 
-		cgi_SP_GetStringTextString( "SP_INGAME_OBJNONE", text, sizeof(text) );
-		int messageXPosition = objectiveStartingXpos + (objectiveTextBoxWidth/2) -  (cgi_R_Font_StrLenPixels(text, cgs.media.qhFontMedium, 1.0f) /2);
+		cgi_SP_GetStringTextString("SP_INGAME_OBJNONE", text, sizeof(text));
+		int messageXPosition = objectiveStartingXpos + (objectiveTextBoxWidth / 2) - (cgi_R_Font_StrLenPixels(text, cgs.media.qhFontMedium, 1.0f) / 2);
 
-		cgi_R_Font_DrawString (
+		cgi_R_Font_DrawString(
 			messageXPosition,
 			messageYPosition,
 			text,
-			colorTable[CT_WHITE],
-			cgs.media.qhFontMedium,
+			colorTable[CT_HUD_GREEN],
+			cgs.media.qhFontArimob,
 			-1,
-			1.0f);
+			0.35f);
 	}
 }
 
