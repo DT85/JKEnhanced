@@ -133,6 +133,7 @@ stringID_table_t WPTable[] =
 	// Player weapons
 	ENUM2STRING(WP_SABER),				 // NOTE: lots of code assumes this is the first weapon (... which is crap) so be careful -Ste.
 	ENUM2STRING(WP_BLASTER_PISTOL),	// apparently some enemy only version of the blaster
+	ENUM2STRING(WP_BRYAR_PISTOL),
 	ENUM2STRING(WP_BLASTER),
 	ENUM2STRING(WP_DISRUPTOR),
 	ENUM2STRING(WP_BOWCASTER),
@@ -148,7 +149,6 @@ stringID_table_t WPTable[] =
 	//NOTE: player can only have up to 16 weapons), anything after that is enemy only
 	ENUM2STRING(WP_STUN_BATON),
 	// NPC enemy weapons
-	ENUM2STRING(WP_BRYAR_PISTOL),
 	ENUM2STRING(WP_EMPLACED_GUN),
 	ENUM2STRING(WP_BOT_LASER),		// Probe droid	- Laser blast
 	ENUM2STRING(WP_TURRET),			// turret guns

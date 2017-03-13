@@ -38,6 +38,7 @@ typedef enum //# weapon_e
 	// Player weapons
 	WP_SABER,			// player and NPC weapon
 	WP_BLASTER_PISTOL,	// player and NPC weapon
+	WP_BRYAR_PISTOL,	// player weapon
 	WP_BLASTER,			// player and NPC weapon
 	WP_DISRUPTOR,		// player and NPC weapon
 	WP_BOWCASTER,		// NPC weapon - player can pick this up, but never starts with them
@@ -61,8 +62,6 @@ typedef enum //# weapon_e
 	WP_STUN_BATON,		// stupid weapon, should remove
 
 	//NPC weapons
-	WP_BRYAR_PISTOL,	// NPC weapon - player can pick this up, but never starts with them
-
 	WP_EMPLACED_GUN,
 
 	WP_BOT_LASER,		// Probe droid	- Laser blast

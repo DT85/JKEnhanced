@@ -382,6 +382,7 @@ const float defaultAltSplashRadius[] = {
 	0.0f,							// WP_NONE
 	0.0f,							// WP_SABER		// handled elsewhere
 	0.0f,							// WP_BLASTER_PISTOL
+	0.0f,							// WP_BRYAR_PISTOL
 	0.0f,							// WP_BLASTER
 	0.0f,							// WP_DISRUPTOR
 	BOWCASTER_SPLASH_RADIUS,		// WP_BOWCASTER
@@ -401,7 +402,6 @@ const float defaultAltSplashRadius[] = {
 
 	0.0f,							// WP_STUN_BATON
 
-	0.0f,							// WP_BRYAR_PISTOL
 	0.0f,							// WP_EMPLACED_GUN
 	0.0f,							// WP_BOT_LASER
 	0.0f,							// WP_TURRET		// handled elsewhere

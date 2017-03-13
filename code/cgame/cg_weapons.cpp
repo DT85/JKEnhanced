@@ -1820,10 +1820,11 @@ int CG_WeaponCheck( int weaponIndex )
 
 int cgi_UI_GetItemText(char *menuFile,char *itemName, char *text);
 
-const char *weaponDesc[13] =
+const char *weaponDesc[14] =
 {
 "SABER_DESC",
-"NEW_BLASTER_PISTOL_DESC",
+"BLASTER_PISTOL_DESC",
+"BRYAR_BLASTER_PISTOL_DESC",
 "BLASTER_RIFLE_DESC",
 "DISRUPTOR_RIFLE_DESC",
 "BOWCASTER_DESC",
@@ -1899,9 +1900,9 @@ void CG_DrawDataPadWeaponSelect( void )
 	{
 		cg.DataPadWeaponSelect = FIRST_WEAPON;
 	}
-	else if (cg.DataPadWeaponSelect>13)
+	else if (cg.DataPadWeaponSelect>14)
 	{
-		cg.DataPadWeaponSelect = 13;
+		cg.DataPadWeaponSelect = 14;
 	}
 
 	// What weapon does the player currently have selected
@@ -1915,7 +1916,7 @@ void CG_DrawDataPadWeaponSelect( void )
 	}
 	if (weaponSelectI<1)
 	{
-		weaponSelectI = 13;
+		weaponSelectI = 14;
 	}
 
 	const int smallIconSize = 40;
@@ -1946,7 +1947,7 @@ void CG_DrawDataPadWeaponSelect( void )
 
 		if (weaponSelectI<1)
 		{
-			weaponSelectI = 13;
+			weaponSelectI = 14;
 		}
 
 		if ( !(weaponBitFlag & ( 1 << weaponSelectI )))	// Does he have this weapon?
@@ -2015,7 +2016,7 @@ void CG_DrawDataPadWeaponSelect( void )
 		weaponSelectI = cg.DataPadWeaponSelect + 1;
 	}
 
-	if (weaponSelectI> 13)
+	if (weaponSelectI> 14)
 	{
 		weaponSelectI = 1;
 	}
@@ -2034,7 +2035,7 @@ void CG_DrawDataPadWeaponSelect( void )
 		{
 			weaponSelectI = WP_CONCUSSION;
 		}
-		if (weaponSelectI>13)
+		if (weaponSelectI>14)
 		{
 			weaponSelectI = 1;
 		}
@@ -2083,7 +2084,7 @@ void CG_DrawDataPadWeaponSelect( void )
 	{
 		const short textboxXPos = 35;
 		const short textboxYPos = 85;
-		const int	textboxWidth = 560;
+		const int	textboxWidth = 540;
 		const int	textboxHeight = 300;
 		const float	textScale = 0.35f;
 
