@@ -140,6 +140,9 @@ typedef struct {
 	qhandle_t	loadTick;
 	qhandle_t	loadTickCap;
 
+	qhandle_t	newgameloadTick;
+	qhandle_t	newgameloadTickCap;
+
 	//			HUD artwork
 	int			currentBackground;
 	qhandle_t	weaponbox;
@@ -253,6 +256,8 @@ typedef struct {
 	qhandle_t	useableHint;
 
 	qhandle_t	levelLoad;
+
+	qhandle_t	newgamelevelLoad;
 
 	//new stuff for Jedi Academy
 	//force power icons
