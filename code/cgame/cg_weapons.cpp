@@ -1924,7 +1924,7 @@ void CG_DrawDataPadWeaponSelect( void )
 	const int bigPad = 64;
 	const int pad = 32;
 
-	const int centerXPos = 317;
+	const int centerXPos = 312;
 	const int graphicYPos = 343;
 	const int centergraphicYPos = 333;
 

@@ -668,6 +668,8 @@ typedef struct gitem_s {
 
 	const char	*icon;
 
+	const char	*dp_icon;
+
 	int			quantity;		// for ammo how much, or duration of powerup
 	itemType_t  giType;			// IT_* flags
 
