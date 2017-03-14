@@ -58,7 +58,7 @@ vec3 PrefilterEnvMap( float Roughness, vec3 R )
 	vec3 V = R;
 	vec3 PrefilteredColor = vec3(0.0);
 	float TotalWeight = 0.0;
-	uint NumSamples = uint(1024);
+	uint NumSamples = uint(64);
 	for ( uint i = uint(0); i < NumSamples; i++ )
 	{
 		vec2 Xi = hammersley2D( i, NumSamples );
@@ -67,7 +67,6 @@ vec3 PrefilterEnvMap( float Roughness, vec3 R )
 		float NoL = clamp((dot( N, L )),0.0,1.0);
 		if ( NoL > 0 )
 		{
-			//PrefilteredColor += EnvMap.SampleLevel( EnvMapSampler, L, 0 ).rgb * NoL;
 			PrefilteredColor += textureLod(u_CubeMap, L, 0.0).rgb * NoL;
 			TotalWeight += NoL;
 		}

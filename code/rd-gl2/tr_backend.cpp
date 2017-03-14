@@ -1885,7 +1885,7 @@ void RB_PrefilterEnvMap() {
 	if (!tr.world || tr.numCubemaps == 0 || cubemap->mipmapped > 30)
 	{
 		// do nothing
-		return;
+		//return;
 	}
 
 	int cubeMipSize = r_cubemapSize->integer;
@@ -1936,9 +1936,10 @@ void RB_PrefilterEnvMap() {
 			//////////////////////////////////////////////////////////////////////////////////////////////
 			qglCopyTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + j, level, 0, 0, 0, 0, width, height);
 		}
-
 	}
-	cubemap->mipmapped++;
+
+	//cubemap->mipmapped++;
+	GL_SelectTexture(0);
 	return;
 }
 
@@ -2218,10 +2219,10 @@ static const void	*RB_DrawSurfs( const void *data ) {
 		if (cubemap->mipmapped < 30) {
 			if (r_pbr->integer == 0 || r_pbrIBL->integer == 0) {
 				qglGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-				cubemap->mipmapped++;
-			}
+				//cubemap->mipmapped++;
+			}	
 			// else we mip-map elsewhere!
-		}
+		//}
 		GL_SelectTexture(0);
 	}
 
