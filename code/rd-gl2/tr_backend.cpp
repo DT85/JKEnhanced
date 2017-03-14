@@ -2216,7 +2216,7 @@ static const void	*RB_DrawSurfs( const void *data ) {
 		GL_SelectTexture(TB_CUBEMAP);
 		GL_BindToTMU(cubemap->image, TB_CUBEMAP);
 		// UGLY find a better way!
-		if (cubemap->mipmapped < 30) {
+		//if (cubemap->mipmapped < 30) {
 			if (r_pbr->integer == 0 || r_pbrIBL->integer == 0) {
 				qglGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 				//cubemap->mipmapped++;
