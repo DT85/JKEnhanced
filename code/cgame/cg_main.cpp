@@ -65,6 +65,7 @@ Ghoul2 Insert End
 
 void CG_LoadHudMenu(void);
 int inv_icons[INV_MAX];
+int dp_inv_icons[INV_MAX];
 const char *inv_names[] =
 {
 "ELECTROBINOCULARS",
@@ -1549,6 +1550,7 @@ static void CG_RegisterGraphics( void ) {
 			if (bg_itemlist[i].giTag < INV_MAX)
 			{
 				inv_icons[bg_itemlist[i].giTag] = cgi_R_RegisterShaderNoMip( bg_itemlist[i].icon );
+				dp_inv_icons[bg_itemlist[i].giTag] = cgi_R_RegisterShaderNoMip( bg_itemlist[i].dp_icon);
 			}
 		}
 	}
@@ -3359,7 +3361,7 @@ void CG_DrawInventorySelect( void )
 	if (!count)
 	{
 		cgi_SP_GetStringTextString("SP_INGAME_EMPTY_INV",text, sizeof(text) );
-		int w = cgi_R_Font_StrLenPixels( text, cgs.media.qhFontSmall, 1.0f );
+		int w = cgi_R_Font_StrLenPixels( text, cgs.media.qhFontArimob, 0.35f );
 		int x = ( SCREEN_WIDTH - w ) / 2;
 		CG_DrawProportionalString(x, y2 + 22, text, CG_CENTER | CG_SMALLFONT, colorTable[CT_ICON_BLUE]);
 		return;
@@ -3400,7 +3402,7 @@ void CG_DrawInventorySelect( void )
 
 	// Left side ICONS
 	// Work backwards from current icon
-	holdX = x - ((bigIconSize/2) + pad + smallIconSize);
+	holdX = x - ((bigIconSize/2) + pad + smallIconSize)*cgs.widthRatioCoef;
 	//height = smallIconSize * cg.iconHUDPercent;
 	addX = (float) smallIconSize * .75;
 
@@ -3421,13 +3423,13 @@ void CG_DrawInventorySelect( void )
 		if (inv_icons[i])
 		{
 			cgi_R_SetColor(NULL);
-			CG_DrawPic( holdX, y+10, smallIconSize, smallIconSize, inv_icons[i] );
+			CG_DrawPic( holdX, y+10, smallIconSize*cgs.widthRatioCoef, smallIconSize, inv_icons[i] );
 
 			cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-			CG_DrawNumField (holdX + addX, y + smallIconSize, 2, cg.snap->ps.inventory[i], 6, 12,
+			CG_DrawNumField (holdX + addX, y + smallIconSize, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[i], 6, 12,
 				NUM_FONT_SMALL,qfalse);
 
-			holdX -= (smallIconSize+pad);
+			holdX -= (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 
@@ -3436,10 +3438,10 @@ void CG_DrawInventorySelect( void )
 	if (inv_icons[cg.inventorySelect])
 	{
 		cgi_R_SetColor(NULL);
-		CG_DrawPic( x-(bigIconSize/2), (y-((bigIconSize-smallIconSize)/2))+10, bigIconSize, bigIconSize, inv_icons[cg.inventorySelect] );
+		CG_DrawPic( x-(bigIconSize*cgs.widthRatioCoef/2), (y-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, inv_icons[cg.inventorySelect] );
 		addX = (float) bigIconSize * .75;
 		cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-		CG_DrawNumField ((x-(bigIconSize/2)) + addX, y, 2, cg.snap->ps.inventory[cg.inventorySelect], 6, 12,
+		CG_DrawNumField ((x-(bigIconSize*cgs.widthRatioCoef/2)) + addX, y, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[cg.inventorySelect], 6, 12,
 			NUM_FONT_SMALL,qfalse);
 
 		if (inv_names[cg.inventorySelect])
@@ -3472,7 +3474,7 @@ void CG_DrawInventorySelect( void )
 
 	// Right side ICONS
 	// Work forwards from current icon
-	holdX = x + (bigIconSize/2) + pad;
+	holdX = x + ((bigIconSize/2) + pad)*cgs.widthRatioCoef;
 	//height = smallIconSize * cg.iconHUDPercent;
 	addX = (float) smallIconSize * .75;
 	for (iconCnt=0;iconCnt<sideRightIconCnt;i++)
@@ -3492,13 +3494,13 @@ void CG_DrawInventorySelect( void )
 		if (inv_icons[i])
 		{
 			cgi_R_SetColor(NULL);
-			CG_DrawPic( holdX, y+10, smallIconSize, smallIconSize, inv_icons[i] );
+			CG_DrawPic( holdX, y+10, smallIconSize*cgs.widthRatioCoef, smallIconSize, inv_icons[i] );
 
 			cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-			CG_DrawNumField (holdX + addX, y + smallIconSize, 2, cg.snap->ps.inventory[i], 6, 12,
+			CG_DrawNumField (holdX + addX, y + smallIconSize, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[i], 6, 12,
 				NUM_FONT_SMALL,qfalse);
 
-			holdX += (smallIconSize+pad);
+			holdX += (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 }
@@ -3539,7 +3541,7 @@ void CG_DrawDataPadInventorySelect( void )
 	count = 0;
 	for ( i = 0 ; i < INV_MAX ; i++ )
 	{
-		if (CG_InventorySelectable(i) && inv_icons[i])
+		if (CG_InventorySelectable(i) && dp_inv_icons[i])
 		{
 			count++;
 		}
@@ -3549,9 +3551,9 @@ void CG_DrawDataPadInventorySelect( void )
 	if (!count)
 	{
 		cgi_SP_GetStringTextString("SP_INGAME_EMPTY_INV",text, sizeof(text) );
-		int w = cgi_R_Font_StrLenPixels( text, cgs.media.qhFontSmall, 1.0f );
+		int w = cgi_R_Font_StrLenPixels( text, cgs.media.qhFontArimob, 0.35f );
 		int x = ( SCREEN_WIDTH - w ) / 2;
-		CG_DrawProportionalString(x, 300 + 22, text, CG_CENTER | CG_SMALLFONT, colorTable[CT_ICON_BLUE]);
+		CG_DrawProportionalString(x, 300 + 22, text, CG_CENTER | CG_SMALLFONT, colorTable[CT_HUD_GREEN]);
 		return;
 	}
 
@@ -3587,13 +3589,14 @@ void CG_DrawDataPadInventorySelect( void )
 	const int bigPad = 64;
 	const int pad = 32;
 
-	const int centerXPos = 320;
-	const int graphicYPos = 340;
+	const int centerXPos = 312;
+	const int graphicYPos = 343;
+	const int centergraphicYPos = 333;
 
 
 	// Left side ICONS
 	// Work backwards from current icon
-	holdX = centerXPos - ((bigIconSize/2) + bigPad + smallIconSize);
+	holdX = centerXPos - ((bigIconSize/2) + bigPad + smallIconSize)*cgs.widthRatioCoef;
 	//height = smallIconSize * cg.iconHUDPercent;
 	addX = (float) smallIconSize * .75;
 
@@ -3604,35 +3607,35 @@ void CG_DrawDataPadInventorySelect( void )
 			i = INV_MAX-1;
 		}
 
-		if ((!CG_InventorySelectable(i)) || (!inv_icons[i]))
+		if ((!CG_InventorySelectable(i)) || (!dp_inv_icons[i]))
 		{
 			continue;
 		}
 
 		++iconCnt;					// Good icon
 
-		if (inv_icons[i])
+		if (dp_inv_icons[i])
 		{
 			cgi_R_SetColor(colorTable[CT_WHITE]);
-			CG_DrawPic( holdX, graphicYPos+10, smallIconSize, smallIconSize, inv_icons[i] );
+			CG_DrawPic( holdX, graphicYPos+10, smallIconSize*cgs.widthRatioCoef, smallIconSize, dp_inv_icons[i] );
 
-			cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-			CG_DrawNumField (holdX + addX, graphicYPos + smallIconSize, 2, cg.snap->ps.inventory[i], 6, 12,
+			cgi_R_SetColor(colorTable[CT_HUD_GREEN]);
+			CG_DrawNumField (holdX + addX, graphicYPos - 2 + smallIconSize, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[i], 6, 12,
 				NUM_FONT_SMALL,qfalse);
 
-			holdX -= (smallIconSize+pad);
+			holdX -= (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 
 	// Current Center Icon
 	//height = bigIconSize * cg.iconHUDPercent;
-	if (inv_icons[cg.DataPadInventorySelect])
+	if (dp_inv_icons[cg.DataPadInventorySelect])
 	{
 		cgi_R_SetColor(colorTable[CT_WHITE]);
-		CG_DrawPic( centerXPos-(bigIconSize/2), (graphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize, bigIconSize, inv_icons[cg.DataPadInventorySelect] );
+		CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (centergraphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, dp_inv_icons[cg.DataPadInventorySelect] );
 		addX = (float) bigIconSize * .75;
-		cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-		CG_DrawNumField ((centerXPos-(bigIconSize/2)) + addX, graphicYPos, 2, cg.snap->ps.inventory[cg.DataPadInventorySelect], 6, 12,
+		cgi_R_SetColor(colorTable[CT_HUD_GREEN]);
+		CG_DrawNumField ((centerXPos-(bigIconSize*cgs.widthRatioCoef/2)) + addX, centergraphicYPos, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[cg.DataPadInventorySelect], 6, 12,
 			NUM_FONT_SMALL,qfalse);
 
 	}
@@ -3645,7 +3648,7 @@ void CG_DrawDataPadInventorySelect( void )
 
 	// Right side ICONS
 	// Work forwards from current icon
-	holdX = centerXPos + (bigIconSize/2) + bigPad;
+	holdX = centerXPos + ((bigIconSize/2) + bigPad)*cgs.widthRatioCoef;
 	//height = smallIconSize * cg.iconHUDPercent;
 	addX = (float) smallIconSize * .75;
 	for (iconCnt=0;iconCnt<sideRightIconCnt;i++)
@@ -3655,23 +3658,23 @@ void CG_DrawDataPadInventorySelect( void )
 			i = 0;
 		}
 
-		if ((!CG_InventorySelectable(i)) || (!inv_icons[i]))
+		if ((!CG_InventorySelectable(i)) || (!dp_inv_icons[i]))
 		{
 			continue;
 		}
 
 		++iconCnt;					// Good icon
 
-		if (inv_icons[i])
+		if (dp_inv_icons[i])
 		{
 			cgi_R_SetColor(colorTable[CT_WHITE]);
-			CG_DrawPic( holdX, graphicYPos+10, smallIconSize, smallIconSize, inv_icons[i] );
+			CG_DrawPic( holdX, graphicYPos+3, smallIconSize*cgs.widthRatioCoef, smallIconSize, dp_inv_icons[i] );
 
-			cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-			CG_DrawNumField (holdX + addX, graphicYPos + smallIconSize, 2, cg.snap->ps.inventory[i], 6, 12,
+			cgi_R_SetColor(colorTable[CT_HUD_GREEN]);
+			CG_DrawNumField (holdX + addX, graphicYPos - 2 + smallIconSize, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[i], 6, 12,
 				NUM_FONT_SMALL,qfalse);
 
-			holdX += (smallIconSize+pad);
+			holdX += (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 
@@ -3682,11 +3685,19 @@ void CG_DrawDataPadInventorySelect( void )
 
 		if (text[0])
 		{
-			CG_DisplayBoxedText(70,50,500,300,text,
-											cgs.media.qhFontSmall,
-											0.7f,
-											textColor
-											);
+			const short textboxXPos = 35;
+			const short textboxYPos = 85;
+			const int	textboxWidth = 540;
+			const int	textboxHeight = 300;
+			const float	textScale = 0.35f;
+
+			CG_DisplayBoxedText(
+				textboxXPos, textboxYPos,
+				textboxWidth, textboxHeight,
+				text,
+				cgs.media.qhFontArimob,
+				textScale,
+				colorTable[CT_HUD_GREEN]);
 		}
 	}
 }

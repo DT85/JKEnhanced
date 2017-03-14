@@ -43,6 +43,7 @@ struct itemParms_s
 static void IT_ClassName (const char **holdBuf);
 static void IT_Count (const char **holdBuf);
 static void IT_Icon (const char **holdBuf);
+static void IT_DP_Icon(const char **holdBuf);
 static void IT_Min (const char **holdBuf);
 static void IT_Max (const char **holdBuf);
 static void IT_Name (const char **holdBuf);
@@ -59,7 +60,7 @@ typedef struct
 } itemParms_t;
 
 
-#define IT_PARM_MAX 10
+#define IT_PARM_MAX 11
 
 itemParms_t ItemParms[IT_PARM_MAX] =
 {
@@ -67,6 +68,7 @@ itemParms_t ItemParms[IT_PARM_MAX] =
 	{ "classname",			IT_ClassName },
 	{ "count",				IT_Count },
 	{ "icon",				IT_Icon },
+	{ "dp_icon",			IT_DP_Icon },
 	{ "min",				IT_Min },
 	{ "max",				IT_Max },
 	{ "pickupsound",		IT_PickupSound },
@@ -558,6 +560,27 @@ static void IT_Icon(const char **holdBuf)
 	}
 
 	bg_itemlist[itemParms.itemNum].icon = G_NewString(tokenStr);
+}
+
+static void IT_DP_Icon(const char **holdBuf)
+{
+	int len;
+	const char	*tokenStr;
+
+	if (COM_ParseString(holdBuf, &tokenStr))
+	{
+		return;
+	}
+
+	len = strlen(tokenStr);
+	len++;
+	if (len > 32)
+	{
+		len = 32;
+		gi.Printf("WARNING: datapad icon too long in external ITEMS.DAT '%s'\n", tokenStr);
+	}
+
+	bg_itemlist[itemParms.itemNum].dp_icon = G_NewString(tokenStr);
 }
 
 static void IT_Count(const char **holdBuf)
