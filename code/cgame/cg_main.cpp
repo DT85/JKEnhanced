@@ -1912,6 +1912,7 @@ static void CG_GameStateReceived( void ) {
 
 	// load the new map
 	cgs.media.levelLoad = cgi_R_RegisterShaderNoMip( "gfx/hud/mp_levelload" );
+	cgs.media.newgamelevelLoad = cgi_R_RegisterShaderNoMip( "gfx/hud/ng_levelload" );
 	CG_LoadingString( "collision map" );
 
 	cgi_CM_LoadMap( cgs.mapname, qfalse );
@@ -2159,6 +2160,9 @@ void CG_Init( int serverCommandSequence ) {
 	cgs.media.whiteShader   = cgi_R_RegisterShader( "white" );
 	cgs.media.loadTick		= cgi_R_RegisterShaderNoMip( "gfx/hud/load_tick" );
 	cgs.media.loadTickCap	= cgi_R_RegisterShaderNoMip( "gfx/hud/load_tick_cap" );
+
+	cgs.media.newgameloadTick	 = cgi_R_RegisterShaderNoMip("gfx/hud/ng_load_tick");
+	cgs.media.newgameloadTickCap = cgi_R_RegisterShaderNoMip("gfx/hud/ng_load_tick_cap");
 
 	const char	*force_icon_files[NUM_FORCE_POWERS] =
 	{//icons matching enums forcePowers_t
@@ -3550,10 +3554,20 @@ void CG_DrawDataPadInventorySelect( void )
 
 	if (!count)
 	{
-		cgi_SP_GetStringTextString("SP_INGAME_EMPTY_INV",text, sizeof(text) );
-		int w = cgi_R_Font_StrLenPixels( text, cgs.media.qhFontArimob, 0.35f );
-		int x = ( SCREEN_WIDTH - w ) / 2;
-		CG_DrawProportionalString(x, 300 + 22, text, CG_CENTER | CG_SMALLFONT, colorTable[CT_HUD_GREEN]);
+		int messageYPosition = 200;
+
+		cgi_SP_GetStringTextString("SP_INGAME_EMPTY_INV", text, sizeof(text));
+		int messageXPosition = 310 - (cgi_R_Font_StrLenPixels(text, cgs.media.qhFontArimob, 0.35f) / 2);
+
+		cgi_R_Font_DrawString(
+			messageXPosition,
+			messageYPosition,
+			text,
+			colorTable[CT_HUD_GREEN],
+			cgs.media.qhFontArimob,
+			-1,
+			0.35f);
+
 		return;
 	}
 

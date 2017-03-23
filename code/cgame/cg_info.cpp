@@ -303,10 +303,10 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 	if (!missionYcnt)
 	{
 		// Set the message a quarter of the way down and in the center of the text box
-		int messageYPosition = objectiveStartingYpos + (objectiveTextBoxHeight / 4);
+		int messageYPosition = objectiveStartingYpos + (objectiveTextBoxHeight / 4) + 50;
 
 		cgi_SP_GetStringTextString("SP_INGAME_OBJNONE", text, sizeof(text));
-		int messageXPosition = objectiveStartingXpos + (objectiveTextBoxWidth / 2) - (cgi_R_Font_StrLenPixels(text, cgs.media.qhFontMedium, 1.0f) / 2);
+		int messageXPosition = objectiveStartingXpos + (objectiveTextBoxWidth / 2) - (cgi_R_Font_StrLenPixels(text, cgs.media.qhFontArimob, 0.35f) / 2);
 
 		cgi_R_Font_DrawString(
 			messageXPosition,
@@ -411,7 +411,7 @@ static void CG_LoadScreen_PersonalInfo(void)
 }
 */
 
-static void CG_LoadBar(void)
+static void CG_NewGameLoadBar(void)
 {
 	const int numticks = 9, tickwidth = 40, tickheight = 8;
 	const int tickpadx = 20, tickpady = 12;
@@ -422,6 +422,29 @@ static void CG_LoadBar(void)
 
 	cgi_R_SetColor( colorTable[CT_WHITE]);
 	// Draw background
+	CG_DrawPic(barleft, bartop, barwidth, barheight, cgs.media.newgamelevelLoad);
+
+	// Draw left cap (backwards)
+	CG_DrawPic(tickleft, ticktop, -capwidth, tickheight, cgs.media.newgameloadTickCap);
+
+	// Draw bar
+	CG_DrawPic(tickleft, ticktop, tickwidth*cg.loadLCARSStage, tickheight, cgs.media.newgameloadTick);
+
+	// Draw right cap
+	CG_DrawPic(tickleft+tickwidth*cg.loadLCARSStage, ticktop, capwidth, tickheight, cgs.media.newgameloadTickCap);
+}
+
+static void CG_LoadBar(void)
+{
+	const int numticks = 9, tickwidth = 40, tickheight = 8;
+	const int tickpadx = 20, tickpady = 12;
+	const int capwidth = 8;
+	const int barwidth = numticks*tickwidth + tickpadx * 2 + capwidth * 2, barleft = ((640 - barwidth) / 2);
+	const int barheight = tickheight + tickpady * 2, bartop = 475 - barheight;
+	const int capleft = barleft + tickpadx, tickleft = capleft + capwidth, ticktop = bartop + tickpady;
+
+	cgi_R_SetColor(colorTable[CT_WHITE]);
+	// Draw background
 	CG_DrawPic(barleft, bartop, barwidth, barheight, cgs.media.levelLoad);
 
 	// Draw left cap (backwards)
@@ -431,7 +454,7 @@ static void CG_LoadBar(void)
 	CG_DrawPic(tickleft, ticktop, tickwidth*cg.loadLCARSStage, tickheight, cgs.media.loadTick);
 
 	// Draw right cap
-	CG_DrawPic(tickleft+tickwidth*cg.loadLCARSStage, ticktop, capwidth, tickheight, cgs.media.loadTickCap);
+	CG_DrawPic(tickleft + tickwidth*cg.loadLCARSStage, ticktop, capwidth, tickheight, cgs.media.loadTickCap);
 }
 
 int CG_WeaponCheck( int weaponIndex );
@@ -834,17 +857,21 @@ void CG_DrawInformation( void ) {
 
 		cgi_SP_GetStringTextString( "SP_INGAME_ALONGTIME", text, sizeof(text) );
 
-		int w = cgi_R_Font_StrLenPixels(text,cgs.media.qhFontMedium, 1.0f);
-		cgi_R_Font_DrawString((320)-(w/2), 140, text,  colorTable[CT_ICON_BLUE], cgs.media.qhFontMedium, -1, 1.0f);
+		int w = cgi_R_Font_StrLenPixels(text,cgs.media.qhFontArimo, 1.0f);
+		cgi_R_Font_DrawString((320)-(w/2), 140, text,  colorTable[CT_ICON_BLUE], cgs.media.qhFontArimo, -1, 1.0f);
+
+		CG_NewGameLoadBar();
 	}
 	else
 	{
 		CG_DrawLoadingScreen(levelshot, s);
 		cgi_UI_Menu_Paint( cgi_UI_GetMenuByName( "loadscreen" ), qtrue );
 		//cgi_UI_MenuPaintAll();
+
+		CG_LoadBar();
 	}
 
-	CG_LoadBar();
+	//CG_LoadBar();
 
 
 	// the first 150 rows are reserved for the client connection
