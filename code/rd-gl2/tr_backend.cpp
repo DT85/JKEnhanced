@@ -1873,7 +1873,7 @@ RB_PrefilterEnvMap
 =============
 */
 
-void RB_PrefilterEnvMap() {
+void RB_PrefilterEnvMap(int numCubeMap) {
 
 	cubemap_t *cubemap = &tr.cubemaps[backEnd.viewParms.targetFboCubemapIndex];
 
@@ -1881,11 +1881,10 @@ void RB_PrefilterEnvMap() {
 	if (tess.numIndexes)
 		RB_EndSurface();
 
-	// UGLY find a better way!
-	if (!tr.world || tr.numCubemaps == 0 || cubemap->mipmapped > 30)
+	if (!tr.world || tr.numCubemaps == 0)
 	{
 		// do nothing
-		//return;
+		return;
 	}
 
 	int cubeMipSize = r_cubemapSize->integer;
@@ -1912,8 +1911,7 @@ void RB_PrefilterEnvMap() {
 		cubeMipSize >>= 1;
 		numMips++;
 	}
-	numMips = MAX(1, numMips - 5);
-
+	numMips = MAX(1, numMips - 4);
 	FBO_Bind(tr.preFilterEnvMapFbo);
 	GL_BindToTMU(cubemap->image, TB_CUBEMAP);
 	GL_State(GLS_DEPTHTEST_DISABLE);
@@ -2162,9 +2160,6 @@ static const void	*RB_DrawSurfs( const void *data ) {
 			RB_InstantQuad2(quadVerts, texCoords); //, color, shaderProgram, invTexRes);
 		}
 
-		if (r_pbr->integer == 0 || r_pbrIBL->integer) {
-			RB_PrefilterEnvMap();
-		}
 		// reset viewport and scissor
 		FBO_Bind(oldFbo);
 		SetViewportAndScissor();
@@ -2216,14 +2211,23 @@ static const void	*RB_DrawSurfs( const void *data ) {
 		GL_SelectTexture(TB_CUBEMAP);
 		GL_BindToTMU(cubemap->image, TB_CUBEMAP);
 		// UGLY find a better way!
-		//if (cubemap->mipmapped < 30) {
+		if (cubemap->mipmapped < 10) {
 			if (r_pbr->integer == 0 || r_pbrIBL->integer == 0) {
 				qglGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-				//cubemap->mipmapped++;
+				cubemap->mipmapped++;
 			}	
 			// else we mip-map elsewhere!
-		//}
+		}
 		GL_SelectTexture(0);
+	}
+
+	if (r_pbr->integer && r_pbrIBL->integer) {
+		cubemap_t *cubemap = &tr.cubemaps[backEnd.viewParms.targetFboCubemapIndex];
+		// UGLY find a better way!
+		if (cubemap->mipmapped < 10) {
+			RB_PrefilterEnvMap(0);
+			cubemap->mipmapped++;
+		}
 	}
 
 	return (const void *)(cmd + 1);

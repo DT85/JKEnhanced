@@ -58,7 +58,7 @@ vec3 PrefilterEnvMap( float Roughness, vec3 R )
 	vec3 V = R;
 	vec3 PrefilteredColor = vec3(0.0);
 	float TotalWeight = 0.0;
-	uint NumSamples = uint(64);
+	uint NumSamples = uint(1024);
 	for ( uint i = uint(0); i < NumSamples; i++ )
 	{
 		vec2 Xi = hammersley2D( i, NumSamples );
