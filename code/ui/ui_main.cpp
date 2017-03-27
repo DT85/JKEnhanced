@@ -3543,6 +3543,13 @@ static void UI_Update(const char *name)
 #define ASSET_SCROLLBAR_ARROWRIGHT  "gfx/menus/scrollbar_arrow_right.tga"
 #define ASSET_SCROLL_THUMB          "gfx/menus/scrollbar_thumb.tga"
 
+#define ASSET_SCROLLBAR_DP             "gfx/menus/scrollbar_dp.tga"
+#define ASSET_SCROLLBAR_ARROWDOWN_DP   "gfx/menus/scrollbar_arrow_dwn_a_dp.tga"
+#define ASSET_SCROLLBAR_ARROWUP_DP     "gfx/menus/scrollbar_arrow_up_a_dp.tga"
+#define ASSET_SCROLLBAR_ARROWLEFT_DP   "gfx/menus/scrollbar_arrow_left_dp.tga"
+#define ASSET_SCROLLBAR_ARROWRIGHT_DP  "gfx/menus/scrollbar_arrow_right_dp.tga"
+#define ASSET_SCROLL_THUMB_DP          "gfx/menus/scrollbar_thumb_dp.tga"
+
 
 /*
 =================
@@ -3558,6 +3565,13 @@ void AssetCache(void)
 	uiInfo.uiDC.Assets.scrollBarArrowLeft = ui.R_RegisterShaderNoMip( ASSET_SCROLLBAR_ARROWLEFT );
 	uiInfo.uiDC.Assets.scrollBarArrowRight = ui.R_RegisterShaderNoMip( ASSET_SCROLLBAR_ARROWRIGHT );
 	uiInfo.uiDC.Assets.scrollBarThumb = ui.R_RegisterShaderNoMip( ASSET_SCROLL_THUMB );
+
+	uiInfo.uiDC.Assets.scrollBar_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLLBAR_DP);
+	uiInfo.uiDC.Assets.scrollBarArrowDown_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLLBAR_ARROWDOWN_DP);
+	uiInfo.uiDC.Assets.scrollBarArrowUp_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLLBAR_ARROWUP_DP);
+	uiInfo.uiDC.Assets.scrollBarArrowLeft_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLLBAR_ARROWLEFT_DP);
+	uiInfo.uiDC.Assets.scrollBarArrowRight_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLLBAR_ARROWRIGHT_DP);
+	uiInfo.uiDC.Assets.scrollBarThumb_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLL_THUMB_DP);
 
 	uiInfo.uiDC.Assets.sliderBar = ui.R_RegisterShaderNoMip( "menu/new/slider" );
 	uiInfo.uiDC.Assets.sliderThumb = ui.R_RegisterShaderNoMip( "menu/new/sliderthumb");
