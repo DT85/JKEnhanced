@@ -2224,7 +2224,7 @@ static const void	*RB_DrawSurfs( const void *data ) {
 	if (r_pbr->integer && r_pbrIBL->integer) {
 		cubemap_t *cubemap = &tr.cubemaps[backEnd.viewParms.targetFboCubemapIndex];
 		// UGLY find a better way!
-		if (cubemap->mipmapped < 10) {
+		if (cubemap && cubemap->mipmapped < 10) {
 			RB_PrefilterEnvMap(0);
 			cubemap->mipmapped++;
 		}
