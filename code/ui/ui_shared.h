@@ -120,6 +120,12 @@ typedef struct {
 	qhandle_t	scrollBarArrowRight;
 	qhandle_t	scrollBar;
 	qhandle_t	scrollBarThumb;
+	qhandle_t	scrollBarArrowUp_dp;
+	qhandle_t	scrollBarArrowDown_dp;
+	qhandle_t	scrollBarArrowLeft_dp;
+	qhandle_t	scrollBarArrowRight_dp;
+	qhandle_t	scrollBar_dp;
+	qhandle_t	scrollBarThumb_dp;
 	qhandle_t	buttonMiddle;
 	qhandle_t	buttonInside;
 	qhandle_t	solidBox;
