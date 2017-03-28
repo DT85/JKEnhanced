@@ -112,6 +112,7 @@ static void ClearGlobalShader(void)
 		VectorSet4(stages[i].normalScale, 0.0f, 0.0f, 0.0f, 0.0f);
 		if (r_pbr->integer) {
 			stages[i].specularScale[0] = r_baseGloss->value;
+			stages[i].specularScale[2] = 1.0;
 		}
 		else 
 		{
@@ -1594,7 +1595,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 				ri.Printf( PRINT_WARNING, "WARNING: missing parameter for specular reflectance in shader '%s'\n", shader.name );
 				continue;
 			}
-			if (0)//if (r_pbr->integer)
+			if (r_pbr->integer)
 				{
 					// interpret specularReflectance < 0.5 as nonmetal
 					stage->specularScale[1] = (atof(token) < 0.5f) ? 0.0f : 1.0f;
