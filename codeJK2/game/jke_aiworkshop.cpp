@@ -1014,7 +1014,6 @@ void Workshop_Undying_f(gentity_t* ent) {
 	else {
 		msg = "undead mode ON\n";
 	}
-	}
 	selected->flags ^= FL_UNDYING;
 	gi.Printf(msg);
 }
