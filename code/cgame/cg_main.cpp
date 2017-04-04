@@ -1550,6 +1550,7 @@ static void CG_RegisterGraphics( void ) {
 			if (bg_itemlist[i].giTag < INV_MAX)
 			{
 				inv_icons[bg_itemlist[i].giTag] = cgi_R_RegisterShaderNoMip( bg_itemlist[i].icon );
+				if (bg_itemlist[i].dp_icon)
 				dp_inv_icons[bg_itemlist[i].giTag] = cgi_R_RegisterShaderNoMip( bg_itemlist[i].dp_icon);
 			}
 		}
