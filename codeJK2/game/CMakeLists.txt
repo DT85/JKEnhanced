@@ -163,7 +163,7 @@ set(JK2SPGameGameFiles
 	"${JK2SPDir}/game/weapons.h"
 	"${JK2SPDir}/game/w_local.h"
 	"${JK2SPDir}/game/wp_saber.h"
-	"${CMAKE_SOURCE_DIR}/lib/json/cjson.c"
+	"${CMAKE_SOURCE_DIR}/lib/json/cJSON.c"
 	"${JK2SPDir}/game/jke_aiworkshop.cpp"
 	)
 source_group("game" FILES ${JK2SPGameGameFiles})
