@@ -121,11 +121,6 @@ static void IN_UseGivenForce(void)
 	case FP_SEE:
 		genCmdNum = GENCMD_FORCE_SEEING;
 		break;
-#endif // !JK2_MODE
-
-	case FP_HEAL:
-		genCmdNum = GENCMD_FORCE_HEAL;
-		break;
 	case FP_DESTRUCTION:
 		genCmdNum = GENCMD_FORCE_DESTRUCTION;
 		break;
@@ -146,6 +141,11 @@ static void IN_UseGivenForce(void)
 		break;
 	case FP_INVULNERABILITY:
 		genCmdNum = GENCMD_FORCE_INVULNERABILITY;
+		break;
+#endif // !JK2_MODE
+
+	case FP_HEAL:
+		genCmdNum = GENCMD_FORCE_HEAL;
 		break;
 	default:
 		assert(0);

@@ -27,7 +27,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "cg_media.h"
 #include "../game/g_functions.h"
 #include "../../code/ghoul2/G2.h"
-#include "FxScheduler.h"
+#include "FX_Local.h"
 #include "../game/wp_saber.h"
 
 extern void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles);

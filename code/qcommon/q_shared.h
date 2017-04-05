@@ -661,11 +661,11 @@ Ghoul2 Insert Start
 Ghoul2 Insert End
 */
 
-#ifdef JK2_MODE
-#define MAX_CONFIGSTRINGS (1024)
-#else
+//#ifdef JK2_MODE
+//#define MAX_CONFIGSTRINGS (1024)
+//#else
 #define	MAX_CONFIGSTRINGS	1300//1024 //rww - I had to up this for terrains
-#endif // JK2_MODE
+//#endif // JK2_MODE
 
 // these are the only configstrings that the system reserves, all the
 // other ones are strictly for servergame to clientgame communication

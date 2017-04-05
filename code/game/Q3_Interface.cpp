@@ -3472,15 +3472,14 @@ static void Q3_SetItem (int entID, const char *item_name)
 
 	self->client->ps.stats[STAT_ITEMS] |= (1<<item->giTag);
 
-	if( (inv == INV_ELECTROBINOCULARS) || (inv == INV_LIGHTAMP_GOGGLES) )
-	{
-		self->client->ps.inventory[inv] = 1;
-		return;
-	}
-	// else Bacta, seeker, sentry
-	if( self->client->ps.inventory[inv] < 5 )
-	{
-		self->client->ps.inventory[inv]++;
+	switch(inv) {
+		case INV_ELECTROBINOCULARS:
+		case INV_LIGHTAMP_GOGGLES:
+			self->client->ps.inventory[inv] = 1;
+		default:
+			if(self->client->ps.inventory[inv] < 5)
+				self->client->ps.inventory[inv]++;
+			break;
 	}
 }
 

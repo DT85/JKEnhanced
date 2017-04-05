@@ -277,14 +277,14 @@ void NPC_SetMiscDefaultData( gentity_t *ent )
 			switch ( g_spskill->integer )
 			{
 			case 0:	//	EASY
-				ent->client->ps.batteryCharge = MAX_BATTERIES * 0.8f; 
+				ent->client->ps.batteryCharge = MAX_BATTERIES * 0.4f; 
 				break;
 			case 1:	//	MEDIUM
-				ent->client->ps.batteryCharge = MAX_BATTERIES * 0.75f; 
+				ent->client->ps.batteryCharge = MAX_BATTERIES * 0.3f; 
 				break;
 			default :
 			case 2:	//	HARD
-				ent->client->ps.batteryCharge = MAX_BATTERIES * 0.5f; 
+				ent->client->ps.batteryCharge = MAX_BATTERIES * 0.2f; 
 				break;
 			}
 		}

@@ -23,7 +23,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "cg_local.h"
 #include "cg_media.h"
-#include "FxScheduler.h"
+#include "FX_Local.h"
 
 #include "../../code/client/vmachine.h"
 
@@ -330,6 +330,24 @@ vmCvar_t	cg_smoothPlayerPos;
 vmCvar_t	cg_smoothPlayerPlat;
 vmCvar_t	cg_smoothPlayerPlatAccel;
 
+vmCvar_t	cg_sfxSabers;
+vmCvar_t	cg_SFXSabersGlowSize;
+vmCvar_t	cg_SFXSabersCoreSize;
+
+vmCvar_t	cg_ignitionFlare;
+
+vmCvar_t	cg_trueguns;
+
+vmCvar_t		cg_trueroll;
+vmCvar_t		cg_trueflip;
+vmCvar_t		cg_truespin;
+vmCvar_t		cg_truemoveroll;
+vmCvar_t		cg_truesaberonly;
+vmCvar_t		cg_trueeyeposition;
+vmCvar_t		cg_trueinvertsaber;
+vmCvar_t		cg_truefov;
+vmCvar_t		cg_truebobbing;
+
 typedef struct {
 	vmCvar_t	*vmCvar;
 	const char	*cvarName;
@@ -438,6 +456,24 @@ Ghoul2 Insert End
 	{ &cg_smoothPlayerPos, "cg_smoothPlayerPos", "0.5", 0},
 	{ &cg_smoothPlayerPlat, "cg_smoothPlayerPlat", "0.75", 0},
 	{ &cg_smoothPlayerPlatAccel, "cg_smoothPlayerPlatAccel", "3.25", 0},
+
+	{ &cg_sfxSabers, "cg_sfxSabers", "0", CVAR_ARCHIVE },
+	{ &cg_SFXSabersGlowSize, "cg_SFXSabersGlowSize", "1.0", CVAR_ARCHIVE },
+	{ &cg_SFXSabersCoreSize, "cg_SFXSabersCoreSize", "1.0", CVAR_ARCHIVE },
+
+	{ &cg_ignitionFlare, "cg_ignitionFlare", "1", CVAR_ARCHIVE },
+
+	//True View Control cvars
+	{ &cg_trueguns, "cg_trueguns", "0", CVAR_ARCHIVE },
+	{ &cg_trueroll, "cg_trueroll", "0", CVAR_ARCHIVE },
+	{ &cg_trueflip, "cg_trueflip", "0", CVAR_ARCHIVE },
+	{ &cg_truespin, "cg_truespin", "0", CVAR_ARCHIVE },
+	{ &cg_truemoveroll, "cg_truemoveroll", "0", CVAR_ARCHIVE },
+	{ &cg_truesaberonly, "cg_truesaberonly", "0", CVAR_ARCHIVE },
+	{ &cg_trueeyeposition, "cg_trueeyeposition", "0.0", 0},
+	{ &cg_trueinvertsaber, "cg_trueinvertsaber", "1", CVAR_ARCHIVE},
+	{ &cg_truefov, "cg_truefov", "80", CVAR_ARCHIVE},
+	{ &cg_truebobbing, "cg_truebobbing", "1", CVAR_ARCHIVE },
 };
 
 static const size_t cvarTableSize = ARRAY_LEN( cvarTable );
@@ -520,6 +556,12 @@ int CG_GetCameraPos( vec3_t camerapos ) {
 	else if (cg.snap && (cg.snap->ps.weapon == WP_SABER||cg.snap->ps.weapon == WP_MELEE) )//implied: !cg.renderingThirdPerson
 	{//first person saber hack
 		VectorCopy( cg.refdef.vieworg, camerapos );
+		return 1;
+	}
+	else if (cg_trueguns.integer && !cg.zoomMode)
+	{//in third person
+		//FIXME: what about hacks that render in third person regardless of this value?
+		VectorCopy(cg.refdef.vieworg, camerapos);
 		return 1;
 	}
 	return 0;
@@ -689,6 +731,11 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.watrInSound = cgi_S_RegisterSound ("sound/player/watr_in.wav");
 	cgs.media.watrOutSound = cgi_S_RegisterSound ("sound/player/watr_out.wav");
 	cgs.media.watrUnSound = cgi_S_RegisterSound ("sound/player/watr_un.wav");
+
+	cgs.media.atstWaterInSound[0] = cgi_S_RegisterSound("sound/chars/atst/atst_water_in1.wav");
+	cgs.media.atstWaterInSound[1] = cgi_S_RegisterSound("sound/chars/atst/atst_water_in2.wav");
+	cgs.media.atstWaterOutSound[0] = cgi_S_RegisterSound("sound/chars/atst/atst_water_out1.wav");
+	cgs.media.atstWaterOutSound[1] = cgi_S_RegisterSound("sound/chars/atst/atst_water_out2.wav");
 
 	// Zoom
 	cgs.media.zoomStart = cgi_S_RegisterSound( "sound/interface/zoomstart.wav" );
@@ -1777,6 +1824,8 @@ void CG_Init( int serverCommandSequence ) {
 
 	CG_InitConsoleCommands();
 
+	CG_TrueViewInit();
+
 	cg.missionInfoFlashTime = 0;
 	cg.missionStatusShow = qfalse;
 
@@ -2596,6 +2645,9 @@ void CG_NextInventory_f( void )
 		return;
 	}
 
+	if(cg.inventoryDebounce > cg.time)
+		return;
+
 	// The first time it's been hit so just show inventory but don't advance in inventory.
 	color = CG_FadeColor( cg.inventorySelectTime, WEAPON_SELECT_TIME );
 	if ( !color )
@@ -2603,6 +2655,8 @@ void CG_NextInventory_f( void )
 		SetInventoryTime();
 		return;
 	}
+
+	cg.inventoryDebounce = cg.time + 200;
 
 	const int original = cg.inventorySelect;
 
@@ -2650,6 +2704,9 @@ void CG_PrevInventory_f( void )
 		return;
 	}
 
+	if(cg.inventoryDebounce > cg.time)
+		return;
+
 	// The first time it's been hit so just show inventory but don't advance in inventory.
 	color = CG_FadeColor( cg.inventorySelectTime, WEAPON_SELECT_TIME );
 	if ( !color )
@@ -2657,6 +2714,8 @@ void CG_PrevInventory_f( void )
 		SetInventoryTime();
 		return;
 	}
+
+	cg.inventoryDebounce = cg.time + 200;
 
 	const int original = cg.inventorySelect;
 

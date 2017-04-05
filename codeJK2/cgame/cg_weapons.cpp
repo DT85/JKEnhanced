@@ -23,7 +23,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "cg_local.h"
 #include "cg_media.h"
-#include "FxScheduler.h"
+#include "FX_Local.h"
 #include "../game/wp_saber.h"
 #include "../game/g_local.h"
 #include "../game/anims.h"
@@ -82,30 +82,39 @@ void CG_RegisterWeapon( int weaponNum ) {
 		CG_Error( "Couldn't find item for weapon %s\nNeed to update Items.dat!", weaponData[weaponNum].classname);
 	}
 	CG_RegisterItemVisuals( item - bg_itemlist );
-
-	// set up in view weapon model
-	weaponInfo->weaponModel = cgi_R_RegisterModel( weaponData[weaponNum].weaponMdl );
-	{//in case the weaponmodel isn't _w, precache the _w.glm
-		char weaponModel[64];
-
-		Q_strncpyz (weaponModel, weaponData[weaponNum].weaponMdl, sizeof(weaponModel));
-		if (char *spot = strstr(weaponModel, ".md3") )
-		{
-			*spot = 0;
-			spot = strstr(weaponModel, "_w");//i'm using the in view weapon array instead of scanning the item list, so put the _w back on
-			if (!spot)
-			{
-				Q_strcat (weaponModel, sizeof(weaponModel), "_w");
-			}
-			Q_strcat (weaponModel, sizeof(weaponModel), ".glm");	//and change to ghoul2
-		}
-		gi.G2API_PrecacheGhoul2Model( weaponModel ); // correct way is item->world_model
+	Q_strncpyz( path, weaponData[weaponNum].weaponMdl, sizeof(path) );
+	// Detect model type
+	const char* test = &path[strlen(path)-4];
+	if (!Q_stricmp(test, ".glm")) {
+		// EXPERIMENTAL: GHOUL2 viewmodels
+		weaponInfo->bUsesGhoul2 = true;
 	}
 
-	if ( weaponInfo->weaponModel == NULL_HANDLE )
-	{
-		CG_Error( "Couldn't find weapon model %s\n", weaponData[weaponNum].classname);
-		return;
+	// set up in view weapon model
+	if(!weaponInfo->bUsesGhoul2) {
+		weaponInfo->weaponModel = cgi_R_RegisterModel( weaponData[weaponNum].weaponMdl );
+		{//in case the weaponmodel isn't _w, precache the _w.glm
+			char weaponModel[64];
+
+			Q_strncpyz (weaponModel, weaponData[weaponNum].weaponMdl, sizeof(weaponModel));	
+			if (char *spot = strstr(weaponModel, ".md3") ) 
+			{
+				*spot = 0;
+				spot = strstr(weaponModel, "_w");//i'm using the in view weapon array instead of scanning the item list, so put the _w back on
+				if (!spot) 
+				{
+					Q_strcat (weaponModel, sizeof(weaponModel), "_w");
+				}
+				Q_strcat (weaponModel, sizeof(weaponModel), ".glm");	//and change to ghoul2
+			}
+			gi.G2API_PrecacheGhoul2Model( weaponModel ); // correct way is item->world_model
+		}
+
+		if ( weaponInfo->weaponModel == NULL_HANDLE) 
+		{
+			CG_Error( "Couldn't find weapon model %s\n", weaponData[weaponNum].classname);
+			return;
+		}
 	}
 
 	// calc midpoint for rotation
@@ -153,14 +162,21 @@ void CG_RegisterWeapon( int weaponNum ) {
 		weaponInfo->weaponWorldModel = weaponInfo->weaponModel;
 	}
 
-	// set up the hand that holds the in view weapon - assuming we have one
+	// Set up the viewmodel.
 	Q_strncpyz( path, weaponData[weaponNum].weaponMdl, sizeof(path) );
-	COM_StripExtension( path, path, sizeof(path) );
-	Q_strcat( path, sizeof(path), "_hand.md3" );
-	weaponInfo->handsModel = cgi_R_RegisterModel( path );
-
-	if ( !weaponInfo->handsModel ) {
+	if( weaponInfo->bUsesGhoul2 ) {
+		gi.G2API_InitGhoul2Model(weaponInfo->ghoul2, path, 0, 0, 0, 0, 0);
 		weaponInfo->handsModel = cgi_R_RegisterModel( "models/weapons2/briar_pistol/briar_pistol_hand.md3" );
+	}
+	else {
+		// Normal -- MD3 viewmodels
+		COM_StripExtension( path, path, sizeof(path) );
+		Q_strcat( path, sizeof(path), "_hand.md3" );
+		weaponInfo->handsModel = cgi_R_RegisterModel( path );
+
+		if ( !weaponInfo->handsModel ) {
+			weaponInfo->handsModel = cgi_R_RegisterModel( "models/weapons2/briar_pistol/briar_pistol_hand.md3" );
+		}
 	}
 
 	// register the sounds for the weapon
@@ -316,6 +332,15 @@ void CG_RegisterWeapon( int weaponNum ) {
 		//saber graphics
 		cgs.media.saberBlurShader			= cgi_R_RegisterShader("gfx/effects/sabers/saberBlur");
 		cgs.media.yellowDroppedSaberShader	= cgi_R_RegisterShader("gfx/effects/yellow_glow");
+
+		cgs.media.sfxSaberTrailShader		= cgi_R_RegisterShader( "SFX_Sabers/saber_trail" );
+		cgs.media.sfxSaberBladeShader		= cgi_R_RegisterShader( "SFX_Sabers/saber_blade" );
+		cgs.media.sfxSaberBlade2Shader		= cgi_R_RegisterShader( "SFX_Sabers/saber_blade_rgb" );
+		cgs.media.sfxSaberEndShader			= cgi_R_RegisterShader( "SFX_Sabers/saber_end" );
+		cgs.media.sfxSaberEnd2Shader		= cgi_R_RegisterShader( "SFX_Sabers/saber_end_rgb" );
+
+		cgs.media.ignitionFlare				= cgi_R_RegisterShader("gfx/effects/flare1");
+
 		cgi_R_RegisterShader( "gfx/effects/saberDamageGlow" );
 		cgi_R_RegisterShader( "gfx/effects/solidWhite_cull" );
 		cgi_R_RegisterShader( "gfx/effects/forcePush" );
@@ -585,9 +610,20 @@ void CG_RegisterItemVisuals( int itemNum ) {
 			break;
 		}
 	}
-
-
-	if ( item->giType == IT_HOLDABLE )
+	else if ( item->giType == IT_ARMOR )
+	{
+		cgi_S_RegisterSound("sound/items/pickupshield.mp3");
+	}
+	else if ( item->giType == IT_HEALTH )
+	{
+		for ( int i = 1; i < 5; i++ )
+		{
+			cgi_S_RegisterSound( va( "sound/weapons/force/heal%d.mp3", i ));
+		}
+		cgi_S_RegisterSound( "sound/player/pickuphealth.mp3" );
+		cgi_S_RegisterSound( "sound/items/doomhealth.wav" );
+	}
+	else if ( item->giType == IT_HOLDABLE )
 	{
 		// This should be set up to actually work.
 		switch( item->giTag )
@@ -629,6 +665,8 @@ void CG_RegisterItemVisuals( int itemNum ) {
 			{
 				cgi_S_RegisterSound( va( "sound/weapons/force/heal%d.mp3", i ));
 			}
+			cgi_S_RegisterSound( "sound/items/use_bacta.wav" );
+			cgi_S_RegisterSound( "sound/items/doomhealth.wav" );
 			break;
 		}
 	}
@@ -914,6 +952,9 @@ void CG_AddViewWeapon( playerState_t *ps )
 	if ( cg.renderingThirdPerson )
 		return;
 
+	if (cg_trueguns.integer == 1 && !cg.zoomMode)
+		return;
+
 	if ( ps->pm_type == PM_INTERMISSION )
 		return;
 
@@ -1045,14 +1086,12 @@ void CG_AddViewWeapon( playerState_t *ps )
 	}
 
 	// map torso animations to weapon animations
-	if ( cg_gun_frame.integer )
-	{
+	if ( cg_gun_frame.integer ) {
 		// development tool
 		hand.frame = hand.oldframe = cg_gun_frame.integer;
 		hand.backlerp = 0;
 	}
-	else
-	{
+	else if ( !weapon->bUsesGhoul2 ) {
 		// get clientinfo for animation map
 		const clientInfo_t	*ci = &cent->gent->client->clientInfo;
 		int torsoAnim = cent->gent->client->ps.torsoAnim;//pe.torso.animationNumber;
@@ -1080,15 +1119,28 @@ void CG_AddViewWeapon( playerState_t *ps )
 
 	// add the weapon
 	memset (&gun, 0, sizeof(gun));
-
-	gun.hModel = weapon->weaponModel;
-	if (!gun.hModel)
-	{
-		return;
-	}
-
 	AnglesToAxis( angles, gun.axis );
-	CG_PositionEntityOnTag( &gun, &hand, weapon->handsModel, "tag_weapon");
+
+	if(!weapon->bUsesGhoul2) {
+		gun.hModel = weapon->weaponModel;
+		if (!gun.hModel) 
+		{
+			return;
+		}
+
+		if(!wData->bNoHandModel)
+			CG_PositionEntityOnTag( &gun, &hand, weapon->handsModel, "tag_weapon");
+		else
+			VectorCopy(hand.origin, gun.origin);
+	}
+	else {
+		gun.ghoul2 = const_cast<CGhoul2Info_v*>(&weapon->ghoul2);
+		gun.radius = 60;
+		if(!wData->bNoHandModel)
+			CG_PositionEntityOnTag( &gun, &hand, weapon->handsModel, "tag_weapon");
+		else
+			VectorCopy(hand.origin, gun.origin);
+	}
 
 	gun.renderfx = RF_DEPTHHACK | RF_FIRST_PERSON;
 
@@ -1116,136 +1168,131 @@ void CG_AddViewWeapon( playerState_t *ps )
 //	CG_AddRefEntityWithPowerups( &gun, cent->currentState.powerups, cent->gent );
 	cgi_R_AddRefEntityToScene( &gun );
 
-/*	if ( ps->weapon == WP_STUN_BATON )
-	{
-		gun.shaderRGBA[0] = gun.shaderRGBA[1] = gun.shaderRGBA[2] = 25;
-
-		gun.customShader = cgi_R_RegisterShader( "gfx/effects/stunPass" );
-		gun.renderfx = RF_RGB_TINT | RF_FIRST_PERSON | RF_DEPTHHACK;
-		cgi_R_AddRefEntityToScene( &gun );
-	}
-*/
 	// add the spinning barrel[s]
-	for (i = 0; (i < wData->numBarrels); i++)
-	{
-		refEntity_t	barrel;
-		memset( &barrel, 0, sizeof( barrel ) );
-		barrel.hModel = weapon->barrelModel[i];
-
-		//VectorCopy( parent->lightingOrigin, barrel.lightingOrigin );
-		//barrel.shadowPlane = parent->shadowPlane;
-		barrel.renderfx = gun.renderfx;
-		angles[YAW] = 0;
-		angles[PITCH] = 0;
-//		if ( ps->weapon == WP_TETRION_DISRUPTOR) {
-//			angles[ROLL] = CG_MachinegunSpinAngle( cent );
-//		} else {
-			angles[ROLL] = 0;//CG_MachinegunSpinAngle( cent );
-//		}
-
-		AnglesToAxis( angles, barrel.axis );
-		if (!i)
+	if(!weapon->bUsesGhoul2) {
+		for (i = 0; (i < wData->numBarrels); i++)	
 		{
-			CG_PositionRotatedEntityOnTag( &barrel, &hand, weapon->handsModel, "tag_barrel", NULL );
-		} else
-		{
-			CG_PositionRotatedEntityOnTag( &barrel, &hand, weapon->handsModel, va("tag_barrel%d",i+1), NULL );
+			refEntity_t	barrel;
+			memset( &barrel, 0, sizeof( barrel ) );
+			barrel.hModel = weapon->barrelModel[i];
+
+			//VectorCopy( parent->lightingOrigin, barrel.lightingOrigin );
+			//barrel.shadowPlane = parent->shadowPlane;
+			barrel.renderfx = gun.renderfx;
+			angles[YAW] = 0;
+			angles[PITCH] = 0;
+	//		if ( ps->weapon == WP_TETRION_DISRUPTOR) {
+	//			angles[ROLL] = CG_MachinegunSpinAngle( cent );
+	//		} else {
+				angles[ROLL] = 0;//CG_MachinegunSpinAngle( cent );
+	//		}
+
+			AnglesToAxis( angles, barrel.axis );
+			if (!i) 
+			{
+				CG_PositionRotatedEntityOnTag( &barrel, &hand, weapon->handsModel, "tag_barrel", NULL );
+			} else 
+			{
+				CG_PositionRotatedEntityOnTag( &barrel, &hand, weapon->handsModel, va("tag_barrel%d",i+1), NULL );
+			}
+
+			cgi_R_AddRefEntityToScene( &barrel );
 		}
-
-		cgi_R_AddRefEntityToScene( &barrel );
 	}
 
 	memset (&flash, 0, sizeof(flash));
 
 	// Seems like we should always do this in case we have an animating muzzle flash....that way we can always store the correct muzzle dir, etc.
-	CG_PositionEntityOnTag( &flash, &gun, gun.hModel, "tag_flash");
+	if(!weapon->bUsesGhoul2) {
+		CG_PositionEntityOnTag( &flash, &gun, gun.hModel, "tag_flash");
 
-	CG_DoMuzzleFlash( cent, flash.origin, flash.axis[0], wData );
+		CG_DoMuzzleFlash( cent, flash.origin, flash.axis[0], wData );
 
-	if ( cent->gent && cent->gent->client )
-	{
-		VectorCopy(flash.origin, cent->gent->client->renderInfo.muzzlePoint);
-		VectorCopy(flash.axis[0], cent->gent->client->renderInfo.muzzleDir);
-//		VectorNormalize( cent->gent->client->renderInfo.muzzleDir );
-		cent->gent->client->renderInfo.mPCalcTime = cg.time;
-
-		CG_LightningBolt( cent, flash.origin );
-	}
-
-	// Do special charge bits
-	//-----------------------
-	if (( ps->weaponstate == WEAPON_CHARGING_ALT && ps->weapon == WP_BRYAR_PISTOL )
-			|| ( ps->weapon == WP_BOWCASTER && ps->weaponstate == WEAPON_CHARGING )
-			|| ( ps->weapon == WP_DEMP2 && ps->weaponstate == WEAPON_CHARGING_ALT ))
-	{
-		int		shader = 0;
-		float	val = 0.0f, scale = 1.0f;
-		vec3_t	WHITE	= {1.0f,1.0f,1.0f};
-
-		if ( ps->weapon == WP_BRYAR_PISTOL )
+		if ( cent->gent && cent->gent->client )
 		{
-			// Hardcoded max charge time of 1 second
-			val = ( cg.time - ps->weaponChargeTime ) * 0.001f;
-			shader = cgi_R_RegisterShader( "gfx/effects/bryarFrontFlash" );
-		}
-		else if ( ps->weapon == WP_BOWCASTER )
-		{
-			// Hardcoded max charge time of 1 second
-			val = ( cg.time - ps->weaponChargeTime ) * 0.001f;
-			shader = cgi_R_RegisterShader( "gfx/effects/greenFrontFlash" );
-		}
-		else if ( ps->weapon == WP_DEMP2 )
-		{
-			// Hardcoded max charge time of 1 second
-			val = ( cg.time - ps->weaponChargeTime ) * 0.001f;
-			shader = cgi_R_RegisterShader( "gfx/misc/lightningFlash" );
-			scale = 1.75f;
+			VectorCopy(flash.origin, cent->gent->client->renderInfo.muzzlePoint);
+			VectorCopy(flash.axis[0], cent->gent->client->renderInfo.muzzleDir);
+	//		VectorNormalize( cent->gent->client->renderInfo.muzzleDir );
+			cent->gent->client->renderInfo.mPCalcTime = cg.time;
+
+			CG_LightningBolt( cent, flash.origin ); 
 		}
 
-		if ( val < 0.0f )
+		// Do special charge bits
+		//-----------------------
+		if (( ps->weaponstate == WEAPON_CHARGING_ALT && ps->weapon == WP_BRYAR_PISTOL ) 
+				|| ( ps->weapon == WP_BOWCASTER && ps->weaponstate == WEAPON_CHARGING )
+				|| ( ps->weapon == WP_DEMP2 && ps->weaponstate == WEAPON_CHARGING_ALT ))
 		{
-			val = 0.0f;
-		}
-		else if ( val > 1.0f )
-		{
-			val = 1.0f;
-			CGCam_Shake( 0.1f, 100 );
-		}
-		else
-		{
-			CGCam_Shake( val * val * 0.3f, 100 );
-		}
+			int		shader = 0;
+			float	val = 0.0f, scale = 1.0f;
+			vec3_t	WHITE	= {1.0f,1.0f,1.0f};
+
+			if ( ps->weapon == WP_BRYAR_PISTOL )
+			{
+				// Hardcoded max charge time of 1 second
+				val = ( cg.time - ps->weaponChargeTime ) * 0.001f;
+				shader = cgi_R_RegisterShader( "gfx/effects/bryarFrontFlash" );
+			}
+			else if ( ps->weapon == WP_BOWCASTER )
+			{
+				// Hardcoded max charge time of 1 second
+				val = ( cg.time - ps->weaponChargeTime ) * 0.001f;
+				shader = cgi_R_RegisterShader( "gfx/effects/greenFrontFlash" );
+			}
+			else if ( ps->weapon == WP_DEMP2 )
+			{
+				// Hardcoded max charge time of 1 second
+				val = ( cg.time - ps->weaponChargeTime ) * 0.001f;
+				shader = cgi_R_RegisterShader( "gfx/misc/lightningFlash" );
+				scale = 1.75f;
+			}
+
+			if ( val < 0.0f )
+			{
+				val = 0.0f;
+			}
+			else if ( val > 1.0f )
+			{
+				val = 1.0f;
+				CGCam_Shake( 0.1f, 100 );
+			}
+			else
+			{
+				CGCam_Shake( val * val * 0.3f, 100 );
+			}
 
 		val += Q_flrand(0.0f, 1.0f) * 0.5f;
 
 		FX_AddSprite( flash.origin, NULL, NULL, 3.0f * val * scale, 0.0f, 0.7f, 0.7f, WHITE, WHITE, Q_flrand(0.0f, 1.0f) * 360, 0.0f, 1.0f, shader, FX_USE_ALPHA | FX_DEPTH_HACK );
-	}
+		}
 
-	// Check if the heavy repeater is finishing up a sustained burst
-	//-------------------------------
-	if ( ps->weapon == WP_REPEATER && ps->weaponstate == WEAPON_FIRING )
-	{
-		if ( cent->gent && cent->gent->client && cent->gent->client->ps.weaponstate != WEAPON_FIRING )
+		// Check if the heavy repeater is finishing up a sustained burst
+		//-------------------------------
+		if ( ps->weapon == WP_REPEATER && ps->weaponstate == WEAPON_FIRING )
 		{
-			int	ct = 0;
-
-			// the more continuous shots we've got, the more smoke we spawn
-			if ( cent->gent->client->ps.weaponShotCount > 60 ) {
-				ct = 5;
-			}
-			else if ( cent->gent->client->ps.weaponShotCount > 35 ) {
-				ct = 3;
-			}
-			else if ( cent->gent->client->ps.weaponShotCount > 15 ) {
-				ct = 1;
-			}
-
-			for ( i = 0; i < ct; i++ )
+			if ( cent->gent && cent->gent->client && cent->gent->client->ps.weaponstate != WEAPON_FIRING )
 			{
-				theFxScheduler.PlayEffect( "repeater/muzzle_smoke", cent->currentState.clientNum );
-			}
+				int	ct = 0;
 
-			cent->gent->client->ps.weaponShotCount = 0;
+				// the more continuous shots we've got, the more smoke we spawn
+				if ( cent->gent->client->ps.weaponShotCount > 60 ) {
+					ct = 5;
+				}
+				else if ( cent->gent->client->ps.weaponShotCount > 35 ) {
+					ct = 3;
+				}
+				else if ( cent->gent->client->ps.weaponShotCount > 15 ) {
+					ct = 1;
+				}
+
+				for ( i = 0; i < ct; i++ )
+				{
+					theFxScheduler.PlayEffect( "repeater/muzzle_smoke", cent->currentState.clientNum );
+				}
+
+				cent->gent->client->ps.weaponShotCount = 0;
+			}
 		}
 	}
 }

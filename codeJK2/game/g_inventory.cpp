@@ -50,9 +50,9 @@ qboolean INV_GoodieKeyTake( gentity_t *target )
 		return (qfalse);
 	}
 
-	if (target->client->ps.inventory[INV_GOODIE_KEY])
+	if (target->client->ps.inventory[INV_GOODIE_KEY] >= g_keysused->integer)
 	{
-		target->client->ps.inventory[INV_GOODIE_KEY]--;
+		target->client->ps.inventory[INV_GOODIE_KEY] -= g_keysused->integer;
 		return (qtrue);
 	}
 
@@ -67,7 +67,7 @@ int INV_GoodieKeyCheck( gentity_t *target )
 		return (qfalse);
 	}
 
-	if ( target->client->ps.inventory[INV_GOODIE_KEY] )
+	if ( target->client->ps.inventory[INV_GOODIE_KEY] >= g_keysused->integer )
 	{//found a key
 		return (INV_GOODIE_KEY);
 	}

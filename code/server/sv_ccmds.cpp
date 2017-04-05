@@ -111,7 +111,7 @@ void SV_Player_EndOfLevelSave(void)
 		const char	*s2;
 		const char *s;
 #ifdef JK2_MODE
-		s = va("%i %i %i %i %i %i %i %f %f %f %i %i %i %i %i %i",
+		s = va("%i %i %i %i %i %i %f %f %f %f %i %i %i %i %i %i",
 						pState->stats[STAT_HEALTH],
 						pState->stats[STAT_ARMOR],
 						pState->stats[STAT_WEAPONS],

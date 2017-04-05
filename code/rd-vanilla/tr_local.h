@@ -34,7 +34,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
 typedef unsigned int glIndex_t;
 
-extern refimport_t ri;
+extern refimport_t *ri;
 
 
 // 13 bits
@@ -1855,3 +1855,6 @@ Ghoul2 Insert End
 
 // tr_surfacesprites
 void RB_DrawSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input);
+
+
+void Create_Matrix(const float *angle, mdxaBone_t *matrix);

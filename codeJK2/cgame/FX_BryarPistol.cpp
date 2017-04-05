@@ -23,7 +23,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 // Bryar Pistol Weapon Effects
 #include "cg_local.h"
 #include "cg_media.h"
-#include "FxScheduler.h"
+#include "FX_Local.h"
 
 /*
 -------------------------

@@ -267,10 +267,10 @@ void NPC_BSWait( void )
 	NPC_UpdateAngles( qtrue, qtrue );
 }
 
-
+extern int PM_AnimLength(int index, animNumber_t anim);
 void NPC_BSInvestigate (void)
 {
-/*
+
 	//FIXME: maybe allow this to be set as a tempBState in a script?  Just specify the
 	//investigateGoal, investigateDebounceTime and investigateCount? (Needs a macro)
 	vec3_t		invDir, invAngles, spot;
@@ -287,9 +287,9 @@ void NPC_BSInvestigate (void)
 		{//FIXME: do anger script
 			NPCInfo->goalEntity = NPC->enemy;
 //			NAV_ClearLastRoute(NPC);
-			NPCInfo->behaviorState = BS_RUN_AND_SHOOT;
+			NPCInfo->behaviorState = BS_HUNT_AND_KILL;
 			NPCInfo->tempBehavior = BS_DEFAULT;
-			NPC_AngerSound();
+			//NPC_AngerSound();
 			return;
 		}
 	}
@@ -321,14 +321,11 @@ void NPC_BSInvestigate (void)
 
 	if(	level.time < NPCInfo->walkDebounceTime )
 	{//walk toward investigateGoal
-
-		/*
 		NPCInfo->goalEntity = NPCInfo->tempGoal;
 //		NAV_ClearLastRoute(NPC);
 		VectorCopy(NPCInfo->investigateGoal, NPCInfo->tempGoal->currentOrigin);
-		*/
 
-/*		NPC_SetMoveGoal( NPC, NPCInfo->investigateGoal, 16, qtrue );
+		NPC_SetMoveGoal( NPC, NPCInfo->investigateGoal, 16, qtrue );
 
 		NPC_MoveToGoal( qtrue );
 
@@ -342,73 +339,11 @@ void NPC_BSInvestigate (void)
 
 		NPC_SetAnim(NPC,SETANIM_LEGS,BOTH_STAND1,SETANIM_FLAG_NORMAL);
 
-		if(NPCInfo->hlookCount > 30)
-		{
-			if(Q_irand(0, 10) > 7)
-			{
-				NPCInfo->hlookCount = 0;
-			}
-		}
-		else if(NPCInfo->hlookCount < -30)
-		{
-			if(Q_irand(0, 10) > 7)
-			{
-				NPCInfo->hlookCount = 0;
-			}
-		}
-		else if(NPCInfo->hlookCount == 0)
-		{
-			NPCInfo->hlookCount = Q_irand(-1, 1);
-		}
-		else if(Q_irand(0, 10) > 7)
-		{
-			if(NPCInfo->hlookCount > 0)
-			{
-				NPCInfo->hlookCount++;
-			}
-			else//lookCount < 0
-			{
-				NPCInfo->hlookCount--;
-			}
-		}
-
-		if(NPCInfo->vlookCount >= 15)
-		{
-			if(Q_irand(0, 10) > 7)
-			{
-				NPCInfo->vlookCount = 0;
-			}
-		}
-		else if(NPCInfo->vlookCount <= -15)
-		{
-			if(Q_irand(0, 10) > 7)
-			{
-				NPCInfo->vlookCount = 0;
-			}
-		}
-		else if(NPCInfo->vlookCount == 0)
-		{
-			NPCInfo->vlookCount = Q_irand(-1, 1);
-		}
-		else if(Q_irand(0, 10) > 8)
-		{
-			if(NPCInfo->vlookCount > 0)
-			{
-				NPCInfo->vlookCount++;
-			}
-			else//lookCount < 0
-			{
-				NPCInfo->vlookCount--;
-			}
-		}
-
 		//turn toward investigateGoal
 		CalcEntitySpot( NPC, SPOT_HEAD, spot );
 		VectorSubtract(NPCInfo->investigateGoal, spot, invDir);
 		VectorNormalize(invDir);
 		vectoangles(invDir, invAngles);
-		NPCInfo->desiredYaw = AngleNormalize360(invAngles[YAW] + NPCInfo->hlookCount);
-		NPCInfo->desiredPitch = AngleNormalize360(invAngles[PITCH] + NPCInfo->hlookCount);
 	}
 
 	NPC_UpdateAngles(qtrue, qtrue);
@@ -420,9 +355,7 @@ void NPC_BSInvestigate (void)
 	{
 		NPCInfo->tempBehavior = BS_DEFAULT;
 	}
-
-	NPC_CheckSoundEvents();
-	*/
+	
 }
 
 qboolean NPC_CheckInvestigate( int alertEventNum )

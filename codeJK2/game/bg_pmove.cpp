@@ -651,7 +651,7 @@ static qboolean PM_CheckJump( void )
 							pm->ps->forcePowersActive |= (1<<FP_LEVITATION);
 							if ( pm->gent )
 							{
-								G_SoundOnEnt( pm->gent, CHAN_BODY, "sound/weapons/force/jump.wav" );
+								G_SoundOnEnt( pm->gent, CHAN_AUTO, "sound/weapons/force/jump.wav" );
 							}
 							//play flip
 							//FIXME: do this only when they stop the jump (below) or when they're just about to hit the peak of the jump
@@ -1123,8 +1123,10 @@ static qboolean PM_CheckJump( void )
 						pm->ps->forceJumpZStart = pm->ps->origin[2];//so we don't take damage if we land at same height
 						pm->ps->pm_flags |= (PMF_JUMPING|PMF_SLOW_MO_FALL);
 						pm->cmd.upmove = 0;
-						G_SoundOnEnt( pm->gent, CHAN_BODY, "sound/weapons/force/jump.wav" );
-						WP_ForcePowerDrain( pm->gent, FP_LEVITATION, 0 );
+						G_SoundOnEnt( pm->gent, CHAN_AUTO, "sound/weapons/force/jump.wav" );
+						if (pm->ps->forcePowerLevel[FP_LEVITATION] < FORCE_LEVEL_5) {
+							WP_ForcePowerDrain(pm->gent, FP_LEVITATION, 0);
+						}
 					}
 				}
 			}
@@ -1259,7 +1261,9 @@ static qboolean PM_CheckJump( void )
 						pm->ps->pm_flags |= PMF_JUMPING|PMF_SLOW_MO_FALL;
 						pm->cmd.upmove = 0;
 						G_SoundOnEnt( pm->gent, CHAN_BODY, "sound/weapons/force/jump.wav" );
-						WP_ForcePowerDrain( pm->gent, FP_LEVITATION, 0 );
+						if (pm->ps->forcePowerLevel[FP_LEVITATION] < FORCE_LEVEL_5) {
+							WP_ForcePowerDrain(pm->gent, FP_LEVITATION, 0);
+						}
 					}
 				}
 			}
@@ -2640,11 +2644,13 @@ static void PM_CrashLand( void )
 		}
 	}
 
-	// create a local entity event to play the sound
-
-	if ( pm->gent && pm->gent->client && pm->gent->client->respawnTime >= level.time - 500 )
-	{//just spawned in, don't make a noise
-		return;
+	if (pm->gent && pm->gent->client) {
+		if (pm->gent->client->NPC_class == CLASS_INTERROGATOR) {
+			delta *= 3;
+		}
+		else if (pm->gent->client->NPC_class == CLASS_SENTRY) {
+			delta *= 2;
+		}
 	}
 
 	if ( delta >= 75 )
@@ -2675,6 +2681,12 @@ static void PM_CrashLand( void )
 				AddSoundEvent( pm->gent->enemy, pm->ps->origin, 256, AEL_DISCOVERED );
 			}
 		}
+	}
+	else if (pm->gent->client &&
+		(pm->gent->client->NPC_class == CLASS_PROBE ||
+		pm->gent->client->NPC_class == CLASS_INTERROGATOR ||
+		pm->gent->client->NPC_class == CLASS_SENTRY)) {
+		return;
 	}
 	else if ( delta >= 50 )
 	{
@@ -3297,6 +3309,9 @@ static void PM_SetWaterLevelAtPoint( vec3_t org, int *waterlevel, int *watertype
 	point[0] = org[0];
 	point[1] = org[1];
 	point[2] = org[2] + DEFAULT_MINS_2 + 1;
+	if (!pm->pointcontents) {
+		return;
+	}
 	cont = pm->pointcontents( point, pm->ps->clientNum );
 
 	if ( cont & (MASK_WATER|CONTENTS_LADDER) )
@@ -3879,7 +3894,7 @@ qboolean PM_GettingUpFromKnockDown( float standheight, float crouchheight )
 							PM_AddEvent( Q_irand( EV_COMBAT1, EV_COMBAT3 ) );
 							pm->gent->NPC->blockedSpeechDebounceTime = level.time + 1000;
 						}
-						G_SoundOnEnt( pm->gent, CHAN_BODY, "sound/weapons/force/jump.wav" );
+						G_SoundOnEnt( pm->gent, CHAN_AUTO, "sound/weapons/force/jump.wav" );
 						//launch off ground?
 						pm->ps->weaponTime = 300;//just to make sure it's cleared
 					}
@@ -5684,7 +5699,7 @@ static void PM_FinishWeaponChange( void ) {
 				pm->gent->weaponModel = -1;
 			}
 			if (weaponData[weapon].weaponMdl[0]) {	//might be NONE, so check if it has a model
-				G_CreateG2AttachedWeaponModel( pm->gent, weaponData[weapon].weaponMdl );
+				G_CreateG2AttachedWeaponModel(pm->gent, weaponData[weapon].weaponMdl);
 			}
 		}
 
@@ -6309,6 +6324,10 @@ void PM_SaberLockBreak( gentity_t *gent, gentity_t *genemy, saberLockResult_t re
 	int	winAnim = -1, loseAnim = -1;
 
 	winAnim = PM_SaberLockWinAnim( result );
+	if (!genemy->client) {
+		// No! This should never happen...!
+		return;
+	}
 	if ( genemy && genemy->client )
 	{
 		loseAnim = PM_SaberLockLoseAnim( genemy, result );
@@ -8303,6 +8322,7 @@ static void PM_Weapon( void )
 			return;
 		}
 		PM_AddEvent( EV_FIRE_WEAPON );
+
 		addTime = weaponData[pm->ps->weapon].fireTime;
 
 		switch( pm->ps->weapon)
@@ -8310,6 +8330,8 @@ static void PM_Weapon( void )
 		case WP_REPEATER:
 			// repeater is supposed to do smoke after sustained bursts
 			pm->ps->weaponShotCount++;
+			if(bg_repeaterrate->integer)
+				addTime += 50;
 			break;
 		case WP_BOWCASTER:
 			addTime *= (( trueCount < 3 ) ? 0.35f : 1.0f );// if you only did a small charge shot with the bowcaster, use less time between shots

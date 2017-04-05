@@ -209,7 +209,7 @@ typedef struct {
 	byte		areamask[MAX_MAP_AREA_BYTES];
 
 	// text messages for deform text shaders
-//	char		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
+	char		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
 } refdef_t;
 
 

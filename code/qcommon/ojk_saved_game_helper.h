@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <memory>
 #include "ojk_saved_game_helper_fwd.h"
 #include "ojk_scope_guard.h"
 #include "ojk_saved_game_class_archivers.h"

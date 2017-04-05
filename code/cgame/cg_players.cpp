@@ -6055,37 +6055,37 @@ void CG_DoSFXSaber( vec3_t blade_muz, vec3_t blade_tip, vec3_t trail_tip, vec3_t
 		
 		AngleScale = 1.2 - (DisDif/blade_len)*(DisDif/blade_len);
 		
-		if(AngleScale > 1.0)
-			AngleScale = 1.0;
-		if(AngleScale < 0.2)
-			AngleScale = 0.2;
+		if(AngleScale > 1.0f)
+			AngleScale = 1.0f;
+		if(AngleScale < 0.2f)
+			AngleScale = 0.2f;
 		
 		effectalpha *= AngleScale;
 		
-		AngleScale += 0.3;
+		AngleScale += 0.3f;
 		
-		if(AngleScale > 1.0)
-			AngleScale = 1.0;
-		if(AngleScale < 0.4)
-			AngleScale = 0.4;
+		if(AngleScale > 1.0f)
+			AngleScale = 1.0f;
+		if(AngleScale < 0.4f)
+			AngleScale = 0.4f;
 	}
 	
 	memset( &saber, 0, sizeof( refEntity_t ));
 	
 	if (blade_len < lengthMax)
 	{
-		radiusmult = 0.5 + ((blade_len / lengthMax)/2);
+		radiusmult = 0.5f + ((blade_len / lengthMax)/2);
 	}
 	else
 	{
-		radiusmult = 1.0;
+		radiusmult = 1.0f;
 	}
 	
-	effectradius	= ((radius * 1.6 * v1) + Q_flrand(-1.0f, 1.0f) * 0.1f)*radiusmult*cg_SFXSabersGlowSize.value;
-	coreradius		= ((radius * 0.4 * v2) + Q_flrand(-1.0f, 1.0f) * 0.1f)*radiusmult*cg_SFXSabersCoreSize.value;
+	effectradius	= ((radius * 1.6f * v1) + Q_flrand(-1.0f, 1.0f) * 0.1f)*radiusmult*cg_SFXSabersGlowSize.value;
+	coreradius		= ((radius * 0.4f * v2) + Q_flrand(-1.0f, 1.0f) * 0.1f)*radiusmult*cg_SFXSabersCoreSize.value;
 	if ( crystals & SABER_CRYSTAL_UNSTABLE )
 	{
-		coreradius *= 0.9;
+		coreradius *= 0.9f;
 	}
 		
 	{
@@ -6216,7 +6216,7 @@ void CG_DoSFXSaber( vec3_t blade_muz, vec3_t blade_tip, vec3_t trail_tip, vec3_t
 		
 		// Do the hot core
 		VectorMA( blade_muz, base_len, base_dir, saber.origin );
-		VectorMA( blade_muz, -0.1, base_dir, saber.oldorigin );
+		VectorMA( blade_muz, -0.1f, base_dir, saber.oldorigin );
 		
 		saber.customShader = cgs.media.SaberBladeShader;
 		if ( crystals & SABER_CRYSTAL_BLACK )
@@ -6260,17 +6260,17 @@ void CG_DoSFXSaber( vec3_t blade_muz, vec3_t blade_tip, vec3_t trail_tip, vec3_t
 				DisDif = 0;
 			}
 			
-			if(DisDif > end_len * 0.9)
+			if(DisDif > end_len * 0.9f)
 			{
-				effectalpha *= 0.3;
+				effectalpha *= 0.3f;
 			}
-			else if(DisDif > end_len * 0.8)
+			else if(DisDif > end_len * 0.8f)
 			{
-				effectalpha *= 0.5;
+				effectalpha *= 0.5f;
 			}
-			else if(DisDif > end_len * 0.7)
+			else if(DisDif > end_len * 0.7f)
 			{
-				effectalpha *= 0.7;
+				effectalpha *= 0.7f;
 			}
 		}
 		
@@ -6301,7 +6301,7 @@ void CG_DoSFXSaber( vec3_t blade_muz, vec3_t blade_tip, vec3_t trail_tip, vec3_t
 		
 		// Do the hot core
 		VectorMA( blade_tip, end_len, end_dir, saber.origin );
-		VectorMA( blade_tip, -0.1, end_dir, saber.oldorigin );
+		VectorMA( blade_tip, -0.1f, end_dir, saber.oldorigin );
 		
 		saber.customShader = cgs.media.SaberEndShader;
 		if ( crystals & SABER_CRYSTAL_BLACK )
@@ -6327,8 +6327,8 @@ void CG_DoSFXSaber( vec3_t blade_muz, vec3_t blade_tip, vec3_t trail_tip, vec3_t
 		{
 			AngleScale -= (((DisDif/end_len)*(DisDif/end_len))*AngleScale);
 			
-			if(AngleScale < 0.8)
-				AngleScale = 0.8;
+			if(AngleScale < 0.8f)
+				AngleScale = 0.8f;
 		}
 		
 		saber.radius = (coreradius * AngleScale);
@@ -7432,20 +7432,20 @@ else
 		
 		if ( saberMoveData[client->ps.saberMove].trailLength == 0 )
 		{
-			dirlen0 *= 0.5;
-			dirlen1 *= 0.3;
+			dirlen0 *= 0.5f;
+			dirlen1 *= 0.3f;
 		}
 		else
 		{
-			dirlen0 *= 1.0;
-			dirlen1 *= 0.5;
+			dirlen0 *= 1.0f;
+			dirlen1 *= 0.5f;
 		}
 		
 		lagscale = (cg.time - saberTrail->lastTime);
 		lagscale = 1-(lagscale*3/200);
 		
-		if(lagscale < 0.1)
-			lagscale = 0.1;
+		if(lagscale < 0.1f)
+			lagscale = 0.1f;
 		
 		VectorNormalize( dir0 );
 		VectorNormalize( dir1 );

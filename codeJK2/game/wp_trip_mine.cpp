@@ -35,6 +35,8 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define PROXIMITY_STYLE 1
 #define TRIPWIRE_STYLE	2
 
+#define MAX_TRAPS		50
+
 //---------------------------------------------------------
 void touchLaserTrap( gentity_t *ent, gentity_t *other, trace_t *trace )
 //---------------------------------------------------------
@@ -48,19 +50,18 @@ void touchLaserTrap( gentity_t *ent, gentity_t *other, trace_t *trace )
 	VectorSet( ent->mins, -4, -4, -4 );
 	VectorSet( ent->maxs, 4, 4, 4 );
 
-	ent->clipmask = MASK_SHOT;
-	ent->contents = CONTENTS_SHOTCLIP;
+	ent->clipmask = MASK_ALL;
+	ent->contents = CONTENTS_CORPSE;
+	ent->contents = CONTENTS_SOLID | CONTENTS_SHOTCLIP | CONTENTS_CORPSE | CONTENTS_BODY;//for certain traces
 	ent->takedamage = qtrue;
 	ent->health = 15;
 
 	ent->e_DieFunc = dieF_WP_ExplosiveDie;
 	ent->e_TouchFunc = touchF_NULL;
 
-	// so we can trip it too
-	ent->activator = ent->owner;
-	ent->owner = NULL;
-
 	WP_Stick( ent, trace );
+
+	ent->svFlags |= SVF_PLAYER_USABLE;
 
 	if ( ent->count == TRIPWIRE_STYLE )
 	{
@@ -150,6 +151,8 @@ void laserTrapThink( gentity_t *ent )
 	ent->e_ThinkFunc = thinkF_laserTrapThink;
 	ent->nextthink = level.time + FRAMETIME;
 
+	ent->e_UseFunc = useF_tripmine_use;
+
 	// Find the main impact point
 	VectorMA( ent->s.pos.trBase, 2048, ent->movedir, end );
 	gi.trace( &tr, ent->s.origin2, mins, maxs, end, ent->s.number, MASK_SHOT, G2_RETURNONHIT, 0 );
@@ -159,7 +162,7 @@ void laserTrapThink( gentity_t *ent )
 	// Adjust this so that the effect has a relatively fresh endpoint
 	VectorCopy( tr.endpos, ent->pos4 );
 
-	if ( traceEnt->client || tr.startsolid )
+	if ( traceEnt->client || tr.startsolid && traceEnt != ent->owner)
 	{
 		// go boom
 		WP_Explode( ent );
@@ -197,13 +200,12 @@ void CreateLaserTrap( gentity_t *laserTrap, vec3_t start, gentity_t *owner )
 	laserTrap->s.weapon = WP_TRIP_MINE;
 
 	laserTrap->owner = owner;
-//	VectorSet( laserTrap->mins, -LT_SIZE, -LT_SIZE, -LT_SIZE );
-//	VectorSet( laserTrap->maxs, LT_SIZE, LT_SIZE, LT_SIZE );
-	laserTrap->clipmask = (CONTENTS_SOLID|CONTENTS_BODY|CONTENTS_SHOTCLIP);//MASK_SHOT;
+	laserTrap->clipmask = (CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_SHOTCLIP);//MASK_SHOT;
 
 	laserTrap->s.pos.trTime = level.time;		// move a bit on the very first frame
 	VectorCopy( start, laserTrap->s.pos.trBase );
 	VectorCopy( start, laserTrap->currentOrigin);
+	VectorCopy(start, laserTrap->s.origin);
 
 	VectorCopy( start, laserTrap->pos2 ); // ?? wtf ?
 
@@ -216,66 +218,15 @@ void CreateLaserTrap( gentity_t *laserTrap, vec3_t start, gentity_t *owner )
 	gi.G2API_InitGhoul2Model( laserTrap->ghoul2, weaponData[WP_TRIP_MINE].missileMdl, G_ModelIndex( weaponData[WP_TRIP_MINE].missileMdl ), NULL_HANDLE, NULL_HANDLE, 0, 0);
 }
 
-//---------------------------------------------------------
-static void WP_RemoveOldTraps( gentity_t *ent )
-//---------------------------------------------------------
-{
-	gentity_t	*found = NULL;
-	int			trapcount = 0, i;
-	int			foundLaserTraps[MAX_GENTITIES] = {ENTITYNUM_NONE};
-	int			trapcount_org, lowestTimeStamp;
-	int			removeMe;
-
-	// see how many there are now
-	while (( found = G_Find( found, FOFS(classname), "tripmine" )) != NULL )
-	{
-		if ( found->activator != ent ) // activator is really the owner?
-		{
-			continue;
-		}
-		foundLaserTraps[trapcount++] = found->s.number;
+void tripmine_use(gentity_t* self, gentity_t* other, gentity_t* activator) {
+	self->s.modelindex = ITM_AMMO_TRIPMINE_PICKUP;
+	self->item = &bg_itemlist[self->s.modelindex];
+	self->count = 1;
+	if (activator->client->ps.ammo[AMMO_TRIPMINE] >= BG_GetAmmoMax(AMMO_TRIPMINE)) {
+		gi.Printf("You don't have enough room for that trip mine.\n");
+		return;
 	}
-
-	// now remove first ones we find until there are only 9 left
-	found = NULL;
-	trapcount_org = trapcount;
-	lowestTimeStamp = level.time;
-
-	while ( trapcount > 9 )
-	{
-		removeMe = -1;
-		for ( i = 0; i < trapcount_org; i++ )
-		{
-			if ( foundLaserTraps[i] == ENTITYNUM_NONE )
-			{
-				continue;
-			}
-			found = &g_entities[foundLaserTraps[i]];
-			if ( found->setTime < lowestTimeStamp )
-			{
-				removeMe = i;
-				lowestTimeStamp = found->setTime;
-			}
-		}
-		if ( removeMe != -1 )
-		{
-			//remove it... or blow it?
-			if ( &g_entities[foundLaserTraps[removeMe]] == NULL )
-			{
-				break;
-			}
-			else
-			{
-				G_FreeEntity( &g_entities[foundLaserTraps[removeMe]] );
-			}
-			foundLaserTraps[removeMe] = ENTITYNUM_NONE;
-			trapcount--;
-		}
-		else
-		{
-			break;
-		}
-	}
+	Touch_Item(self, other, nullptr);
 }
 
 //---------------------------------------------------------
@@ -284,9 +235,6 @@ void WP_PlaceLaserTrap( gentity_t *ent, qboolean alt_fire )
 {
 	vec3_t		start;
 	gentity_t	*laserTrap;
-
-	// limit to 10 placed at any one time
-	WP_RemoveOldTraps( ent );
 
 	//FIXME: surface must be within 64
 	laserTrap = G_Spawn();

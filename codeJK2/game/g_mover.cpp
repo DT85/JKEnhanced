@@ -985,7 +985,7 @@ void Use_BinaryMover( gentity_t *ent, gentity_t *other, gentity_t *activator )
 			key = INV_GoodieKeyCheck( activator );
 			if (key)
 			{//activator has a goodie key, remove it
-				activator->client->ps.inventory[key]--;
+				activator->client->ps.inventory[key] -= g_keysused->integer;		
 				G_Sound( activator, G_SoundIndex( "sound/movers/goodie_pass.wav" ) );
 				// once the goodie mover has been used, it no longer requires a goodie key
 				ent->spawnflags &= ~MOVER_GOODIE;

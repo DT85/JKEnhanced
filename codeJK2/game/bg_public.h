@@ -612,7 +612,6 @@ typedef struct ginfoitem_s
 extern weaponData_t weaponData[WP_NUM_WEAPONS];
 
 //==============================================================================
-extern ammoData_t ammoData[AMMO_MAX];
 
 //==============================================================================
 
@@ -675,5 +674,59 @@ int	CurrentPlayerstateEvent( playerState_t *ps );
 void PlayerStateToEntityState( playerState_t *ps, entityState_t *s );
 
 qboolean	BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTime );
+
+// JK2:HD cvars
+
+// Items
+extern cvar_t	*g_pullitems;
+extern cvar_t	*g_pushitems;
+extern cvar_t	*g_gripitems;
+extern cvar_t	*g_sentryinfiniteammo;
+extern cvar_t	*g_sentryexplode;
+extern cvar_t	*g_sentrycheat;
+extern cvar_t	*g_npcsentryrate;
+extern cvar_t	*g_sentryrate;
+extern cvar_t	*g_maxsentries;
+extern cvar_t	*g_maxseekers;
+extern cvar_t	*g_medpacheal;
+extern cvar_t	*g_medpacgrunt;
+extern cvar_t	*g_medpacmpsound;
+extern cvar_t	*g_medpacdoomsound;
+extern cvar_t	*g_armormpsound;
+extern cvar_t	*g_armorlgoverflow;
+extern cvar_t	*g_armoroverflowdown;
+extern cvar_t	*g_armorsmamount;
+extern cvar_t	*g_armorlgamount;
+extern cvar_t	*g_ammompsound;
+extern cvar_t	*g_bactagrunt;
+extern cvar_t	*g_bactampsound;
+extern cvar_t	*g_bactadoomsound;
+extern cvar_t	*g_bactaheal;
+extern cvar_t	*g_maxbactas;
+extern cvar_t	*g_maxkeys;
+extern cvar_t	*g_keysused;
+extern cvar_t	*g_binocgivebatteries;
+extern cvar_t	*g_binocrestrict;
+extern cvar_t	*g_binocdrainrate;
+extern cvar_t	*g_binocrandomrate;
+extern cvar_t	*g_lagivebatteries;
+extern cvar_t	*g_larestrict;
+extern cvar_t	*g_ladrainrate;
+extern cvar_t	*g_larandomrate;
+
+extern cvar_t	*bg_repeaterrate;
+extern cvar_t	*g_repeaterspread;
+
+extern cvar_t	*g_maxAmmo_Force;
+extern cvar_t	*g_maxAmmo_Blaster;
+extern cvar_t	*g_maxAmmo_Powercell;
+extern cvar_t	*g_maxAmmo_MetalBolts;
+extern cvar_t	*g_maxAmmo_Rockets;
+extern cvar_t	*g_maxAmmo_Thermal;
+extern cvar_t	*g_maxAmmo_TripMines;
+extern cvar_t	*g_maxAmmo_DetPack;
+extern cvar_t	*g_maxAmmo_Emplaced;
+
+int BG_GetAmmoMax(int ammoIndex);
 
 #endif//#ifndef __BG_PUBLIC_H__

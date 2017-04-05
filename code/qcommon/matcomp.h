@@ -1,8 +1,8 @@
 #pragma once
 
 #ifdef __cplusplus
-extern "C"
-{
+//extern "C"
+//{
 #endif
 
 #define MC_BITS_X (16)
@@ -24,5 +24,5 @@ void MC_UnCompressQuat(float mat[3][4],const unsigned char * comp);
 
 
 #ifdef __cplusplus
-}
+//}
 #endif

@@ -20,9 +20,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 ===========================================================================
 */
 
-#if !defined(FX_SCHEDULER_H_INC)
-	#include "FxScheduler.h"
-#endif
+#include "FX_Local.h"
 
 #if !defined(GHOUL2_SHARED_H_INC)
 	#include "../game/ghoul2_shared.h"	//for CGhoul2Info_v
@@ -103,7 +101,7 @@ void CFxScheduler::Clean(bool bRemoveTemplates /*= true*/, int idToPreserve /*= 
 		next = itr;
 		++next;
 
-		mScheduledEffectsPool.Free (*itr);
+		mScheduledEffectsPool.Free(*itr);
 		mFxSchedule.erase(itr);
 
 		itr = next;
@@ -1587,3 +1585,5 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, const vec3_t origin, ve
 		}
 	}
 }
+
+

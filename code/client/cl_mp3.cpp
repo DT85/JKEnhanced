@@ -35,6 +35,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 qboolean MP3_IsValid( const char *psLocalFilename, void *pvData, int iDataLen, qboolean bStereoDesired /* = qfalse */)
 {
+	if(!Q_stricmp(psLocalFilename, "music/cinematic_1.mp3"))
+		bStereoDesired = qtrue;
+
 	char *psError = C_MP3_IsValid(pvData, iDataLen, bStereoDesired);
 
 	if (psError)

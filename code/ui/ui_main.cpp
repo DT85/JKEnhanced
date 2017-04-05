@@ -371,7 +371,6 @@ typedef struct {
 } cvarTable_t;
 
 
-vmCvar_t	ui_menuFiles;
 vmCvar_t	ui_hudFiles;
 
 vmCvar_t	ui_char_anim;
@@ -428,7 +427,6 @@ vmCvar_t    ui_hilt2_color_blue;
 
 static cvarTable_t cvarTable[] = 
 {
-	{ &ui_menuFiles,			"ui_menuFiles",			"ui/menus.txt", CVAR_ARCHIVE },
 #ifdef JK2_MODE
 	{ &ui_hudFiles,				"cg_hudFiles",			"ui/jk2hud.txt",CVAR_ARCHIVE},
 #else
@@ -675,8 +673,8 @@ void Text_Paint(float x, float y, float scale, vec4_t color, const char *text, i
 							color,	// paletteRGBA_c c
 							iStyleOR | iFontIndex,	// const int iFontHandle
 							!iMaxPixelWidth?-1:iMaxPixelWidth,	// iMaxPixelWidth (-1 = none)
-							scale	// const float scale = 1.0f
-							);
+							scale,	// const float scale = 1.0f
+							1.0f);
 }
 
 
@@ -3791,10 +3789,11 @@ void _UI_Init( qboolean inGameLoad )
 
 	String_Init();
 
-	const char *menuSet = UI_Cvar_VariableString("ui_menuFiles");
+	const char *menuSet = "\0";
 
 	if (menuSet == NULL || menuSet[0] == '\0')
 	{
+		// WIDESCREEN
 		menuSet = "ui/menus.txt";
 	}
 
@@ -4931,8 +4930,8 @@ static void UI_OwnerDraw(float x, float y, float w, float h, float text_x, float
 									color,	// paletteRGBA_c c
 									iFontIndex,	// const int iFontHandle
 									w,//-1,		// iMaxPixelWidth (-1 = none)
-									scale	// const float scale = 1.0f
-									);
+									scale,	// const float scale = 1.0f
+									1.0f);
 			break;
 		case UI_PREVIEWCINEMATIC:
 			// FIXME BOB - make this work?

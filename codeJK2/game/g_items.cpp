@@ -40,8 +40,6 @@ extern qboolean PM_InGetUp( playerState_t *ps );
 
 extern	cvar_t	*g_spskill;
 
-#define MAX_BACTA_HEAL_AMOUNT		25
-
 /*
 
   Items are any object that a player can touch to gain some effect.
@@ -82,6 +80,7 @@ qboolean G_InventorySelectable( int index,gentity_t *other)
 
 extern qboolean INV_GoodieKeyGive( gentity_t *target );
 extern qboolean INV_SecurityKeyGive( gentity_t *target, const char *keyname );
+void Add_Batteries( gentity_t *ent, float *count );
 int Pickup_Holdable( gentity_t *ent, gentity_t *other )
 {
 	int		i,original;
@@ -99,6 +98,32 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other )
 		//FIXME: temp message
 		gi.SendServerCommand( 0, "cp @INGAME_YOU_TOOK_SUPPLY_KEY" );
 		INV_GoodieKeyGive( other );
+	}
+	else if ( ent->item->giTag == INV_ELECTROBINOCULARS &&
+		g_binocgivebatteries->integer )
+	{
+		bool bFirstTime = false;
+		if(other->client->ps.inventory[ent->item->giTag] <= 0) {
+			other->client->ps.inventory[ent->item->giTag]++;
+			bFirstTime = true;
+		}
+		if(g_binocgivebatteries->integer != 1 || !bFirstTime) {
+			float count = 500.0f; // not as much as regular batteries
+			Add_Batteries(other, &count);
+		}
+	}
+	else if ( ent->item->giTag == INV_LIGHTAMP_GOGGLES &&
+		g_lagivebatteries->integer )
+	{
+		bool bFirstTime = false;
+		if(other->client->ps.inventory[ent->item->giTag] <= 0) {
+			other->client->ps.inventory[ent->item->giTag]++;
+			bFirstTime = true;
+		}
+		if(g_lagivebatteries->integer != 1 || !bFirstTime) {
+			float count = 500.0f; // not as much as regular batteries
+			Add_Batteries(other, &count);
+		}
 	}
 	else
 	{// Picking up a normal item?
@@ -150,30 +175,30 @@ int Add_Ammo2 (gentity_t *ent, int ammoType, int count)
 			break;
 		}
 
-		if ( ent->client->ps.ammo[ammoType] > ammoData[ammoType].max )
+		if ( ent->client->ps.ammo[ammoType] > BG_GetAmmoMax(ammoType) ) 
 		{
-			ent->client->ps.ammo[ammoType] = ammoData[ammoType].max;
+			ent->client->ps.ammo[ammoType] = BG_GetAmmoMax(ammoType);
 			return qfalse;
 		}
 	}
 	else
 	{
-		if ( ent->client->ps.forcePower >= ammoData[ammoType].max )
+		if ( ent->client->ps.forcePower >= BG_GetAmmoMax(ammoType) )
 		{//if have full force, just get 25 extra per crystal
 			ent->client->ps.forcePower += 25;
 		}
 		else
 		{//else if don't have full charge, give full amount, up to max + 25
 			ent->client->ps.forcePower += count;
-			if ( ent->client->ps.forcePower >= ammoData[ammoType].max + 25 )
+			if ( ent->client->ps.forcePower >= BG_GetAmmoMax(ammoType) + 25 )
 			{//cap at max + 25
-				ent->client->ps.forcePower = ammoData[ammoType].max + 25;
+				ent->client->ps.forcePower = BG_GetAmmoMax(ammoType) + 25;
 			}
 		}
 
-		if ( ent->client->ps.forcePower >= ammoData[ammoType].max*2 )
+		if ( ent->client->ps.forcePower >= BG_GetAmmoMax(ammoType)*2 )
 		{//always cap at twice a full charge
-			ent->client->ps.forcePower = ammoData[ammoType].max*2;
+			ent->client->ps.forcePower = BG_GetAmmoMax(ammoType)*2;
 			return qfalse;		// can't hold any more
 		}
 	}
@@ -203,7 +228,7 @@ int Pickup_Ammo (gentity_t *ent, gentity_t *other)
 }
 
 //======================================================================
-void Add_Batteries( gentity_t *ent, int *count )
+void Add_Batteries( gentity_t *ent, float *count )
 {
 	if ( ent->client && ent->client->ps.batteryCharge < MAX_BATTERIES && *count )
 	{
@@ -239,9 +264,14 @@ int Pickup_Battery( gentity_t *ent, gentity_t *other )
 	}
 
 	// There may be some left over in quantity if the player is close to full, but with pickup items, this amount will just be lost
-	Add_Batteries( other, &quantity );
+	float x = quantity;
+	Add_Batteries( other, &x );
+	ent->count = (int)x;
 
-	return 30;
+	if( ent->count >= 1 )
+		return 0;
+	else
+		return 30;
 }
 
 //======================================================================
@@ -289,7 +319,7 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other)
 
 	if ( other->s.number )
 	{//NPC
-		if ( other->s.weapon == WP_NONE )
+		//if ( other->s.weapon == WP_NONE )
 		{//NPC with no weapon picked up a weapon, change to this weapon
 			//FIXME: clear/set the alt-fire flag based on the picked up weapon and my class?
 			other->client->ps.weapon = ent->item->giTag;
@@ -337,24 +367,33 @@ int ITM_AddHealth (gentity_t *ent, int count)
 int Pickup_Health (gentity_t *ent, gentity_t *other) {
 	int			max;
 	int			quantity;
+	bool		bMaxAmountHealed = true;
 
 	max = other->client->ps.stats[STAT_MAX_HEALTH];
 
 	if ( ent->count ) {
 		quantity = ent->count;
 	} else {
-		quantity = ent->item->quantity;
+		quantity = g_medpacheal->integer;
 	}
 
 	other->health += quantity;
 
 	if (other->health > max ) {
+		bMaxAmountHealed = false;
 		other->health = max;
 	}
 
 	if ( ent->item->giTag == 100 ) {		// mega health respawns slow
 		return 120;
 	}
+
+	if(g_medpacgrunt->integer == 1 && bMaxAmountHealed == true)
+		G_SoundOnEnt( other, CHAN_VOICE, va( "sound/weapons/force/heal%d.mp3", Q_irand( 1, 4 ) ) );
+	if(g_medpacmpsound->integer == 1 && bMaxAmountHealed == true)
+		G_SoundOnEnt( ent, CHAN_ITEM, "sound/player/pickuphealth.mp3" );
+	if(g_medpacdoomsound->integer == 1 && bMaxAmountHealed == true)
+		G_SoundOnEnt( ent, CHAN_ITEM, "sound/items/doomhealth.wav" );
 
 	return 30;
 }
@@ -363,10 +402,13 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 
 int ITM_AddArmor (gentity_t *ent, int count)
 {
+	if ( ent->client->ps.stats[STAT_ARMOR] > ent->client->ps.stats[STAT_MAX_HEALTH] )
+		return qfalse;
 
 	ent->client->ps.stats[STAT_ARMOR] += count;
 
-	if (ent->client->ps.stats[STAT_ARMOR] > ent->client->ps.stats[STAT_MAX_HEALTH])
+	if (ent->client->ps.stats[STAT_ARMOR] > ent->client->ps.stats[STAT_MAX_HEALTH] &&
+		(!g_armorlgoverflow->integer || count < 50)) 
 	{
 		ent->client->ps.stats[STAT_ARMOR] = ent->client->ps.stats[STAT_MAX_HEALTH];
 		return qfalse;
@@ -377,14 +419,24 @@ int ITM_AddArmor (gentity_t *ent, int count)
 
 
 int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
+	bool bMaxAmountGiven = true;
 
-	// make sure that the shield effect is on
-	other->client->ps.powerups[PW_BATTLESUIT] = Q3_INFINITE;
+	// this is sort of hack but whatever --eez
+	int amount = ent->item->quantity;
+	if(amount == 25)
+		amount = g_armorsmamount->integer;
+	else
+		amount = g_armorlgamount->integer;
 
-	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
-	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] ) {
+	other->client->ps.stats[STAT_ARMOR] += amount;
+	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] &&
+		!g_armorlgoverflow->integer) {
 		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[STAT_MAX_HEALTH];
+		bMaxAmountGiven = false;
 	}
+
+	if(g_armormpsound->integer == 1 && bMaxAmountGiven)
+		G_SoundOnEnt(other, CHAN_ITEM, "sound/player/pickupshield.mp3");
 
 	return 30;
 }
@@ -439,26 +491,102 @@ RespawnItem
 void RespawnItem( gentity_t *ent ) {
 }
 
+qboolean BetterWeaponForMe(gentity_t* item, gentity_t* pickerupper) {
+	if (item->item->giTag == pickerupper->s.weapon) {
+		return qfalse;
+	}
+	else if (item->item->giTag == WP_TRIP_MINE || item->item->giTag == WP_DET_PACK) {
+		// Don't bother with these.
+		return qfalse;
+	}
+	else if (pickerupper->s.weapon == WP_NONE || pickerupper->s.weapon == WP_MELEE) {
+		// Always.
+		return qtrue;
+	}
+	else if (pickerupper->s.weapon == WP_SABER || pickerupper->s.weapon == WP_ATST_MAIN || pickerupper->s.weapon == WP_ATST_SIDE) {
+		// Never.
+		return qfalse;
+	}
+	else if (item->item->giType != IT_WEAPON) {
+		return qfalse;
+	}
+	else if (item->item->giTag == WP_THERMAL) {
+		// We should only be picking up thermals if we're using WP_NONE or WP_MELEE to begin with
+		return qfalse;
+	}
+
+	// Special case for the DEMP2 - we should use it if we're 
+	if (item->item->giTag == WP_DEMP2) {
+		if (pickerupper->s.weapon == WP_BLASTER_PISTOL) {
+			return qtrue;
+		}
+		else if (pickerupper->s.weapon < item->item->giTag && pickerupper->s.weapon != WP_REPEATER) {
+			return qtrue;
+		}
+		else {
+			return qfalse;
+		}
+	}
+
+	if (item->item->giTag == WP_BOWCASTER || item->item->giTag == WP_BLASTER || item->item->giTag == WP_FLECHETTE || item->item->giTag == WP_REPEATER) {
+		// These are fairly straightforward. We don't need to worry about distance
+		if (pickerupper->s.weapon == WP_BLASTER_PISTOL) {
+			return qtrue;
+		}
+		else if (pickerupper->s.weapon < item->item->giTag) {
+			// A weapon with a higher giTag will always be better
+			return qtrue;
+		}
+		else {
+			// This weapon is strictly worse
+			return qfalse;
+		}
+	}
+
+	float distance = (int)DistanceHorizontalSquared(item->currentOrigin, pickerupper->enemy->currentOrigin);
+
+	if (item->item->giTag == WP_DISRUPTOR) { // extremely long distance so we can snipe
+		if (distance >= 1024.0f) {
+			return qtrue;
+		}
+		else {
+			return qfalse;
+		}
+	}
+	else if (item->item->giTag == WP_ROCKET_LAUNCHER) { // pretty long distance
+		if (distance >= 256.0f) {
+			return qtrue;
+		}
+		else {
+			return qfalse;
+		}
+	}
+	else {
+		return qfalse;
+	}
+}
 
 qboolean CheckItemCanBePickedUpByNPC( gentity_t *item, gentity_t *pickerupper )
 {
 	if ( !item->item ) {
 		return qfalse;
 	}
-	if ( item->item->giType == IT_HOLDABLE &&
-		item->item->giTag == INV_SECURITY_KEY ) {
+	if ( item->item->giType == IT_HOLDABLE ) {
 		return qfalse;
 	}
-	if ( (item->flags&FL_DROPPED_ITEM)
-		&& item->activator != &g_entities[0]
+	if (item->item->giType == IT_HEALTH && pickerupper->health < (pickerupper->max_health / 2)) {
+		// The AI can pick up health packs too!
+		return qtrue;
+	}
+	if ( item->activator != &g_entities[0]
 		&& pickerupper->s.number
-		&& pickerupper->s.weapon == WP_NONE
+		&& BetterWeaponForMe(item, pickerupper)
 		&& pickerupper->enemy
 		&& pickerupper->painDebounceTime < level.time
 		&& pickerupper->NPC && pickerupper->NPC->surrenderTime < level.time //not surrendering
 		&& !(pickerupper->NPC->scriptFlags&SCF_FORCED_MARCH) ) // not being forced to march
 	{//non-player, in combat, picking up a dropped item that does NOT belong to the player and it *not* a security key
-		if ( level.time - item->s.time < 3000 )//was 5000
+		if ( level.time - item->s.time < 5000 )//was 5000
 		{
 			return qfalse;
 		}
@@ -532,6 +660,9 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 			return;
 		}
 	}
+	else if (other->client && other->s.number != 0) {
+		return;
+	}
 
 	// the same pickup rules are used for client side and server side
 	if ( !BG_CanItemBeGrabbed( &ent->s, &other->client->ps ) ) {
@@ -558,7 +689,7 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	switch( ent->item->giType )
 	{
 	case IT_WEAPON:
-		if ( other->NPC && other->s.weapon == WP_NONE )
+		if ( other->NPC )
 		{//Make them duck and sit here for a few seconds
 			int pickUpTime = Q_irand( 1000, 3000 );
 			TIMER_Set( other, "duck", pickUpTime );
@@ -596,11 +727,6 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		return;
 	}
 
-	if ( !respawn )
-	{
-		return;
-	}
-
 	// play the normal pickup sound
 	if ( !other->s.number && g_timescale->value < 1.0f  )
 	{//SIGH... with timescale on, you lose events left and right
@@ -624,6 +750,11 @@ extern void CG_ItemPickup( int itemNum, qboolean bHadItem );
 
 	// fire item targets
 	G_UseTargets (ent, other);
+
+	if ( !respawn ) 
+	{ // for batteries
+		return;
+	}
 
 	// wait of -1 will not respawn
 //	if ( ent->wait == -1 )
@@ -1029,6 +1160,42 @@ void G_SpawnItem (gentity_t *ent, gitem_t *item) {
 	G_SpawnFloat( "random", "0", &ent->random );
 	G_SpawnFloat( "wait", "0", &ent->wait );
 
+	if(!Q_stricmp(ent->classname, "item_battery")) {
+		// HAX
+		if(Q_irand(1,100) <= g_binocrandomrate->integer) {
+			gitem_t		*itemX;
+			int			itemNum;
+
+			ent->classname = G_NewString("item_binoculars");
+
+			itemNum=1;
+			for ( itemX = bg_itemlist + 1 ; itemX->classname ; itemX++,itemNum++) 
+			{
+				if (!strcmp(itemX->classname,ent->classname))
+				{
+					break;
+				}
+			}
+			item = itemX;
+		}
+		else if(Q_irand(1,100) <= g_larandomrate->integer) {
+			gitem_t		*itemX;
+			int			itemNum;
+
+			ent->classname = G_NewString("item_la_goggles");
+
+			itemNum=1;
+			for ( itemX = bg_itemlist + 1 ; itemX->classname ; itemX++,itemNum++) 
+			{
+				if (!strcmp(itemX->classname,ent->classname))
+				{
+					break;
+				}
+			}
+			item = itemX;
+		}
+	}
+
 	RegisterItem( item );
 	ent->item = item;
 
@@ -1074,8 +1241,11 @@ void G_BounceItem( gentity_t *ent, trace_t *trace ) {
 
 	// check for stop
 	if ( trace->plane.normal[2] > 0 && ent->s.pos.trDelta[2] < 40 ) {
+		trace->endpos[2] += 1.0f;
 		G_SetOrigin( ent, trace->endpos );
 		ent->s.groundEntityNum = trace->entityNum;
+		ent->s.pos.trType = TR_STATIONARY;
+		ent->s.pos.trDelta[0] = ent->s.pos.trDelta[1] = ent->s.pos.trDelta[2];
 		return;
 	}
 
@@ -1211,6 +1381,7 @@ ItemUse_Bacta
 */
 void ItemUse_Bacta(gentity_t *ent)
 {
+	qboolean bMaxHeal = qtrue;
 	if (!ent || !ent->client)
 	{
 		return;
@@ -1221,14 +1392,20 @@ void ItemUse_Bacta(gentity_t *ent)
 		return;
 	}
 
-	ent->health += MAX_BACTA_HEAL_AMOUNT;
+	ent->health += g_bactaheal->integer;
 
 	if (ent->health > ent->client->ps.stats[STAT_MAX_HEALTH])
 	{
 		ent->health = ent->client->ps.stats[STAT_MAX_HEALTH];
+		bMaxHeal = qfalse;
 	}
 
 	ent->client->ps.inventory[INV_BACTA_CANISTER]--;
 
-	G_SoundOnEnt( ent, CHAN_VOICE, va( "sound/weapons/force/heal%d.mp3", Q_irand( 1, 4 ) ) );
+	if(!g_bactagrunt->integer || (g_bactagrunt->integer == 1 && bMaxHeal))
+		G_SoundOnEnt( ent, CHAN_VOICE, va( "sound/weapons/force/heal%d.mp3", Q_irand( 1, 4 ) ) );
+	if(!g_bactampsound->integer || (g_bactampsound->integer == 1 && bMaxHeal))
+		G_SoundOnEnt( ent, CHAN_ITEM, "sound/items/use_bacta.wav" );
+	if(!g_bactadoomsound->integer || (g_bactadoomsound->integer == 1 && bMaxHeal))
+		G_SoundOnEnt( ent, CHAN_ITEM, "sound/items/doomhealth.wav" );
 }

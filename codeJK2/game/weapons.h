@@ -158,6 +158,12 @@ typedef struct weaponData_s
 	float	splashRadius;
 	float	altSplashRadius;
 
+	// JK2:HD ADD
+	float	npcDamageModifier;
+	
+	float	projectileVelocity;
+	float	altProjectileVelocity;
+	bool	bNoHandModel;
 } weaponData_t;
 
 
@@ -219,7 +225,7 @@ typedef struct ammoData_s
 //----------
 #define REPEATER_SPREAD				1.4f
 #define REPEATER_NPC_SPREAD			0.7f
-#define	REPEATER_DAMAGE				8
+#define	REPEATER_DAMAGE				14
 #define	REPEATER_VELOCITY			1600
 #define	REPEATER_NPC_DAMAGE_EASY	2
 #define	REPEATER_NPC_DAMAGE_NORMAL	4
@@ -333,7 +339,7 @@ typedef struct ammoData_s
 
 #define PROX_MINE_RADIUS_CHECK		190
 
-#define LT_SIZE				3.0f
+#define LT_SIZE				5.0f
 #define LT_ALT_TIME			2000
 #define	LT_ACTIVATION_DELAY	1000
 #define	LT_DELAY_TIME		50

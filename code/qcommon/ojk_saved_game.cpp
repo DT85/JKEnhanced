@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "qcommon/qcommon.h"
 #include "server/server.h"
+#include <memory>
 
 
 namespace ojk

@@ -20,12 +20,12 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 ===========================================================================
 */
 
-#if !defined(CG_LOCAL_H_INC)
-	#include "cg_local.h"
-#endif
-
 #ifndef FX_SYSTEM_H_INC
 #define FX_SYSTEM_H_INC
+
+#if !defined(__CG_LOCAL_H__)
+	#include "cg_local.h"
+#endif
 
 #include "qcommon/safe/gsl.h"
 

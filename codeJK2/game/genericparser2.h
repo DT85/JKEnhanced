@@ -22,6 +22,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 // Filename:-	genericparser2.h
 
+#ifndef GENERICPARSER2_H
+#define GENERICPARSER2_H
+
 #include <vector>
 #include <forward_list>
 #include <array>
@@ -31,9 +34,6 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/safe/memory.h"
 #include "qcommon/safe/files.h"
 #include "qcommon/safe/string.h"
-
-#ifndef GENERICPARSER2_H
-#define GENERICPARSER2_H
 
 namespace GP2
 {

@@ -29,7 +29,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 //Node flags
 #define	NF_ANY			0
-//#define	NF_CLEAR_LOS	0x00000001
+#define	NF_CLEAR_LOS	0x00000001
 #define NF_CLEAR_PATH	0x00000002
 #define NF_RECALC		0x00000004
 
@@ -114,9 +114,12 @@ public:
 	int	GetFlags( void )				const	{	return m_flags;	}
 	void AddFlag( int newFlag )			{	m_flags |= newFlag;	}
 	void RemoveFlag( int oldFlag )		{	m_flags &= ~oldFlag; }
+	void SetRadius(int newRadius)		{   m_radius = newRadius; }
 
 	int	Save( int numNodes, fileHandle_t file );
 	int Load( int numNodes, fileHandle_t file );
+
+	void DeleteEdgeReference(int nodeNum);
 
 protected:
 
@@ -185,6 +188,25 @@ public:
 	void ShowNodes( void );
 	void ShowEdges( void );
 	void ShowPath( int start, int end );
+	void ShowSelectedNode(void);
+
+	void SelectNode(int node = -1);
+	void NearMe(void);
+	int GetSelectedNode() { return m_selectedNode; }
+	void SetSelectedNodeRadius(int radius);
+	void DeleteSelectedNode();
+	void SetDefaultRadius(int newRadius) {
+		m_defaultRadius = newRadius;
+	}
+	int GetDefaultRadius() { return m_defaultRadius; }
+	void ClearNodeFlags() {
+		m_nodes[m_selectedNode]->RemoveFlag(NF_CLEAR_LOS);
+		m_nodes[m_selectedNode]->RemoveFlag(NF_CLEAR_PATH);
+	}
+
+	void AddNodeFlag(int flag) {
+		m_nodes[m_selectedNode]->AddFlag(flag);
+	}
 
 	int GetNearestNode( gentity_t *ent, int lastID, int flags, int targetID );
 
@@ -257,6 +279,8 @@ protected:
 
 	node_v			m_nodes;
 	EdgeMultimap	m_edgeLookupMap;
+	int				m_selectedNode;
+	int				m_defaultRadius = 8;
 };
 
 //////////////////////////////////////////////////////////////////////

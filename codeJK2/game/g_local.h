@@ -73,6 +73,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define FL_DISINTEGRATED		0x00020000	// marks that the corpse has already been disintegrated
 #define FL_FORCE_PULLABLE_ONLY	0x00040000	// cannot be force pushed
 #define FL_NO_IMPACT_DMG		0x00080000	// Will not take impact damage
+#define FL_GRIPMOVE				0x00100000	// Using gripmove cheat
 
 //Pointer safety utilities
 #define VALID( a )		( a != NULL )
@@ -580,6 +581,13 @@ void G_InitSessionData( gclient_t *client, char *userinfo );
 void G_InitWorldSession( void );
 void G_WriteSessionData( void );
 
+//
+// jke_aiworkshop.cpp
+//
+extern qboolean inAIWorkshop;
+void WorkshopToggle();
+void WorkshopThink();
+qboolean TryWorkshopCommand(gentity_t* ent);
 
 //
 // NPC_senses.cpp
@@ -660,8 +668,11 @@ qboolean	TIMER_Start( gentity_t *self, const char *identifier, int duration );
 qboolean	TIMER_Done2( gentity_t *ent, const char *identifier, qboolean remove = qfalse );
 qboolean	TIMER_Exists( gentity_t *ent, const char *identifier );
 void		TIMER_Remove( gentity_t *ent, const char *identifier );
+std::vector<std::pair<std::string, int>> TIMER_List(gentity_t* ent);
 
 float NPC_GetHFOVPercentage( vec3_t spot, vec3_t from, vec3_t facing, float hFOV );
 float NPC_GetVFOVPercentage( vec3_t spot, vec3_t from, vec3_t facing, float vFOV );
+
+void sentry_explode( gentity_t *ent);
 
 #endif//#ifndef __G_LOCAL_H__
