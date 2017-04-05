@@ -40,14 +40,6 @@
 // cJSON
 // JSON parser in C.
 
-// Sprintf security fix
-// All instances of sprintf are change to snprintf to avoid buffer overflows
-// On windows, it's called sprintf_s instead of snprintf, so we'll do a little define here
-#ifdef WIN32
-#define snprintf sprintf_s
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #include <string.h>
 #include <stdio.h>
 #include <math.h>

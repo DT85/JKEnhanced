@@ -80,7 +80,7 @@ qboolean G_InventorySelectable( int index,gentity_t *other)
 
 extern qboolean INV_GoodieKeyGive( gentity_t *target );
 extern qboolean INV_SecurityKeyGive( gentity_t *target, const char *keyname );
-void Add_Batteries( gentity_t *ent, float *count );
+void Add_Batteries( gentity_t *ent, int *count );
 int Pickup_Holdable( gentity_t *ent, gentity_t *other )
 {
 	int		i,original;
@@ -108,7 +108,7 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other )
 			bFirstTime = true;
 		}
 		if(g_binocgivebatteries->integer != 1 || !bFirstTime) {
-			float count = 500.0f; // not as much as regular batteries
+			int count = 500; // not as much as regular batteries
 			Add_Batteries(other, &count);
 		}
 	}
@@ -121,7 +121,7 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other )
 			bFirstTime = true;
 		}
 		if(g_lagivebatteries->integer != 1 || !bFirstTime) {
-			float count = 500.0f; // not as much as regular batteries
+			int count = 500; // not as much as regular batteries
 			Add_Batteries(other, &count);
 		}
 	}
@@ -228,7 +228,7 @@ int Pickup_Ammo (gentity_t *ent, gentity_t *other)
 }
 
 //======================================================================
-void Add_Batteries( gentity_t *ent, float *count )
+void Add_Batteries( gentity_t *ent, int *count )
 {
 	if ( ent->client && ent->client->ps.batteryCharge < MAX_BATTERIES && *count )
 	{
@@ -263,10 +263,8 @@ int Pickup_Battery( gentity_t *ent, gentity_t *other )
 		quantity = ent->item->quantity;
 	}
 
-	// There may be some left over in quantity if the player is close to full, but with pickup items, this amount will just be lost
-	float x = quantity;
-	Add_Batteries( other, &x );
-	ent->count = (int)x;
+	Add_Batteries( other, &quantity );
+	ent->count = quantity;
 
 	if( ent->count >= 1 )
 		return 0;
