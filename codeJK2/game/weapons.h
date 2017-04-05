@@ -142,8 +142,8 @@ typedef struct weaponData_s
 
 	char	missileHitSound[64];	// Missile impact sound
 	char	altmissileHitSound[64];	// alt Missile impact sound
-	void	*func;
-	void	*altfunc;
+	void(*func)(struct centity_s *cent, const struct weaponInfo_s *weapon);
+	void(*altfunc)(struct centity_s *cent, const struct weaponInfo_s *weapon);
 
 	char	mMuzzleEffect[64];
 	int		mMuzzleEffectID;

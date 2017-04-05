@@ -155,8 +155,8 @@ float forceJumpHeight[FORCE_LEVEL_5 + 1] =
 	96,//(+stepheight+crouchdiff = 130)
 	192,//(+stepheight+crouchdiff = 226)
 	384,//(+stepheight+crouchdiff = 418)
-	INT_MAX,
-	INT_MAX,
+	FLT_MAX,
+	FLT_MAX,
 };
 
 float forceJumpHeightMax[FORCE_LEVEL_5 + 1] =
@@ -165,8 +165,8 @@ float forceJumpHeightMax[FORCE_LEVEL_5 + 1] =
 	130,//(96+stepheight(18)+crouchdiff(24) = 138)
 	226,//(192+stepheight(18)+crouchdiff(24) = 234)
 	418,//(384+stepheight(18)+crouchdiff(24) = 426)
-	INT_MAX,
-	INT_MAX,
+	FLT_MAX,
+	FLT_MAX,
 };
 
 float forcePushPullRadius[NUM_FORCE_POWER_LEVELS] =

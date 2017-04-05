@@ -332,7 +332,7 @@ static void WP_PopulateWeaponList() {
 typedef void (*pfParse)(cJSON*, weaponData_t*);
 static unordered_map<string, pfParse> parsers;
 
-#define SPAIR2(x)	make_pair(#x "", (pfParse)PARSE_##x##)
+#define SPAIR2(x)	make_pair(#x "", (pfParse)PARSE_##x)
 static void WP_PopulateParseList() {
 	parsers.insert(SPAIR2(Classname));
 	parsers.insert(SPAIR2(WeaponModel));
