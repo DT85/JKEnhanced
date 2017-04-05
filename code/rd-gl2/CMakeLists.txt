@@ -21,7 +21,7 @@ if(NOT InOpenJK)
 	message(FATAL_ERROR "Use the top-level cmake script!")
 endif(NOT InOpenJK)
 
-if(BuildSPRdGL2)
+if(BuildSPRdGL2 OR BuildJK2SPRdGL2)
 
 	set(SPRDGL2RendererIncludeDirectories ${SPDir})
 	set(SPRDGL2RendererIncludeDirectories
@@ -216,6 +216,11 @@ if(BuildSPRdGL2)
 	if(BuildSPRdGL2)
 		add_sp_renderer_project(${SPRDGL2Renderer} "SP GL2 Renderer" ${SPEngine} ${JKAInstallDir} ${JKASPClientComponent})
 	endif(BuildSPRdGL2)
+
+	if(BuildJK2SPRdGL2)
+		set(SPRDGL2Defines ${SPRDGL2Defines} "JK2_MODE")
+		add_sp_renderer_project(${JK2SPRDGL2Renderer} "JK2 SP GL2 Renderer" ${JK2SPEngine} ${JK2InstallDir} ${JK2SPClientComponent})
+	endif(BuildJK2SPRdGL2)
 	
 	# GLSL shader file generator
 	add_executable(compact_glsl
@@ -231,4 +236,4 @@ if(BuildSPRdGL2)
 		COMMAND compact_glsl ${CMAKE_CURRENT_BINARY_DIR}/glsl_shaders.cpp ${SPRDGL2GLSLFiles}
 		DEPENDS compact_glsl ${SPRDGL2GLSLFiles})
 
-endif(BuildSPRdGL2)
+endif(BuildSPRdGL2 OR BuildJK2SPRdGL2)

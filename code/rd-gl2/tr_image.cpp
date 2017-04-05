@@ -98,7 +98,7 @@ void GL_TextureMode(const char *string) {
 
 
 	if (i == 6) {
-		ri.Printf(PRINT_ALL, "bad filter name\n");
+		ri->Printf(PRINT_ALL, "bad filter name\n");
 		return;
 	}
 
@@ -107,7 +107,7 @@ void GL_TextureMode(const char *string) {
 
 	if (r_ext_texture_filter_anisotropic->value > glConfig.maxTextureFilterAnisotropy)
 	{
-		ri.Cvar_SetValue("r_ext_texture_filter_anisotropic", glConfig.maxTextureFilterAnisotropy);
+		ri->Cvar_SetValue("r_ext_texture_filter_anisotropic", glConfig.maxTextureFilterAnisotropy);
 	}
 
 	// change all the existing mipmap texture objects
@@ -189,7 +189,7 @@ void R_ImageList_f(void) {
 	int estTotalSize = 0;
 	const char *sizeSuffix;
 
-	ri.Printf(PRINT_ALL, "\n      -w-- -h-- type  -size- --name-------\n");
+	ri->Printf(PRINT_ALL, "\n      -w-- -h-- type  -size- --name-------\n");
 
 	for (i = 0; i < tr.numImages; i++ )
 	{
@@ -273,15 +273,15 @@ void R_ImageList_f(void) {
 
 		float printSize = GetReadableSize(estSize, &sizeSuffix);
 
-		ri.Printf(PRINT_ALL, "%4i: %4ix%4i %s %7.2f%s %s\n", i, image->uploadWidth, image->uploadHeight, format, printSize, sizeSuffix, image->imgName);
+		ri->Printf(PRINT_ALL, "%4i: %4ix%4i %s %7.2f%s %s\n", i, image->uploadWidth, image->uploadHeight, format, printSize, sizeSuffix, image->imgName);
 		estTotalSize += estSize;
 	}
 
 	float printSize = GetReadableSize(estTotalSize, &sizeSuffix);
 
-	ri.Printf(PRINT_ALL, " ---------\n");
-	ri.Printf(PRINT_ALL, " approx %i bytes (%.2f%s)\n", estTotalSize, printSize, sizeSuffix);
-	ri.Printf(PRINT_ALL, " %i total images\n\n", tr.numImages);
+	ri->Printf(PRINT_ALL, " ---------\n");
+	ri->Printf(PRINT_ALL, " approx %i bytes (%.2f%s)\n", estTotalSize, printSize, sizeSuffix);
+	ri->Printf(PRINT_ALL, " %i total images\n\n", tr.numImages);
 }
 
 //=======================================================================
@@ -308,7 +308,7 @@ static void ResampleTexture(byte *in, int inwidth, int inheight, byte *out,
 	byte	*pix1, *pix2, *pix3, *pix4;
 
 	if (outwidth>2048)
-		ri.Error(ERR_DROP, "ResampleTexture: max width");
+		ri->Error(ERR_DROP, "ResampleTexture: max width");
 
 	fracstep = inwidth * 0x10000 / outwidth;
 
@@ -1664,7 +1664,7 @@ static void RawImage_ScaleToPower2(byte **data, int *inout_width, int *inout_hei
 
 		//endTime = ri->Milliseconds();
 
-		//ri.Printf(PRINT_ALL, "upsampled %dx%d to %dx%d in %dms\n", width, height, scaled_width, scaled_height, endTime - startTime);
+		//ri->Printf(PRINT_ALL, "upsampled %dx%d to %dx%d in %dms\n", width, height, scaled_width, scaled_height, endTime - startTime);
 
 		*data = *resampledBuffer;
 		width = scaled_width;
@@ -2269,14 +2269,14 @@ image_t *R_CreateImage(const char *name, byte *pic, int width, int height, imgTy
 	int         glWrapClampMode;
 
 	if (strlen(name) >= MAX_QPATH) {
-		ri.Error(ERR_DROP, "R_CreateImage: \"%s\" is too long", name);
+		ri->Error(ERR_DROP, "R_CreateImage: \"%s\" is too long", name);
 	}
 	if (!strncmp(name, "*lightmap", 9)) {
 		isLightmap = qtrue;
 	}
 
 	if (tr.numImages == MAX_DRAWIMAGES) {
-		ri.Error(ERR_DROP, "R_CreateImage: MAX_DRAWIMAGES hit");
+		ri->Error(ERR_DROP, "R_CreateImage: MAX_DRAWIMAGES hit");
 	}
 	
 	image = tr.images[tr.numImages] = (image_t *)R_Hunk_Alloc(sizeof(image_t), qtrue);
@@ -2537,7 +2537,7 @@ static void R_CreateNormalMap(const char *name, byte *pic, int width, int height
 			byte *blurPic;
 
 			RGBAtoYCoCgA(pic, pic, width, height);
-			blurPic = ri.Malloc(width * height);
+			blurPic = ri->Malloc(width * height);
 
 			for (y = 1; y < height - 1; y++)
 			{
@@ -2622,7 +2622,7 @@ image_t	*R_FindImageFile(const char *name, imgType_t type, int flags)
 			// the white image can be used with any set of parms, but other mismatches are errors
 			if (strcmp(name, "*white")) {
 				if (image->flags != flags) {
-					ri.Printf(PRINT_DEVELOPER, "WARNING: reused image %s with mixed flags (%i vs %i)\n", name, image->flags, flags);
+					ri->Printf(PRINT_DEVELOPER, "WARNING: reused image %s with mixed flags (%i vs %i)\n", name, image->flags, flags);
 				}
 			}
 			return image;
@@ -3094,14 +3094,14 @@ void R_SetColorMappings(void) {
 	tr.identityLightByte = 255 * tr.identityLight;
 
 	if (r_intensity->value <= 1) {
-		ri.Cvar_Set("r_intensity", "1");
+		ri->Cvar_Set("r_intensity", "1");
 	}
 
 	if (r_gamma->value < 0.5f) {
-		ri.Cvar_Set("r_gamma", "0.5");
+		ri->Cvar_Set("r_gamma", "0.5");
 	}
 	else if (r_gamma->value > 3.0f) {
-		ri.Cvar_Set("r_gamma", "3.0");
+		ri->Cvar_Set("r_gamma", "3.0");
 	}
 
 	g = r_gamma->value;
@@ -3144,7 +3144,7 @@ void R_SetColorMappings(void) {
 
 	if (glConfig.deviceSupportsGamma)
 	{
-		ri.WIN_SetGamma(&glConfig, s_gammatable, s_gammatable, s_gammatable);
+		ri->WIN_SetGamma(&glConfig, s_gammatable, s_gammatable, s_gammatable);
 	}
 }
 

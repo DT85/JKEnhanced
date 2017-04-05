@@ -45,6 +45,11 @@ option(BuildSPGame "Whether to create projects for the SP gamecode (df2gamex86.d
 option(BuildSPRdGL1 "Whether to create projects for the SP default OpenGL 1 renderer (rdsp-GL1_x86.dll)" ON)
 option(BuildSPRdGL2 "Whether to create projects for the SP OpenGL 2 renderer (rdsp-GL2_x86.dll)" ON)
 
+option(BuildJK2SPEngine "Whether to create projects for the jk2 SP engine (openjo_sp.exe)" OFF)
+option(BuildJK2SPGame "Whether to create projects for the jk2 sp gamecode mod (jk2gamex86.dll)" OFF)
+option(BuildJK2SPRdGL1 "Whether to create projects for the jk2 sp OpenGL 1 renderer (rdjosp-gl1_x86.dll)" OFF)
+option(BuildJK2SPRdGL2 "Whether to create projects for the jk2 sp OpenGL 2 renderer (rdjosp-gl2_x86.dll)" OFF)
+
 option(BuildTests "Whether to build automatic unit tests (requires Boost)" OFF)
 
 Include(CMakeDependentOption)
@@ -142,7 +147,7 @@ message("Git revision is ${GIT_SHA1}")
 # Binary names
 set(SPEngine "ja_enhanced.${Architecture}")
 set(SPGame "jaenhancedgame${Architecture}")
-set(SPRDVanillaRenderer "rdcustomsp-vanilla_${Architecture}")
+set(SPRDGL1Renderer "rdsp-GL1_${Architecture}")
 set(SPRDGL2Renderer "rdsp-GL2_${Architecture}")
 set(MPEngine "openjk.${Architecture}")
 set(MPVanillaRenderer "rd-vanilla_${Architecture}")
@@ -152,7 +157,8 @@ set(MPCGame "cgame${Architecture}")
 set(MPUI "ui${Architecture}")
 set(JK2SPEngine "openjo_sp.${Architecture}")
 set(JK2SPGame "jospgame${Architecture}")
-set(JK2SPVanillaRenderer "rdjosp-vanilla_${Architecture}")
+set(JK2SPRDGL1Renderer "rdjosp-GL1_${Architecture}")
+set(JK2SPRDGL2Renderer "rdjosp-GL2_${Architecture}")
 set(AssetsPk3 "openjk-${Architecture}.pk3")
 # Library names
 set(MPBotLib "botlib")

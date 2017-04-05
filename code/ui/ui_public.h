@@ -74,7 +74,7 @@ typedef struct {
 
 	int			(*R_Font_StrLenPixels)(const char *text, const int setIndex, const float scale );
 	int			(*R_Font_HeightPixels)(const int setIndex, const float scale );
-	void		(*R_Font_DrawString)(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iMaxPixelWidth, const float scale, const float aspectCorrection );
+	void		(*R_Font_DrawString)(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iMaxPixelWidth, const float scale );
 	int			(*R_Font_StrLenChars)(const char *text);
 	qboolean	(*Language_IsAsian) (void);
 	qboolean	(*Language_UsesSpaces) (void);

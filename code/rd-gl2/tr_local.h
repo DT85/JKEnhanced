@@ -3106,6 +3106,13 @@ CRenderableSurface():
 		goreChain=0;
 		vboMesh = NULL;
 	}
+#else
+	void Init()
+	{
+		boneCache = 0;
+		surfaceData = 0;
+		vboMesh = NULL;
+	}
 #endif
 };
 

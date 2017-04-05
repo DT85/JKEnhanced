@@ -31,7 +31,7 @@ add_subdirectory("${SPDir}/rd-gl1")
 add_subdirectory("${SPDir}/rd-gl2")
 
 #    Add Engine Project
-if(BuildSPEngine)
+if(BuildSPEngine OR BuildJK2SPEngine)
 	# Libraries
 	if(WIN32)
 		set(SPEngineLibraries "winmm")
@@ -432,5 +432,9 @@ if(BuildSPEngine)
 	if(BuildSPEngine)
 		add_sp_project(${SPEngine} "SP Client" ${SPDir} ${JKAInstallDir} ${JKASPClientComponent})
 	endif(BuildSPEngine)
+	if(BuildJK2SPEngine)
+		set(SPEngineDefines ${SPEngineDefines} "JK2_MODE")
+		add_sp_project(${JK2SPEngine} "JK2 SP Client" ${JK2SPDir} ${JK2InstallDir} ${JK2SPClientComponent})
+	endif(BuildJK2SPEngine)
 
-endif(BuildSPEngine)
+endif(BuildSPEngine OR BuildJK2SPEngine)

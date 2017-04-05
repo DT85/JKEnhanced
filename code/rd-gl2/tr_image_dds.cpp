@@ -227,7 +227,7 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 
 	if (!picFormat)
 	{
-		ri.Printf(PRINT_ERROR, "R_LoadDDS() called without picFormat parameter!");
+		ri->Printf(PRINT_ERROR, "R_LoadDDS() called without picFormat parameter!");
 		return;
 	}
 
@@ -245,7 +245,7 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 	//
 	// load the file
 	//
-	len = ri.FS_ReadFile( ( char * ) filename, &buffer.v);
+	len = ri->FS_ReadFile( ( char * ) filename, &buffer.v);
 	if (!buffer.b || len < 0) {
 		return;
 	}
@@ -255,8 +255,8 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 	//
 	if (len < 4 + sizeof(*ddsHeader))
 	{
-		ri.Printf(PRINT_ALL, "File %s is too small to be a DDS file.\n", filename);
-		ri.FS_FreeFile(buffer.v);
+		ri->Printf(PRINT_ALL, "File %s is too small to be a DDS file.\n", filename);
+		ri->FS_FreeFile(buffer.v);
 		return;
 	}
 
@@ -265,8 +265,8 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 	//
 	if (*((ui32_t *)(buffer.b)) != EncodeFourCC("DDS "))
 	{
-		ri.Printf(PRINT_ALL, "File %s is not a DDS file.\n", filename);
-		ri.FS_FreeFile(buffer.v);
+		ri->Printf(PRINT_ALL, "File %s is not a DDS file.\n", filename);
+		ri->FS_FreeFile(buffer.v);
 		return;
 	}
 
@@ -278,8 +278,8 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 	{
 		if (len < 4 + sizeof(*ddsHeader) + sizeof(*ddsHeaderDxt10))
 		{
-			ri.Printf(PRINT_ALL, "File %s indicates a DX10 header it is too small to contain.\n", filename);
-			ri.FS_FreeFile(buffer.v);
+			ri->Printf(PRINT_ALL, "File %s indicates a DX10 header it is too small to contain.\n", filename);
+			ri->FS_FreeFile(buffer.v);
 			return;
 		}
 
@@ -391,8 +391,8 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 				break;
 
 			default:
-				ri.Printf(PRINT_ALL, "DDS File %s has unsupported DXGI format %d.", filename, ddsHeaderDxt10->dxgiFormat);
-				ri.FS_FreeFile(buffer.v);
+				ri->Printf(PRINT_ALL, "DDS File %s has unsupported DXGI format %d.", filename, ddsHeaderDxt10->dxgiFormat);
+				ri->FS_FreeFile(buffer.v);
 				return;
 				break;
 		}
@@ -425,8 +425,8 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 				*picFormat = GL_COMPRESSED_SIGNED_RG_RGTC2;
 			else
 			{
-				ri.Printf(PRINT_ALL, "DDS File %s has unsupported FourCC.", filename);
-				ri.FS_FreeFile(buffer.v);
+				ri->Printf(PRINT_ALL, "DDS File %s has unsupported FourCC.", filename);
+				ri->FS_FreeFile(buffer.v);
 				return;
 			}
 		}
@@ -441,8 +441,8 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 		}
 		else
 		{
-			ri.Printf(PRINT_ALL, "DDS File %s has unsupported RGBA format.", filename);
-			ri.FS_FreeFile(buffer.v);
+			ri->Printf(PRINT_ALL, "DDS File %s has unsupported RGBA format.", filename);
+			ri->FS_FreeFile(buffer.v);
 			return;
 		}
 	}
@@ -450,7 +450,7 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 	*pic = (byte *)R_Malloc(len, TAG_TEMP_WORKSPACE);
 	Com_Memcpy(*pic, data, len);
 
-	ri.FS_FreeFile(buffer.v);
+	ri->FS_FreeFile(buffer.v);
 }
 
 void R_SaveDDS(const char *filename, byte *pic, int width, int height, int depth)
@@ -493,7 +493,7 @@ void R_SaveDDS(const char *filename, byte *pic, int width, int height, int depth
 
 	Com_Memcpy(data + 4 + sizeof(*ddsHeader), pic, picSize);
 
-	ri.FS_WriteFile(filename, data, size);
+	ri->FS_WriteFile(filename, data, size);
 
 	R_Free(data);
 }

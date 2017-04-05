@@ -719,7 +719,7 @@ void RestoreGhoul2InfoArray()
 		TheGhoul2InfoArray();
 
 		size_t size;
-		const void *data = ri.PD_Load(PERSISTENT_G2DATA, &size);
+		const void *data = ri->PD_Load(PERSISTENT_G2DATA, &size);
 		if (data == NULL)
 		{
 			return;
@@ -746,7 +746,7 @@ void SaveGhoul2InfoArray()
 
 	assert(written == size);
 
-	if (!ri.PD_Store(PERSISTENT_G2DATA, data, size))
+	if (!ri->PD_Store(PERSISTENT_G2DATA, data, size))
 	{
 		Com_Printf(S_COLOR_RED "ERROR: Failed to store persistent renderer data.\n");
 	}
@@ -1277,7 +1277,11 @@ qboolean G2API_StopBoneAnim(CGhoul2Info *ghlInfo, const char *boneName)
 	return ret;
 }
 
-qboolean G2API_SetBoneAnglesIndex(CGhoul2Info *ghlInfo, const int index, const vec3_t angles, const int flags,
+extern qboolean G2_Set_Bone_Angles_Index(CGhoul2Info *ghlInfo, boneInfo_v &blist, const int index,
+	const float *angles, const int flags, const Eorientations yaw,
+	const Eorientations pitch, const Eorientations roll,
+	const int blendTime, const int currentTime);
+qboolean G2API_SetBoneAnglesOffsetIndex(CGhoul2Info *ghlInfo, const int index, const vec3_t angles, const int flags,
 	const Eorientations yaw, const Eorientations pitch, const Eorientations roll,
 	qhandle_t *, int blendTime, int AcurrentTime)
 {
@@ -1304,9 +1308,19 @@ qboolean G2API_SetBoneAnglesIndex(CGhoul2Info *ghlInfo, const int index, const v
 	return ret;
 }
 
-qboolean G2API_SetBoneAngles(CGhoul2Info *ghlInfo, const char *boneName, const vec3_t angles, const int flags,
-	const Eorientations up, const Eorientations left, const Eorientations forward,
+qboolean G2API_SetBoneAnglesIndex(CGhoul2Info *ghlInfo, const int index, const vec3_t angles, const int flags,
+	const Eorientations yaw, const Eorientations pitch, const Eorientations roll,
 	qhandle_t *, int blendTime, int AcurrentTime)
+{
+	return G2API_SetBoneAnglesOffsetIndex(ghlInfo, index, angles, flags, yaw, pitch, roll, 0, blendTime, AcurrentTime);
+}
+
+extern qboolean G2_Set_Bone_Angles(CGhoul2Info *ghlInfo, boneInfo_v &blist, const char *boneName, const float *angles,
+	const int flags, const Eorientations up, const Eorientations left, const Eorientations forward,
+	const int blendTime, const int currentTime);
+qboolean G2API_SetBoneAnglesOffset(CGhoul2Info *ghlInfo, const char *boneName, const vec3_t angles, const int flags,
+	const Eorientations up, const Eorientations left, const Eorientations forward,
+	qhandle_t *, int blendTime, int AcurrentTime, const vec3_t offset)
 {
 	//rww - RAGDOLL_BEGIN
 	if (ghlInfo && ghlInfo->mFlags & GHOUL2_RAG_STARTED)
@@ -1326,6 +1340,13 @@ qboolean G2API_SetBoneAngles(CGhoul2Info *ghlInfo, const char *boneName, const v
 	}
 	G2WARNING(ret, "G2API_SetBoneAngles Failed");
 	return ret;
+}
+
+qboolean G2API_SetBoneAngles(CGhoul2Info *ghlInfo, const char *boneName, const vec3_t angles, const int flags,
+	const Eorientations up, const Eorientations left, const Eorientations forward,
+	qhandle_t *, int blendTime, int AcurrentTime)
+{
+	return G2API_SetBoneAnglesOffset(ghlInfo, boneName, angles, flags, up, left, forward, 0, blendTime, AcurrentTime);
 }
 
 qboolean G2API_SetBoneAnglesMatrixIndex(CGhoul2Info *ghlInfo, const int index, const mdxaBone_t &matrix,
@@ -1906,13 +1927,13 @@ void G2API_CollisionDetect(CCollisionRecord *collRecMap, CGhoul2Info_v &ghoul2, 
 		// pre generate the world matrix - used to transform the incoming ray
 		G2_GenerateWorldMatrix(angles, position);
 
-		ri.GetG2VertSpaceServer()->ResetHeap();
+		ri->GetG2VertSpaceServer()->ResetHeap();
 
 		// now having done that, time to build the model
 #ifdef _G2_GORE
-		G2_TransformModel(ghoul2, frameNumber, scale, ri.GetG2VertSpaceServer(), useLod, false);
+		G2_TransformModel(ghoul2, frameNumber, scale, ri->GetG2VertSpaceServer(), useLod, false);
 #else
-		G2_TransformModel(ghoul2, frameNumber, scale, ri.GetG2VertSpaceServer(), useLod);
+		G2_TransformModel(ghoul2, frameNumber, scale, ri->GetG2VertSpaceServer(), useLod);
 #endif
 
 		// model is built. Lets check to see if any triangles are actually hit.
@@ -1927,7 +1948,7 @@ void G2API_CollisionDetect(CCollisionRecord *collRecMap, CGhoul2Info_v &ghoul2, 
 		G2_TraceModels(ghoul2, transRayStart, transRayEnd, collRecMap, entNum, eG2TraceType, useLod, fRadius);
 #endif
 
-		ri.GetG2VertSpaceServer()->ResetHeap();
+		ri->GetG2VertSpaceServer()->ResetHeap();
 		// now sort the resulting array of collision records so they are distance ordered
 		qsort(collRecMap, MAX_G2_COLLISIONS,
 			sizeof(CCollisionRecord), QsortDistance);
@@ -2182,9 +2203,9 @@ void G2API_AddSkinGore(CGhoul2Info_v &ghoul2, SSkinGoreData &gore)
 	for (lod = lodbias; lod<maxLod; lod++)
 	{
 		// now having done that, time to build the model
-		ri.GetG2VertSpaceServer()->ResetHeap();
+		ri->GetG2VertSpaceServer()->ResetHeap();
 
-		G2_TransformModel(ghoul2, gore.currentTime, gore.scale, ri.GetG2VertSpaceServer(), lod, true, &gore);
+		G2_TransformModel(ghoul2, gore.currentTime, gore.scale, ri->GetG2VertSpaceServer(), lod, true, &gore);
 
 		// now walk each model and compute new texture coordinates
 		G2_TraceModels(ghoul2, transHitLocation, transRayDirection, 0, gore.entNum, G2_NOCOLLIDE, lod, 1.0f, gore.SSize, gore.TSize, gore.theta, gore.shader, &gore, qtrue);

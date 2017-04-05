@@ -21,7 +21,9 @@ if(NOT InOpenJK)
 	message(FATAL_ERROR "Use the top-level cmake script!")
 endif(NOT InOpenJK)
 
-if(BuildSPRdGL1)
+
+
+if(BuildSPRdGL1 OR BuildJK2SPRdGL1)
 
 	set(SPRDGL1RendererIncludeDirectories ${SPDir})
 	set(SPRDGL1RendererIncludeDirectories
@@ -195,5 +197,10 @@ if(BuildSPRdGL1)
 	if(BuildSPRdGL1)
 		add_sp_renderer_project(${SPRDGL1Renderer} "SP GL1 Renderer" ${SPEngine} ${JKAInstallDir} ${JKASPClientComponent})
 	endif(BuildSPRdGL1)
+
+	if(BuildJK2SPRdGL1)
+		set(SPRDGL1Defines ${SPRDGL1Defines} "JK2_MODE")
+		add_sp_renderer_project(${JK2SPRDGL1Renderer} "JK2 SP GL1 Renderer" ${JK2SPEngine} ${JK2InstallDir} ${JK2SPClientComponent})
+	endif(BuildJK2SPRdGL1)
 
 endif(BuildSPRdGL1 OR BuildJK2SPRdGL1)
