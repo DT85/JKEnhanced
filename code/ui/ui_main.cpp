@@ -395,6 +395,20 @@ vmCvar_t	ui_rgb_saber_blue;
 vmCvar_t	ui_rgb_saber2_red;
 vmCvar_t	ui_rgb_saber2_green;
 vmCvar_t	ui_rgb_saber2_blue;
+extern void trap_R_FontRatioFix( float ratio );
+static vmCvar_t r_ratioFix;
+static void CG_Set2DRatio(void) {
+	if (r_ratioFix.integer)
+		uiInfo.uiDC.widthRatioCoef = (float)(SCREEN_WIDTH * uiInfo.uiDC.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * uiInfo.uiDC.glconfig.vidWidth);
+	else
+		uiInfo.uiDC.widthRatioCoef = 1.0f;
+
+
+	if (r_ratioFix.integer == 2)
+		trap_R_FontRatioFix(1.0f);
+	else
+		trap_R_FontRatioFix(uiInfo.uiDC.widthRatioCoef);
+}
 
 vmCvar_t	ui_char_head_model;
 vmCvar_t	ui_char_head_skin;
@@ -451,6 +465,8 @@ static cvarTable_t cvarTable[] =
 	{ &ui_char_color_blue,		"ui_char_color_blue",	"", 0},
 
 	{ &ui_PrecacheModels,		"ui_PrecacheModels",	"1", CVAR_ARCHIVE},
+
+	{ &r_ratioFix,			"r_ratioFix",			"1", CVAR_ARCHIVE},
 	
 	{ &ui_rgb_saber_red,		"ui_rgb_saber_red",	"", 0},
 	{ &ui_rgb_saber_blue,		"ui_rgb_saber_blue",	"", 0},
@@ -572,7 +588,7 @@ void _UI_Refresh( int realtime )
 	{
 		if (uiInfo.uiDC.cursorShow == qtrue)
 		{
-			UI_DrawHandlePic( uiInfo.uiDC.cursorx, uiInfo.uiDC.cursory, 48, 48, uiInfo.uiDC.Assets.cursor);
+			UI_DrawHandlePic((float)uiInfo.uiDC.cursorx, (float)uiInfo.uiDC.cursory, 40.0f*uiInfo.uiDC.widthRatioCoef, 40.0f, uiInfo.uiDC.Assets.cursor);
 		}
 	}
 }
@@ -664,7 +680,7 @@ void Text_Paint(float x, float y, float scale, vec4_t color, const char *text, i
 	case  ITEM_TEXTSTYLE_SHADOWED:			iStyleOR = STYLE_DROPSHADOW;break;	// JK2 drop shadow ( need a color for this )
 	case  ITEM_TEXTSTYLE_OUTLINED:			iStyleOR = STYLE_DROPSHADOW;break;	// JK2 drop shadow ( need a color for this )
 	case  ITEM_TEXTSTYLE_OUTLINESHADOWED:	iStyleOR = STYLE_DROPSHADOW;break;	// JK2 drop shadow ( need a color for this )
-	case  ITEM_TEXTSTYLE_SHADOWEDMORE:		iStyleOR = STYLE_DROPSHADOW;break;	// JK2 drop shadow ( need a color for this )
+	case  ITEM_TEXTSTYLE_SHADOWEDMORE:		iStyleOR = STYLE_DROPSHADOWDARK;break;	// JK2 drop shadow dark ( need a color for this )
 	}
 
 	ui.R_Font_DrawString(	x,		// int ox
@@ -1261,7 +1277,9 @@ static qboolean UI_RunMenuScript ( const char **args )
 #ifdef JK2_MODE
 			ui.Cmd_ExecuteText( EXEC_APPEND, "map kejim_post\n" );
 #else
-			ui.Cmd_ExecuteText( EXEC_APPEND, "map yavin1\n");
+			//DT EDIT: DF2 - START - Changed start up map
+			ui.Cmd_ExecuteText(EXEC_APPEND, "map 01nar\n");
+			//DT EDIT: DF2 - END
 #endif
 		}
 		else if (Q_stricmp(name, "startmap") == 0)
@@ -3797,6 +3815,7 @@ void _UI_Init( qboolean inGameLoad )
 		menuSet = "ui/menus.txt";
 	}
 
+
 #ifndef JK2_MODE
 	if (inGameLoad)
 	{
@@ -3857,6 +3876,11 @@ static void UI_RegisterCvars( void )
 	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ )
 	{
 		Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
+		if (!Q_stricmp(cv->cvarName, "r_ratioFix")) 
+		{
+			Cvar_Update(cv->vmCvar);
+			CG_Set2DRatio();
+		}
 	}
 }
 
@@ -3995,16 +4019,16 @@ void UI_LoadMenus(const char *menuFile, qboolean reset)
 
 	start = Sys_Milliseconds();
 
-	len = ui.FS_ReadFile(menuFile,(void **) &buffer);
+	len = ui.FS_ReadFile(menuFile, (void **)&buffer);
 
 	if (len<1)
 	{
 		Com_Printf( va( S_COLOR_YELLOW "menu file not found: %s, using default\n", menuFile ) );
-		len = ui.FS_ReadFile("ui/menus.txt",(void **) &buffer);
+		len = ui.FS_ReadFile("ui/menus.txt", (void **)&buffer);
 
 		if (len<1)
 		{
-			Com_Error( ERR_FATAL, "%s", va("default menu file not found: ui/menus.txt, unable to continue!\n", menuFile ));
+			Com_Error(ERR_FATAL, "%s", va("default menu file not found: ui/menus.txt, unable to continue!\n", menuFile));
 			return;
 		}
 	}
@@ -4065,6 +4089,7 @@ UI_Load
 void UI_Load(void)
 {
 	const char *menuSet;
+	const char *menuSetWide;
 	char lastName[1024];
 	menuDef_t *menu = Menu_GetFocused();
 
@@ -4085,8 +4110,9 @@ void UI_Load(void)
 	else
 #endif
 	{
-		menuSet= UI_Cvar_VariableString("ui_menuFiles");
+		menuSet = UI_Cvar_VariableString("ui_menuFiles");
 	}
+
 	if (menuSet == NULL || menuSet[0] == '\0')
 	{
 		menuSet = "ui/menus.txt";
@@ -4546,14 +4572,14 @@ static void UI_Update(const char *name)
 		switch (val)
 		{
 			case 0:
-				Cvar_SetValue( "ui_r_subdivisions", 4 );
+				Cvar_SetValue( "ui_r_subdivisions", 2 );
 				break;
 			case 1:
-				Cvar_SetValue( "ui_r_subdivisions", 12 );
+				Cvar_SetValue( "ui_r_subdivisions", 8 );
 				break;
 
 			case 2:
-				Cvar_SetValue( "ui_r_subdivisions", 20 );
+				Cvar_SetValue( "ui_r_subdivisions", 16 );
 				break;
 		}
 	}
@@ -4649,6 +4675,13 @@ static void UI_Update(const char *name)
 #define ASSET_SCROLLBAR_ARROWRIGHT  "gfx/menus/scrollbar_arrow_right.tga"
 #define ASSET_SCROLL_THUMB          "gfx/menus/scrollbar_thumb.tga"
 
+#define ASSET_SCROLLBAR_DP             "gfx/menus/scrollbar_dp.tga"
+#define ASSET_SCROLLBAR_ARROWDOWN_DP   "gfx/menus/scrollbar_arrow_dwn_a_dp.tga"
+#define ASSET_SCROLLBAR_ARROWUP_DP     "gfx/menus/scrollbar_arrow_up_a_dp.tga"
+#define ASSET_SCROLLBAR_ARROWLEFT_DP   "gfx/menus/scrollbar_arrow_left_dp.tga"
+#define ASSET_SCROLLBAR_ARROWRIGHT_DP  "gfx/menus/scrollbar_arrow_right_dp.tga"
+#define ASSET_SCROLL_THUMB_DP          "gfx/menus/scrollbar_thumb_dp.tga"
+
 
 /*
 =================
@@ -4664,6 +4697,13 @@ void AssetCache(void)
 	uiInfo.uiDC.Assets.scrollBarArrowLeft = ui.R_RegisterShaderNoMip( ASSET_SCROLLBAR_ARROWLEFT );
 	uiInfo.uiDC.Assets.scrollBarArrowRight = ui.R_RegisterShaderNoMip( ASSET_SCROLLBAR_ARROWRIGHT );
 	uiInfo.uiDC.Assets.scrollBarThumb = ui.R_RegisterShaderNoMip( ASSET_SCROLL_THUMB );
+
+	uiInfo.uiDC.Assets.scrollBar_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLLBAR_DP);
+	uiInfo.uiDC.Assets.scrollBarArrowDown_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLLBAR_ARROWDOWN_DP);
+	uiInfo.uiDC.Assets.scrollBarArrowUp_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLLBAR_ARROWUP_DP);
+	uiInfo.uiDC.Assets.scrollBarArrowLeft_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLLBAR_ARROWLEFT_DP);
+	uiInfo.uiDC.Assets.scrollBarArrowRight_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLLBAR_ARROWRIGHT_DP);
+	uiInfo.uiDC.Assets.scrollBarThumb_dp = ui.R_RegisterShaderNoMip(ASSET_SCROLL_THUMB_DP);
 
 	uiInfo.uiDC.Assets.sliderBar = ui.R_RegisterShaderNoMip( "menu/new/slider" );
 	uiInfo.uiDC.Assets.sliderThumb = ui.R_RegisterShaderNoMip( "menu/new/sliderthumb");
@@ -4730,6 +4770,10 @@ void UI_UpdateCvars( void )
 	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ )
 	{
 		Cvar_Update( cv->vmCvar );
+		if (!Q_stricmp(cv->cvarName, "r_ratioFix")) 
+		{
+			CG_Set2DRatio();
+		}
 	}
 }
 
@@ -5229,7 +5273,7 @@ void UI_MainMenu(void)
 	menuDef_t *m = Menus_ActivateByName("mainMenu");
 	if (!m)
 	{	//wha? try again
-		UI_LoadMenus("ui/menus.txt",qfalse);
+		UI_LoadMenus("ui/menus.txt", qfalse);
 	}
 	ui.Cvar_VariableStringBuffer("com_errorMessage", buf, sizeof(buf));
 	if (strlen(buf)) {
@@ -5263,6 +5307,7 @@ you to discard your changes if you did something you didnt want
 void UI_UpdateVideoSetup ( void )
 {
 	Cvar_Set ( "r_mode", Cvar_VariableString ( "ui_r_mode" ) );
+	Cvar_Set ( "r_ratioFix", Cvar_VariableString ( "ui_r_ratioFix" ) );
 	Cvar_Set ( "r_fullscreen", Cvar_VariableString ( "ui_r_fullscreen" ) );
 	Cvar_Set ( "r_colorbits", Cvar_VariableString ( "ui_r_colorbits" ) );
 	Cvar_Set ( "r_lodbias", Cvar_VariableString ( "ui_r_lodbias" ) );
@@ -5296,6 +5341,7 @@ void UI_GetVideoSetup ( void )
 
 	// Make sure the cvars are registered as read only.
 	Cvar_Register ( NULL, "ui_r_mode",					"0", CVAR_ROM );
+	Cvar_Register ( NULL, "ui_r_ratioFix",				"0", CVAR_ROM );
 	Cvar_Register ( NULL, "ui_r_fullscreen",			"0", CVAR_ROM );
 	Cvar_Register ( NULL, "ui_r_colorbits",				"0", CVAR_ROM );
 	Cvar_Register ( NULL, "ui_r_lodbias",				"0", CVAR_ROM );
@@ -5314,6 +5360,7 @@ void UI_GetVideoSetup ( void )
 
 	// Copy over the real video cvars into their temporary counterparts
 	Cvar_Set ( "ui_r_mode", Cvar_VariableString ( "r_mode" ) );
+	Cvar_Set ( "ui_r_ratioFix", Cvar_VariableString ( "r_ratioFix" ) );
 	Cvar_Set ( "ui_r_colorbits", Cvar_VariableString ( "r_colorbits" ) );
 	Cvar_Set ( "ui_r_fullscreen", Cvar_VariableString ( "r_fullscreen" ) );
 	Cvar_Set ( "ui_r_lodbias", Cvar_VariableString ( "r_lodbias" ) );
@@ -6009,7 +6056,7 @@ static void	UI_RecordWeapons( void )
 	int wpns = 0;
 	// always add blaster and saber
 	wpns |= (1<<WP_SABER);
-	wpns |= (1<<WP_BLASTER_PISTOL);
+	wpns |= (1<<WP_BRYAR_PISTOL);
 	wpns |= (1<< uiInfo.selectedWeapon1);
 	wpns |= (1<< uiInfo.selectedWeapon2);
 	wpns |= (1<< uiInfo.selectedThrowWeapon);

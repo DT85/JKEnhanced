@@ -1032,6 +1032,12 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_R_DRAWROTATEPIC2:
 		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
 		return 0;
+	case CG_R_ROTATEPIC2_RATIOFIX:
+		re.RotatePic2RatioFix( VMF(1) );
+		return 0;
+	case CG_R_FONTRATIOFIX:
+		re.FontRatioFix( VMF(1) );
+		return 0;
 	case CG_R_SETRANGEFOG:
 		re.SetRangedFog( VMF( 1 ) );
 		return 0;

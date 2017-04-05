@@ -155,6 +155,21 @@ typedef struct {
 	int		  (*GetAnimationCFG)(const char *psCFGFilename, char *psDest, int iDestSize);
 	qhandle_t (*RegisterShader)( const char *name );
 	qhandle_t (*RegisterShaderNoMip)( const char *name );
+	//DT EDIT: Rend2 - START
+	void(*ClearDecals)(void);
+	void(*AddDecalToScene)(qhandle_t shader, const vec3_t origin, const vec3_t dir, float orientation, float r, float g, float b, float a, qboolean alphaFade, float radius, qboolean temporary);
+	int(*LightForPoint)(vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir);
+	void(*AddAdditiveLightToScene)(const vec3_t org, float intensity, float r, float g, float b);
+	qboolean(*GetEntityToken)(char *buffer, int size);
+	//void(*SetRefractionProperties)(float distortionAlpha, float distortionStretch, qboolean distortionPrePost, qboolean distortionNegate);
+	//float(*GetDistanceCull)(void);
+	//void(*GetRealRes)(int *w, int *h);
+	//qboolean(*InitializeWireframeAutomap)(void);
+	//void(*InitSkins)(void);
+	//void(*InitShaders)(void);
+	//void(*HunkClearCrap)(void);
+	//qboolean(*inPVS)(const vec3_t p1, const vec3_t p2, byte *mask);
+	//DT EDIT: Rend2 - END
 	void	(*LoadWorld)( const char *name );
 	void	(*R_LoadImage)( const char *name, byte **pic, int *width, int *height );
 
@@ -190,6 +205,8 @@ typedef struct {
 		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
 	void	(*DrawRotatePic2) ( float x, float y, float w, float h,
 		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
+	void	(*RotatePic2RatioFix) (float ratio);
+	void	(*FontRatioFix) (float ratio);
 	void	(*LAGoggles)(void);
 	void	(*Scissor) ( float x, float y, float w, float h);	// 0 = white
 

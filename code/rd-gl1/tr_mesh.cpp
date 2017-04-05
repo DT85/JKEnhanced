@@ -411,8 +411,9 @@ void R_AddMD3Surfaces( trRefEntity_t *ent ) {
 		if ( !personalModel
 			&& r_shadows->integer == 2
 			&& fogNum == 0
-			&& (ent->e.renderfx & RF_SHADOW_PLANE )
-			&& !(ent->e.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) )
+			//DT EDIT: DF2 - Allow shadows from any MD3
+			//&& (ent->e.renderfx & RF_SHADOW_PLANE )
+			&& !(ent->e.renderfx & ( /*RF_NOSHADOW |*/ RF_DEPTHHACK ) )
 			&& shader->sort == SS_OPAQUE ) {
 			R_AddDrawSurf( (surfaceType_t *)surface, tr.shadowShader, 0, qfalse );
 		}

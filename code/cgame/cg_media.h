@@ -97,8 +97,12 @@ typedef enum
 	OHB_SABERSTYLE_FAST,
 	OHB_SCANLINE_LEFT,
 	OHB_SCANLINE_RIGHT,
+	OHB_STATICLINE_LEFT,
+	OHB_STATICLINE_RIGHT,
 	OHB_FRAME_LEFT,
 	OHB_FRAME_RIGHT,
+	OHB_INNERFRAME_LEFT,
+	OHB_INNERFRAME_RIGHT,
 	OHB_MAX
 } otherhudbits_t;
 
@@ -135,6 +139,9 @@ typedef struct {
 
 	qhandle_t	loadTick;
 	qhandle_t	loadTickCap;
+
+	qhandle_t	newgameloadTick;
+	qhandle_t	newgameloadTickCap;
 
 	//			HUD artwork
 	int			currentBackground;
@@ -233,6 +240,8 @@ typedef struct {
 	//
 	qhandle_t	qhFontSmall;
 	qhandle_t	qhFontMedium;
+	qhandle_t	qhFontArimo;
+	qhandle_t	qhFontArimob;
 
 	// special effects models / etc.
 	qhandle_t	personalShieldShader;
@@ -256,6 +265,8 @@ typedef struct {
 	qhandle_t	useableHint;
 
 	qhandle_t	levelLoad;
+
+	qhandle_t	newgamelevelLoad;
 
 	//new stuff for Jedi Academy
 	//force power icons
@@ -332,6 +343,10 @@ typedef struct {
 	sfxHandle_t	zoomLoop;
 	sfxHandle_t	zoomEnd;
 	sfxHandle_t	disruptorZoomLoop;
+
+	// Zoom ratio fix helpers
+	qhandle_t	zoomLeft;
+	qhandle_t	zoomRight;
 
 	//new stuff for Jedi Academy
 	sfxHandle_t	drainSound;
@@ -458,6 +473,7 @@ typedef struct {
 	
 	cgRadarMap_t	radarMap;
 
+	float			widthRatioCoef;			// to make 2D images be not stretched
 } cgs_t;
 
 extern	cgs_t			cgs;

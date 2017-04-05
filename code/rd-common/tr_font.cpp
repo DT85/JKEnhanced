@@ -1460,6 +1460,13 @@ CFontInfo *GetFont(int index)
 	return pFont;
 }
 
+static float fontRatioFix = 1.0f;
+void RE_FontRatioFix(float ratio) {
+	if (ratio <= 0.0f)
+		fontRatioFix = 1.0f;
+	else
+		fontRatioFix = ratio;
+}
 
 int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float fScale)
 {
@@ -1545,7 +1552,7 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float 
 		{
 			int iPixelAdvance = curfont->GetLetterHorizAdvance( uiLetter );
 
-			float fValue = iPixelAdvance * ((uiLetter > (unsigned)g_iNonScaledCharRange) ? fScaleAsian : fScale);
+			float fValue = iPixelAdvance * ((uiLetter > (unsigned)g_iNonScaledCharRange) ? fScaleAsian : fScale) * fontRatioFix;
 			fThisWidth += curfont->mbRoundCalcs ? Round( fValue ) : fValue;
 			if (fThisWidth > fMaxWidth)
 			{
@@ -1746,10 +1753,8 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 				RE_StretchPic(curfont->mbRoundCalcs ? fx + Round(pLetter->horizOffset * fThisScale) : fx + pLetter->horizOffset * fThisScale, // float x
 								(uiLetter > 255) ? fy - fAsianYAdjust : fy,	// float y
-									//curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale * fAspectCorrection) :
-										pLetter->width * fThisScale * fAspectCorrection,	// float w
-									//curfont->mbRoundCalcs ? Round(pLetter->height * fThisScale * fAspectCorrection) :
-										pLetter->height * fThisScale, // float h
+								curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale,	// float w
+								curfont->mbRoundCalcs ? Round(pLetter->height * fThisScale) : pLetter->height * fThisScale, // float h
 								pLetter->s,						// float s1
 								pLetter->t,						// float t1
 								pLetter->s2,					// float s2
@@ -1848,7 +1853,19 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 		const vec4_t v4DKGREY2 = {0.15f, 0.15f, 0.15f, rgba?rgba[3]:1.0f};
 
 		gbInShadow = qtrue;
-		RE_Font_DrawString(ox + offset, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iMaxPixelWidth, fScale, fAspectCorrection);
+		RE_Font_DrawString(ox + offset * fontRatioFix, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iMaxPixelWidth, fScale);
+		gbInShadow = qfalse;
+	}
+
+	// Draw a dark dropshadow if required
+	if (iFontHandle & STYLE_DROPSHADOWDARK)
+	{
+		offset = Round(curfont->GetPointSize() * fScale * 0.075f);
+
+		const vec4_t v4BLACK = { 0.00f, 0.00f, 0.00f, rgba ? rgba[3] : 1.0f };
+
+		gbInShadow = qtrue;
+		RE_Font_DrawString(ox + offset, oy + offset, psText, v4BLACK, iFontHandle & SET_MASK, iMaxPixelWidth, fScale);
 		gbInShadow = qfalse;
 	}
 
@@ -1883,7 +1900,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 			break;
 		case 32:						// Space
 			pLetter = curfont->GetLetter(' ');
-			fx += curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fScale) : pLetter->horizAdvance * fScale;
+			fx += curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fScale * fontRatioFix) : pLetter->horizAdvance * fScale * fontRatioFix;
 			bNextTextWouldOverflow = ( iMaxPixelWidth != -1 && ((fx-fox) > (float)iMaxPixelWidth) ) ? qtrue : qfalse; // yeuch
 			break;
 		case '_':	// has a special word-break usage if in Thai (and followed by a thai char), and should not be displayed, else treat as normal
@@ -1926,7 +1943,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 				fx -= curfont->mbRoundCalcs ? Round(7.0f * fThisScale) : 7.0f * fThisScale;
 			}
 
-			float fAdvancePixels = curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fThisScale) : pLetter->horizAdvance * fThisScale;
+			float fAdvancePixels = curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fThisScale) : pLetter->horizAdvance * fThisScale * fontRatioFix;
 			bNextTextWouldOverflow = ( iMaxPixelWidth != -1 && (((fx+fAdvancePixels)-fox) > (float)iMaxPixelWidth) ) ? qtrue : qfalse; // yeuch
 			if (!bNextTextWouldOverflow)
 			{
@@ -1940,7 +1957,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 				RE_StretchPic(curfont->mbRoundCalcs ? fx + Round(pLetter->horizOffset * fThisScale) : fx + pLetter->horizOffset * fThisScale, // float x
 								(uiLetter > (unsigned)g_iNonScaledCharRange) ? fy - fAsianYAdjust : fy,	// float y
-								curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale * fAspectCorrection,	// float w
+								curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale * fontRatioFix,	// float w
 								curfont->mbRoundCalcs ? Round(pLetter->height * fThisScale) : pLetter->height * fThisScale, // float h
 								pLetter->s,						// float s1
 								pLetter->t,						// float t1

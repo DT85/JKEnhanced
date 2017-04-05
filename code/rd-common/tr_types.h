@@ -189,7 +189,6 @@ Ghoul2 Insert End
 
 } refEntity_t;
 
-
 #define	MAX_RENDER_STRINGS			8
 #define	MAX_RENDER_STRING_LENGTH	32
 
@@ -230,7 +229,8 @@ typedef enum {
 typedef enum {
 	TC_NONE,
 	TC_S3TC,
-	TC_S3TC_DXT
+	TC_S3TC_DXT,
+	TC_S3TC_ARB
 } textureCompression_t;
 
 typedef struct glconfig_s {

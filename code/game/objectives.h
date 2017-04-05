@@ -34,8 +34,21 @@ typedef enum //# Objective_e
 	//
 	//=================================================
 
+	//DT EDIT: DF2 - START - Objectives
 	LIGHTSIDE_OBJ = 0,
-	HOTH2_OBJ1,
+	DF2_01NAR_OBJ,
+	DF2_02NAR_OBJ1,
+	DF2_02NAR_OBJ2,
+	DF2_02NAR_OBJ3,
+	DF2_03KATARN_OBJ,
+	DF2_07YUN_OBJ,
+	DF2_11GORC_OBJ1,
+	DF2_11GORC_OBJ2,
+
+	T3_BOUNTY_OBJ1, //needed as this is called elsewhere.
+	T2_RANCOR_OBJ5, //needed as this is called elsewhere.
+
+	/*HOTH2_OBJ1,
 	HOTH2_OBJ2,
 	HOTH2_OBJ3,
 	HOTH3_OBJ1,
@@ -130,7 +143,8 @@ typedef enum //# Objective_e
 	T1_SURPRISE_OBJ1,
 	T1_SURPRISE_OBJ2,
 	T1_SURPRISE_OBJ3,
-	T1_SURPRISE_OBJ4,
+	T1_SURPRISE_OBJ4,*/
+	//DT EDIT: DF2 - END
 
 	//# #eol
 	MAX_OBJECTIVES,
@@ -215,8 +229,20 @@ stringID_table_t objectiveTable [] =
 	//=================================================
 	//
 	//=================================================
+	//DT EDIT: DF2 - START - Objectives
 	ENUM2STRING(LIGHTSIDE_OBJ),
-	ENUM2STRING(HOTH2_OBJ1),
+	ENUM2STRING(DF2_01NAR_OBJ),
+	ENUM2STRING(DF2_02NAR_OBJ1),
+	ENUM2STRING(DF2_02NAR_OBJ2),
+	ENUM2STRING(DF2_02NAR_OBJ3),
+	ENUM2STRING(DF2_03KATARN_OBJ),
+	ENUM2STRING(DF2_07YUN_OBJ),
+	ENUM2STRING(DF2_11GORC_OBJ1),
+	ENUM2STRING(DF2_11GORC_OBJ2),
+
+	ENUM2STRING(T3_BOUNTY_OBJ1), //needed as this is called elsewhere.
+	ENUM2STRING(T2_RANCOR_OBJ5), //needed as this is called elsewhere.
+	/*ENUM2STRING(HOTH2_OBJ1),
 	ENUM2STRING(HOTH2_OBJ2),
 	ENUM2STRING(HOTH2_OBJ3),
 	ENUM2STRING(HOTH3_OBJ1),
@@ -311,7 +337,8 @@ stringID_table_t objectiveTable [] =
 	ENUM2STRING(T1_SURPRISE_OBJ1),
 	ENUM2STRING(T1_SURPRISE_OBJ2),
 	ENUM2STRING(T1_SURPRISE_OBJ3),
-	ENUM2STRING(T1_SURPRISE_OBJ4),
+	ENUM2STRING(T1_SURPRISE_OBJ4),*/
+	//DT EDIT: DF2 - END
 
 	//stringID_table_t Must end with a null entry
 	{ "", 0 }

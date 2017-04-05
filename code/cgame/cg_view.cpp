@@ -807,7 +807,9 @@ static void CG_OffsetThirdPersonView( void )
 		}
 	}
 
-	if ( !cg.renderingThirdPerson && (cg.snap->ps.weapon == WP_SABER||cg.snap->ps.weapon == WP_MELEE) )
+	//DT EDIT: DF2 - START - removed WP_MELEE from this for no 3P auto switch
+	if (!cg.renderingThirdPerson && (cg.snap->ps.weapon == WP_SABER))
+	//DT EDIT: DF2 - END
 	{// First person saber
 		// FIXME: use something network-friendly
 		vec3_t	org, viewDir;

@@ -2307,8 +2307,9 @@ void RenderSurfaces(CRenderSurface &RS)
 		if ( /*!RS.personalModel
 			&& */r_shadows->integer == 2
 //			&& RS.fogNum == 0
-			&& (RS.renderfx & RF_SHADOW_PLANE )
-			&& !(RS.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) )
+			//DT EDIT: DF2 - Allow shadows from any GLM
+			//&& (RS.renderfx & RF_SHADOW_PLANE )
+			&& !(RS.renderfx & ( /*RF_NOSHADOW |*/ RF_DEPTHHACK ) )
 			&& shader->sort == SS_OPAQUE )
 		{		// set the surface info to point at the where the transformed bone list is going to be for when the surface gets rendered out
 			CRenderableSurface *newSurf = AllocRS();
