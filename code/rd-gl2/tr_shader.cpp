@@ -318,7 +318,7 @@ static int NameToSrcBlendMode( const char *name )
 	{
 		if ( r_ignoreDstAlpha->integer )
 		{
-			return GLS_DSTBLEND_ONE;
+			return GLS_SRCBLEND_ONE;
 		}
 
 		return GLS_SRCBLEND_DST_ALPHA;
@@ -327,7 +327,7 @@ static int NameToSrcBlendMode( const char *name )
 	{
 		if ( r_ignoreDstAlpha->integer )
 		{
-			return GLS_DSTBLEND_ZERO;
+			return GLS_SRCBLEND_ZERO;
 		}
 
 		return GLS_SRCBLEND_ONE_MINUS_DST_ALPHA;
