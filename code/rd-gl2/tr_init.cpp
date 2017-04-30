@@ -2234,5 +2234,10 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI(int apiVersion, refimport_t *ri
 
 	//Swap_Init();
 
+	// JK2 specific stuff
+	re.TempRawImage_CleanUp = []() {};
+	re.TempRawImage_ReadFromFile = [](const char* psLocalFileNmae, int *piWidth, int *piHeight, byte* pbReSampleBuffer, qboolean qbVertFlip) -> byte* { return NULL; };
+	re.SaveJPGToBuffer = [](byte* buffer, size_t bufSize, int quality, int image_width, int image_height, byte* image_buffer, int padding, bool flip_vertical) -> size_t { return 0; };
+
 	return &re;
 }
