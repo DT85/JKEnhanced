@@ -1179,6 +1179,9 @@ void	trap_CIN_SetExtents (int handle, int x, int y, int w, int h);
 void	*cgi_Z_Malloc( int size, int tag );
 void	cgi_Z_Free( void *ptr );
 
+void cgi_UI_SetActive_Menu(char *name);
+void cgi_UI_Menu_OpenByName(char *buf);
+
 int		cgi_SP_Register(const char *text, qboolean persist);
 int		cgi_SP_GetStringTextString(const char *text, char *buf, int bufferlength);
 int		cgi_SP_GetStringText(int ID, char *buffer, int bufferLength);

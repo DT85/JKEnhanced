@@ -1309,6 +1309,7 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("ingamecinematic", CL_PlayInGameCinematic_f);
 	Cmd_AddCommand ("uimenu", CL_GenericMenu_f);
 	Cmd_AddCommand ("datapad", CL_DataPad_f);
+	Cmd_AddCommand ("developer_menu", CL_DeveloperMenu_f);
 	Cmd_AddCommand ("endscreendissolve", CL_EndScreenDissolve_f);
 
 	CL_InitRef();

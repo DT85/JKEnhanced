@@ -456,6 +456,16 @@ void cgi_Z_Free( void *ptr )
 	Q_syscall(CG_Z_FREE,ptr);
 }
 
+void cgi_UI_SetActive_Menu(char *name)
+{
+	Q_syscall(CG_UI_SETACTIVE_MENU, name);
+}
+
+void cgi_UI_Menu_OpenByName(char *buf)
+{
+	Q_syscall(CG_UI_MENU_OPENBYNAME, buf);
+}
+
 void cgi_UI_Menu_Reset(void)
 {
 	Q_syscall(CG_UI_MENU_RESET);

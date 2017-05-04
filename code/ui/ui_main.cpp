@@ -5677,7 +5677,7 @@ static void UI_InitAllocForcePowers ( const char *forceName )
 
 	client_t* cl = &svs.clients[0];	// 0 because only ever us as a player
 
-	// NOTE: this UIScript can be called outside the running game now, so handle that case
+	// NOTE: this can be called outside the running game now, so handle that case
 	// by getting info frim UIInfo instead of PlayerState
 	if( cl )
 	{
