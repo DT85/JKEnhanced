@@ -512,7 +512,7 @@ static cvarTable_t cvarTable[] =
 
 	{ &ui_PrecacheModels,		"ui_PrecacheModels",	"1", NULL, CVAR_ARCHIVE},
 
-	{ &ui_screenshotType,		"ui_screenshotType",	"jpg", UI_UpdateScreenshot, CVAR_ARCHIVE }
+	{ &ui_screenshotType,		"ui_screenshotType",	"jpg", UI_UpdateScreenshot, CVAR_ARCHIVE },
 	
 	{ &ui_rgb_saber_red,		"ui_rgb_saber_red",	"", NULL, 0},
 	{ &ui_rgb_saber_blue,		"ui_rgb_saber_blue",	"", NULL, 0},
