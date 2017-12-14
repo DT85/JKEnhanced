@@ -934,6 +934,7 @@ void CL_InitRenderer( void ) {
 	cls.charSetShader = re.RegisterShaderNoMip("gfx/2d/charsgrid_med");
 	cls.whiteShader = re.RegisterShader( "white" );
 	cls.consoleShader = re.RegisterShader( "console" );
+	cls.ratioFix = (float)(SCREEN_WIDTH * cls.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * cls.glconfig.vidWidth);
 	g_console_field_width = cls.glconfig.vidWidth / SMALLCHAR_WIDTH - 2;
 	g_consoleField.widthInChars = g_console_field_width;
 }
@@ -1072,9 +1073,9 @@ static CMiniHeap *GetG2VertSpaceServer( void ) {
 
 // NOTENOTE: If you change the output name of rd-vanilla, change this define too!
 #ifdef JK2_MODE
-#define DEFAULT_RENDER_LIBRARY	"rdjosp-vanilla"
+#define DEFAULT_RENDER_LIBRARY	"rdjosp-gl2"
 #else
-#define DEFAULT_RENDER_LIBRARY	"rddf2sp-vanilla"
+#define DEFAULT_RENDER_LIBRARY	"rdsp-gl2"
 #endif
 
 void CL_InitRef( void ) {
@@ -1281,9 +1282,7 @@ void CL_Init( void ) {
 #ifdef JK2_MODE
 	Cvar_Get ("name", "Kyle", CVAR_USERINFO | CVAR_ARCHIVE );
 #else
-	//DT EDIT: DF2 - START - Changed to kyle
-	Cvar_Get("name", "Kyle", CVAR_USERINFO | CVAR_ARCHIVE);
-	//DT EDIT: DF2 - END
+	Cvar_Get ("name", "Jaden", CVAR_USERINFO | CVAR_ARCHIVE );
 #endif
 
 #ifdef JK2_MODE
@@ -1292,11 +1291,9 @@ void CL_Init( void ) {
 	Cvar_Get ("sex", "male", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("handicap", "100", CVAR_USERINFO | CVAR_SAVEGAME );
 #else
-	//DT EDIT: DF2 - START - Changed to kyle
-	Cvar_Get("sex", "m", CVAR_USERINFO | CVAR_ARCHIVE | CVAR_SAVEGAME | CVAR_NORESTART);
-	Cvar_Get("snd", "df2_kyle", CVAR_USERINFO | CVAR_ARCHIVE | CVAR_SAVEGAME | CVAR_NORESTART);//UI_SetSexandSoundForModel changes to match sounds.cfg for model
-	//DT EDIT: DF2 - END
-	Cvar_Get("handicap", "100", CVAR_USERINFO | CVAR_SAVEGAME | CVAR_NORESTART);
+	Cvar_Get ("sex", "f", CVAR_USERINFO | CVAR_ARCHIVE | CVAR_SAVEGAME | CVAR_NORESTART );
+	Cvar_Get ("snd", "jaden_fmle", CVAR_USERINFO | CVAR_ARCHIVE | CVAR_SAVEGAME | CVAR_NORESTART );//UI_SetSexandSoundForModel changes to match sounds.cfg for model
+	Cvar_Get ("handicap", "100", CVAR_USERINFO | CVAR_SAVEGAME | CVAR_NORESTART);
 #endif
 
 	//

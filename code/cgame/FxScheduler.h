@@ -20,6 +20,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 ===========================================================================
 */
 
+#pragma once
 #if !defined(FX_UTIL_H_INC)
 	#include "FxUtil.h"
 #endif

@@ -277,6 +277,38 @@ gitem_t	*FindItem( const char *className ) {
 	return NULL;
 }
 
+/*
+================
+BG_GetAmmoMax
+
+Get maximum ammo count for a given ammo index
+================
+*/
+
+int BG_GetAmmoMax(int ammoIndex) {
+	switch(ammoIndex) {
+		default:
+		case AMMO_NONE:
+		case AMMO_EMPLACED:
+			return g_maxAmmo_Emplaced->integer;
+		case AMMO_FORCE:
+			return g_maxAmmo_Force->integer;
+		case AMMO_BLASTER:
+			return g_maxAmmo_Blaster->integer;
+		case AMMO_POWERCELL:
+			return g_maxAmmo_Powercell->integer;
+		case AMMO_METAL_BOLTS:
+			return g_maxAmmo_MetalBolts->integer;
+		case AMMO_ROCKETS:
+			return g_maxAmmo_Rockets->integer;
+		case AMMO_THERMAL:
+			return g_maxAmmo_Thermal->integer;
+		case AMMO_TRIPMINE:
+			return g_maxAmmo_TripMines->integer;
+		case AMMO_DETPACK:
+			return g_maxAmmo_DetPack->integer;
+	}
+}
 
 /*
 ================
@@ -306,7 +338,7 @@ qboolean	BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps 
 		}
 
 		// Make sure that we aren't already full on ammo for this weapon
-		if ( ps->ammo[weaponData[item->giTag].ammoIndex] >= ammoData[weaponData[item->giTag].ammoIndex].max )
+		if ( ps->ammo[weaponData[item->giTag].ammoIndex] >= BG_GetAmmoMax(weaponData[item->giTag].ammoIndex) )
 		{
 			// full, so don't grab the item
 			return qfalse;
@@ -341,14 +373,14 @@ qboolean	BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps 
 				break;
 			}
 
-			if ( ps->ammo[ item->giTag ] >= ammoData[item->giTag].max )	// checkme
+			if ( ps->ammo[ item->giTag ] >= BG_GetAmmoMax(item->giTag) )	// checkme			
 			{
 				return qfalse;		// can't hold any more
 			}
 		}
 		else
 		{
-			if (ps->forcePower >= ammoData[item->giTag].max*2)
+			if (ps->forcePower >= BG_GetAmmoMax(item->giTag)*2)
 			{
 				return qfalse;		// can't hold any more
 			}
@@ -359,9 +391,12 @@ qboolean	BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps 
 
 	case IT_ARMOR:
 		// we also clamp armor to the maxhealth for handicapping
-		if ( ps->stats[STAT_ARMOR] >= ps->stats[STAT_MAX_HEALTH] ) {
+		if ( ps->stats[STAT_ARMOR] > ps->stats[STAT_MAX_HEALTH] ) {
 			return qfalse;
 		}
+		if ( ps->stats[STAT_ARMOR] == ps->stats[STAT_MAX_HEALTH] &&
+			!g_armorlgoverflow->integer )
+			return qfalse;
 		return qtrue;
 
 	case IT_HEALTH:
@@ -387,10 +422,38 @@ qboolean	BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps 
 	case IT_HOLDABLE:
 		if ( item->giTag >= INV_ELECTROBINOCULARS && item->giTag <= INV_SENTRY )
 		{
-			// hardcoded--can only pick up five of any holdable
-			if ( ps->inventory[item->giTag] >= 5 )
-			{
-				return qfalse;
+			switch(item->giTag) {
+				case INV_BACTA_CANISTER:
+					if( ps->inventory[item->giTag] >= g_maxbactas->integer )
+						return qfalse;
+					break;
+				case INV_SEEKER:
+					if( ps->inventory[item->giTag] >= g_maxseekers->integer )
+						return qfalse;
+					break;
+				case INV_SENTRY:
+					if( ps->inventory[item->giTag] >= g_maxsentries->integer )
+						return qfalse;
+					break;
+				case INV_GOODIE_KEY:
+					if( ps->inventory[item->giTag] >= g_maxkeys->integer )
+						return qfalse;
+				case INV_ELECTROBINOCULARS:
+					if( g_binocrestrict->integer && ps->inventory[item->giTag] >= 1) {
+						if( ps->batteryCharge >= MAX_BATTERIES )
+							return qfalse;
+					}
+					return qtrue;
+				case INV_LIGHTAMP_GOGGLES:
+					if( g_larestrict->integer && ps->inventory[item->giTag] >= 1 ) {
+						if( ps->batteryCharge >= MAX_BATTERIES )
+							return qfalse;
+					}
+					return qtrue;
+				default:
+					if( ps->inventory[item->giTag] >= 5 )
+						return qfalse;
+					break;
 			}
 		}
 		return qtrue;

@@ -1255,7 +1255,7 @@ void ammo_think( gentity_t *ent )
 	// Still has ammo to give
 	if (ent->count > 0 && ent->enemy )
 	{
-		dif = ammoData[AMMO_BLASTER].max  - ent->enemy->client->ps.ammo[AMMO_BLASTER];
+		dif = BG_GetAmmoMax(AMMO_BLASTER)  - ent->enemy->client->ps.ammo[AMMO_BLASTER];
 
 		if (dif > 2 )
 		{
@@ -1308,7 +1308,7 @@ void ammo_use( gentity_t *self, gentity_t *other, gentity_t *activator)
 	{
 		if (other->client)
 		{
-			dif = ammoData[AMMO_BLASTER].max - other->client->ps.ammo[AMMO_BLASTER];
+			dif = BG_GetAmmoMax(AMMO_BLASTER) - other->client->ps.ammo[AMMO_BLASTER];
 		}
 		else
 		{	// Being triggered to be used up
@@ -1352,14 +1352,14 @@ void mega_ammo_use( gentity_t *self, gentity_t *other, gentity_t *activator )
 	G_UseTargets( self, activator );
 
 	// first use, adjust the max ammo a person can hold for each type of ammo
-	ammoData[AMMO_BLASTER].max	= 999;
-	ammoData[AMMO_POWERCELL].max		= 999;
+	//BG_GetAmmoMax(AMMO_BLASTER)	= 999;
+	//BG_GetAmmoMax(AMMO_POWERCELL)		= 999;
 
 	// Set up our count with whatever the max difference will be
 	if ( other->client->ps.ammo[AMMO_POWERCELL] > other->client->ps.ammo[AMMO_BLASTER] )
-		self->count = ammoData[AMMO_BLASTER].max - other->client->ps.ammo[AMMO_BLASTER];
+		self->count = BG_GetAmmoMax(AMMO_BLASTER) - other->client->ps.ammo[AMMO_BLASTER];
 	else
-		self->count = ammoData[AMMO_POWERCELL].max - other->client->ps.ammo[AMMO_POWERCELL];
+		self->count = BG_GetAmmoMax(AMMO_POWERCELL) - other->client->ps.ammo[AMMO_POWERCELL];
 
 //	G_Sound( self, G_SoundIndex("sound/player/superenergy.wav") );
 
@@ -1394,11 +1394,11 @@ void mega_ammo_think( gentity_t *self )
 		self->enemy->client->ps.ammo[AMMO_POWERCELL]	+= ammo_add;
 
 		// Now cap to prevent overflows
-		if ( self->enemy->client->ps.ammo[AMMO_BLASTER] > ammoData[AMMO_BLASTER].max )
-			self->enemy->client->ps.ammo[AMMO_BLASTER] = ammoData[AMMO_BLASTER].max;
+		if ( self->enemy->client->ps.ammo[AMMO_BLASTER] > BG_GetAmmoMax(AMMO_BLASTER) )
+			self->enemy->client->ps.ammo[AMMO_BLASTER] = BG_GetAmmoMax(AMMO_BLASTER);
 
-		if ( self->enemy->client->ps.ammo[AMMO_POWERCELL] > ammoData[AMMO_POWERCELL].max )
-			self->enemy->client->ps.ammo[AMMO_POWERCELL] = ammoData[AMMO_POWERCELL].max;
+		if ( self->enemy->client->ps.ammo[AMMO_POWERCELL] > BG_GetAmmoMax(AMMO_POWERCELL) )
+			self->enemy->client->ps.ammo[AMMO_POWERCELL] = BG_GetAmmoMax(AMMO_POWERCELL);
 
 		// Decrement the count given counter
 		self->count -= ammo_add;
@@ -1440,7 +1440,7 @@ void touch_ammo_crystal_tigger( gentity_t *self, gentity_t *other, trace_t *trac
 		return;
 	}
 
-	if ( other->client->ps.ammo[ AMMO_POWERCELL ] >= ammoData[AMMO_POWERCELL].max )
+	if ( other->client->ps.ammo[ AMMO_POWERCELL ] >= BG_GetAmmoMax(AMMO_POWERCELL) )
 	{
 		return;		// can't hold any more
 	}
@@ -1448,9 +1448,9 @@ void touch_ammo_crystal_tigger( gentity_t *self, gentity_t *other, trace_t *trac
 	// Add the ammo
 	other->client->ps.ammo[AMMO_POWERCELL] += self->owner->count;
 
-	if ( other->client->ps.ammo[AMMO_POWERCELL] > ammoData[AMMO_POWERCELL].max )
+	if ( other->client->ps.ammo[AMMO_POWERCELL] > BG_GetAmmoMax(AMMO_POWERCELL) ) 
 	{
-		other->client->ps.ammo[AMMO_POWERCELL] = ammoData[AMMO_POWERCELL].max;
+		other->client->ps.ammo[AMMO_POWERCELL] = BG_GetAmmoMax(AMMO_POWERCELL);
 	}
 
 	// Trigger once only
@@ -2045,9 +2045,9 @@ void ammo_power_converter_use( gentity_t *self, gentity_t *other, gentity_t *act
 
 	if ( self->setTime < level.time )
 	{
-		difBlaster		= ammoData[AMMO_BLASTER].max - ps->ammo[AMMO_BLASTER];
-		difPowerCell	= ammoData[AMMO_POWERCELL].max - ps->ammo[AMMO_POWERCELL];
-		difMetalBolts	= ammoData[AMMO_METAL_BOLTS].max - ps->ammo[AMMO_METAL_BOLTS];
+		difBlaster		= BG_GetAmmoMax(AMMO_BLASTER) - ps->ammo[AMMO_BLASTER];
+		difPowerCell	= BG_GetAmmoMax(AMMO_POWERCELL) - ps->ammo[AMMO_POWERCELL];
+		difMetalBolts	= BG_GetAmmoMax(AMMO_METAL_BOLTS) - ps->ammo[AMMO_METAL_BOLTS];
 
 		// Has it got any power left...and can we even use any of it?
 		if ( self->count && ( difBlaster > 0 || difPowerCell > 0 || difMetalBolts > 0 ))
@@ -2076,19 +2076,19 @@ void ammo_power_converter_use( gentity_t *self, gentity_t *other, gentity_t *act
 			ps->ammo[AMMO_METAL_BOLTS]	+= add;
 
 			// ...then get clamped to max
-			if ( ps->ammo[AMMO_BLASTER] > ammoData[AMMO_BLASTER].max )
+			if ( ps->ammo[AMMO_BLASTER] > BG_GetAmmoMax(AMMO_BLASTER) )
 			{
-				ps->ammo[AMMO_BLASTER] = ammoData[AMMO_BLASTER].max;
+				ps->ammo[AMMO_BLASTER] = BG_GetAmmoMax(AMMO_BLASTER);
 			}
 
-			if ( ps->ammo[AMMO_POWERCELL] > ammoData[AMMO_POWERCELL].max )
+			if ( ps->ammo[AMMO_POWERCELL] > BG_GetAmmoMax(AMMO_POWERCELL) )
 			{
-				ps->ammo[AMMO_POWERCELL] = ammoData[AMMO_POWERCELL].max;
+				ps->ammo[AMMO_POWERCELL] = BG_GetAmmoMax(AMMO_POWERCELL);
 			}
 
-			if ( ps->ammo[AMMO_METAL_BOLTS] > ammoData[AMMO_METAL_BOLTS].max )
+			if ( ps->ammo[AMMO_METAL_BOLTS] > BG_GetAmmoMax(AMMO_METAL_BOLTS) )
 			{
-				ps->ammo[AMMO_METAL_BOLTS] = ammoData[AMMO_METAL_BOLTS].max;
+				ps->ammo[AMMO_METAL_BOLTS] = BG_GetAmmoMax(AMMO_METAL_BOLTS);
 			}
 
 			self->count -= add;
@@ -2106,9 +2106,9 @@ void ammo_power_converter_use( gentity_t *self, gentity_t *other, gentity_t *act
 				self->s.frame = 1;
 			}
 		}
-		else if  ( ps->ammo[AMMO_BLASTER] >= ammoData[AMMO_BLASTER].max
-						&& ps->ammo[AMMO_POWERCELL] >= ammoData[AMMO_POWERCELL].max
-						&& ps->ammo[AMMO_METAL_BOLTS] >= ammoData[AMMO_METAL_BOLTS].max )
+		else if  ( ps->ammo[AMMO_BLASTER] >= BG_GetAmmoMax(AMMO_BLASTER) 
+						&& ps->ammo[AMMO_POWERCELL] >= BG_GetAmmoMax(AMMO_POWERCELL)
+						&& ps->ammo[AMMO_METAL_BOLTS] >= BG_GetAmmoMax(AMMO_METAL_BOLTS) )
 		{
 			// play full sound
 			G_Sound( self, G_SoundIndex( "sound/interface/ammocon_done.wav" ));

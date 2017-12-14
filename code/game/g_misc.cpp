@@ -188,6 +188,7 @@ void SP_light( gentity_t *self ) {
 	misc_lightstyle_set (self);
 }
 
+// "light" uses this, not misc_dlight.
 void misc_dlight_use ( gentity_t *ent, gentity_t *other, gentity_t *activator )
 {
 	G_ActivateBehavior(ent,BSET_USE);
@@ -1086,7 +1087,7 @@ void SP_misc_dlight(gentity_t *ent)
 	ent->radius *= 1000;
 
 	//FIXME: attach self to a train or something?
-	ent->e_UseFunc = useF_misc_dlight_use;
+	ent->e_UseFunc = useF_misc_dlight_ent_use;
 
 	ent->misc_dlight_active = qfalse;
 	ent->e_clThinkFunc = clThinkF_NULL;
@@ -1105,7 +1106,7 @@ void SP_misc_dlight(gentity_t *ent)
 	}
 }
 
-void misc_dlight_use_old ( gentity_t *ent, gentity_t *other, gentity_t *activator )
+void misc_dlight_ent_use ( gentity_t *ent, gentity_t *other, gentity_t *activator )
 {
 	G_ActivateBehavior(ent,BSET_USE);
 
@@ -3158,3 +3159,46 @@ void SP_misc_cubemap( gentity_t *ent )
 {
 	G_FreeEntity( ent );
 }
+
+/*QUAKED misc_radar_icon (0 0.5 0) (-4 -4 -4) (4 4 4) STARTOFF
+ Draws a radar icon
+ 
+ STARTOFF - Starts off
+ icon - which icon to display
+ 
+ toggles on and off when targeted
+ */
+
+void radar_icon_use ( gentity_t *ent, gentity_t *other, gentity_t *activator )
+{
+	G_ActivateBehavior(ent,BSET_USE);
+	
+	ent->misc_dlight_active = (qboolean)!ent->misc_dlight_active;	//toggle
+	if (ent->misc_dlight_active)
+	{
+		ent->svFlags |= SVF_BROADCAST;
+		ent->s.eFlags2 |= EF2_RADAROBJECT;
+	}
+	else
+	{
+		ent->svFlags &= ~SVF_BROADCAST;
+		ent->s.eFlags2 &= ~EF2_RADAROBJECT;
+	}
+}
+
+void SP_misc_radar_icon( gentity_t *self ){
+	G_SetOrigin( self, self->s.origin );
+	G_SetAngles( self, self->s.angles );
+	if ( self->radarIcon && self->radarIcon[0] )
+	{
+		self->s.radarIcon = G_IconIndex( self->radarIcon );
+	}
+	self->e_UseFunc = useF_radar_icon_use;
+	self->misc_dlight_active = qfalse;
+	if ( !(self->spawnflags & 1) )
+	{//Turn myself on now
+		GEntity_UseFunc( self, self, self );
+	}
+	gi.linkentity(self);
+}
+

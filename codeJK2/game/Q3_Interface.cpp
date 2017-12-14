@@ -101,10 +101,112 @@ stringID_table_t BSTable[] =
 	ENUM2STRING(BS_REMOVE),//# Waits for player to leave PVS then removes itself
 	ENUM2STRING(BS_CINEMATIC),//# Does nothing but face it's angles and move to a goal if it has one
 	//the rest are internal only
+	// ... but we should list them anyway, otherwise workshop behavior will screw up
+	ENUM2STRING(BS_WAIT),
+	ENUM2STRING(BS_STAND_GUARD),
+	ENUM2STRING(BS_PATROL),
+	ENUM2STRING(BS_INVESTIGATE),
+	ENUM2STRING(BS_HUNT_AND_KILL),
+	ENUM2STRING(BS_FLEE),
 	{"",				-1},
 };
 
+stringID_table_t NPCClassTable[] =
+{
+	ENUM2STRING(CLASS_NONE),
+	ENUM2STRING(CLASS_ATST),
+	ENUM2STRING(CLASS_BARTENDER),
+	ENUM2STRING(CLASS_BESPIN_COP),
+	ENUM2STRING(CLASS_CLAW),
+	ENUM2STRING(CLASS_COMMANDO),
+	ENUM2STRING(CLASS_DESANN),
+	ENUM2STRING(CLASS_FISH),
+	ENUM2STRING(CLASS_FLIER2),
+	ENUM2STRING(CLASS_GALAK),
+	ENUM2STRING(CLASS_GLIDER),
+	ENUM2STRING(CLASS_GONK),
+	ENUM2STRING(CLASS_GRAN),
+	ENUM2STRING(CLASS_HOWLER),
+	ENUM2STRING(CLASS_IMPERIAL),
+	ENUM2STRING(CLASS_IMPWORKER),
+	ENUM2STRING(CLASS_INTERROGATOR),
+	ENUM2STRING(CLASS_JAN),
+	ENUM2STRING(CLASS_JEDI),
+	ENUM2STRING(CLASS_KYLE),
+	ENUM2STRING(CLASS_LANDO),
+	ENUM2STRING(CLASS_LIZARD),
+	ENUM2STRING(CLASS_LUKE),
+	ENUM2STRING(CLASS_MARK1),
+	ENUM2STRING(CLASS_MARK2),
+	ENUM2STRING(CLASS_GALAKMECH),
+	ENUM2STRING(CLASS_MINEMONSTER),
+	ENUM2STRING(CLASS_MONMOTHA),
+	ENUM2STRING(CLASS_MORGANKATARN),
+	ENUM2STRING(CLASS_MOUSE),
+	ENUM2STRING(CLASS_MURJJ),
+	ENUM2STRING(CLASS_PRISONER),
+	ENUM2STRING(CLASS_PROBE),
+	ENUM2STRING(CLASS_PROTOCOL),
+	ENUM2STRING(CLASS_R2D2),
+	ENUM2STRING(CLASS_R5D2),
+	ENUM2STRING(CLASS_REBEL),
+	ENUM2STRING(CLASS_REBORN),
+	ENUM2STRING(CLASS_REELO),
+	ENUM2STRING(CLASS_REMOTE),
+	ENUM2STRING(CLASS_RODIAN),
+	ENUM2STRING(CLASS_SEEKER),
+	ENUM2STRING(CLASS_SENTRY),
+	ENUM2STRING(CLASS_SHADOWTROOPER),
+	ENUM2STRING(CLASS_STORMTROOPER),
+	ENUM2STRING(CLASS_SWAMP),
+	ENUM2STRING(CLASS_SWAMPTROOPER),
+	ENUM2STRING(CLASS_TAVION),
+	ENUM2STRING(CLASS_TRANDOSHAN),
+	ENUM2STRING(CLASS_UGNAUGHT),
+	ENUM2STRING(CLASS_WEEQUAY),
 
+	{ "", -1 },
+};
+
+stringID_table_t RankTable[] = 
+{
+	ENUM2STRING(RANK_CIVILIAN),
+	ENUM2STRING(RANK_CREWMAN),
+	ENUM2STRING(RANK_ENSIGN),
+	ENUM2STRING(RANK_LT_JG),
+	ENUM2STRING(RANK_LT),
+	ENUM2STRING(RANK_LT_COMM),
+	ENUM2STRING(RANK_COMMANDER),
+	ENUM2STRING(RANK_CAPTAIN),
+
+	{ "", -1 },
+};
+
+stringID_table_t MoveTypeTable[] = 
+{
+	ENUM2STRING(MT_STATIC),
+	ENUM2STRING(MT_WALK),
+	ENUM2STRING(MT_RUNJUMP),
+	ENUM2STRING(MT_FLYSWIM),
+	{ "", -1 }
+};
+
+stringID_table_t FPTable[] =
+{
+	ENUM2STRING(FP_FIRST),
+	ENUM2STRING(FP_HEAL),
+	ENUM2STRING(FP_LEVITATION),
+	ENUM2STRING(FP_SPEED),
+	ENUM2STRING(FP_PUSH),
+	ENUM2STRING(FP_PULL),
+	ENUM2STRING(FP_TELEPATHY),
+	ENUM2STRING(FP_GRIP),
+	ENUM2STRING(FP_LIGHTNING),
+	ENUM2STRING(FP_SABERTHROW),
+	ENUM2STRING(FP_SABER_DEFENSE),
+	ENUM2STRING(FP_SABER_OFFENSE),
+	{ "", -1 }
+};
 
 stringID_table_t BSETTable[] =
 {
@@ -1003,7 +1105,7 @@ Plays a sound from an entity
 */
 extern void G_SoundOnEnt (gentity_t *ent, soundChannel_t channel, const char *soundPath);
 extern void G_SoundBroadcast( gentity_t *ent, int soundIndex );
-static int Q3_PlaySound( int taskID, int entID, const char *name, const char *channel )
+int Q3_PlaySound( int taskID, int entID, const char *name, const char *channel )
 {
 	gentity_t		*ent = &g_entities[entID];
 	char			finalName[MAX_QPATH];
@@ -2065,7 +2167,7 @@ Q3_SetAnimUpper
 Sets the upper animation of an entity
 =============
 */
-static qboolean Q3_SetAnimUpper( int entID, const char *anim_name )
+qboolean Q3_SetAnimUpper( int entID, const char *anim_name )
 {
 	int			animID = 0;
 
@@ -2094,7 +2196,7 @@ Q3_SetAnimLower
 Sets the lower animation of an entity
 =============
 */
-static qboolean Q3_SetAnimLower( int entID, const char *anim_name )
+qboolean Q3_SetAnimLower( int entID, const char *anim_name )
 {
 	int			animID = 0;
 
@@ -2129,7 +2231,7 @@ Q3_SetAnimHoldTime
 */
 extern void PM_SetTorsoAnimTimer( gentity_t *ent, int *torsoAnimTimer, int time );
 extern void PM_SetLegsAnimTimer( gentity_t *ent, int *legsAnimTimer, int time );
-static void Q3_SetAnimHoldTime( int entID, int int_data, qboolean lower )
+void Q3_SetAnimHoldTime( int entID, int int_data, qboolean lower )
 {
 	gentity_t	*ent  = &g_entities[entID];
 
@@ -2376,7 +2478,7 @@ Q3_SetHealth
   Argument		: int data
 ============
 */
-static void Q3_SetHealth( int entID, int data )
+void Q3_SetHealth( int entID, int data )
 {
 	gentity_t	*ent  = &g_entities[entID];
 
@@ -2433,7 +2535,7 @@ Q3_SetArmor
   Argument		: int data
 ============
 */
-static void Q3_SetArmor( int entID, int data )
+void Q3_SetArmor( int entID, int data )
 {
 	gentity_t	*ent  = &g_entities[entID];
 
@@ -2469,7 +2571,7 @@ FIXME: this should be a general NPC wrapper function
 	that is called ANY time	a bState is changed...
 ============
 */
-static qboolean Q3_SetBState( int entID, const char *bs_name )
+qboolean Q3_SetBState( int entID, const char *bs_name )
 {
 	gentity_t	*ent  = &g_entities[entID];
 	bState_t	bSID;
@@ -3375,7 +3477,7 @@ static void Q3_SetWeapon (int entID, const char *wp_name)
 	else
 	{
 		self->client->ps.stats[STAT_WEAPONS] |= ( 1 << wp );
-		self->client->ps.ammo[weaponData[wp].ammoIndex] = ammoData[weaponData[wp].ammoIndex].max;
+		self->client->ps.ammo[weaponData[wp].ammoIndex] = BG_GetAmmoMax(weaponData[wp].ammoIndex);
 
 		G_AddEvent( self, EV_ITEM_PICKUP, (item - bg_itemlist) );
 		//force it to change
@@ -3438,15 +3540,30 @@ static void Q3_SetItem (int entID, const char *item_name)
 
 	self->client->ps.stats[STAT_ITEMS] |= (1<<item->giTag);
 
-	if( (inv == INV_ELECTROBINOCULARS) || (inv == INV_LIGHTAMP_GOGGLES) )
-	{
-		self->client->ps.inventory[inv] = 1;
-		return;
-	} 
-	// else Bacta, seeker, sentry
-	if( self->client->ps.inventory[inv] < 5 )
-	{
-		self->client->ps.inventory[inv]++;
+	switch(inv) {
+		case INV_ELECTROBINOCULARS:
+		case INV_LIGHTAMP_GOGGLES:
+			self->client->ps.inventory[inv] = 1;
+		case INV_BACTA_CANISTER:
+			if(self->client->ps.inventory[inv] < g_maxbactas->integer)
+				self->client->ps.inventory[inv]++;
+			break;
+		case INV_SEEKER:
+			if(self->client->ps.inventory[inv] < g_maxseekers->integer)
+				self->client->ps.inventory[inv]++;
+			break;
+		case INV_SENTRY:
+			if(self->client->ps.inventory[inv] < g_maxsentries->integer)
+				self->client->ps.inventory[inv]++;
+			break;
+		case INV_GOODIE_KEY:
+			if(self->client->ps.inventory[inv] < g_maxkeys->integer)
+				self->client->ps.inventory[inv]++;
+			break;
+		default:
+			if(self->client->ps.inventory[inv] < 5)
+				self->client->ps.inventory[inv]++;
+			break;
 	}
 }
 
@@ -3652,7 +3769,7 @@ Q3_SetGravity
   Argument		: float float_data
 ============
 */
-static void Q3_SetGravity(int entID, float float_data)
+void Q3_SetGravity(int entID, float float_data)
 {
 	gentity_t	*self  = &g_entities[entID];
 
@@ -3755,7 +3872,7 @@ Q3_SetScale
   Argument		: float float_data
 ============
 */
-static void Q3_SetScale(int entID, float float_data)
+void Q3_SetScale(int entID, float float_data)
 {
 	gentity_t	*self  = &g_entities[entID];
 

@@ -30,7 +30,8 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../ghoul2/G2.h"
 #include "../ghoul2/ghoul2_gore.h"
 
-#define	REF_API_VERSION		17
+#define JAE_REF_API_OFFSET	128
+#define	REF_API_VERSION		17 + JAE_REF_API_OFFSET
 
 typedef struct {
 	void				(QDECL *Printf)						( int printLevel, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
@@ -128,7 +129,7 @@ typedef struct {
 
 } refimport_t;
 
-extern refimport_t ri;
+extern refimport_t *ri;
 
 //
 // these are the functions exported by the refresh module
@@ -154,6 +155,21 @@ typedef struct {
 	int		  (*GetAnimationCFG)(const char *psCFGFilename, char *psDest, int iDestSize);
 	qhandle_t (*RegisterShader)( const char *name );
 	qhandle_t (*RegisterShaderNoMip)( const char *name );
+	//DT EDIT: Rend2 - START
+	void(*ClearDecals)(void);
+	void(*AddDecalToScene)(qhandle_t shader, const vec3_t origin, const vec3_t dir, float orientation, float r, float g, float b, float a, qboolean alphaFade, float radius, qboolean temporary);
+	int(*LightForPoint)(vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir);
+	void(*AddAdditiveLightToScene)(const vec3_t org, float intensity, float r, float g, float b);
+	qboolean(*GetEntityToken)(char *buffer, int size);
+	//void(*SetRefractionProperties)(float distortionAlpha, float distortionStretch, qboolean distortionPrePost, qboolean distortionNegate);
+	//float(*GetDistanceCull)(void);
+	//void(*GetRealRes)(int *w, int *h);
+	//qboolean(*InitializeWireframeAutomap)(void);
+	//void(*InitSkins)(void);
+	//void(*InitShaders)(void);
+	//void(*HunkClearCrap)(void);
+	//qboolean(*inPVS)(const vec3_t p1, const vec3_t p2, byte *mask);
+	//DT EDIT: Rend2 - END
 	void	(*LoadWorld)( const char *name );
 	void	(*R_LoadImage)( const char *name, byte **pic, int *width, int *height );
 
@@ -189,6 +205,8 @@ typedef struct {
 		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
 	void	(*DrawRotatePic2) ( float x, float y, float w, float h,
 		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
+	void	(*RotatePic2RatioFix) (float ratio);
+	void	(*FontRatioFix) (float ratio);
 	void	(*LAGoggles)(void);
 	void	(*Scissor) ( float x, float y, float w, float h);	// 0 = white
 
@@ -342,6 +360,9 @@ typedef struct {
 	qboolean	(*G2API_SetBoneAngles)(CGhoul2Info *ghlInfo, const char *boneName, const vec3_t angles, const int flags,
 					const Eorientations up, const Eorientations left, const Eorientations forward, qhandle_t *modelList,
 					int blendTime, int AcurrentTime);
+	qboolean	(*G2API_SetBoneAnglesOffset)(CGhoul2Info *ghlInfo, const char *boneName, const vec3_t angles, const int flags,
+									   const Eorientations up, const Eorientations left, const Eorientations forward, qhandle_t *modelList,
+									   int blendTime, int AcurrentTime, const vec3_t offset);
 	qboolean	(*G2API_SetBoneAnglesIndex)(CGhoul2Info *ghlInfo, const int index, const vec3_t angles, const int flags,
 					const Eorientations yaw, const Eorientations pitch, const Eorientations roll, qhandle_t *modelList,
 					int blendTime, int AcurrentTime);
@@ -370,6 +391,8 @@ typedef struct {
 	void		(*G2API_AddSkinGore)(CGhoul2Info_v &ghoul2, SSkinGoreData &gore);
 	void		(*G2API_ClearSkinGore)(CGhoul2Info_v &ghoul2);
 #endif
+    
+    void        (*G2API_SetTintType)(CGhoul2Info *ghlInfo, g2Tints_t tintType);
 
 	// Performance analysis (perform anal)
 	void		(*G2Time_ResetTimers)(void);

@@ -16,6 +16,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 #============================================================================
 
+set(ANGELSCRIPT_HOME "${OpenJKLibDir}/angelscript")
+
 # Make sure the user is not executing this script directly
 if(NOT InOpenJK)
 	message(FATAL_ERROR "Use the top-level cmake script!")
@@ -161,6 +163,8 @@ set(JK2SPGameGameFiles
 	"${JK2SPDir}/game/weapons.h"
 	"${JK2SPDir}/game/w_local.h"
 	"${JK2SPDir}/game/wp_saber.h"
+	"${CMAKE_SOURCE_DIR}/lib/json/cJSON.c"
+	"${JK2SPDir}/game/jke_aiworkshop.cpp"
 	)
 source_group("game" FILES ${JK2SPGameGameFiles})
 set(JK2SPGameFiles ${JK2SPGameFiles} ${JK2SPGameGameFiles})
@@ -211,6 +215,7 @@ set(JK2SPGameCGameFiles
 	"${JK2SPDir}/cgame/cg_snapshot.cpp"
 	"${JK2SPDir}/cgame/cg_syscalls.cpp"
 	"${JK2SPDir}/cgame/cg_text.cpp"
+	"${JK2SPDir}/cgame/cg_trueview.cpp"
 	"${JK2SPDir}/cgame/cg_view.cpp"
 	"${JK2SPDir}/cgame/cg_weapons.cpp"
 	"${JK2SPDir}/cgame/strip_objectives.h"
@@ -309,5 +314,5 @@ set_target_properties(${JK2SPGame} PROPERTIES INCLUDE_DIRECTORIES "${JK2SPGameIn
 set_target_properties(${JK2SPGame} PROPERTIES PROJECT_LABEL "JK2 SP Game Library")
 # no libraries used
 if(JK2SPGameLibraries)
-	target_link_libraries(${JK2SPGame} ${JK2SPGameLibraries})
+	target_link_libraries(${JK2SPGame})
 endif(JK2SPGameLibraries)

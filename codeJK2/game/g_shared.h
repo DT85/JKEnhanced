@@ -717,6 +717,7 @@ class gclient_t
 public:
 	// ps MUST be the first element, because the server expects it
 	playerState_t	ps;				// communicated by server to clients
+	playerState_t*	GetPlayerState() { return &ps; }
 
 	// private to game
 	clientPersistant_t	pers;
@@ -798,6 +799,8 @@ public:
 	int			poisonDamage;				// Amount of poison damage to be given
 	int			poisonTime;					// When to apply poison damage
 	int			slopeRecalcTime;			// debouncer for slope-foot-height-diff calcing
+
+	int			minigunChargeTime;			// for the AT-ST main cannon
 
 	vec3_t		pushVec;
 	int			pushVecTime;
@@ -969,6 +972,7 @@ typedef struct centity_s centity_t;
 struct gentity_s {
 	entityState_t	s;				// communicated by server to clients
 	gclient_t	*client;	// NULL if not a player (unless it's NPC ( if (this->NPC != NULL)  )  <sigh>... -slc)
+	//struct gclient_s	*GetClient() { return client; }
 	qboolean	inuse;
 	qboolean	linked;				// qfalse if not in any good cluster
 
@@ -1675,6 +1679,8 @@ typedef struct weaponInfo_s {
 	sfxHandle_t		altChargeSound;
 
 	sfxHandle_t		selectSound;	// sound played when weapon is selected
+	bool			bUsesGhoul2;
+	CGhoul2Info_v	ghoul2;
 } weaponInfo_t;
 
 extern sfxHandle_t CAS_GetBModelSound( const char *name, int stage );

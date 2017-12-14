@@ -34,19 +34,30 @@ void WP_ATSTMainFire( gentity_t *ent )
 //---------------------------------------------------------
 {
 	float vel = ATST_MAIN_VEL;
+	vec3_t	dir, angs;
+
+	vectoangles(wpFwd, angs);
 
 //	if ( ent->client && (ent->client->ps.eFlags & EF_IN_ATST ))
 //	{
 //		vel = 4500.0f;
 //	}
 
+	VectorCopy(wpFwd, dir);
+
 	if ( !ent->s.number )
 	{
 		// player shoots faster
 		vel *= 1.6f;
+
+		// If we're not in alt-fire, we should add some slop to the shots
+		angs[PITCH] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
+		angs[YAW] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
 	}
 
-	gentity_t	*missile = CreateMissile( wpMuzzle, wpFwd, vel, 10000, ent );
+	AngleVectors(angs, dir, NULL, NULL);
+
+	gentity_t	*missile = CreateMissile( wpMuzzle, dir, vel, 10000, ent );
 
 	missile->classname = "atst_main_proj";
 	missile->s.weapon = WP_ATST_MAIN;

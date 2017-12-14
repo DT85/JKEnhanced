@@ -123,11 +123,17 @@ typedef struct {
 } modInfo_t;
 
 #define SKIN_LENGTH			16
+#define MODEL_LENGTH		32
 #define ACTION_BUFFER_SIZE	128
 
 typedef struct {
 	char name[SKIN_LENGTH];
 } skinName_t;
+
+typedef struct {
+	char model[MODEL_LENGTH];
+	char skin[SKIN_LENGTH];
+} headSwap_t;
 
 typedef struct {
 	char shader[MAX_QPATH];
@@ -147,8 +153,32 @@ typedef struct {
 	skinName_t	*SkinLeg;
 	int			ColorMax;
 	int			ColorCount;
+	int			Color2Max;
+	int			Color2Count;
 	playerColor_t	*Color;
+	playerColor_t	*Color2;
+	headSwap_t	*HeadSwap;
 } playerSpeciesInfo_t;
+
+typedef struct {
+	char name[32];
+	char desc[64];
+	int	count;
+	int max;
+	skinName_t *skins;
+} saberPartSkin_t;
+
+typedef struct {
+	char		SaberName[64];
+	char		SaberLongName[64];
+	char		FolderName[MAX_QPATH];
+	saberPartSkin_t	Skin1;
+	saberPartSkin_t Skin2;
+	saberPartSkin_t Skin3;
+	saberPartSkin_t Skin4;
+	saberPartSkin_t Skin5;
+	qboolean	isStaff;
+} customSaberInfo_t;
 
 typedef struct {
 	displayContextDef_t uiDC;
@@ -164,6 +194,12 @@ typedef struct {
 	int					playerSpeciesCount;
 	playerSpeciesInfo_t	*playerSpecies;
 	int					playerSpeciesIndex;
+	
+	int					customSabersMax;
+	int					customSabersCount;
+	customSaberInfo_t	*customSabers;
+	int					customSabersIndex;
+	int					customSabers2Index;
 
 
 	char		deferredScript [ MAX_DEFERRED_SCRIPT ];
@@ -195,6 +231,19 @@ typedef struct {
 	itemDef_t *weaponThrowButton;
 	qhandle_t litThrowableIcon;
 	qhandle_t unlitThrowableIcon;
+	
+	short	selectedInventory1;
+	char	selectedInventory1ItemName[64];
+	short	selectedInventory2;
+	char	selectedInventory2ItemName[64];
+	itemDef_t *inventory1ItemButton;
+	qhandle_t litInventory1Icon;
+	qhandle_t unlitInventory1Icon;
+	itemDef_t *inventory2ItemButton;
+	qhandle_t litInventory2Icon;
+	qhandle_t unlitInventory2Icon;
+	
+	
 	short		movesTitleIndex;
 	const char	*movesBaseAnim;
 	int			moveAnimTime;
@@ -241,6 +290,7 @@ void			trap_R_RenderScene( const refdef_t *fd );
 void			trap_S_StopSounds( void );
 sfxHandle_t		trap_S_RegisterSound( const char *sample, qboolean compressed );
 void			trap_S_StartLocalSound( sfxHandle_t sfx, int channelNum );
+void			trap_R_FontRatioFix( float ratio );
 
 
 

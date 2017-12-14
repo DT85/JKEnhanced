@@ -20,9 +20,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 ===========================================================================
 */
 
-#if !defined(FX_SCHEDULER_H_INC)
-	#include "FxScheduler.h"
-#endif
+#include "FX_Local.h"
 
 extern vmCvar_t	fx_debug;
 extern vmCvar_t	fx_freeze;

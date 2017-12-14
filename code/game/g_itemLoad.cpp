@@ -43,6 +43,7 @@ struct itemParms_s
 static void IT_ClassName (const char **holdBuf);
 static void IT_Count (const char **holdBuf);
 static void IT_Icon (const char **holdBuf);
+static void IT_DP_Icon(const char **holdBuf);
 static void IT_Min (const char **holdBuf);
 static void IT_Max (const char **holdBuf);
 static void IT_Name (const char **holdBuf);
@@ -59,7 +60,7 @@ typedef struct
 } itemParms_t;
 
 
-#define IT_PARM_MAX 10
+#define IT_PARM_MAX 11
 
 itemParms_t ItemParms[IT_PARM_MAX] =
 {
@@ -67,6 +68,7 @@ itemParms_t ItemParms[IT_PARM_MAX] =
 	{ "classname",			IT_ClassName },
 	{ "count",				IT_Count },
 	{ "icon",				IT_Icon },
+	{ "dp_icon",			IT_DP_Icon },
 	{ "min",				IT_Min },
 	{ "max",				IT_Max },
 	{ "pickupsound",		IT_PickupSound },
@@ -161,6 +163,17 @@ static void IT_Name(const char **holdBuf)
 		itemNum = ITM_SCEPTER_PICKUP;
 	else if (!Q_stricmp(tokenStr,"ITM_NOGHRI_STICK_PICKUP"))
 		itemNum = ITM_NOGHRI_STICK_PICKUP;
+	else if (!Q_stricmp(tokenStr,"ITM_SONIC_BLASTER_PICKUP"))
+		itemNum = ITM_SONIC_BLASTER_PICKUP;
+	else if (!Q_stricmp(tokenStr,"ITM_E5_PICKUP"))
+		itemNum = ITM_E5_PICKUP;
+	else if (!Q_stricmp(tokenStr,"ITM_DC15S_PICKUP"))
+		itemNum = ITM_DC15S_PICKUP;
+	else if (!Q_stricmp(tokenStr,"ITM_DC15A_PICKUP"))
+		itemNum = ITM_DC15A_PICKUP;
+	else if (!Q_stricmp(tokenStr,"ITM_Z6_PICKUP"))
+		itemNum = ITM_Z6_PICKUP;
+
 	//ammo
 	else if (!Q_stricmp(tokenStr,"ITM_AMMO_FORCE_PICKUP"))
 		itemNum = ITM_AMMO_FORCE_PICKUP;
@@ -382,6 +395,16 @@ static void IT_Tag(const char **holdBuf)
 		tag = WP_SCEPTER;
 	else if (!Q_stricmp(tokenStr,"WP_NOGHRI_STICK"))
 		tag = WP_NOGHRI_STICK;
+	else if (!Q_stricmp(tokenStr,"WP_SONIC_BLASTER"))
+		tag = WP_SONIC_BLASTER;
+	else if (!Q_stricmp(tokenStr,"WP_E5_CARBINE"))
+		tag = WP_E5_CARBINE;
+	else if (!Q_stricmp(tokenStr,"WP_DC15S_CARBINE"))
+		tag = WP_DC15S_CARBINE;
+	else if (!Q_stricmp(tokenStr,"WP_DC15A_RIFLE"))
+		tag = WP_DC15A_RIFLE;
+	else if (!Q_stricmp(tokenStr,"WP_Z6_ROTARY"))
+		tag = WP_Z6_ROTARY;
 	else if (!Q_stricmp(tokenStr,"AMMO_FORCE"))
 		tag = AMMO_FORCE;
 	else if (!Q_stricmp(tokenStr,"AMMO_BLASTER"))
@@ -558,6 +581,27 @@ static void IT_Icon(const char **holdBuf)
 	}
 
 	bg_itemlist[itemParms.itemNum].icon = G_NewString(tokenStr);
+}
+
+static void IT_DP_Icon(const char **holdBuf)
+{
+	int len;
+	const char	*tokenStr;
+
+	if (COM_ParseString(holdBuf, &tokenStr))
+	{
+		return;
+	}
+
+	len = strlen(tokenStr);
+	len++;
+	if (len > 32)
+	{
+		len = 32;
+		gi.Printf("WARNING: datapad icon too long in external ITEMS.DAT '%s'\n", tokenStr);
+	}
+
+	bg_itemlist[itemParms.itemNum].dp_icon = G_NewString(tokenStr);
 }
 
 static void IT_Count(const char **holdBuf)

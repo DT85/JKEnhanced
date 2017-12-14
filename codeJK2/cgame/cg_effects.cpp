@@ -25,10 +25,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "cg_local.h"
 #include "cg_media.h"
-
-#if !defined(FX_SCHEDULER_H_INC)
-	#include "FxScheduler.h"
-#endif
+#include "FX_Local.h"
 
 //void DoBolt( vec3_t m_origin, vec3_t m_origin2, float m_scale, float m_deviation );
 

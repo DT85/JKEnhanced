@@ -20,12 +20,12 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 ===========================================================================
 */
 
+#ifndef FX_UTIL_H_INC
+#define FX_UTIL_H_INC
+
 #if !defined(FX_PRIMITIVES_H_INC)
 	#include "FxPrimitives.h"
 #endif
-
-#ifndef FX_UTIL_H_INC
-#define FX_UTIL_H_INC
 
 
 bool	FX_Free( void );	// ditches all active effects;

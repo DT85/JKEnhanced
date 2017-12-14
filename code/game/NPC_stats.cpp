@@ -88,6 +88,14 @@ stringID_table_t FPTable[] =
 	ENUM2STRING(FP_ABSORB),
 	ENUM2STRING(FP_DRAIN),
 	ENUM2STRING(FP_SEE),
+	//new bonus powers
+	ENUM2STRING(FP_DESTRUCTION),
+	ENUM2STRING(FP_INSANITY),
+	ENUM2STRING(FP_STASIS),
+	ENUM2STRING(FP_BLINDING),
+	ENUM2STRING(FP_DEADLYSIGHT),
+	ENUM2STRING(FP_REPULSE),
+	ENUM2STRING(FP_INVULNERABILITY),
 	{ "",	-1 }
 };
 
@@ -175,6 +183,7 @@ stringID_table_t ClassTable[] =
 	ENUM2STRING(CLASS_ASSASSIN_DROID),
 	ENUM2STRING(CLASS_HAZARD_TROOPER),
 	ENUM2STRING(CLASS_VEHICLE),
+	{ "CLASS_GALAK_MECH", CLASS_GALAKMECH },
 	{ "",	-1 }
 };
 
@@ -297,7 +306,14 @@ saber_colors_t TranslateSaberColor( const char *name )
 	{
 		return ((saber_colors_t)(Q_irand( SABER_ORANGE, SABER_PURPLE )));
 	}
-	return SABER_BLUE;
+	float colors[3];
+	Q_parseSaberColor(name, colors);
+	int colourArray[3];
+	for (int i = 0; i < 3; i++)
+	{
+		colourArray[i] = (int)(colors[i] * 255);
+	}
+	return (saber_colors_t)((colourArray[0]) + (colourArray[1] << 8) + (colourArray[2] << 16) + (1 << 24));
 }
 
 /* static int MethodNameToNumber( const char *name ) {
@@ -1376,19 +1392,7 @@ void NPC_PrecacheWeapons( team_t playerTeam, int spawnflags, char *NPCtype )
 			CG_RegisterItemSounds( (item-bg_itemlist) );
 			CG_RegisterItemVisuals( (item-bg_itemlist) );
 			//precache the in-hand/in-world ghoul2 weapon model
-
-			char weaponModel[64];
-
-			strcpy (weaponModel, weaponData[curWeap].weaponMdl);
-			if (char *spot = strstr(weaponModel, ".md3") ) {
-				*spot = 0;
-				spot = strstr(weaponModel, "_w");//i'm using the in view weapon array instead of scanning the item list, so put the _w back on
-				if (!spot) {
-					strcat (weaponModel, "_w");
-				}
-				strcat (weaponModel, ".glm");	//and change to ghoul2
-			}
-			gi.G2API_PrecacheGhoul2Model( weaponModel ); // correct way is item->world_model
+			gi.G2API_PrecacheGhoul2Model( weaponData[curWeap].worldModel ); // correct way is item->world_model
 		}
 	}
 }
@@ -1428,6 +1432,7 @@ extern void NPC_Rosh_Dark_Precache( void );
 extern void NPC_Tusken_Precache( void );
 extern void NPC_Saboteur_Precache( void );
 extern void NPC_CultistDestroyer_Precache( void );
+extern void NPC_GalakMech_Precache( void );
 void NPC_Jawa_Precache( void )
 {
 	for ( int i = 1; i < 7; i++ )
@@ -1524,6 +1529,10 @@ void NPC_PrecacheByClassName( const char* type )
 	else if ( !Q_stricmp( "protocol", type ))
 	{
 		NPC_Protocol_Precache();
+	}
+	else if ( !Q_stricmp( "galak_mech", type ))
+	{
+		NPC_GalakMech_Precache();
 	}
 	else if ( !Q_stricmp( "boba_fett", type ))
 	{
@@ -1861,6 +1870,22 @@ void CG_NPC_Precache ( gentity_t *spawner )
 			{
 				cgi_R_RegisterShader( saber.g2WeaponMarkShader2 );
 			}
+			if ( saber.ignitionFlare[0] )
+			{
+				cgi_R_RegisterShader( saber.ignitionFlare );
+			}
+			if ( saber.ignitionFlare2[0] )
+			{
+				cgi_R_RegisterShader( saber.ignitionFlare2 );
+			}
+			if ( saber.blackIgnitionFlare[0] )
+			{
+				cgi_R_RegisterShader( saber.blackIgnitionFlare );
+			}
+			if ( saber.blackIgnitionFlare2[0] )
+			{
+				cgi_R_RegisterShader( saber.blackIgnitionFlare2 );
+			}
 			continue;
 		}
 
@@ -1930,6 +1955,7 @@ void NPC_BuildRandom( gentity_t *NPC )
 extern void G_MatchPlayerWeapon( gentity_t *ent );
 extern void G_InitPlayerFromCvars( gentity_t *ent );
 extern void G_SetG2PlayerModel( gentity_t * const ent, const char *modelName, const char *customSkin, const char *surfOff, const char *surfOn );
+extern void G_ChangeHeadModel( gentity_t *ent, const char *newModel );
 qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 {
 	const char	*token;
@@ -1941,6 +1967,8 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 	char	sound[MAX_QPATH];
 	char	playerModel[MAX_QPATH];
 	char	customSkin[MAX_QPATH];
+	char	playerHeadModel[MAX_QPATH] = {0};
+	char	customHeadSkin[MAX_QPATH] = {0};
 	clientInfo_t	*ci = &NPC->client->clientInfo;
 	renderInfo_t	*ri = &NPC->client->renderInfo;
 	gNPCstats_t		*stats = NULL;
@@ -1949,6 +1977,10 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 	char	surfOn[1024]={0};
 	qboolean parsingPlayer = qfalse;
 
+	
+	qboolean forcedRGBSaberColours[MAX_SABERS][MAX_BLADES] = {{qfalse, qfalse, qfalse, qfalse, qfalse, qfalse, qfalse, qfalse},
+																{qfalse, qfalse, qfalse, qfalse, qfalse, qfalse, qfalse, qfalse}};
+	
 	strcpy(customSkin,"default");
 	if ( !NPCName || !NPCName[0])
 	{
@@ -2550,7 +2582,29 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 				Q_strncpyz( customSkin, value, sizeof(customSkin));
 				continue;
 			}
-
+			
+			// playerModel
+			if ( !Q_stricmp( token, "playerHeadModel" ) )
+			{
+				if ( COM_ParseString( &p, &value ) )
+				{
+					continue;
+				}
+				Q_strncpyz( playerHeadModel, value, sizeof(playerHeadModel));
+				continue;
+			}
+			
+			// customSkin
+			if ( !Q_stricmp( token, "customHeadSkin" ) )
+			{
+				if ( COM_ParseString( &p, &value ) )
+				{
+					continue;
+				}
+				Q_strncpyz( customHeadSkin, value, sizeof(customHeadSkin));
+				continue;
+			}
+			
 			// surfOff
 			if ( !Q_stricmp( token, "surfOff" ) )
 			{
@@ -3523,7 +3577,7 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 				if ( weap >= WP_NONE && weap < WP_NUM_WEAPONS )
 				{
 					NPC->client->ps.weapon = weap;
-					NPC->client->ps.stats[STAT_WEAPONS] |= ( 1 << weap );
+					NPC->client->ps.weapons[weap] = 1;
 					if ( weap > WP_NONE )
 					{
 						RegisterItem( FindItemForWeapon( (weapon_t)(weap) ) );	//precache the weapon
@@ -3693,7 +3747,10 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 					saber_colors_t color = TranslateSaberColor( value );
 					for ( n = 0; n < MAX_BLADES; n++ )
 					{
-						NPC->client->ps.saber[0].blade[n].color = color;
+						if (!forcedRGBSaberColours[0][n])
+						{
+							NPC->client->ps.saber[0].blade[n].color = color;
+						}
 					}
 				}
 				else if (strlen(token)==11)
@@ -3708,7 +3765,10 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 					{
 						continue;
 					}
-					NPC->client->ps.saber[0].blade[index].color = TranslateSaberColor( value );
+					if (!forcedRGBSaberColours[0][index])
+					{
+						NPC->client->ps.saber[0].blade[index].color = TranslateSaberColor( value );
+					}
 				}
 				else
 				{
@@ -3734,7 +3794,10 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 					saber_colors_t color = TranslateSaberColor( value );
 					for ( n = 0; n < MAX_BLADES; n++ )
 					{
-						NPC->client->ps.saber[1].blade[n].color = color;
+						if (!forcedRGBSaberColours[1][n])
+						{
+							NPC->client->ps.saber[1].blade[n].color = color;
+						}
 					}
 				}
 				else if (strlen(token)==12)
@@ -3749,7 +3812,10 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 					{
 						continue;
 					}
-					NPC->client->ps.saber[1].blade[n].color = TranslateSaberColor( value );
+					if (!forcedRGBSaberColours[1][n])
+					{
+						NPC->client->ps.saber[1].blade[n].color = TranslateSaberColor( value );
+					}
 				}
 				else
 				{
@@ -3757,7 +3823,92 @@ qboolean NPC_ParseParms( const char *NPCName, gentity_t *NPC )
 				}
 				continue;
 			}
-
+			
+			// saberColor
+			if ( !Q_stricmpn( token, "saberColorRGB", 13) )
+			{
+				if ( !NPC->client )
+				{
+					continue;
+				}
+				
+				if (strlen(token)==13)
+				{
+					if ( COM_ParseString( &p, &value ) )
+					{
+						continue;
+					}
+					saber_colors_t color = TranslateSaberColor( value );
+					forcedRGBSaberColours[0][0] = qtrue;
+					for ( n = 0; n < MAX_BLADES; n++ )
+					{
+						NPC->client->ps.saber[0].blade[n].color = color;
+					}
+				}
+				else if (strlen(token)==14)
+				{
+					int index = atoi(&token[13])-1;
+					if (index > 7 || index < 1 )
+					{
+						gi.Printf( S_COLOR_YELLOW"WARNING: bad saberColorRGB '%s' in %s\n", token, NPCName );
+						continue;
+					}
+					if ( COM_ParseString( &p, &value ) )
+					{
+						continue;
+					}
+					forcedRGBSaberColours[0][index] = qtrue;
+					NPC->client->ps.saber[0].blade[index].color = TranslateSaberColor( value );
+				}
+				else
+				{
+					gi.Printf( S_COLOR_YELLOW"WARNING: bad saberColorRGB '%s' in %s\n", token, NPCName );
+				}
+				continue;
+			}
+			
+			
+			if ( !Q_stricmpn( token, "saber2ColorRGB", 14 ) )
+			{
+				if ( !NPC->client )
+				{
+					continue;
+				}
+				
+				if (strlen(token)==14)
+				{
+					if ( COM_ParseString( &p, &value ) )
+					{
+						continue;
+					}
+					forcedRGBSaberColours[1][0] = qtrue;
+					saber_colors_t color = TranslateSaberColor( value );
+					for ( n = 0; n < MAX_BLADES; n++ )
+					{
+						NPC->client->ps.saber[1].blade[n].color = color;
+					}
+				}
+				else if (strlen(token)==15)
+				{
+					n = atoi(&token[14])-1;
+					if (n > 7 || n < 1 )
+					{
+						gi.Printf( S_COLOR_YELLOW"WARNING: bad saber2ColorRGB '%s' in %s\n", token, NPCName );
+						continue;
+					}
+					if ( COM_ParseString( &p, &value ) )
+					{
+						continue;
+					}
+					forcedRGBSaberColours[1][n] = qtrue;
+					NPC->client->ps.saber[1].blade[n].color = TranslateSaberColor( value );
+				}
+				else
+				{
+					gi.Printf( S_COLOR_YELLOW"WARNING: bad saber2ColorRGB '%s' in %s\n", token, NPCName );
+				}
+				continue;
+			}
 
 			//saber length
 			if ( !Q_stricmpn( token, "saberLength", 11) )
@@ -4062,6 +4213,18 @@ Ghoul2 Insert Start
 			}
 
 			G_SetG2PlayerModel( NPC, playerModel, customSkin, surfOff, surfOn );
+			
+			if ( playerHeadModel && playerHeadModel[0] )
+			{
+				if (customHeadSkin && customHeadSkin[0])
+				{
+					G_ChangeHeadModel( NPC, va("%s|%s", playerHeadModel, customHeadSkin) );
+				}
+				else
+				{
+					G_ChangeHeadModel( NPC, va("%s|default", playerHeadModel) );
+				}
+			}
 		}
 	}
 /*

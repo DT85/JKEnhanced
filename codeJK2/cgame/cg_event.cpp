@@ -25,7 +25,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "cg_local.h"
 #include "cg_media.h"
-#include "FxScheduler.h"
+#include "FX_Local.h"
 
 #include "../game/anims.h"
 
@@ -160,6 +160,23 @@ void CG_ItemPickup( int itemNum, qboolean bHadItem ) {
 			}
 		}
 	}
+	else if( bg_itemlist[itemNum].giType == IT_AMMO )
+	{
+		if(g_ammompsound->integer)
+			cgi_S_StartSound (NULL, 0, CHAN_ITEM,	cgi_S_RegisterSound( "sound/player/pickupenergy.mp3" ) );
+	}
+	else if( bg_itemlist[itemNum].giType == IT_HEALTH )
+	{
+		if(!g_medpacdoomsound->integer)
+			cgi_S_StartSound (NULL, 0, CHAN_ITEM,	cgi_S_RegisterSound( "sound/items/doomhealth.wav" ) );
+		if(!g_medpacmpsound->integer)
+			cgi_S_StartSound (NULL, 0, CHAN_ITEM,	cgi_S_RegisterSound( "sound/player/pickuphealth.mp3" ) );
+	}
+	else if( bg_itemlist[itemNum].giType == IT_ARMOR )
+	{
+		if(!g_armormpsound->integer)
+			cgi_S_StartSound (NULL, 0, CHAN_ITEM,	cgi_S_RegisterSound( "sound/player/pickupshield.mp3" ) );
+	}
 }
 
 
@@ -186,9 +203,9 @@ void UseItem(int itemNum)
 		CG_ToggleLAGoggles();
 		break;
 	case INV_GOODIE_KEY:
-		if (cent->gent->client->ps.inventory[INV_GOODIE_KEY])
+		if (cent->gent->client->ps.inventory[INV_GOODIE_KEY] >= g_keysused->integer)
 		{
-			cent->gent->client->ps.inventory[INV_GOODIE_KEY]--;
+			cent->gent->client->ps.inventory[INV_GOODIE_KEY] -= g_keysused->integer;
 		}
 		break;
 	case INV_SECURITY_KEY:
@@ -290,7 +307,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_FOOTSTEP:
 		DEBUGNAME("EV_FOOTSTEP");
 		if (cg_footsteps.integer) {
-			if ( cent->gent && cent->gent->s.number == 0 && !cg.renderingThirdPerson )//!cg_thirdPerson.integer )
+			if ( cent->gent->s.number == 0 && !cg.renderingThirdPerson )//!cg_thirdPerson.integer )
 			{//Everyone else has keyframed footsteps in animsounds.cfg
 				cgi_S_StartSound (NULL, es->number, CHAN_BODY,
 					cgs.media.footsteps[ FOOTSTEP_NORMAL ][rand()&3] );
@@ -310,15 +327,19 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_FOOTSPLASH:
 		DEBUGNAME("EV_FOOTSPLASH");
 		if (cg_footsteps.integer) {
-			cgi_S_StartSound (NULL, es->number, CHAN_BODY,
-				cgs.media.footsteps[ FOOTSTEP_SPLASH ][rand()&3] );
+			if (cent->gent->client->NPC_class != CLASS_ATST) {
+				cgi_S_StartSound(NULL, es->number, CHAN_BODY,
+					cgs.media.footsteps[FOOTSTEP_SPLASH][rand() & 3]);
+			}
 		}
 		break;
 	case EV_FOOTWADE:
 		DEBUGNAME("EV_FOOTWADE");
 		if (cg_footsteps.integer) {
-			cgi_S_StartSound (NULL, es->number, CHAN_BODY,
-				cgs.media.footsteps[ FOOTSTEP_WADE ][rand()&3] );
+			if (cent->gent->client->NPC_class != CLASS_ATST) {
+				cgi_S_StartSound(NULL, es->number, CHAN_BODY,
+					cgs.media.footsteps[FOOTSTEP_WADE][rand() & 3]);
+			}
 		}
 		break;
 	case EV_SWIM:
@@ -425,12 +446,22 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 
 	case EV_WATER_TOUCH:
 		DEBUGNAME("EV_WATER_TOUCH");
-		cgi_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrInSound );
+		if (cent->gent->client->NPC_class == CLASS_ATST) {
+			cgi_S_StartSound(NULL, es->number, CHAN_AUTO, cgs.media.atstWaterInSound[Q_irand(0, 1)]);
+		}
+		else {
+			cgi_S_StartSound(NULL, es->number, CHAN_AUTO, cgs.media.watrInSound);
+		}
 		break;
 
 	case EV_WATER_LEAVE:
 		DEBUGNAME("EV_WATER_LEAVE");
-		cgi_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrOutSound );
+		if (cent->gent->client->NPC_class == CLASS_ATST) {
+			cgi_S_StartSound(NULL, es->number, CHAN_AUTO, cgs.media.atstWaterOutSound[Q_irand(0, 1)]);
+		}
+		else {
+			cgi_S_StartSound(NULL, es->number, CHAN_AUTO, cgs.media.watrOutSound);
+		}
 		break;
 
 	case EV_WATER_UNDER:

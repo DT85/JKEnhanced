@@ -541,48 +541,52 @@ void Sniper_FaceEnemy( void )
 
 		if ( enemyDist > 65536 && NPCInfo->stats.aim < 5 )//is 256 squared, was 16384 (128*128)
 		{
-			if ( NPC->count < (5-NPCInfo->stats.aim) )
-			{//miss a few times first
-				if ( shoot && TIMER_Done( NPC, "attackDelay" ) && level.time >= NPCInfo->shotTime )
+			if ( NPC->count < (5-NPCInfo->stats.aim) || NPC->enemy->client->ps.forcePowersActive & (1 << FP_SPEED) )
+			{//miss a few times first. Always miss when the target has Force Speed on
+				if (shoot && TIMER_Done(NPC, "attackDelay") && level.time >= NPCInfo->shotTime)
 				{//ready to fire again
 					qboolean	aimError = qfalse;
 					qboolean	hit = qtrue;
 					int			tryMissCount = 0;
 					trace_t		trace;
 
-					GetAnglesForDirection( muzzle, target, angles );
-					AngleVectors( angles, forward, right, up );
+					GetAnglesForDirection(muzzle, target, angles);
+					AngleVectors(angles, forward, right, up);
 
-					while ( hit && tryMissCount < 10 )
+					while (hit && tryMissCount < 10)
 					{
 						tryMissCount++;
-						if ( !Q_irand( 0, 1 ) )
+						if (!Q_irand(0, 1))
 						{
 							aimError = qtrue;
-							if ( !Q_irand( 0, 1 ) )
+							if (!Q_irand(0, 1))
 							{
-								VectorMA( target, NPC->enemy->maxs[2]*Q_flrand(1.5, 4), right, target );
+								VectorMA(target, NPC->enemy->maxs[2] * Q_flrand(1.5, 4), right, target);
 							}
 							else
 							{
-								VectorMA( target, NPC->enemy->mins[2]*Q_flrand(1.5, 4), right, target );
+								VectorMA(target, NPC->enemy->mins[2] * Q_flrand(1.5, 4), right, target);
 							}
 						}
-						if ( !aimError || !Q_irand( 0, 1 ) )
+						if (!aimError || !Q_irand(0, 1))
 						{
-							if ( !Q_irand( 0, 1 ) )
+							if (!Q_irand(0, 1))
 							{
-								VectorMA( target, NPC->enemy->maxs[2]*Q_flrand(1.5, 4), up, target );
+								VectorMA(target, NPC->enemy->maxs[2] * Q_flrand(1.5, 4), up, target);
 							}
 							else
 							{
-								VectorMA( target, NPC->enemy->mins[2]*Q_flrand(1.5, 4), up, target );
+								VectorMA(target, NPC->enemy->mins[2] * Q_flrand(1.5, 4), up, target);
 							}
 						}
-						gi.trace( &trace, muzzle, vec3_origin, vec3_origin, target, NPC->s.number, MASK_SHOT, G2_NOCOLLIDE, 0 );
-						hit = Sniper_EvaluateShot( trace.entityNum );
+						gi.trace(&trace, muzzle, vec3_origin, vec3_origin, target, NPC->s.number, MASK_SHOT, G2_NOCOLLIDE, 0);
+						hit = Sniper_EvaluateShot(trace.entityNum);
 					}
-					NPC->count++;
+					if (!(NPC->enemy->client->ps.forcePowersActive & (1 << FP_SPEED))) {
+						// If the target has force speed on, we shouldn't increment the count.
+						// This prevents a potential issue where all snipers on the map suddenly hit when the correct target when their speed wears off.
+						NPC->count++;
+					}
 				}
 				else
 				{

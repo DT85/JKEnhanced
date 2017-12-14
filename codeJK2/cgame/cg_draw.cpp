@@ -435,7 +435,7 @@ static void CG_DrawAmmo(centity_t	*cent,int x,int y)
 	cgi_R_SetColor( colorTable[numColor_i] );	
 	CG_DrawNumField(x + 29, y + 26, 3, value, 6, 12, NUM_FONT_SMALL,qfalse);
 
-	inc = (float) ammoData[weaponData[cent->currentState.weapon].ammoIndex].max / MAX_TICS;
+	inc = (float) BG_GetAmmoMax(weaponData[cent->currentState.weapon].ammoIndex) / MAX_TICS;
 	value =ps->ammo[weaponData[cent->currentState.weapon].ammoIndex];
 
 	for (i=MAX_TICS-1;i>=0;i--)
@@ -745,9 +745,12 @@ CG_DrawHUD
 */
 extern void *cgi_UI_GetMenuByName( const char *menu );
 extern void cgi_UI_Menu_Paint( void *menu, qboolean force );
+extern void WorkshopDrawClientsideInformation();
 static void CG_DrawHUD( centity_t *cent )
 {
 	int x,y,value;
+
+	WorkshopDrawClientsideInformation();
 	
 	if (cgi_UI_GetMenuInfo("lefthud",&x,&y))
 	{
@@ -1078,7 +1081,7 @@ static void CG_DrawZoomMask( void )
 		float cx, cy;
 		float max;
 
-		max = cg_entities[0].gent->client->ps.ammo[weaponData[WP_DISRUPTOR].ammoIndex] / (float)ammoData[weaponData[WP_DISRUPTOR].ammoIndex].max;
+		max = cg_entities[0].gent->client->ps.ammo[weaponData[WP_DISRUPTOR].ammoIndex] / (float)BG_GetAmmoMax(weaponData[WP_DISRUPTOR].ammoIndex);
 
 		if ( max > 1.0f )
 		{
@@ -1973,6 +1976,11 @@ static void CG_DrawRocketLocking( int lockEntNum, int lockTime )
 			if ( cg.overrides.active & CG_OVERRIDE_FOV )
 			{
 				sz -= ( cg.overrides.fov - cg_zoomFov ) / 80.0f;
+			}
+			else if (!cg.renderingThirdPerson && (cg_trueguns.integer || cg.snap->ps.weapon == WP_SABER
+				|| cg.snap->ps.weapon == WP_MELEE) && cg_truefov.value)
+			{
+				sz -= (cg_truefov.value - cg_zoomFov) / 80.0f;
 			}
 			else
 			{

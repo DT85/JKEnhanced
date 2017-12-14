@@ -243,12 +243,19 @@ void TIMER_Load( void )
 			const char* sg_buffer_data = static_cast<const char*>(
 				saved_game.get_buffer_data());
 
-			const int sg_buffer_size = saved_game.get_buffer_size();
+			int sg_buffer_size = saved_game.get_buffer_size();
 
-			std::uninitialized_copy_n(
-				sg_buffer_data,
-				sg_buffer_size,
-				tempBuffer);
+			if (sg_buffer_size < 0 || static_cast<size_t>(sg_buffer_size) >= sizeof(tempBuffer))
+			{
+				sg_buffer_size = 0;
+			}
+			else
+			{
+				std::uninitialized_copy_n(
+					sg_buffer_data,
+					sg_buffer_size,
+					tempBuffer);
+			}
 
 			tempBuffer[sg_buffer_size] = '\0';
 
@@ -446,4 +453,22 @@ qboolean TIMER_Start( gentity_t *self, const char *identifier, int duration )
 		return qtrue;
 	}
 	return qfalse;
+}
+
+/*
+ -------------------------
+ TIMER_List
+ -------------------------
+ */
+std::vector<std::pair<std::string, int> > TIMER_List(gentity_t* ent) {
+    std::vector<std::pair<std::string, int> > returnValue;
+    gtimer_t *p = g_timers[ent->s.number];
+    
+    while (p) {
+        std::pair<std::string, int> pair = std::make_pair(p->id.c_str(), p->time - level.time);
+        returnValue.push_back(pair);
+        p = p->next;
+    }
+    
+    return returnValue;
 }

@@ -185,7 +185,7 @@ static void CG_CaptionText_f( void ) {
 }
 
 static void CG_ScrollText_f( void ) {
-	CG_ScrollText( CG_Argv( 1 ), SCREEN_WIDTH - 16 );
+	CG_ScrollText(CG_Argv(1), SCREEN_WIDTH - 16);
 }
 
 static void CG_LCARSText_f( void ) {
@@ -203,7 +203,7 @@ typedef struct serverCommand_s {
 	void		(*func)(void);
 } serverCommand_t;
 
-int svcmdcmp( const void *a, const void *b ) {
+static int svcmdcmp( const void *a, const void *b ) {
 	return Q_stricmp( (const char *)a, ((serverCommand_t*)b)->cmd );
 }
 
@@ -239,7 +239,7 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
-	command = (serverCommand_t *)bsearch( cmd, commands, numCommands, sizeof( commands[0] ), svcmdcmp );
+	command = (serverCommand_t *)Q_LinearSearch( cmd, commands, numCommands, sizeof( commands[0] ), svcmdcmp );
 
 	if ( command ) {
 		command->func();

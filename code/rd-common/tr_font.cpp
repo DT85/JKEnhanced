@@ -154,7 +154,7 @@ struct ThaiCodes_t
 				//
 				// read the valid-codes table in...
 				//
-				int iBytesRead = ri.FS_ReadFile( sFILENAME_THAI_CODES, (void **) &piData );
+				int iBytesRead = ri->FS_ReadFile( sFILENAME_THAI_CODES, (void **) &piData );
 				if (iBytesRead > 0 && !(iBytesRead&3))	// valid length and multiple of 4 bytes long
 				{
 					int iTableEntries = iBytesRead / sizeof(int);
@@ -163,18 +163,18 @@ struct ThaiCodes_t
 					{
 						m_mapValidCodes[ piData[i] ] = i;	// convert MBCS code to sequential index...
 					}
-					ri.FS_FreeFile( piData );	// dispose of original
+					ri->FS_FreeFile( piData );	// dispose of original
 
 					// now read in the widths... (I'll keep these in a simple STL vector, so they'all disappear when the <map> entries do...
 					//
-					iBytesRead = ri.FS_ReadFile( sFILENAME_THAI_WIDTHS, (void **) &piData );
+					iBytesRead = ri->FS_ReadFile( sFILENAME_THAI_WIDTHS, (void **) &piData );
 					if (iBytesRead > 0 && !(iBytesRead&3) && iBytesRead>>2/*sizeof(int)*/ == iTableEntries)
 					{
 						for (int i=0; i<iTableEntries; i++)
 						{
 							m_viGlyphWidths.push_back( piData[i] );
 						}
-						ri.FS_FreeFile( piData );	// dispose of original
+						ri->FS_FreeFile( piData );	// dispose of original
 					}
 					else
 					{
@@ -967,10 +967,10 @@ CFontInfo::CFontInfo(const char *_fontName)
 	m_fAltSBCSFontScaleFactor = -1;
 	m_bIsFakeAlienLanguage = !strcmp(_fontName,"aurabesh");	// dont try and make SBCS or asian overrides for this
 
-	len = ri.FS_ReadFile(fontName, NULL);
+	len = ri->FS_ReadFile(fontName, NULL);
 	if (len == sizeof(dfontdat_t))
 	{
-		ri.FS_ReadFile(fontName, &buff);
+		ri->FS_ReadFile(fontName, &buff);
 		fontdat = (dfontdat_t *)buff;
 
 		for(i = 0; i < GLYPH_COUNT; i++)
@@ -1005,7 +1005,7 @@ CFontInfo::CFontInfo(const char *_fontName)
             mDescender = mHeight - mAscender;
 		}
 
-		ri.FS_FreeFile(buff);
+		ri->FS_FreeFile(buff);
 	}
 	else
 	{
@@ -1046,12 +1046,12 @@ CFontInfo::CFontInfo(const char *_fontName)
 				char sTemp[MAX_QPATH];
 
 				sprintf(sTemp,"fonts/%s.tga", g_SBCSOverrideLanguages[i].m_psName );
-				ri.FS_FOpenFileRead( sTemp, &f, qfalse );
-				if (f) ri.FS_FCloseFile( f );
+				ri->FS_FOpenFileRead( sTemp, &f, qfalse );
+				if (f) ri->FS_FCloseFile( f );
 
 				sprintf(sTemp,"fonts/%s.fontdat", g_SBCSOverrideLanguages[i].m_psName );
-				ri.FS_FOpenFileRead( sTemp, &f, qfalse );
-				if (f) ri.FS_FCloseFile( f );
+				ri->FS_FOpenFileRead( sTemp, &f, qfalse );
+				if (f) ri->FS_FCloseFile( f );
 			}
 
 			// asian MBCS override languages...
@@ -1068,14 +1068,14 @@ CFontInfo::CFontInfo(const char *_fontName)
 					{
 						// additional files needed for Thai language...
 						//
-						ri.FS_FOpenFileRead( sFILENAME_THAI_WIDTHS , &f, qfalse );
+						ri->FS_FOpenFileRead( sFILENAME_THAI_WIDTHS , &f, qfalse );
 						if (f) {
-							ri.FS_FCloseFile( f );
+							ri->FS_FCloseFile( f );
 						}
 
-						ri.FS_FOpenFileRead( sFILENAME_THAI_CODES, &f, qfalse );
+						ri->FS_FOpenFileRead( sFILENAME_THAI_CODES, &f, qfalse );
 						if (f) {
-							ri.FS_FCloseFile( f );
+							ri->FS_FCloseFile( f );
 						}
 					}
                     break;
@@ -1086,9 +1086,9 @@ CFontInfo::CFontInfo(const char *_fontName)
 					Com_sprintf(sTemp,sizeof(sTemp), "fonts/%s_%d_1024_%d.tga", psLang, 1024/m_iAsianGlyphsAcross, i);
 
 					// RE_RegisterShaderNoMip( sTemp );	// don't actually need to load it, so...
-					ri.FS_FOpenFileRead( sTemp, &f, qfalse );
+					ri->FS_FOpenFileRead( sTemp, &f, qfalse );
 					if (f) {
-						ri.FS_FCloseFile( f );
+						ri->FS_FCloseFile( f );
 					}
 				}
 			}
@@ -1136,7 +1136,7 @@ void CFontInfo::UpdateAsianIfNeeded( bool bForceReEval /* = false */ )
 							{
 								// failed to load a needed file, reset to English...
 								//
-								ri.Cvar_Set("se_language", "english");
+								ri->Cvar_Set("se_language", "english");
 								Com_Error( ERR_DROP, psFailureReason );
 							}
 						}
@@ -1460,6 +1460,13 @@ CFontInfo *GetFont(int index)
 	return pFont;
 }
 
+static float fontRatioFix = 1.0f;
+void RE_FontRatioFix(float ratio) {
+	if (ratio <= 0.0f)
+		fontRatioFix = 1.0f;
+	else
+		fontRatioFix = ratio;
+}
 
 int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float fScale)
 {
@@ -1545,7 +1552,7 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float 
 		{
 			int iPixelAdvance = curfont->GetLetterHorizAdvance( uiLetter );
 
-			float fValue = iPixelAdvance * ((uiLetter > (unsigned)g_iNonScaledCharRange) ? fScaleAsian : fScale);
+			float fValue = iPixelAdvance * ((uiLetter > (unsigned)g_iNonScaledCharRange) ? fScaleAsian : fScale) * fontRatioFix;
 			fThisWidth += curfont->mbRoundCalcs ? Round( fValue ) : fValue;
 			if (fThisWidth > fMaxWidth)
 			{
@@ -1627,7 +1634,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 	if(iFontHandle & STYLE_BLINK)
 	{
-		if((ri.Milliseconds() >> 7) & 1)
+		if((ri->Milliseconds() >> 7) & 1)
 		{
 			return;
 		}
@@ -1773,7 +1780,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 	if(iFontHandle & STYLE_BLINK)
 	{
-		if((ri.Milliseconds() >> 7) & 1)
+		if((ri->Milliseconds() >> 7) & 1)
 		{
 			return;
 		}
@@ -1846,7 +1853,19 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 		const vec4_t v4DKGREY2 = {0.15f, 0.15f, 0.15f, rgba?rgba[3]:1.0f};
 
 		gbInShadow = qtrue;
-		RE_Font_DrawString(ox + offset, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iMaxPixelWidth, fScale);
+		RE_Font_DrawString(ox + offset * fontRatioFix, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iMaxPixelWidth, fScale);
+		gbInShadow = qfalse;
+	}
+
+	// Draw a dark dropshadow if required
+	if (iFontHandle & STYLE_DROPSHADOWDARK)
+	{
+		offset = Round(curfont->GetPointSize() * fScale * 0.075f);
+
+		const vec4_t v4BLACK = { 0.00f, 0.00f, 0.00f, rgba ? rgba[3] : 1.0f };
+
+		gbInShadow = qtrue;
+		RE_Font_DrawString(ox + offset, oy + offset, psText, v4BLACK, iFontHandle & SET_MASK, iMaxPixelWidth, fScale);
 		gbInShadow = qfalse;
 	}
 
@@ -1881,7 +1900,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 			break;
 		case 32:						// Space
 			pLetter = curfont->GetLetter(' ');
-			fx += curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fScale) : pLetter->horizAdvance * fScale;
+			fx += curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fScale * fontRatioFix) : pLetter->horizAdvance * fScale * fontRatioFix;
 			bNextTextWouldOverflow = ( iMaxPixelWidth != -1 && ((fx-fox) > (float)iMaxPixelWidth) ) ? qtrue : qfalse; // yeuch
 			break;
 		case '_':	// has a special word-break usage if in Thai (and followed by a thai char), and should not be displayed, else treat as normal
@@ -1924,7 +1943,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 				fx -= curfont->mbRoundCalcs ? Round(7.0f * fThisScale) : 7.0f * fThisScale;
 			}
 
-			float fAdvancePixels = curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fThisScale) : pLetter->horizAdvance * fThisScale;
+			float fAdvancePixels = curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fThisScale) : pLetter->horizAdvance * fThisScale * fontRatioFix;
 			bNextTextWouldOverflow = ( iMaxPixelWidth != -1 && (((fx+fAdvancePixels)-fox) > (float)iMaxPixelWidth) ) ? qtrue : qfalse; // yeuch
 			if (!bNextTextWouldOverflow)
 			{
@@ -1938,7 +1957,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 				RE_StretchPic(curfont->mbRoundCalcs ? fx + Round(pLetter->horizOffset * fThisScale) : fx + pLetter->horizOffset * fThisScale, // float x
 								(uiLetter > (unsigned)g_iNonScaledCharRange) ? fy - fAsianYAdjust : fy,	// float y
-								curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale,	// float w
+								curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale * fontRatioFix,	// float w
 								curfont->mbRoundCalcs ? Round(pLetter->height * fThisScale) : pLetter->height * fThisScale, // float h
 								pLetter->s,						// float s1
 								pLetter->t,						// float t1

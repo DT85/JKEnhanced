@@ -27,7 +27,8 @@ if(BuildSPGame)
 endif(BuildSPGame)
 
 #    Add Modular Renderer project
-add_subdirectory("${SPDir}/rd-vanilla")
+add_subdirectory("${SPDir}/rd-gl1")
+add_subdirectory("${SPDir}/rd-gl2")
 
 #    Add Engine Project
 if(BuildSPEngine OR BuildJK2SPEngine)
@@ -321,6 +322,7 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 
 	if(WIN32)
 		set(SPEngineWin32Files
+			"${SPDir}/win32/jkenhanced.ico"
 			"${SPDir}/win32/resource.h"
 			"${SPDir}/win32/winquake.rc"
 			)
@@ -368,11 +370,11 @@ if(BuildSPEngine OR BuildJK2SPEngine)
     list(APPEND SPEngineIncludeDirectories ${ZLIB_INCLUDE_DIR})
     list(APPEND SPEngineLibraries          ${ZLIB_LIBRARIES})
 
-	# project macro so we can invoke it twice: for jk2 and for ja
+	# project macro so we can invoke it twice: for ja
 	function(add_sp_project ProjectName Label SPDirName InstallDir Component)
 		if(MakeApplicationBundles)
-			set_source_files_properties(${SPDirName}/macosx/OpenJK.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-			set(SPEngineFiles ${SPEngineFiles} ${SPDirName}/macosx/OpenJK.icns)
+			set_source_files_properties(${SPDirName}/macosx/JKEnhanced.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+			set(SPEngineFiles ${SPEngineFiles} ${SPDirName}/macosx/JKEnhanced.icns)
 			set_source_files_properties(${SPDirName}/macosx/English.lproj/InfoPlist.strings PROPERTIES MACOSX_PACKAGE_LOCATION Resources/English.lproj)
 			set(SPEngineFiles ${SPEngineFiles} ${SPDirName}/macosx/English.lproj/InfoPlist.strings)
 		endif(MakeApplicationBundles)

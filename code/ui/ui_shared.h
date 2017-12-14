@@ -120,6 +120,12 @@ typedef struct {
 	qhandle_t	scrollBarArrowRight;
 	qhandle_t	scrollBar;
 	qhandle_t	scrollBarThumb;
+	qhandle_t	scrollBarArrowUp_dp;
+	qhandle_t	scrollBarArrowDown_dp;
+	qhandle_t	scrollBarArrowLeft_dp;
+	qhandle_t	scrollBarArrowRight_dp;
+	qhandle_t	scrollBar_dp;
+	qhandle_t	scrollBarThumb_dp;
 	qhandle_t	buttonMiddle;
 	qhandle_t	buttonInside;
 	qhandle_t	solidBox;
@@ -218,6 +224,10 @@ typedef struct {
 	qboolean	(*g2_GetBoltMatrix)(CGhoul2Info_v &ghoul2, const int modelIndex, const int boltIndex, mdxaBone_t *matrix,
 									const vec3_t angles, const vec3_t position, const int frameNum, qhandle_t *modelList, const vec3_t scale);
 	void		(*g2_GiveMeVectorFromMatrix)(mdxaBone_t &boltMatrix, Eorientations flags, vec3_t &vec);
+	
+	qboolean		(*g2_SetSurfaceOnOff)(CGhoul2Info *ghlInfo, const char *surfaceName, const int flags);
+	
+	qboolean	(*g2_SetRootSurface)(CGhoul2Info_v &ghlInfo, const int modelIndex, const char *surfaceName);
 
 	//Utility functions that don't immediately redirect to ghoul2 functions
 	int			(*g2hilev_SetAnim)(CGhoul2Info *ghlInfo, const char *boneName, int animNum, const qboolean freeze);
@@ -238,6 +248,8 @@ typedef struct {
 	qhandle_t	whiteShader;
 	qhandle_t	gradientImage;
 	float FPS;
+
+	float		widthRatioCoef; //to make 2Ds be not stretched
 
 } displayContextDef_t;
 
@@ -339,6 +351,7 @@ typedef struct modelDef_s {
 //Transition extras
 	vec3_t g2mins2, g2maxs2, g2minsEffect, g2maxsEffect;
 	float fov_x2, fov_y2, fov_Effectx, fov_Effecty;
+	int g2skin2;
 } modelDef_t;
 
 #define ITF_G2VALID			0x0001					// indicates whether or not g2 instance is valid.
@@ -362,6 +375,7 @@ typedef struct itemDef_s {
 	int			textStyle;					// ( optional ) style, normal and shadowed are it for now
 	char		*text;						// display text
 	char		*text2;						// display text2
+	int			descFont;					// Description FONT_SMALL,FONT_MEDIUM,FONT_LARGE
 	const char		*descText;				//	Description text
 	void		*parent;					// menu owner
 	qhandle_t	asset;						// handle to asset
@@ -395,12 +409,14 @@ typedef struct itemDef_s {
 	int			font;						// FONT_SMALL,FONT_MEDIUM,FONT_LARGE
 	int			invertYesNo;
 	int			xoffset;
-
+	qboolean	disabled;					// Does this item ignore mouse and keyboard focus
+	qboolean	disabledHidden;				// hide the item when 'disabled' is true (for generic image items)
 } itemDef_t;
 
 typedef struct {
 	Window window;
 	const char  *font;						// font
+	const char  *descFont;					// Description font
 	qboolean	fullScreen;					// covers entire screen
 	int			itemCount;					// number of items;
 	int			fontIndex;					//
@@ -427,7 +443,7 @@ typedef struct {
 	vec4_t		descColor;					// description text color for items
 	int			descAlignment;				// Description of alignment
 	float		descScale;					// Description scale
-	int			descTextStyle;					// ( optional ) style, normal and shadowed are it for now
+	int			descTextStyle;				// ( optional ) style, normal and shadowed are it for now
 
 
 } menuDef_t;
@@ -471,6 +487,11 @@ qboolean	Menus_AnyFullScreenVisible(void);
 void		Menus_CloseAll(void);
 int			Menu_Count(void);
 itemDef_t	*Menu_FindItemByName(menuDef_t *menu, const char *p);
+void Menu_ShowGroup (menuDef_t *menu, const char *itemName, qboolean showFlag);
+void Menu_ItemDisable(menuDef_t *menu, const char *name, qboolean disableFlag);
+int Menu_ItemsMatchingGroup(menuDef_t *menu, const char *name);
+itemDef_t *Menu_GetMatchingItemByNumber(menuDef_t *menu, int index, const char *name);
+
 void		Menu_HandleKey(menuDef_t *menu, int key, qboolean down);
 void		Menu_New(char *buffer);
 void		Menus_OpenByName(const char *p);

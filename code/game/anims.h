@@ -1616,8 +1616,8 @@ typedef enum //# animNumber_e
 	BOTH_TUSKENTAUNT1,
 
 	//DT EDIT: DF2 - START - Added Gamorrean weapon anims
-	BOTH_GAMM_ATTACK1,
-	BOTH_GAMM_ATTACK2,
+	BOTH_GAM_ATTACK1,
+	BOTH_GAM_ATTACK2,
 	//DT EDIT: DF2 - END
 
 	BOTH_COWER1_START,		//# cower start
@@ -1645,6 +1645,10 @@ typedef enum //# animNumber_e
 
 	BOTH_SIT6,
 	BOTH_SIT7,
+	BOTH_ALERT1,
+	BOTH_TRIUMPHANT1START,
+	BOTH_TRIUMPHANT1STARTGESTURE,
+	BOTH_TRIUMPHANT1STOP,
 
 	//=================================================
 	//ANIMS IN WHICH ONLY THE UPPER OBJECTS ARE IN MD3
@@ -1675,6 +1679,10 @@ typedef enum //# animNumber_e
 	TORSO_HANDSIGNAL3,
 	TORSO_HANDSIGNAL4,
 	TORSO_HANDSIGNAL5,
+	
+	TORSO_RAISEWEAP2,
+	TORSO_DROPWEAP2,
+	TORSO_WEAPONIDLE1,
 
 
 	//=================================================
@@ -1822,20 +1830,23 @@ typedef enum //# animNumber_e
 
 #define SABER_ANIM_GROUP_SIZE (BOTH_A2_T__B_ - BOTH_A1_T__B_)
 
-//DT EDIT: Ghoul2 viewmodels - START
 /*
-======================================
-Viewmodel Animations
-======================================
-*/
+ ======================================
+ Viewmodel Animations
+ ======================================
+ */
 
-typedef enum {
+enum {
+	// Basic
 	VM_READY,
 	VM_IDLE,
 	VM_RAISE,
 	VM_LOWER,
 	VM_FIRE,
-
+	VM_MELEE,
+	VM_RELOAD,
+	
+	// Force powers
 	VM_FPUSH,
 	VM_FPULL,
 	VM_FGRIP,
@@ -1852,18 +1863,32 @@ typedef enum {
 	VM_FRESISTPUSH,
 	VM_FMINDTRICK1,
 	VM_FMINDTRICK2,
-
-
+	
+	// JA stuff
+	VM_2H_FLIGHTNING,
+	VM_2H_FLIGHTNING_HOLD,
+	VM_2H_FLIGHTNING_RELEASE,
+	VM_FDRAIN,
+	VM_FDRAIN_START,
+	VM_FDRAIN_HOLD,
+	VM_FDRAIN_RELEASE,
+	VM_FPROTECT,
+	VM_FPROTECT_FAST,
+	VM_FRAGE,
+	VM_FABSORB,
+	VM_FABSORB_START,
+	VM_FABSORB_END,
+	
 	MAX_VIEWMODEL_ANIMATIONS
 };
 
-typedef struct {
+typedef struct
+{
 	char			filename[MAX_QPATH];
 	animation_t		animations[MAX_VIEWMODEL_ANIMATIONS];
 } viewModelAnimSet_t;
 
-extern stringID_table_t vmAnimTable[MAX_VIEWMODEL_ANIMATIONS + 1];
-//DT EDIT: Ghoul2 viewmodels - END
+extern stringID_table_t vmAnimTable [MAX_VIEWMODEL_ANIMATIONS+1];
 
 #endif// #ifndef __ANIMS_H__
 

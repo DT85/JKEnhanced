@@ -1348,7 +1348,7 @@ int CNavigator::GetBestPathBetweenEnts( gentity_t *ent, gentity_t *goal, int fla
 				//We're not *within* this node, so check clear path, etc.
 
 				//FIXME: any way to call G_FindClosestPointOnLineSegment and see if I can at least get to the waypoint's path
-				if ( flags & NF_CLEAR_PATH )//|| flags & NF_CLEAR_LOS )
+				if ( flags & NF_CLEAR_PATH || flags & NF_CLEAR_LOS )
 				{//need a clear path or LOS
 					if ( !gi.inPVS( ent->currentOrigin, position ) )
 					{//not even potentially clear
@@ -1437,7 +1437,7 @@ int CNavigator::GetBestPathBetweenEnts( gentity_t *ent, gentity_t *goal, int fla
 				{
 					//We're not *within* this node, so check clear path, etc.
 
-					if ( flags & NF_CLEAR_PATH )//|| flags & NF_CLEAR_LOS )
+					if ( flags & NF_CLEAR_PATH || flags & NF_CLEAR_LOS )
 					{//need a clear path or LOS
 						if ( !gi.inPVS( goal->currentOrigin, position2 ) )
 						{//not even potentially clear
@@ -1488,7 +1488,7 @@ int CNavigator::GetNearestNode( gentity_t *ent, int lastID, int flags, int targe
 	if ( m_nodes.size() == 0 )
 		return NODE_NONE;
 
-	if ( targetID == NODE_NONE )
+	if ( ent != g_entities && targetID == NODE_NONE )
 	{
 		//Try and find an early match using our last node
 		bestNode = TestBestFirst( ent, lastID, flags );
@@ -1560,16 +1560,16 @@ int CNavigator::GetNearestNode( gentity_t *ent, int lastID, int flags, int targe
 			}
 
 			//Do we need a clear line of sight?
-			/*
+			
 			if ( flags & NF_CLEAR_LOS )
 			{
 				if ( TestNodeLOS( ent, position ) == false )
 				{
-					nodeChecked[(*nci).nodeID][ent->s.number] = CHECKED_FAILED;
+					SetCheckedNode((*nci).nodeID, ent->s.number, CHECKED_FAILED);
 					continue;
 				}
 			}
-			*/
+			
 			SetCheckedNode((*nci).nodeID,ent->s.number,CHECKED_PASSED);
 		}
 
@@ -2636,6 +2636,125 @@ int CNavigator::GetProjectedNode( vec3_t origin, int nodeID )
 
 	return bestNode;
 }
+
+/*
+-------------------------
+NearMe
+-------------------------
+*/
+void CNavigator::NearMe()
+{
+	gentity_t* me = g_entities;
+	int nodeID = this->GetNearestNode(me, me->waypoint, NF_ANY, WAYPOINT_NONE);
+	if (nodeID == NODE_NONE) {
+		Com_Printf("No nearest node\n");
+		return;
+	}
+	CNode* pNode = m_nodes[nodeID];
+	vec3_t pos;
+	pNode->GetPosition(pos);
+	if (nodeID == m_selectedNode) {
+		Com_Printf("[SELECTED] ");
+	}
+
+	Com_Printf("node %i (flags: %i, radius: %i, edges: %i) @ %.2f %.2f %.2f\n", 
+		nodeID, pNode->GetFlags(), pNode->GetRadius(), pNode->GetNumEdges(), pos[0], pos[1], pos[2]);
+	for (int i = 0; i < pNode->GetNumEdges(); i++) {
+		Com_Printf("...with edge %i to node %i (flags: %i, cost: %i)\n",
+			pNode->GetEdge(i), pNode->GetEdgeNumToNode(i), pNode->GetEdgeFlags(i), pNode->GetEdgeCost(i));
+	}
+}
+
+/*
+-------------------------
+SelectNode
+-------------------------
+*/
+void CNavigator::SelectNode(int nodeID)
+{
+	if (nodeID == NODE_NONE) {
+		// Pick the nearest node to me
+		gentity_t* me = g_entities;
+		nodeID = this->GetNearestNode(me, me->waypoint, NF_CLEAR_PATH, WAYPOINT_NONE);
+		if (nodeID == NODE_NONE) {
+			Com_Printf("Couldn't find a node ='(\n");
+			return;
+		}
+	}
+	m_selectedNode = nodeID;
+}
+
+/*
+-------------------------
+DeleteSelectedNode
+-------------------------
+*/
+void CNavigator::DeleteSelectedNode()
+{
+	if (m_selectedNode == NODE_NONE) {
+		return;
+	}
+
+	// First pass: delete any edges which reference this node
+	for (auto it = m_nodes.begin(); it != m_nodes.end(); ++it) {
+		auto thisNode = *it;
+		thisNode->DeleteEdgeReference(m_selectedNode);
+	}
+
+	// Second pass: delete the node itself
+	m_nodes.erase(m_nodes.begin() + m_selectedNode);
+
+	m_selectedNode = NODE_NONE;
+}
+
+void CNode::DeleteEdgeReference(int nodeID) {
+	if (this->m_ID > nodeID) {
+		this->m_ID--;
+	}
+
+	auto it = m_edges.begin();
+	while (it != m_edges.end()) {
+		if (it->ID == nodeID) {
+			it = m_edges.erase(it);
+		}
+		else {
+			if (it->ID > nodeID) {
+				it->ID--;
+			}
+			it++;
+		}
+	}
+	m_numEdges = m_edges.size();
+}
+/*
+-------------------------
+SetSelectedNodeRadius
+-------------------------
+*/
+void CNavigator::SetSelectedNodeRadius(int radius)
+{
+	for (auto it = m_nodes.begin(); it != m_nodes.end(); ++it) {
+		auto thisNode = *it;
+		if (thisNode->GetID() == m_selectedNode) {
+			thisNode->SetRadius(radius);
+			return;
+		}
+	}
+}
+
+void CNavigator::ShowSelectedNode()
+{
+	for (auto it = m_nodes.begin(); it != m_nodes.end(); ++it) {
+		auto thisNode = *it;
+		if (thisNode->GetID() == m_selectedNode) {
+			vec3_t origin;
+			thisNode->GetPosition(origin);
+			G_PlayEffect("force/invin", origin);
+			return;
+		}
+	}
+}
+
 
 // This is the PriorityQueue stuff for lists of connections
 // better than linear		(1/21/02 BJG)

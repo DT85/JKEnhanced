@@ -203,6 +203,12 @@ void G_Give( gentity_t *ent, const char *name, const char *args, int argc )
 			ent->client->ps.forcePower = Com_Clampi( 0, FORCE_POWER_MAX, atoi( args ) );
 		else
 			ent->client->ps.forcePower = FORCE_POWER_MAX;
+		ent->client->ps.inventory[INV_BACTA_CANISTER] = g_maxbactas->integer;
+		ent->client->ps.inventory[INV_SEEKER] = g_maxseekers->integer;
+		ent->client->ps.inventory[INV_LIGHTAMP_GOGGLES] = 1;
+		ent->client->ps.inventory[INV_SENTRY] = g_maxsentries->integer;
+		ent->client->ps.inventory[INV_GOODIE_KEY] = g_maxkeys->integer;
+		ent->client->ps.inventory[INV_SECURITY_KEY] = 5;
 
 		if ( !give_all )
 			return;
@@ -233,7 +239,7 @@ void G_Give( gentity_t *ent, const char *name, const char *args, int argc )
 		if ( argc == 3 )
 			num = Com_Clampi( -1, 999, atoi( args ) );
 		for ( i=AMMO_BLASTER; i<AMMO_MAX; i++ )
-			ent->client->ps.ammo[i] = num != -1 ? num : ammoData[i].max;
+			ent->client->ps.ammo[i] = num != -1 ? num : BG_GetAmmoMax(i);
 		if ( !give_all )
 			return;
 	}
@@ -1129,6 +1135,7 @@ void ClientCommand( int clientNum ) {
 			gi.SetConfigstring( CS_MUSIC, cmd2 );
 		}
 	}
+	else if (TryWorkshopCommand(ent)) {}
 	else
 	{
 		gi.SendServerCommand( clientNum, va("print \"Unknown command %s\n\"", cmd ) );

@@ -205,7 +205,7 @@ NPC_BSGrenadier_Patrol
 
 void NPC_BSGrenadier_Patrol( void )
 {//FIXME: pick up on bodies of dead buddies?
-	if ( NPCInfo->confusionTime < level.time )
+	if ( (NPCInfo->confusionTime<level.time)&&(NPCInfo->insanityTime<level.time) )
 	{
 		//Look for any enemies
 		if ( NPCInfo->scriptFlags&SCF_LOOK_FOR_ENEMIES )
@@ -530,7 +530,7 @@ void NPC_BSGrenadier_Attack( void )
 	}
 	else if ( enemyDist > 65536 || (NPC->enemy->client && NPC->enemy->client->ps.weapon == WP_SABER && NPC->enemy->client->ps.SaberActive()) )//256
 	{//enemy is far or using saber
-		if ( NPC->client->ps.weapon == WP_MELEE && (NPC->client->ps.stats[STAT_WEAPONS]&(1<<WP_THERMAL)) )
+		if ( NPC->client->ps.weapon == WP_MELEE && (NPC->client->ps.weapons[WP_THERMAL]) )
 		{//fisticuffs, make switch to thermal if have it
 			//reset fire-timing variables
 			NPC_ChangeWeapon( WP_THERMAL );

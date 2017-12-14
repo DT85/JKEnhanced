@@ -292,6 +292,9 @@ void G_AttackDelay( gentity_t *self, gentity_t *enemy )
 			break;
 		case WP_BRYAR_PISTOL:
 			break;
+		case WP_BLASTER_PISTOL:	// apparently some enemy only version of the blaster
+			attDelay -= Q_irand(500, 1500);
+			break;
 		case WP_BLASTER:
 			if ( self->NPC->scriptFlags & SCF_ALT_FIRE )
 			{//rapid-fire blasters
@@ -320,9 +323,6 @@ void G_AttackDelay( gentity_t *self, gentity_t *enemy )
 		case WP_CONCUSSION:
 			attDelay += Q_irand( 500, 1500 );
 			break;
-		case WP_BLASTER_PISTOL:	// apparently some enemy only version of the blaster
-			attDelay -= Q_irand( 500, 1500 );
-			break;
 		case WP_DISRUPTOR://sniper's don't delay?
 			return;
 			break;
@@ -343,6 +343,20 @@ void G_AttackDelay( gentity_t *self, gentity_t *enemy )
 			break;
 		case WP_NOGHRI_STICK:
 			attDelay += Q_irand( 0, 500 );
+			break;
+		case WP_E5_CARBINE:
+			attDelay -= Q_irand( 0, 500 );
+			break;
+		case WP_DC15S_CARBINE:
+			attDelay -= Q_irand( 0, 500 );
+			break;
+		case WP_Z6_ROTARY:
+			attDelay += Q_irand( 0, 500 );
+			break;
+		case WP_DC15A_RIFLE:
+			break;
+		case WP_SONIC_BLASTER:
+			return;
 			break;
 		/*
 		case WP_DEMP2:
@@ -434,6 +448,11 @@ void G_SetEnemy( gentity_t *self, gentity_t *enemy )
 	{//can't pick up enemies if confused
 		return;
 	}
+	
+	if ( self->NPC->insanityTime > level.time )
+	{//can't pick up enemies if confused
+		return;
+	}
 
 #ifdef _DEBUG
 	if ( self->s.number )
@@ -449,7 +468,7 @@ void G_SetEnemy( gentity_t *self, gentity_t *enemy )
 
 	if ( self->client && self->NPC && enemy->client && enemy->client->playerTeam == self->client->playerTeam )
 	{//Probably a damn script!
-		if ( self->NPC->charmedTime > level.time )
+		if ( self->NPC->charmedTime > level.time || self->NPC->darkCharmedTime > level.time )
 		{//Probably a damn script!
 			return;
 		}
@@ -604,19 +623,19 @@ void G_SetEnemy( gentity_t *self, gentity_t *enemy )
 		//FIXME: this is a disgusting hack that is supposed to make the Imperials start with their weapon holstered- need a better way
 		if ( self->client->ps.weapon == WP_NONE && !Q_stricmpn( self->NPC_type, "imp", 3 ) && !(self->NPC->scriptFlags & SCF_FORCED_MARCH)  )
 		{
-			if ( self->client->ps.stats[STAT_WEAPONS] & ( 1 << WP_BLASTER ) )
+			if ( self->client->ps.weapons[WP_BLASTER] )
 			{
 				ChangeWeapon( self, WP_BLASTER );
 				self->client->ps.weapon = WP_BLASTER;
 				self->client->ps.weaponstate = WEAPON_READY;
-				G_CreateG2AttachedWeaponModel( self, weaponData[WP_BLASTER].weaponMdl, self->handRBolt, 0 );
+				G_CreateG2AttachedWeaponModel( self, weaponData[WP_BLASTER].worldModel, self->handRBolt, 0 );
 			}
-			else if ( self->client->ps.stats[STAT_WEAPONS] & ( 1 << WP_BLASTER_PISTOL ) )
+			else if ( self->client->ps.weapons[WP_BLASTER_PISTOL] )
 			{
 				ChangeWeapon( self, WP_BLASTER_PISTOL );
 				self->client->ps.weapon = WP_BLASTER_PISTOL;
 				self->client->ps.weaponstate = WEAPON_READY;
-				G_CreateG2AttachedWeaponModel( self, weaponData[WP_BLASTER_PISTOL].weaponMdl, self->handRBolt, 0 );
+				G_CreateG2AttachedWeaponModel( self, weaponData[WP_BLASTER_PISTOL].worldModel, self->handRBolt, 0 );
 			}
 		}
 		return;
@@ -1018,6 +1037,57 @@ void ChangeWeapon( gentity_t *ent, int newWeapon )
 		else
 			ent->NPC->burstSpacing = 750;//attack debounce
 		break;
+			
+	case WP_E5_CARBINE:
+		ent->NPC->aiFlags &= ~NPCAI_BURST_WEAPON;
+		if ( g_spskill->integer == 0 )
+			ent->NPC->burstSpacing = 1000;//attack debounce
+		else if ( g_spskill->integer == 1 )
+			ent->NPC->burstSpacing = 750;//attack debounce
+		else
+			ent->NPC->burstSpacing = 500;//attack debounce
+		break;
+			
+	case WP_DC15S_CARBINE:
+		ent->NPC->aiFlags &= ~NPCAI_BURST_WEAPON;
+		if ( g_spskill->integer == 0 )
+			ent->NPC->burstSpacing = 1000;//attack debounce
+		else if ( g_spskill->integer == 1 )
+			ent->NPC->burstSpacing = 750;//attack debounce
+		else
+			ent->NPC->burstSpacing = 500;//attack debounce
+		break;
+			
+	case WP_Z6_ROTARY:
+		ent->NPC->aiFlags |= NPCAI_BURST_WEAPON;
+		ent->NPC->burstMin = 3;
+#ifdef BASE_SAVE_COMPAT
+		ent->NPC->burstMean = 6;
+#endif
+		ent->NPC->burstMax = 10;
+		if ( g_spskill->integer == 0 )
+			ent->NPC->burstSpacing = 1500;//attack debounce
+		else if ( g_spskill->integer == 1 )
+			ent->NPC->burstSpacing = 1000;//attack debounce
+		else
+			ent->NPC->burstSpacing = 500;//attack debounce
+		break;
+
+	case WP_SONIC_BLASTER:
+		ent->NPC->aiFlags &= ~NPCAI_BURST_WEAPON;
+		ent->NPC->burstSpacing = 1000;//attackdebounce
+		break;
+
+	case WP_DC15A_RIFLE:
+		ent->NPC->aiFlags &= ~NPCAI_BURST_WEAPON;
+		if ( g_spskill->integer == 0 )
+			ent->NPC->burstSpacing = 1000;//attack debounce
+		else if ( g_spskill->integer == 1 )
+			ent->NPC->burstSpacing = 750;//attack debounce
+		else
+			ent->NPC->burstSpacing = 500;//attack debounce
+		break;
+
 
 	default:
 		ent->NPC->aiFlags &= ~NPCAI_BURST_WEAPON;
@@ -1042,10 +1112,12 @@ void NPC_ChangeWeapon( int newWeapon )
 		if ( NPC->client->ps.weapon == WP_SABER )
 		{
 			WP_SaberAddG2SaberModels( NPC );
+			G_RemoveHolsterModels( NPC );
 		}
 		else
 		{
-			G_CreateG2AttachedWeaponModel( NPC, weaponData[NPC->client->ps.weapon].weaponMdl, NPC->handRBolt, 0 );
+			G_CreateG2AttachedWeaponModel( NPC, weaponData[NPC->client->ps.weapon].worldModel, NPC->handRBolt, 0 );
+			WP_SaberAddHolsteredG2SaberModels( NPC );
 		}
 	}
 }
@@ -1250,7 +1322,7 @@ HaveWeapon
 
 qboolean HaveWeapon( int weapon )
 {
-	return (qboolean)( client->ps.stats[STAT_WEAPONS] & ( 1 << weapon ) );
+	return ( (qboolean)(client->ps.weapons[weapon] != 0) );
 }
 
 qboolean EntIsGlass (gentity_t *check)

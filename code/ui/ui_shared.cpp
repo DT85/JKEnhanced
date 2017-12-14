@@ -47,6 +47,26 @@ extern vmCvar_t	ui_char_color_red;
 extern vmCvar_t	ui_char_color_green;
 extern vmCvar_t	ui_char_color_blue;
 
+extern vmCvar_t	ui_char_color_2_red;
+extern vmCvar_t	ui_char_color_2_green;
+extern vmCvar_t	ui_char_color_2_blue;
+
+extern vmCvar_t    ui_hilt_color_red;
+extern vmCvar_t    ui_hilt_color_green;
+extern vmCvar_t    ui_hilt_color_blue;
+
+extern vmCvar_t    ui_hilt2_color_red;
+extern vmCvar_t    ui_hilt2_color_green;
+extern vmCvar_t    ui_hilt2_color_blue;
+
+extern vmCvar_t	ui_rgb_saber_red;
+extern vmCvar_t	ui_rgb_saber_green;
+extern vmCvar_t	ui_rgb_saber_blue;
+
+extern vmCvar_t	ui_rgb_saber2_red;
+extern vmCvar_t	ui_rgb_saber2_green;
+extern vmCvar_t	ui_rgb_saber2_blue;
+
 void *UI_Alloc( int size );
 
 void		Controls_GetConfig( void );
@@ -168,6 +188,7 @@ const char *types [] = {
 "ITEM_TYPE_EDITFIELD",
 "ITEM_TYPE_COMBO",
 "ITEM_TYPE_LISTBOX",
+"ITEM_TYPE_LISTBOX_DP",
 "ITEM_TYPE_MODEL",
 "ITEM_TYPE_OWNERDRAW",
 "ITEM_TYPE_NUMERICFIELD",
@@ -176,6 +197,7 @@ const char *types [] = {
 "ITEM_TYPE_MULTI",
 "ITEM_TYPE_BIND",
 "ITEM_TYPE_TEXTSCROLL",
+"ITEM_TYPE_SLIDER_INTEGER",
 NULL
 };
 
@@ -705,6 +727,28 @@ qboolean MenuParse_appearanceIncrement( itemDef_t *item)
 }
 
 
+/*
+=================
+MenuParse_descFont
+=================
+*/
+qboolean MenuParse_descFont(itemDef_t *item)
+{
+	menuDef_t *menu = (menuDef_t*)item;
+
+	if (!PC_ParseStringMem(&menu->descFont))
+	{
+		return qfalse;
+	}
+
+	if (!DC->Assets.fontRegistered)
+	{
+		DC->Assets.qhMediumFont = DC->registerFont(menu->descFont);
+		DC->Assets.fontRegistered = qtrue;
+	}
+	return qtrue;
+}
+
 
 /*
 =================
@@ -1027,25 +1071,131 @@ qboolean MenuParse_fadeCycle( itemDef_t *item)
 	return qtrue;
 }
 
+/*
+===============
+Item_ApplyHacks
+Hacks to fix issues with Team Arena menu scripts
+===============
+*/
+static void Item_ApplyHacks( itemDef_t *item ) {
+#if !defined(_WIN32) || ( defined(_WIN32) && defined(idx64) )
+	// Fix length of favorite address in createfavorite.menu
+	if ( item->type == ITEM_TYPE_MULTI && item->cvar && !Q_stricmp( item->cvar, "s_UseOpenAL" ) ) {
+		if( item->parent )
+		{
+			menuDef_t *parent = (menuDef_t *)item->parent;
+			VectorSet4( parent->disableColor, 0.5f, 0.5f, 0.5f, 1.0f );
+			item->disabled = qtrue;
+			// Just in case it had focus
+			item->window.flags &= ~WINDOW_MOUSEOVER;
+			Com_Printf( "Disabling eax field because current platform does not support EAX.\n");
+		}
+	}
+	
+	if ( item->type == ITEM_TYPE_TEXT && item->window.name && !Q_stricmp( item->window.name, "eax_icon") && item->cvarTest && !Q_stricmp( item->cvarTest, "s_UseOpenAL" ) && item->enableCvar && item->cvarFlags & CVAR_HIDE ) {
+		if( item->parent )
+		{
+			menuDef_t *parent = (menuDef_t *)item->parent;
+			VectorSet4( parent->disableColor, 0.5f, 0.5f, 0.5f, 1.0f );
+			item->disabled = item->disabledHidden = qtrue;
+			// Just in case it had focus
+			item->window.flags &= ~WINDOW_MOUSEOVER;
+			Com_Printf( "Hiding eax_icon object because current platform does not support EAX.\n");
+		}
+	}
+#endif
+
+	if ( item->type == ITEM_TYPE_MULTI && item->window.name && !Q_stricmp( item->window.name, "sound_quality") ) {
+		multiDef_t *multiPtr = (multiDef_t *)item->typeData;
+		int i;
+		qboolean found = qfalse;
+		for( i = 0; i < multiPtr->count; i++ )
+		{
+			if ( multiPtr->cvarValue[i] == 44 )
+			{
+				found = qtrue;
+				break;
+			}
+		}
+		if ( !found && multiPtr->count < MAX_MULTI_CVARS )
+		{
+#ifdef JK2_MODE
+			multiPtr->cvarList[multiPtr->count] = String_Alloc("@MENUS0_VERY_HIGH");
+#else
+			multiPtr->cvarList[multiPtr->count] = String_Alloc("@MENUS_VERY_HIGH");
+#endif
+			multiPtr->cvarValue[multiPtr->count] = 44;
+			multiPtr->count++;
+			Com_Printf( "Extended sound quality field to contain very high option.\n");
+		}
+	}
+	
+	if ( item->type == ITEM_TYPE_MULTI && item->window.name && !Q_stricmp( item->window.name, "voice") && item->cvar && !Q_stricmp( item->cvar, "g_subtitles" ) ) {
+		multiDef_t *multiPtr = (multiDef_t *)item->typeData;
+		int i;
+		qboolean found = qfalse;
+		for( i = 0; i < multiPtr->count; i++ )
+		{
+			if ( multiPtr->cvarValue[i] == 1 )
+			{
+				found = qtrue;
+				break;
+			}
+		}
+		if ( !found && multiPtr->count < MAX_MULTI_CVARS )
+		{
+#ifdef JK2_MODE
+			multiPtr->cvarList[multiPtr->count] = String_Alloc("@MENUS3_ALL_VOICEOVERS");
+#else
+			multiPtr->cvarList[multiPtr->count] = String_Alloc("@MENUS_ALL_VOICEOVERS");
+#endif
+			multiPtr->cvarValue[multiPtr->count] = 1;
+			multiPtr->count++;
+			Com_Printf( "Extended subtitles field to contain all voiceovers option.\n");
+		}
+	}
+
+#ifdef JK2_MODE
+	if ( item->type == ITEM_TYPE_MULTI && item->window.name && !Q_stricmp( item->window.name, "video_mode") && item->cvar && !Q_stricmp( item->cvar, "r_ext_texture_filter_anisotropic" ) ) {
+		{
+			memset(item->typeData, 0, sizeof(multiDef_t));
+		}
+		editFieldDef_t *editPtr = NULL;
+
+		item->cvarFlags = CVAR_DISABLE;
+		item->type = ITEM_TYPE_SLIDER;
+
+		Item_ValidateTypeData(item);
+
+		editPtr = (editFieldDef_t *)item->typeData;
+		editPtr->minVal = 0.5f;
+		editPtr->maxVal = cls.glconfig.maxTextureFilterAnisotropy;
+		editPtr->defVal = 1.0f;
+		Com_Printf( "Converted anisotropic filter field to slider.\n");
+	}
+#endif
+}
 
 /*
 ================
 MenuParse_itemDef
 ================
 */
-qboolean MenuParse_itemDef( itemDef_t *item)
+qboolean MenuParse_itemDef( itemDef_t *item )
 {
 	menuDef_t *menu = (menuDef_t*)item;
 	if (menu->itemCount < MAX_MENUITEMS)
 	{
-		menu->items[menu->itemCount] = (struct itemDef_s *) UI_Alloc(sizeof(itemDef_t));
-		Item_Init(menu->items[menu->itemCount]);
-		if (!Item_Parse(menu->items[menu->itemCount]))
+		itemDef_t *newItem = menu->items[menu->itemCount] = (struct itemDef_s *) UI_Alloc(sizeof(itemDef_t));
+		Item_Init(newItem);
+		if (!Item_Parse(newItem))
 		{
 			return qfalse;
 		}
-		Item_InitControls(menu->items[menu->itemCount]);
-		menu->items[menu->itemCount++]->parent = menu;
+		Item_InitControls( newItem );
+		newItem->parent = menu->items[menu->itemCount]->parent = menu;
+		menu->itemCount++;
+		Item_ApplyHacks( newItem );
 	}
 	else
 	{
@@ -1071,6 +1221,7 @@ keywordHash_t menuParseKeywords[] = {
 	{"bordercolor",			MenuParse_bordercolor,	},
 	{"borderSize",			MenuParse_borderSize,	},
 	{"cinematic",			MenuParse_cinematic,	},
+	{"descFont",			MenuParse_descFont		},
 	{"descAlignment",		MenuParse_descAlignment	},
 	{"descTextStyle",		MenuParse_descTextStyle	},
 	{"desccolor",			MenuParse_descColor		},
@@ -1847,6 +1998,47 @@ void Menu_OrbitItemByName(menuDef_t *menu, const char *p, float x, float y, floa
 			item->window.rectClient.x = x;
 			item->window.rectClient.y = y;
 			Item_UpdatePosition(item);
+		}
+	}
+}
+
+void Menu_ToggleDecorationByName(menuDef_t *menu, const char *p)
+{
+	itemDef_t *item;
+	int i;
+	int count = Menu_ItemsMatchingGroup(menu, p);
+	for (i = 0; i < count; i++)
+	{
+		item = Menu_GetMatchingItemByNumber(menu, i, p);
+		if (item != NULL)
+		{
+			if (item->window.flags & WINDOW_DECORATION)
+			{
+				item->window.flags &= ~WINDOW_DECORATION;
+			}
+			else
+			{
+				item->window.flags |= WINDOW_DECORATION;
+			}
+		}
+	}
+}
+
+void Menu_ItemDisable(menuDef_t *menu, const char *name, qboolean disableFlag)
+{
+	int	j,count;
+	itemDef_t *itemFound;
+
+	count = Menu_ItemsMatchingGroup(menu, name);
+	// Loop through all items that have this name
+	for (j = 0; j < count; j++)
+	{
+		itemFound = Menu_GetMatchingItemByNumber( menu, j, name);
+		if (itemFound != NULL)
+		{
+			itemFound->disabled = disableFlag;
+			// Just in case it had focus
+			itemFound->window.flags &= ~WINDOW_MOUSEOVER;
 		}
 	}
 }
@@ -2812,6 +3004,18 @@ qboolean Script_Orbit(itemDef_t *item, const char **args)
 	return qtrue;
 }
 
+qboolean Script_ToggleDecoration(itemDef_t *item, const char **args)
+{
+	const char *name;
+	
+	if (String_Parse(args, &name))
+	{
+		Menu_ToggleDecorationByName((menuDef_t *) item->parent, name);
+	}
+	
+	return qtrue;
+}
+
 
 commandDef_t commandList[] =
 {
@@ -2847,7 +3051,8 @@ commandDef_t commandList[] =
   {"delay",			&Script_Delay},					// works on this (script)
   {"transition3",   &Script_Transition3},			// model exclusive transition
   {"incrementfeeder", &Script_IncrementFeeder},
-  {"decrementfeeder", &Script_DecrementFeeder}
+  {"decrementfeeder", &Script_DecrementFeeder},
+	{"toggledecoration", &Script_ToggleDecoration}
 };
 
 int scriptCommandCount = sizeof(commandList) / sizeof(commandDef_t);
@@ -3013,6 +3218,24 @@ qboolean ItemParse_descText( itemDef_t *item)
 	return qtrue;
 }
 
+
+/*
+===============
+ItemParse_descFont
+value <int>
+===============
+*/
+
+qboolean ItemParse_descFont(itemDef_t *item)
+{
+	if (PC_ParseInt(&item->descFont))
+	{
+		return qfalse;
+	}
+	return qtrue;
+}
+
+
 /*
 ===============
 ItemParse_text
@@ -3065,6 +3288,10 @@ qboolean ItemParse_asset_model_go( itemDef_t *item, const char *name )
 	{ //it's a ghoul2 model then
 		if ( item->ghoul2.size() && item->ghoul2[0].mModelindex >= 0)
 		{
+			if ( item->ghoul2.size() > 1 && item->ghoul2[1].mModelindex >= 0)
+			{
+				DC->g2_RemoveGhoul2Model( item->ghoul2, 1 );
+			}
 			DC->g2_RemoveGhoul2Model( item->ghoul2, 0 );
 			item->flags &= ~ITF_G2VALID;
 		}
@@ -3091,7 +3318,46 @@ qboolean ItemParse_asset_model_go( itemDef_t *item, const char *name )
 	return qtrue;
 }
 
-qboolean ItemParse_asset_model( itemDef_t *item )
+qboolean ItemParse_asset_model_go_head( itemDef_t *item, const char *name, qboolean cleanuponly )
+{
+	modelDef_t *modelPtr;
+	Item_ValidateTypeData(item);
+	modelPtr = (modelDef_t*)item->typeData;
+	
+	//Cleanup also done in ItemParse_asset_model_go
+	if ( item->ghoul2.size() > 1 && item->ghoul2[1].mModelindex >= 0 )
+	{
+		DC->g2_RemoveGhoul2Model( item->ghoul2, 1 );
+	}
+	
+	if ( cleanuponly )
+	{
+		return qtrue;
+	}
+	
+	if (!Q_stricmp(&name[strlen(name) - 4], ".glm"))
+	{ //it's a ghoul2 model then
+		int g2Model = DC->g2_InitGhoul2Model(item->ghoul2, name, 0, 0, 0, 0, 0);
+		//NOTE: it still loads the default skin's tga's because they're referenced in the .glm.
+
+		if (g2Model >= 0)
+		{
+			if (modelPtr->g2anim)
+			{ //does the menu request this model be playing an animation?
+				DC->g2hilev_SetAnim(&item->ghoul2[1], "model_root", modelPtr->g2anim, qfalse);
+				//need to sync the head and body!
+				DC->g2hilev_SetAnim(&item->ghoul2[0], "model_root", modelPtr->g2anim, qfalse);
+			}
+			if ( modelPtr->g2skin2 )
+			{
+				DC->g2_SetSkin( &item->ghoul2[1], modelPtr->g2skin2, modelPtr->g2skin2 );//this is going to set the surfs on/off matching the skin file
+			}
+		}
+	}
+	return qtrue;
+}
+
+qboolean ItemParse_asset_model( itemDef_t *item ) 
 {
 	const char *temp;
 	Item_ValidateTypeData(item);
@@ -3288,7 +3554,46 @@ qboolean ItemParse_model_g2skin_go( itemDef_t *item, const char *skinName )
 	return qtrue;
 }
 
-qboolean ItemParse_model_g2skin( itemDef_t *item )
+qboolean ItemParse_model_g2skin_go_head( itemDef_t *item, const char *skinName )
+{
+	modelDef_t *modelPtr;
+
+	Item_ValidateTypeData(item);
+	modelPtr = (modelDef_t*)item->typeData;
+	
+	if (!skinName || !skinName[0])
+	{ //it was parsed cor~rectly so still return true.
+		modelPtr->g2skin2 = 0;
+		DC->g2_SetSkin( &item->ghoul2[1], -1, 0 );//turn off custom skin
+		return qtrue;
+	}
+
+	modelPtr->g2skin2 = DC->registerSkin(skinName);
+//	Com_Printf("loaded skin %d\n", modelPtr->g2skin2);
+	if ( item->ghoul2.IsValid() && item->ghoul2.size() > 1 &&  item->ghoul2[1].mModelindex >= 0 )
+	{
+		DC->g2_SetSkin( &item->ghoul2[1], modelPtr->g2skin2, modelPtr->g2skin2 );//this is going to set the surfs on/off matching the skin file
+	}
+//	Com_Printf("forced skin %d\n", item->ghoul2[1].mCustomSkin);
+	
+	return qtrue;
+}
+
+void ItemParse_swapheads( itemDef_t *item )
+{
+	if ( item->ghoul2.IsValid() )
+	{
+		DC->g2_SetSurfaceOnOff( &item->ghoul2[0], "head", G2SURFACEFLAG_NODESCENDANTS);
+		DC->g2_SetSurfaceOnOff( &item->ghoul2[0], "torso_cap_head", 0x00);
+		if (item->ghoul2[1].mValid && item->ghoul2[1].mModelindex >= 0)
+		{
+			DC->g2_SetRootSurface( item->ghoul2, 1, "head");
+			DC->g2_SetSurfaceOnOff( &item->ghoul2[1], "head_cap_torso", 0x00);//show caps so don't get such bad seams
+		}
+	}
+}
+
+qboolean ItemParse_model_g2skin( itemDef_t *item ) 
 {
 	const char *skinName;
 
@@ -3448,7 +3753,7 @@ qboolean ItemParse_notselectable( itemDef_t *item )
 	Item_ValidateTypeData(item);
 	listPtr = (listBoxDef_t*)item->typeData;
 
-	if (item->type == ITEM_TYPE_LISTBOX && listPtr)
+	if (item->type == ITEM_TYPE_LISTBOX || item->type == ITEM_TYPE_LISTBOX_DP && listPtr)
 	{
 		listPtr->notselectable = qtrue;
 	}
@@ -3467,7 +3772,7 @@ qboolean ItemParse_scrollhidden( itemDef_t *item )
 	Item_ValidateTypeData(item);
 	listPtr = (listBoxDef_t*)item->typeData;
 
-	if (item->type == ITEM_TYPE_LISTBOX && listPtr)
+	if (item->type == ITEM_TYPE_LISTBOX || item->type == ITEM_TYPE_LISTBOX_DP && listPtr)
 	{
 		listPtr->scrollhidden = qtrue;
 	}
@@ -4264,6 +4569,7 @@ qboolean ItemParse_cvar( itemDef_t *item)
 			case ITEM_TYPE_YESNO:
 			case ITEM_TYPE_BIND:
 			case ITEM_TYPE_SLIDER:
+			case ITEM_TYPE_SLIDER_INTEGER:
 			case ITEM_TYPE_TEXT:
 			case ITEM_TYPE_TEXTSCROLL:
 				editPtr = (editFieldDef_t*)item->typeData;
@@ -4659,12 +4965,12 @@ void Item_ValidateTypeData(itemDef_t *item)
 		return;
 	}
 
-	if (item->type == ITEM_TYPE_LISTBOX)
+	if (item->type == ITEM_TYPE_LISTBOX || item->type == ITEM_TYPE_LISTBOX_DP)
 	{
 		item->typeData = UI_Alloc(sizeof(listBoxDef_t));
 		memset(item->typeData, 0, sizeof(listBoxDef_t));
-	}
-	else if (item->type == ITEM_TYPE_EDITFIELD || item->type == ITEM_TYPE_NUMERICFIELD || item->type == ITEM_TYPE_YESNO || item->type == ITEM_TYPE_BIND || item->type == ITEM_TYPE_SLIDER || item->type == ITEM_TYPE_TEXT)
+	} 
+	else if (item->type == ITEM_TYPE_EDITFIELD || item->type == ITEM_TYPE_NUMERICFIELD || item->type == ITEM_TYPE_YESNO || item->type == ITEM_TYPE_BIND || item->type == ITEM_TYPE_SLIDER || item->type == ITEM_TYPE_SLIDER_INTEGER || item->type == ITEM_TYPE_TEXT)
 	{
 		item->typeData = UI_Alloc(sizeof(editFieldDef_t));
 		memset(item->typeData, 0, sizeof(editFieldDef_t));
@@ -4789,6 +5095,7 @@ keywordHash_t itemParseKeywords[] = {
 	{"cvarStrList",		ItemParse_cvarStrList,		},
 	{"cvarTest",		ItemParse_cvarTest,			},
 	{"decoration",		ItemParse_decoration,		},
+	{"descFont",		ItemParse_descFont,			},
 	{"desctext",		ItemParse_descText			},
 	{"disableCvar",		ItemParse_disableCvar,		},
 	{"doubleclick",		ItemParse_doubleClick,		},
@@ -5090,7 +5397,7 @@ void Item_InitControls(itemDef_t *item)
 	{
 		return;
 	}
-	if (item->type == ITEM_TYPE_LISTBOX)
+	if (item->type == ITEM_TYPE_LISTBOX || item->type == ITEM_TYPE_LISTBOX_DP)
 	{
 		listBoxDef_t *listPtr = (listBoxDef_t*)item->typeData;
 		item->cursorPos = 0;
@@ -5344,6 +5651,7 @@ static const char *g_bindCommands[] = {
 #endif
 	"+force_grip",
 	"+force_lightning",
+	"+force_repulse",
 	"+forward",
 	"+left",
 	"+lookdown",
@@ -5354,6 +5662,7 @@ static const char *g_bindCommands[] = {
 	"+moveright",
 	"+moveup",
 	"+right",
+	"+saber_throw",
 	"+speed",
 	"+strafe",
 	"+use",
@@ -5364,10 +5673,15 @@ static const char *g_bindCommands[] = {
 	"exitview",
 #ifndef JK2_MODE
 	"force_absorb",
+	"force_blinding",
+	"force_destruction",
+	"force_deadlysight",
 #endif
 	"force_distract",
 	"force_heal",
 #ifndef JK2_MODE
+	"force_insanity",
+	"force_invulnerability",
 	"force_protect",
 #endif
 	"force_pull",
@@ -5376,6 +5690,9 @@ static const char *g_bindCommands[] = {
 	"force_sight",
 #endif
 	"force_speed",
+#ifndef JK2_MODE
+	"force_stasis",
+#endif
 	"force_throw",
 	"forcenext",
 	"forceprev",
@@ -6156,6 +6473,11 @@ void Item_TextColor(itemDef_t *item, vec4_t *newColor)
 		memcpy(newColor, &item->window.foreColor, sizeof(vec4_t));
 	}
 
+	if (item->disabled)
+	{
+		memcpy(newColor, &parent->disableColor, sizeof(vec4_t));
+	}
+
 	// items can be enabled and disabled based on cvars
 	if (item->enableCvar && *item->enableCvar && item->cvarTest && *item->cvarTest)
 	{
@@ -6719,6 +7041,261 @@ void Item_ListBox_Paint(itemDef_t *item)
 
 /*
 =================
+Item_ListBox_Paint_DP
+=================
+*/
+
+void Item_ListBox_Paint_DP(itemDef_t *item)
+{
+	float x, y, size;
+	int count, i, thumb;
+	qhandle_t image;
+	qhandle_t optionalImage;
+	listBoxDef_t *listPtr = (listBoxDef_t*)item->typeData;
+
+	// the listbox is horizontal or vertical and has a fixed size scroll bar going either direction
+	// elements are enumerated from the DC and either text or image handles are acquired from the DC as well
+	// textscale is used to size the text, textalignx and textaligny are used to size image elements
+	// there is no clipping available so only the last completely visible item is painted
+	count = DC->feederCount(item->special);
+
+	if (listPtr->startPos > (count ? count - 1 : count))
+	{//probably changed feeders, so reset
+		listPtr->startPos = 0;
+	}
+
+	if (item->cursorPos > (count ? count - 1 : count))
+	{//probably changed feeders, so reset
+		item->cursorPos = 0;
+	}
+	// default is vertical if horizontal flag is not here
+	if (item->window.flags & WINDOW_HORIZONTAL)
+	{
+		//JLF new variable (code just indented)
+		if (!listPtr->scrollhidden)
+		{
+			// draw scrollbar in bottom of the window
+			// bar
+			if (Item_ListBox_MaxScroll(item) > 0)
+			{
+				x = item->window.rect.x + 1;
+				y = item->window.rect.y + item->window.rect.h - SCROLLBAR_SIZE - 1;
+				DC->drawHandlePic(x, y, SCROLLBAR_SIZE, SCROLLBAR_SIZE, DC->Assets.scrollBarArrowLeft_dp);
+				x += SCROLLBAR_SIZE - 1;
+				size = item->window.rect.w - (SCROLLBAR_SIZE * 2);
+				DC->drawHandlePic(x, y, size + 1, SCROLLBAR_SIZE, DC->Assets.scrollBar_dp);
+				x += size - 1;
+				DC->drawHandlePic(x, y, SCROLLBAR_SIZE, SCROLLBAR_SIZE, DC->Assets.scrollBarArrowRight_dp);
+				// thumb
+				thumb = Item_ListBox_ThumbDrawPosition(item);//Item_ListBox_ThumbPosition(item);
+				if (thumb > x - SCROLLBAR_SIZE - 1)
+				{
+					thumb = x - SCROLLBAR_SIZE - 1;
+				}
+				DC->drawHandlePic(thumb, y, SCROLLBAR_SIZE, SCROLLBAR_SIZE, DC->Assets.scrollBarThumb_dp);
+			}
+			else if (listPtr->startPos > 0)
+			{
+				listPtr->startPos = 0;
+			}
+		}
+		//JLF end
+		//
+		listPtr->endPos = listPtr->startPos;
+		size = item->window.rect.w - 2;
+		// items
+		// size contains max available space
+		if (listPtr->elementStyle == LISTBOX_IMAGE)
+		{
+			// fit = 0;
+			x = item->window.rect.x + 1;
+			y = item->window.rect.y + 1;
+			for (i = listPtr->startPos; i < count; i++)
+			{
+				// always draw at least one
+				// which may overdraw the box if it is too small for the element
+				image = DC->feederItemImage(item->special, i);
+				if (image)
+				{
+					if (item->window.flags & WINDOW_PLAYERCOLOR)
+					{
+						vec4_t	color;
+						color[0] = ui_char_color_red.integer / 255.0f;
+						color[1] = ui_char_color_green.integer / 255.0f;
+						color[2] = ui_char_color_blue.integer / 255.0f;
+						color[3] = 1;
+						ui.R_SetColor(color);
+					}
+					DC->drawHandlePic(x + 1, y + 1, listPtr->elementWidth - 2, listPtr->elementHeight - 2, image);
+				}
+
+				if (i == item->cursorPos)
+				{
+					DC->drawRect(x, y, listPtr->elementWidth - 1, listPtr->elementHeight - 1, item->window.borderSize, item->window.borderColor);
+				}
+
+				size -= listPtr->elementWidth;
+				if (size < listPtr->elementWidth)
+				{
+					listPtr->drawPadding = size; //listPtr->elementWidth - size;
+					break;
+				}
+				x += listPtr->elementWidth;
+				listPtr->endPos++;
+				// fit++;
+			}
+		}
+		else
+		{
+			//
+		}
+	}
+	else
+	{
+		//JLF new variable (code idented with if)
+		if (!listPtr->scrollhidden)
+		{
+			// draw scrollbar to right side of the window
+			x = item->window.rect.x + item->window.rect.w - SCROLLBAR_SIZE - 1;
+			y = item->window.rect.y + 1;
+			DC->drawHandlePic(x, y, SCROLLBAR_SIZE, SCROLLBAR_SIZE, DC->Assets.scrollBarArrowUp_dp);
+			y += SCROLLBAR_SIZE - 1;
+
+			listPtr->endPos = listPtr->startPos;
+			size = item->window.rect.h - (SCROLLBAR_SIZE * 2);
+			DC->drawHandlePic(x, y, SCROLLBAR_SIZE, size + 1, DC->Assets.scrollBar_dp);
+			y += size - 1;
+			DC->drawHandlePic(x, y, SCROLLBAR_SIZE, SCROLLBAR_SIZE, DC->Assets.scrollBarArrowDown_dp);
+			// thumb
+			thumb = Item_ListBox_ThumbDrawPosition(item);//Item_ListBox_ThumbPosition(item);
+			if (thumb > y - SCROLLBAR_SIZE - 1)
+			{
+				thumb = y - SCROLLBAR_SIZE - 1;
+			}
+			DC->drawHandlePic(x, thumb, SCROLLBAR_SIZE, SCROLLBAR_SIZE, DC->Assets.scrollBarThumb_dp);
+		}
+		//JLF end
+		// adjust size for item painting
+		size = item->window.rect.h - 2;
+		if (listPtr->elementStyle == LISTBOX_IMAGE)
+		{
+			// fit = 0;
+			x = item->window.rect.x + 1;
+			y = item->window.rect.y + 1;
+
+			for (i = listPtr->startPos; i < count; i++)
+			{
+				// always draw at least one
+				// which may overdraw the box if it is too small for the element
+				image = DC->feederItemImage(item->special, i);
+				if (image)
+				{
+					DC->drawHandlePic(x + 1, y + 1, listPtr->elementWidth - 2, listPtr->elementHeight - 2, image);
+				}
+
+				if (i == item->cursorPos)
+				{
+					DC->drawRect(x, y, listPtr->elementWidth - 1, listPtr->elementHeight - 1, item->window.borderSize, item->window.borderColor);
+				}
+
+				listPtr->endPos++;
+				size -= listPtr->elementHeight;
+				if (size < listPtr->elementHeight)
+				{
+					listPtr->drawPadding = listPtr->elementHeight - size;
+					break;
+				}
+				y += listPtr->elementHeight;
+				// fit++;
+			}
+		}
+		else
+		{
+			x = item->window.rect.x + 1;
+			y = item->window.rect.y + 1 - listPtr->elementHeight;
+			i = listPtr->startPos;
+
+			for (; i < count; i++)
+			{
+				const char *text;
+				// always draw at least one
+				// which may overdraw the box if it is too small for the element
+
+				if (listPtr->numColumns > 0)
+				{
+					int j;
+					for (j = 0; j < listPtr->numColumns; j++)
+					{
+						text = DC->feederItemText(item->special, i, j, &optionalImage);
+						if (text[0] == '@')
+						{
+							text = SE_GetString(&text[1]);
+						}
+
+						if (optionalImage >= 0)
+						{
+							DC->drawHandlePic(x + 4 + listPtr->columnInfo[j].pos, y - 1 + listPtr->elementHeight / 2, listPtr->columnInfo[j].width, listPtr->columnInfo[j].width, optionalImage);
+						}
+						else if (text)
+						{
+							vec4_t	*color;
+							menuDef_t *parent = (menuDef_t*)item->parent;
+
+							// Use focus color is it has focus.
+							if (i == item->cursorPos)
+							{
+								color = &parent->focusColor;
+							}
+							else
+							{
+								color = &item->window.foreColor;
+							}
+
+
+							int textyOffset;
+							textyOffset = 0;
+
+							DC->drawText(x + 4 + listPtr->columnInfo[j].pos, y + listPtr->elementHeight + textyOffset, item->textscale, *color, text, listPtr->columnInfo[j].maxChars, item->textStyle, item->font);
+						}
+					}
+				}
+				else
+				{
+
+					text = DC->feederItemText(item->special, i, 0, &optionalImage);
+					if (optionalImage >= 0)
+					{
+						//DC->drawHandlePic(x + 4 + listPtr->elementHeight, y, listPtr->columnInfo[j].width, listPtr->columnInfo[j].width, optionalImage);
+					}
+					else if (text)
+					{
+						DC->drawText(x + 4, y + listPtr->elementHeight, item->textscale, item->window.foreColor, text, 0, item->textStyle, item->font);
+					}
+
+				}
+
+				// The chosen text
+				if (i == item->cursorPos)
+				{
+					DC->fillRect(x + 2, y + listPtr->elementHeight + 2, item->window.rect.w - SCROLLBAR_SIZE - 4, listPtr->elementHeight + 2, item->window.outlineColor);
+				}
+
+				size -= listPtr->elementHeight;
+				if (size < listPtr->elementHeight)
+				{
+					listPtr->drawPadding = listPtr->elementHeight - size;
+					break;
+				}
+				listPtr->endPos++;
+				y += listPtr->elementHeight;
+				// fit++;
+			}
+		}
+	}
+}
+
+/*
+=================
 BindingIDFromName
 =================
 */
@@ -6975,6 +7552,79 @@ Item_Model_Paint
 =================
 */
 extern void UI_SaberDrawBlades( itemDef_t *item, vec3_t origin, float curYaw );
+extern saber_colors_t TranslateSaberColor( const char *name );
+
+void UI_RGBForSaber( byte *rgba, int whichSaber )
+{
+    char bladeColorString[MAX_QPATH];
+
+    if ( whichSaber == 0 )
+    {
+        DC->getCVarString( "ui_saber_color", bladeColorString, sizeof(bladeColorString) );
+    }
+    else//if ( whichSaber == 1 ) - presumed
+    {
+        DC->getCVarString( "ui_saber2_color", bladeColorString, sizeof(bladeColorString) );
+    }
+    
+    saber_colors_t bladeColor = TranslateSaberColor( bladeColorString );
+
+    switch( bladeColor )
+    {
+        case SABER_RED:
+            rgba[0] = 255;
+            rgba[1] = 51;
+            rgba[2] = 51;
+            rgba[3] = 255;
+            break;
+        case SABER_ORANGE:
+            rgba[0] = 255;
+            rgba[1] = 128;
+            rgba[2] = 25;
+            rgba[3] = 255;
+            break;
+        case SABER_YELLOW:
+            rgba[0] = 255;
+            rgba[1] = 255;
+            rgba[2] = 51;
+            rgba[3] = 255;
+            break;
+        case SABER_GREEN:
+            rgba[0] = 51;
+            rgba[1] = 255;
+            rgba[2] = 51;
+            rgba[3] = 255;
+            break;
+        case SABER_BLUE:
+            rgba[0] = 51;
+            rgba[2] = 102;
+            rgba[3] = 255;
+            rgba[3] = 255;
+            break;
+        case SABER_PURPLE:
+            rgba[0] = 230;
+            rgba[1] = 51;
+            rgba[2] = 255;
+            rgba[3] = 255;
+            break;
+        default://SABER_RGB
+            if (whichSaber == 1)
+            {
+                rgba[0] = ui_rgb_saber2_red.integer;
+                rgba[1] = ui_rgb_saber2_green.integer;
+                rgba[2] = ui_rgb_saber2_blue.integer;
+                rgba[3] = 255;
+            }
+            else
+            {
+                rgba[0] = ui_rgb_saber_red.integer;
+                rgba[1] = ui_rgb_saber_green.integer;
+                rgba[2] = ui_rgb_saber_blue.integer;
+                rgba[3] = 255;
+            }
+            break;
+    }
+}
 
 void Item_Model_Paint(itemDef_t *item)
 {
@@ -7133,6 +7783,10 @@ void Item_Model_Paint(itemDef_t *item)
 				break;
 			}
 		}
+		if (Cvar_VariableString( "ui_char_head_model" )[0])
+		{
+			DC->g2hilev_SetAnim(&item->ghoul2[1], "model_root", modelPtr->g2anim, qtrue);
+		}
 	}
 
 	// setup the refdef
@@ -7219,10 +7873,47 @@ void Item_Model_Paint(itemDef_t *item)
 			ent.shaderRGBA[1] = ui_char_color_green.integer;
 			ent.shaderRGBA[2] = ui_char_color_blue.integer;
 			ent.shaderRGBA[3] = 255;
+			ent.newShaderRGBA[TINT_NEW_ENT][0] = ui_char_color_2_red.integer;
+			ent.newShaderRGBA[TINT_NEW_ENT][1] = ui_char_color_2_green.integer;
+			ent.newShaderRGBA[TINT_NEW_ENT][2] = ui_char_color_2_blue.integer;
+			ent.newShaderRGBA[TINT_NEW_ENT][3] = 255;
 			UI_TalkingHead(item);
 		}
 		if ( item->flags&ITF_ISANYSABER )
 		{//UGH, draw the saber blade!
+            if ( item->flags&ITF_ISCHARACTER )
+            {
+                ent.newShaderRGBA[TINT_HILT1][0] = ui_hilt_color_red.integer;
+                ent.newShaderRGBA[TINT_HILT1][1] = ui_hilt_color_green.integer;
+                ent.newShaderRGBA[TINT_HILT1][2] = ui_hilt_color_blue.integer;
+                ent.newShaderRGBA[TINT_HILT1][3] = 255;
+                
+                ent.newShaderRGBA[TINT_HILT2][0] = ui_hilt2_color_red.integer;
+                ent.newShaderRGBA[TINT_HILT2][1] = ui_hilt2_color_green.integer;
+                ent.newShaderRGBA[TINT_HILT2][2] = ui_hilt2_color_blue.integer;
+                ent.newShaderRGBA[TINT_HILT2][3] = 255;
+                
+                UI_RGBForSaber(ent.newShaderRGBA[TINT_BLADE1], 0);
+                UI_RGBForSaber(ent.newShaderRGBA[TINT_BLADE2], 1);
+            }
+            else if ( item->flags&ITF_ISSABER )
+            {
+                ent.newShaderRGBA[TINT_HILT1][0] = ui_hilt_color_red.integer;
+                ent.newShaderRGBA[TINT_HILT1][1] = ui_hilt_color_green.integer;
+                ent.newShaderRGBA[TINT_HILT1][2] = ui_hilt_color_blue.integer;
+                ent.newShaderRGBA[TINT_HILT1][3] = 255;
+                
+                UI_RGBForSaber(ent.newShaderRGBA[TINT_BLADE1], 0);
+            }
+            else if ( item->flags&ITF_ISSABER2 )
+            {
+                ent.newShaderRGBA[TINT_HILT1][0] = ui_hilt2_color_red.integer;
+                ent.newShaderRGBA[TINT_HILT1][1] = ui_hilt2_color_green.integer;
+                ent.newShaderRGBA[TINT_HILT1][2] = ui_hilt2_color_blue.integer;
+                ent.newShaderRGBA[TINT_HILT1][3] = 255;
+                
+                UI_RGBForSaber(ent.newShaderRGBA[TINT_BLADE1], 1);
+            }
 			UI_SaberDrawBlades( item, origin, curYaw );
 		}
 	}
@@ -7297,6 +7988,9 @@ void Item_OwnerDraw_Paint(itemDef_t *item)
 			LerpColor(item->window.foreColor,lowLight,color,0.5+0.5*sin((float)(DC->realTime / PULSE_DIVISOR)));
 		}
 
+		if ( item->disabled )
+			memcpy( color, parent->disableColor, sizeof( vec4_t ) );
+
 		if (item->cvarFlags & (CVAR_ENABLE | CVAR_DISABLE) && !Item_EnableShowViaCvar(item, CVAR_ENABLE))
 		{
 			memcpy(color, parent->disableColor, sizeof(vec4_t));
@@ -7318,24 +8012,10 @@ void Item_OwnerDraw_Paint(itemDef_t *item)
 
 void Item_YesNo_Paint(itemDef_t *item)
 {
-	vec4_t newColor, lowLight;
+	vec4_t color;
 	float value;
-	menuDef_t *parent = (menuDef_t*)item->parent;
 
 	value = (item->cvar) ? DC->getCVarValue(item->cvar) : 0;
-
-	if (item->window.flags & WINDOW_HASFOCUS)
-	{
-		lowLight[0] = 0.8 * parent->focusColor[0];
-		lowLight[1] = 0.8 * parent->focusColor[1];
-		lowLight[2] = 0.8 * parent->focusColor[2];
-		lowLight[3] = 0.8 * parent->focusColor[3];
-		LerpColor(parent->focusColor,lowLight,newColor,0.5+0.5*sin((float)(DC->realTime / PULSE_DIVISOR)));
-	}
-	else
-	{
-		memcpy(&newColor, &item->window.foreColor, sizeof(vec4_t));
-	}
 
 #ifdef JK2_MODE
 	const char *psYes = ui.SP_GetStringTextString( "MENUS0_YES" );
@@ -7351,15 +8031,15 @@ void Item_YesNo_Paint(itemDef_t *item)
 	else
 		yesnovalue = (value != 0) ? psYes : psNo;
 
+	Item_TextColor(item, &color);
 	if (item->text)
 	{
 		Item_Text_Paint(item);
-		DC->drawText(item->textRect.x + item->textRect.w + 8, item->textRect.y, item->textscale, newColor, yesnovalue, 0, item->textStyle, item->font);
-
+		DC->drawText(item->textRect.x + item->textRect.w + 8, item->textRect.y, item->textscale, color, yesnovalue, 0, item->textStyle, item->font);
 	}
 	else
 	{
-		DC->drawText(item->textRect.x, item->textRect.y, item->textscale, newColor, yesnovalue , 0, item->textStyle, item->font);
+		DC->drawText(item->textRect.x, item->textRect.y, item->textscale, color, yesnovalue , 0, item->textStyle, item->font);
 	}
 
 }
@@ -7371,22 +8051,8 @@ Item_Multi_Paint
 */
 void Item_Multi_Paint(itemDef_t *item)
 {
-	vec4_t newColor, lowLight;
+	vec4_t color;
 	const char *text = "";
-	menuDef_t *parent = (menuDef_t*)item->parent;
-
-	if (item->window.flags & WINDOW_HASFOCUS)
-	{
-		lowLight[0] = 0.8 * parent->focusColor[0];
-		lowLight[1] = 0.8 * parent->focusColor[1];
-		lowLight[2] = 0.8 * parent->focusColor[2];
-		lowLight[3] = 0.8 * parent->focusColor[3];
-		LerpColor(parent->focusColor,lowLight,newColor,0.5+0.5*sin((float)(DC->realTime / PULSE_DIVISOR)));
-	}
-	else
-	{
-		memcpy(&newColor, &item->window.foreColor, sizeof(vec4_t));
-	}
 
 	text = Item_Multi_Setting(item);
 	if (*text == '@')	// string reference
@@ -7394,16 +8060,16 @@ void Item_Multi_Paint(itemDef_t *item)
 		text = SE_GetString( &text[1] );
 	}
 
-
+	Item_TextColor(item, &color);
 	if (item->text)
 	{
 		Item_Text_Paint(item);
-		DC->drawText(item->textRect.x + item->textRect.w + 8, item->textRect.y, item->textscale, newColor, text, 0, item->textStyle, item->font);
+		DC->drawText(item->textRect.x + item->textRect.w + 8, item->textRect.y, item->textscale, color, text, 0, item->textStyle, item->font);
 	}
 	else
 	{
 //JLF added xoffset
-		DC->drawText(item->textRect.x +item->xoffset, item->textRect.y, item->textscale, newColor, text, 0, item->textStyle, item->font);
+		DC->drawText(item->textRect.x +item->xoffset, item->textRect.y, item->textscale, color, text, 0, item->textStyle, item->font);
 	}
 }
 
@@ -8090,6 +8756,11 @@ static qboolean Item_Paint(itemDef_t *item, qboolean bDraw)
 		}
 	}
 
+	if (item->disabled && item->disabledHidden)
+	{
+		return qfalse;
+	}
+
 	if (item->cvarFlags & (CVAR_SHOW | CVAR_HIDE))
 	{
 		if (!Item_EnableShowViaCvar(item, CVAR_SHOW))
@@ -8148,8 +8819,7 @@ static qboolean Item_Paint(itemDef_t *item, qboolean bDraw)
 				float fDescScaleCopy = fDescScale;
 				while (1)
 				{
-					// FIXME - add some type of parameter in the menu file like descfont to specify the font for the descriptions for this menu.
-					textWidth = DC->textWidth(textPtr, fDescScale, 4);	//  item->font);
+					textWidth = DC->textWidth(textPtr, fDescScale, item->descFont);
 
 					if (parent->descAlignment == ITEM_ALIGN_RIGHT)
 					{
@@ -8184,8 +8854,7 @@ static qboolean Item_Paint(itemDef_t *item, qboolean bDraw)
 						iYadj = iOriginalTextHeight - DC->textHeight(textPtr, fDescScale, uiInfo.uiDC.Assets.qhMediumFont);
 					}
 
-					// FIXME - add some type of parameter in the menu file like descfont to specify the font for the descriptions for this menu.
-					DC->drawText(xPos, parent->descY + iYadj, fDescScale, parent->descColor, textPtr, 0, parent->descTextStyle, 4);	//item->font);
+					DC->drawText(xPos, parent->descY + iYadj, fDescScale, parent->descColor, textPtr, 0, parent->descTextStyle, item->descFont);
 					break;
 				}
 			}
@@ -8235,6 +8904,9 @@ static qboolean Item_Paint(itemDef_t *item, qboolean bDraw)
 		case ITEM_TYPE_LISTBOX:
 			Item_ListBox_Paint(item);
 			break;
+		case ITEM_TYPE_LISTBOX_DP:
+			Item_ListBox_Paint_DP(item);
+			break;
 		case ITEM_TYPE_TEXTSCROLL:
 			Item_TextScroll_Paint ( item );
 			break;
@@ -8251,6 +8923,7 @@ static qboolean Item_Paint(itemDef_t *item, qboolean bDraw)
 			Item_Bind_Paint(item);
 			break;
 		case ITEM_TYPE_SLIDER:
+		case ITEM_TYPE_SLIDER_INTEGER:
 			Item_Slider_Paint(item);
 			break;
 		default:
@@ -8339,10 +9012,9 @@ Window_Paint
 */
 void Window_Paint(Window *w, float fadeAmount, float fadeClamp, float fadeCycle)
 {
-  //float bordersize = 0;
-  vec4_t color;
-  rectDef_t fillRect = w->rect;
-
+	//float bordersize = 0;
+	vec4_t color;
+	rectDef_t fillRect = w->rect;
 
 	if (uis.debugMode)
 	{
@@ -8987,6 +9659,12 @@ void Item_MouseEnter(itemDef_t *item, float x, float y)
 //		r.y -= r.h;			// NOt sure why this is here, but I commented it out.
 		// in the text rect?
 
+		// items can be enabled and disabled
+		if (item->disabled)
+		{
+			return;
+		}
+
 		// items can be enabled and disabled based on cvars
 		if (item->cvarFlags & (CVAR_ENABLE | CVAR_DISABLE) && !Item_EnableShowViaCvar(item, CVAR_ENABLE))
 		{
@@ -9030,7 +9708,7 @@ void Item_MouseEnter(itemDef_t *item, float x, float y)
 				item->window.flags |= WINDOW_MOUSEOVER;
 			}
 
-			if (item->type == ITEM_TYPE_LISTBOX)
+			if (item->type == ITEM_TYPE_LISTBOX || item->type == ITEM_TYPE_LISTBOX_DP)
 			{
 				Item_ListBox_MouseEnter(item, x, y);
 			}
@@ -9062,6 +9740,12 @@ qboolean Item_SetFocus(itemDef_t *item, float x, float y)
 		return qfalse;
 	}
 	menuDef_t *parent = (menuDef_t*)item->parent;
+
+	// items can be enabled and disabled
+	if (item->disabled)
+	{
+		return qfalse;
+	}
 
 	// items can be enabled and disabled based on cvars
 	if (item->cvarFlags & (CVAR_ENABLE | CVAR_DISABLE) && !Item_EnableShowViaCvar(item, CVAR_ENABLE))
@@ -9232,6 +9916,11 @@ void Menu_HandleMouseMove(menuDef_t *menu, float x, float y)
 			}
 
 			if (menu->items[i]->window.flags & WINDOW_INACTIVE)
+			{
+				continue;
+			}
+
+			if (menu->items[i]->disabled)
 			{
 				continue;
 			}
@@ -10475,6 +11164,45 @@ int Item_Slider_OverSlider(itemDef_t *item, float x, float y)
 }
 
 /*
+ =================
+ Scroll_Slider_Integer_ThumbFunc
+ =================
+ */
+static void Scroll_Slider_Integer_ThumbFunc(void *p)
+{
+	float x, value, cursorx;
+	int intValue;
+	scrollInfo_t *si = (scrollInfo_t*)p;
+	editFieldDef_t *editDef = (struct editFieldDef_s *) si->item->typeData;
+	
+	if (si->item->text)
+	{
+		x = si->item->textRect.x + si->item->textRect.w + 8;
+	}
+	else
+	{
+		x = si->item->window.rect.x;
+	}
+	
+	cursorx = DC->cursorx;
+	
+	if (cursorx < x)
+	{
+		cursorx = x;
+	}
+	else if (cursorx > x + SLIDER_WIDTH)
+	{
+		cursorx = x + SLIDER_WIDTH;
+	}
+	value = cursorx - x;
+	value /= SLIDER_WIDTH;
+	value *= (editDef->maxVal - editDef->minVal);
+	value += editDef->minVal;
+	intValue = (int) value;
+	DC->setCVar(si->item->cvar, va("%d", intValue));
+}
+
+/*
 =================
 Scroll_Slider_ThumbFunc
 =================
@@ -10524,6 +11252,7 @@ void Item_StartCapture(itemDef_t *item, int key)
 		case ITEM_TYPE_NUMERICFIELD:
 
 		case ITEM_TYPE_LISTBOX:
+		case ITEM_TYPE_LISTBOX_DP:
 		{
 			flags = Item_ListBox_OverLB(item, DC->cursorx, DC->cursory);
 			if (flags & (WINDOW_LB_LEFTARROW | WINDOW_LB_RIGHTARROW))
@@ -10588,6 +11317,21 @@ void Item_StartCapture(itemDef_t *item, int key)
 				scrollInfo.yStart = DC->cursory;
 				captureData = &scrollInfo;
 				captureFunc = &Scroll_Slider_ThumbFunc;
+				itemCapture = item;
+			}
+			break;
+		}
+		case ITEM_TYPE_SLIDER_INTEGER:
+		{
+			flags = Item_Slider_OverSlider(item, DC->cursorx, DC->cursory);
+			if (flags & WINDOW_LB_THUMB)
+			{
+				scrollInfo.scrollKey = key;
+				scrollInfo.item = item;
+				scrollInfo.xStart = DC->cursorx;
+				scrollInfo.yStart = DC->cursory;
+				captureData = &scrollInfo;
+				captureFunc = &Scroll_Slider_Integer_ThumbFunc;
 				itemCapture = item;
 			}
 			break;
@@ -10875,6 +11619,64 @@ qboolean Item_Slider_HandleKey(itemDef_t *item, int key, qboolean down)
 }
 
 /*
+ =================
+ Item_Slider_HandleKey
+ =================
+ */
+qboolean Item_Slider_Integer_HandleKey(itemDef_t *item, int key, qboolean down)
+{
+	//DC->Print("slider handle key\n");
+	//JLF MPMOVED
+	
+	float x, value, width, work;
+	
+	if (item->window.flags & WINDOW_HASFOCUS && item->cvar && Rect_ContainsPoint(&item->window.rect, DC->cursorx, DC->cursory))
+	{
+		
+		if (key == A_MOUSE1 || key == A_ENTER || key == A_MOUSE2 || key == A_MOUSE3)
+		{
+			editFieldDef_t *editDef = (editFieldDef_s *) item->typeData;
+			if (editDef)
+			{
+				rectDef_t testRect;
+				width = SLIDER_WIDTH;
+				if (item->text)
+				{
+					x = item->textRect.x + item->textRect.w + 8;
+				}
+				else
+				{
+					x = item->window.rect.x;
+				}
+				
+				testRect = item->window.rect;
+				testRect.x = x;
+				value = (float)SLIDER_THUMB_WIDTH / 2;
+				testRect.x -= value;
+				//DC->Print("slider x: %f\n", testRect.x);
+				testRect.w = (SLIDER_WIDTH + (float)SLIDER_THUMB_WIDTH / 2);
+				//DC->Print("slider w: %f\n", testRect.w);
+				if (Rect_ContainsPoint(&testRect, DC->cursorx, DC->cursory))
+				{
+					work = DC->cursorx - x;
+					value = work / width;
+					value *= (editDef->maxVal - editDef->minVal);
+					// vm fuckage
+					// value = (((float)(DC->cursorx - x)/ SLIDER_WIDTH) * (editDef->maxVal - editDef->minVal));
+					value += editDef->minVal;
+					int intValue = (int) value;
+					DC->setCVar(item->cvar, va("%d", intValue));
+					return qtrue;
+				}
+			}
+		}
+	}
+	
+	//DC->Print("slider handle key exit\n");
+	return qfalse;
+}
+
+/*
 =================
 Item_HandleKey
 =================
@@ -10922,6 +11724,7 @@ qboolean Item_HandleKey(itemDef_t *item, int key, qboolean down)
 			return qfalse;
 			break;
 		case ITEM_TYPE_LISTBOX:
+		case ITEM_TYPE_LISTBOX_DP:
 			return Item_ListBox_HandleKey(item, key, down, qfalse);
 			break;
 		case ITEM_TYPE_TEXTSCROLL:
@@ -10941,6 +11744,9 @@ qboolean Item_HandleKey(itemDef_t *item, int key, qboolean down)
 			break;
 		case ITEM_TYPE_SLIDER:
 			return Item_Slider_HandleKey(item, key, down);
+			break;
+		case ITEM_TYPE_SLIDER_INTEGER:
+			return Item_Slider_Integer_HandleKey(item, key, down);
 			break;
 //JLF MPMOVED
 		case ITEM_TYPE_TEXT:
@@ -11098,12 +11904,22 @@ void Menu_HandleKey(menuDef_t *menu, int key, qboolean down)
 		}
 	}
 
+	// Ignore if disabled
+	if (item && item->disabled)
+	{
+		return;
+	}
+
 	if (item != NULL)
 	{
 		if (Item_HandleKey(item, key, down))
 //JLFLISTBOX
 		{
-			Item_Action(item);
+			// It is possible for an item to be disable after Item_HandleKey is run (like in Voice Chat)
+			if (!item->disabled)
+			{
+				Item_Action(item);
+			}
 			inHandler = qfalse;
 			return;
 		}
@@ -11209,7 +12025,7 @@ void Menu_HandleKey(menuDef_t *menu, int key, qboolean down)
 	should just process the action and not support the accept functionality.
 */
 //JLFACCEPT
-				else if ( item->type == ITEM_TYPE_MULTI || item->type == ITEM_TYPE_YESNO || item->type == ITEM_TYPE_SLIDER)
+				else if ( item->type == ITEM_TYPE_MULTI || item->type == ITEM_TYPE_YESNO || item->type == ITEM_TYPE_SLIDER || item->type == ITEM_TYPE_SLIDER_INTEGER )
 				{
 
 					if (Item_HandleAccept(item))

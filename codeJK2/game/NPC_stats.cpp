@@ -353,7 +353,7 @@ qboolean G_ParseAnimationFile( const char *af_filename )
 	const char		*token;
 	float		fps;
 	//int			skip;
-	char		text[40000];
+	char		text[80000];
 	int			animNum;
 	animation_t	*animations = level.knownAnimFileSets[level.numKnownAnimFileSets].animations;
 

@@ -20,12 +20,12 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 ===========================================================================
 */
 
+#ifndef FX_PRIMITIVES_H_INC
+#define FX_PRIMITIVES_H_INC
+
 #if !defined(FX_SYSTEM_H_INC)
 	#include "FxSystem.h"
 #endif
-
-#ifndef FX_PRIMITIVES_H_INC
-#define FX_PRIMITIVES_H_INC
 
 
 #define MAX_EFFECTS			1200

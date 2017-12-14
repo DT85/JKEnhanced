@@ -135,16 +135,16 @@ static void ObjectivePrint_Line(const int color, const int objectIndex, int &mis
 		//
 		if (pixelLen < objectiveTextBoxWidth)	// One shot - small enough to print entirely on one line
 		{
-			y =objectiveStartingYpos + (iYPixelsPerLine * (missionYcnt));
+			y = 105 + (iYPixelsPerLine * (missionYcnt));
 
 			cgi_R_Font_DrawString (
-				objectiveStartingXpos,
+				60,
 				y,
 				str,
 				colorTable[color],
-				cgs.media.qhFontMedium,
+				cgs.media.qhFontArimob,
 				-1,
-				1.0f);
+				0.35f);
 
 			++missionYcnt;
 		}
@@ -253,10 +253,10 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 	int		i,totalY;
 	int		iYPixelsPerLine = cgi_R_Font_HeightPixels(cgs.media.qhFontMedium, 1.0f);
 
-	const short titleXPos = objectiveStartingXpos - 22;		// X starting position for title text
-	const short titleYPos = objectiveStartingYpos - 23;		// Y starting position for title text
-	const short graphic_size = 16;							// Size (width and height) of graphic used to show status of objective
-	const short graphicXpos = objectiveStartingXpos - graphic_size - 8;	// Amount of X to backup from text starting position
+	const short titleXPos = objectiveStartingXpos - 22;					// X starting position for title text
+	const short titleYPos = objectiveStartingYpos - 23;					// Y starting position for title text
+	const short graphic_size = 16;										// Size (width and height) of graphic used to show status of objective
+	const short graphicXpos = 67 - graphic_size - 8;					// Amount of X to backup from text starting position
 	const short graphicYOffset = (iYPixelsPerLine - graphic_size)/2;	// Amount of Y to raise graphic so it's in the center of the text line
 
 	missionInfo_Updated = qfalse;		// This will stop the text from flashing
@@ -270,8 +270,10 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 
 	// Title Text at the top
 	char text[1024]={0};
+	/*
 	cgi_SP_GetStringTextString( "SP_INGAME_OBJECTIVES", text, sizeof(text) );
 	cgi_R_Font_DrawString (titleXPos, titleYPos, text, colorTable[CT_TITLE], cgs.media.qhFontMedium, -1, 1.0f);
+	*/
 
 	int missionYcnt = 0;
 
@@ -282,18 +284,18 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 		if (cent->gent->client->sess.mission_objectives[i].display)
 		{
 			// Calculate the Y position
-			totalY = objectiveStartingYpos + (iYPixelsPerLine * (missionYcnt))+(iYPixelsPerLine/2);
+			totalY = 100 + (iYPixelsPerLine * (missionYcnt))+(iYPixelsPerLine/2);
 
 			//	Draw graphics that show if mission has been accomplished or not
-			cgi_R_SetColor(colorTable[CT_BLUE3]);
-			CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size,  graphic_size, cgs.media.messageObjCircle);	// Circle in front
+			cgi_R_SetColor(colorTable[CT_HUD_GREEN]);
+			CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size*cgs.widthRatioCoef,  graphic_size, cgs.media.messageObjCircle);	// Circle in front
 			if (cent->gent->client->sess.mission_objectives[i].status == OBJECTIVE_STAT_SUCCEEDED)
 			{
-				CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size,  graphic_size, cgs.media.messageLitOn);	// Center Dot
+				CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size*cgs.widthRatioCoef,  graphic_size, cgs.media.messageLitOn);	// Center Dot
 			}
 
 			// Print current objective text
-			ObjectivePrint_Line(CT_WHITE, i, missionYcnt );
+			ObjectivePrint_Line(CT_HUD_GREEN, i, missionYcnt );
 		}
 	}
 
@@ -301,19 +303,19 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 	if (!missionYcnt)
 	{
 		// Set the message a quarter of the way down and in the center of the text box
-		int messageYPosition = objectiveStartingYpos + (objectiveTextBoxHeight / 4);
+		int messageYPosition = objectiveStartingYpos + (objectiveTextBoxHeight / 4) + 50;
 
-		cgi_SP_GetStringTextString( "SP_INGAME_OBJNONE", text, sizeof(text) );
-		int messageXPosition = objectiveStartingXpos + (objectiveTextBoxWidth/2) -  (cgi_R_Font_StrLenPixels(text, cgs.media.qhFontMedium, 1.0f) /2);
+		cgi_SP_GetStringTextString("SP_INGAME_OBJNONE", text, sizeof(text));
+		int messageXPosition = objectiveStartingXpos + (objectiveTextBoxWidth / 2) - (cgi_R_Font_StrLenPixels(text, cgs.media.qhFontArimob, 0.35f) / 2);
 
-		cgi_R_Font_DrawString (
+		cgi_R_Font_DrawString(
 			messageXPosition,
 			messageYPosition,
 			text,
-			colorTable[CT_WHITE],
-			cgs.media.qhFontMedium,
+			colorTable[CT_HUD_GREEN],
+			cgs.media.qhFontArimob,
 			-1,
-			1.0f);
+			0.35f);
 	}
 }
 
@@ -409,7 +411,7 @@ static void CG_LoadScreen_PersonalInfo(void)
 }
 */
 
-static void CG_LoadBar(void)
+static void CG_NewGameLoadBar(void)
 {
 	const int numticks = 9, tickwidth = 40, tickheight = 8;
 	const int tickpadx = 20, tickpady = 12;
@@ -420,6 +422,29 @@ static void CG_LoadBar(void)
 
 	cgi_R_SetColor( colorTable[CT_WHITE]);
 	// Draw background
+	CG_DrawPic(barleft, bartop, barwidth, barheight, cgs.media.newgamelevelLoad);
+
+	// Draw left cap (backwards)
+	CG_DrawPic(tickleft, ticktop, -capwidth, tickheight, cgs.media.newgameloadTickCap);
+
+	// Draw bar
+	CG_DrawPic(tickleft, ticktop, tickwidth*cg.loadLCARSStage, tickheight, cgs.media.newgameloadTick);
+
+	// Draw right cap
+	CG_DrawPic(tickleft+tickwidth*cg.loadLCARSStage, ticktop, capwidth, tickheight, cgs.media.newgameloadTickCap);
+}
+
+static void CG_LoadBar(void)
+{
+	const int numticks = 9, tickwidth = 40, tickheight = 8;
+	const int tickpadx = 20, tickpady = 12;
+	const int capwidth = 8;
+	const int barwidth = numticks*tickwidth + tickpadx * 2 + capwidth * 2, barleft = ((640 - barwidth) / 2);
+	const int barheight = tickheight + tickpady * 2, bartop = 475 - barheight;
+	const int capleft = barleft + tickpadx, tickleft = capleft + capwidth, ticktop = bartop + tickpady;
+
+	cgi_R_SetColor(colorTable[CT_WHITE]);
+	// Draw background
 	CG_DrawPic(barleft, bartop, barwidth, barheight, cgs.media.levelLoad);
 
 	// Draw left cap (backwards)
@@ -429,18 +454,18 @@ static void CG_LoadBar(void)
 	CG_DrawPic(tickleft, ticktop, tickwidth*cg.loadLCARSStage, tickheight, cgs.media.loadTick);
 
 	// Draw right cap
-	CG_DrawPic(tickleft+tickwidth*cg.loadLCARSStage, ticktop, capwidth, tickheight, cgs.media.loadTickCap);
+	CG_DrawPic(tickleft + tickwidth*cg.loadLCARSStage, ticktop, capwidth, tickheight, cgs.media.loadTickCap);
 }
 
 int CG_WeaponCheck( int weaponIndex );
 
 // For printing load screen icons
 const int	MAXLOADICONSPERROW = 8;		// Max icons displayed per row
-const int	MAXLOADWEAPONS = 16;
+const int	MAXLOADWEAPONS = WP_NUM_WEAPONS;
 const int	MAXLOAD_FORCEICONSIZE = 40;	// Size of force power icons
 const int	MAXLOAD_FORCEICONPAD = 12;	// Padding space between icons
 
-static int CG_DrawLoadWeaponsPrintRow( const char *itemName, int weaponsBits,int rowIconCnt, int startIndex)
+static int CG_DrawLoadWeaponsPrintRow( const char *itemName, char *weapons,int rowIconCnt, int startIndex)
 {
 	int		i,endIndex=0, printedIconCnt=0;
 	int		iconSize;
@@ -473,7 +498,7 @@ static int CG_DrawLoadWeaponsPrintRow( const char *itemName, int weaponsBits,int
 
 	for (i=startIndex;i<MAXLOADWEAPONS;i++)
 	{
-		if ( !(weaponsBits & ( 1 << i )))	// Does he have this weapon?
+		if ( !(weapons[i]))	// Does he have this weapon?
 		{
 			continue;
 		}
@@ -510,7 +535,7 @@ static int CG_DrawLoadWeaponsPrintRow( const char *itemName, int weaponsBits,int
 
 // Print weapons the player is carrying
 // Two rows print if there are too many
-static void CG_DrawLoadWeapons( int weaponBits )
+static void CG_DrawLoadWeapons( char *weapons )
 {
 	int		i,endIndex=0;
 	int		iconCnt,rowIconCnt;
@@ -519,7 +544,7 @@ static void CG_DrawLoadWeapons( int weaponBits )
 	iconCnt = 0;
 	for ( i = 1 ; i < MAXLOADWEAPONS ; i++ )
 	{
-		if ( weaponBits & ( 1 << i ) )
+		if ( weapons[i] )
 		{
 			iconCnt++;
 		}
@@ -530,20 +555,21 @@ static void CG_DrawLoadWeapons( int weaponBits )
 		return;
 	}
 
+	//TODO: allow for more rows of icons??
 	// Single line of icons
 	if (iconCnt<=MAXLOADICONSPERROW)
 	{
-		CG_DrawLoadWeaponsPrintRow("weaponicons_singlerow", weaponBits, iconCnt,0);
+		CG_DrawLoadWeaponsPrintRow("weaponicons_singlerow", weapons, iconCnt,0);
 	}
 	// Two lines of icons
 	else
 	{
 		// Print top row
-		endIndex = CG_DrawLoadWeaponsPrintRow("weaponicons_row1", weaponBits, MAXLOADICONSPERROW,0);
+		endIndex = CG_DrawLoadWeaponsPrintRow("weaponicons_row1", weapons, MAXLOADICONSPERROW,0);
 
 		// Print second row
 		rowIconCnt = iconCnt - MAXLOADICONSPERROW;
-		CG_DrawLoadWeaponsPrintRow("weaponicons_row2", weaponBits, rowIconCnt,endIndex+1);
+		CG_DrawLoadWeaponsPrintRow("weaponicons_row2", weapons, rowIconCnt,endIndex+1);
 	}
 
 	cgi_R_SetColor( NULL );
@@ -661,8 +687,8 @@ static void CG_DrawLoadForcePowers( int forceBits )
 	cgi_R_SetColor( NULL );
 }
 
-// Get the player weapons and force power info
-static void CG_GetLoadScreenInfo(int *weaponBits,int *forceBits)
+// Get the player weapons and force power info 
+static void CG_GetLoadScreenInfo(char *weapons,int *forceBits)
 {
 	char	s[MAX_STRING_CHARS];
 	int		iDummy,i;
@@ -674,11 +700,10 @@ static void CG_GetLoadScreenInfo(int *weaponBits,int *forceBits)
 	// Get player weapons and force powers known
 	if (s[0])
 	{
-	//				|general info				  |-force powers
-		sscanf( s, "%i %i %i %i %i %i %i %f %f %f %i %i",
+	//				|general info				  |-force powers 
+		sscanf( s, "%i %i %i %i %i %i %f %f %f %i %i",
 				&iDummy,	//	&client->ps.stats[STAT_HEALTH],
 				&iDummy,	//	&client->ps.stats[STAT_ARMOR],
-				&*weaponBits,//	&client->ps.stats[STAT_WEAPONS],
 				&iDummy,	//	&client->ps.stats[STAT_ITEMS],
 				&iDummy,	//	&client->ps.weapon,
 				&iDummy,	//	&client->ps.weaponstate,
@@ -692,6 +717,26 @@ static void CG_GetLoadScreenInfo(int *weaponBits,int *forceBits)
 
 				);
 	}
+	
+	gi.Cvar_VariableStringBuffer( "playerweaps", s, sizeof(s) );
+	i=0;
+	if (s[0])
+	{
+		var = strtok( s, " " );
+		while( var != NULL )
+		{
+			/* While there are tokens in "s" */
+			weapons[i++] = atoi(var);
+			/* Get next token: */
+			var = strtok( NULL, " " );
+		}
+		assert (i==WP_NUM_WEAPONS);
+	}
+	else
+	{
+		weapons[0] = -1;
+	}
+
 
 	// the new JK2 stuff - force powers, etc...
 	//
@@ -719,7 +764,8 @@ static void CG_DrawLoadingScreen( qhandle_t	levelshot ,const char *mapName)
 	int xPos,yPos,width,height;
 	vec4_t	color;
 	qhandle_t	background;
-	int weapons=0, forcepowers=0;
+	int forcepowers=0;
+	char weapons[WP_NUM_WEAPONS];
 
 	// Get mission briefing for load screen
 	if (cgi_SP_GetStringTextString( va("BRIEFINGS_%s",mapName), NULL, 0 ) == 0)
@@ -770,10 +816,10 @@ static void CG_DrawLoadingScreen( qhandle_t	levelshot ,const char *mapName)
 	}
 
 	// Get player weapons and force power info
-	CG_GetLoadScreenInfo(&weapons,&forcepowers);
+	CG_GetLoadScreenInfo(weapons,&forcepowers);
 
 	// Print weapon icons
-	if (weapons)
+	if (weapons[0] > -1)
 	{
 		CG_DrawLoadWeapons(weapons);
 	}
@@ -832,17 +878,21 @@ void CG_DrawInformation( void ) {
 
 		cgi_SP_GetStringTextString( "SP_INGAME_ALONGTIME", text, sizeof(text) );
 
-		int w = cgi_R_Font_StrLenPixels(text,cgs.media.qhFontMedium, 1.0f);
-		cgi_R_Font_DrawString((320)-(w/2), 140, text,  colorTable[CT_ICON_BLUE], cgs.media.qhFontMedium, -1, 1.0f);
+		int w = cgi_R_Font_StrLenPixels(text,cgs.media.qhFontArimo, 1.0f);
+		cgi_R_Font_DrawString((320)-(w/2), 140, text,  colorTable[CT_ICON_BLUE], cgs.media.qhFontArimo, -1, 1.0f);
+
+		CG_NewGameLoadBar();
 	}
 	else
 	{
 		CG_DrawLoadingScreen(levelshot, s);
 		cgi_UI_Menu_Paint( cgi_UI_GetMenuByName( "loadscreen" ), qtrue );
 		//cgi_UI_MenuPaintAll();
+
+		CG_LoadBar();
 	}
 
-	CG_LoadBar();
+	//CG_LoadBar();
 
 
 	// the first 150 rows are reserved for the client connection

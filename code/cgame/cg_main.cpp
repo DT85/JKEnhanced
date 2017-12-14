@@ -65,6 +65,7 @@ Ghoul2 Insert End
 
 void CG_LoadHudMenu(void);
 int inv_icons[INV_MAX];
+int dp_inv_icons[INV_MAX];
 const char *inv_names[] =
 {
 "ELECTROBINOCULARS",
@@ -85,7 +86,7 @@ const char *inv_names[] =
 };
 
 int	force_icons[NUM_FORCE_POWERS];
-
+int	DP_force_icons[NUM_FORCE_POWERS];
 
 void CG_DrawDataPadHUD( centity_t *cent );
 void CG_DrawDataPadObjectives(const centity_t *cent );
@@ -227,6 +228,19 @@ int					cg_numpermanents = 0;
 weaponInfo_t		cg_weapons[MAX_WEAPONS];
 itemInfo_t			cg_items[MAX_ITEMS];
 
+extern void trap_R_FontRatioFix(float ratio);
+static void CG_Set2DRatio(void) {
+	if (r_ratioFix.integer)
+		cgs.widthRatioCoef = (float)(SCREEN_WIDTH * cgs.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * cgs.glconfig.vidWidth);
+	else
+		cgs.widthRatioCoef = 1.0f;
+
+	if (r_ratioFix.integer == 2)
+		trap_R_FontRatioFix(1.0f);
+	else
+		trap_R_FontRatioFix(cgs.widthRatioCoef);
+}
+
 typedef struct {
 	qboolean		registered;		// Has the player picked it up
 	qboolean		active;			// Is it the chosen inventory item
@@ -344,6 +358,36 @@ vmCvar_t	cg_fovViewmodelAdjust;
 
 vmCvar_t	cg_scaleVehicleSensitivity;
 
+vmCvar_t	r_ratioFix;
+
+vmCvar_t	cg_SFXSabers;
+vmCvar_t	cg_SFXSabersGlowSize;
+vmCvar_t	cg_SFXSabersCoreSize;
+
+vmCvar_t	cg_ignitionFlare;
+vmCvar_t    cg_ignitionSpeed;
+
+vmCvar_t    cg_gunMomentumDamp;
+vmCvar_t    cg_gunMomentumFall;
+vmCvar_t    cg_gunMomentumEnable;
+vmCvar_t    cg_gunMomentumInterval;
+
+
+vmCvar_t	cg_trueguns;
+vmCvar_t	cg_fpls;
+
+vmCvar_t	cg_drawRadar;
+
+vmCvar_t		cg_trueroll;
+vmCvar_t		cg_trueflip;
+vmCvar_t		cg_truespin;
+vmCvar_t		cg_truemoveroll;
+vmCvar_t		cg_truesaberonly;
+vmCvar_t		cg_trueeyeposition;
+vmCvar_t		cg_trueinvertsaber;
+vmCvar_t		cg_truefov;
+vmCvar_t        cg_truebobbing;
+
 typedef struct {
 	vmCvar_t	*vmCvar;
 	const char	*cvarName;
@@ -396,12 +440,9 @@ static cvarTable_t cvarTable[] = {
 
 	{ &cg_debugAnim, "cg_debuganim", "0", CVAR_CHEAT },
 #ifndef FINAL_BUILD
-	//DT EDIT: Ghoul2 viewmodels - START
-	//{ &cg_gun_frame, "gun_frame", "0", CVAR_CHEAT },
+	{ &cg_gun_frame, "gun_frame", "0", CVAR_CHEAT },
 	{ &cg_debugAnimTarget, "cg_debugAnimTarget", "0", CVAR_CHEAT },
 #endif
-	{ &cg_gun_frame, "gun_frame", "0", CVAR_CHEAT },
-	//DT EDIT: Ghoul2 viewmodels - END
 	{ &cg_gun_x, "cg_gunX", "0", CVAR_ARCHIVE },
 	{ &cg_gun_y, "cg_gunY", "0", CVAR_ARCHIVE },
 	{ &cg_gun_z, "cg_gunZ", "0", CVAR_ARCHIVE },
@@ -465,6 +506,39 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_fovViewmodelAdjust, "cg_fovViewmodelAdjust", "1", CVAR_ARCHIVE },
 
 	{ &cg_scaleVehicleSensitivity, "cg_scaleVehicleSensitivity", "1", CVAR_ARCHIVE },
+
+	{ &r_ratioFix, "r_ratioFix", "1", CVAR_ARCHIVE },
+	
+	{ &cg_SFXSabers,	"cg_SFXSabers",	"1", CVAR_ARCHIVE },
+	{ &cg_SFXSabersGlowSize,	"cg_SFXSabersGlowSize",	"1.0", CVAR_ARCHIVE },
+	{ &cg_SFXSabersCoreSize,	"cg_SFXSabersCoreSize",	"1.0", CVAR_ARCHIVE },
+
+	{ &cg_ignitionFlare,	"cg_ignitionFlare",	"1", CVAR_ARCHIVE },
+    { &cg_ignitionSpeed,	"cg_ignitionSpeed",	"1.0", CVAR_ARCHIVE },
+	
+    { &cg_ignitionSpeed,	"cg_ignitionSpeed",	"1.0", CVAR_ARCHIVE },
+    
+    { &cg_gunMomentumDamp, "cg_gunMomentumDamp", "0.001", CVAR_ARCHIVE },
+    { &cg_gunMomentumFall, "cg_gunMomentumFall", "0.5", CVAR_ARCHIVE },
+    { &cg_gunMomentumEnable, "cg_gunMomentumEnable", "0", CVAR_ARCHIVE },
+    { &cg_gunMomentumInterval, "cg_gunMomentumInterval", "75", CVAR_ARCHIVE },
+
+    
+	{ &cg_drawRadar,	"cg_drawRadar", "1", CVAR_ARCHIVE },
+	
+	//True View Control cvars
+	{ &cg_trueguns, "cg_trueguns", "0", CVAR_ARCHIVE },
+	{ &cg_fpls, "cg_fpls", "0", CVAR_ARCHIVE },
+	{ &cg_trueroll,	"cg_trueroll",	"0", CVAR_ARCHIVE },
+	{ &cg_trueflip,	"cg_trueflip",	"0", CVAR_ARCHIVE },
+	{ &cg_truespin,	"cg_truespin",	"0", CVAR_ARCHIVE },
+	{ &cg_truemoveroll,	"cg_truemoveroll",	"0", CVAR_ARCHIVE },
+	{ &cg_truesaberonly,	"cg_truesaberonly",	"0", CVAR_ARCHIVE },
+	{ &cg_trueeyeposition,	"cg_trueeyeposition",	"0.0", 0},
+	{ &cg_trueinvertsaber,	"cg_trueinvertsaber",	"0", CVAR_ARCHIVE},
+	{ &cg_truefov,	"cg_truefov",	"80", CVAR_ARCHIVE},
+    { &cg_truebobbing,	"cg_truebobbing",	"1", CVAR_ARCHIVE},
+
 };
 
 static const size_t cvarTableSize = ARRAY_LEN( cvarTable );
@@ -480,6 +554,11 @@ void CG_RegisterCvars( void ) {
 
 	for ( i=0, cv=cvarTable; i<cvarTableSize; i++, cv++ ) {
 		cgi_Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
+		if (!Q_stricmp(cv->cvarName, "r_ratioFix"))
+		{
+			cgi_Cvar_Update(cv->vmCvar);
+			CG_Set2DRatio();
+		}
 	}
 }
 
@@ -495,6 +574,9 @@ void CG_UpdateCvars( void ) {
 	for ( i=0, cv=cvarTable; i<cvarTableSize; i++, cv++ ) {
 		if ( cv->vmCvar ) {
 			cgi_Cvar_Update( cv->vmCvar );
+			if (!Q_stricmp(cv->cvarName, "r_ratioFix")) {
+				CG_Set2DRatio();
+			}
 		}
 	}
 }
@@ -545,6 +627,12 @@ int CG_GetCameraPos( vec3_t camerapos ) {
 	}
 	else if (cg.snap && (cg.snap->ps.weapon == WP_SABER||cg.snap->ps.weapon == WP_MELEE) )//implied: !cg.renderingThirdPerson
 	{//first person saber hack
+		VectorCopy( cg.refdef.vieworg, camerapos );
+		return 1;
+	}
+	else if ( cg_trueguns.integer && !cg.zoomMode )
+	{//in third person
+		//FIXME: what about hacks that render in third person regardless of this value?
 		VectorCopy( cg.refdef.vieworg, camerapos );
 		return 1;
 	}
@@ -1130,7 +1218,7 @@ static void CG_RegisterEffects( void )
 
 		cgi_R_WorldEffectCommand( effectName );
 	}
-
+	
 	// Set up the glass effects mini-system.
 	CG_InitGlass();
 
@@ -1272,6 +1360,66 @@ HUDMenuItem_t otherHUDBits[] =
 	"gfx/mp/f_icon_saber_throw"		//FP_SABERTHROW
 };
 */
+
+extern int BG_SiegeGetPairedValue(char *buf, char *key, char *outbuf);
+
+void CG_LoadMinimapImages( void )
+{
+	int len = 0;
+	fileHandle_t f;
+	char minimapData[1024];
+	char readBuffer[MAX_QPATH];
+	char fileName[MAX_QPATH];
+	
+	cgs.radarMap.numMinimapImages = 0;
+
+	const char	*info	= CG_ConfigString( CS_SERVERINFO );
+	const char	*s		= Info_ValueForKey( info, "mapname" );
+
+	Com_sprintf(fileName, sizeof(fileName), "minimaps/%s.mmp", s);
+	
+	len = gi.FS_FOpenFile(fileName, &f, FS_READ);
+	
+	if (!f)
+	{
+		return;
+	}
+	
+	if (len >= 1024)
+	{
+		gi.FS_FCloseFile( f );
+		return;
+	}
+	
+	gi.FS_Read(minimapData, len, f);
+	gi.FS_FCloseFile( f );
+	
+	if ( !BG_SiegeGetPairedValue(minimapData, "bottomRight", readBuffer) )
+	{
+		return;
+	}
+	sscanf( readBuffer, "%f %f", &cgs.radarMap.bottomRight[0], &cgs.radarMap.bottomRight[1]);
+	
+	if ( !BG_SiegeGetPairedValue(minimapData, "topLeft", readBuffer) )
+	{
+		return;
+	}
+	sscanf( readBuffer, "%f %f", &cgs.radarMap.topLeft[0], &cgs.radarMap.topLeft[1]);
+	
+	if ( !BG_SiegeGetPairedValue(minimapData, "image", readBuffer) )
+	{
+		return;
+	}
+	cgs.radarMap.minimapImage[0] = cgi_R_RegisterShaderNoMip( readBuffer );
+	
+	if ( BG_SiegeGetPairedValue(minimapData, "height", readBuffer) )
+	{
+		cgs.radarMap.minimapHeights[0] = atof(readBuffer);
+	}
+	
+	cgs.radarMap.numMinimapImages = 1;	
+}
+
 extern void CG_NPC_Precache ( gentity_t *spawner );
 qboolean NPCsPrecached = qfalse;
 /*
@@ -1342,6 +1490,8 @@ static void CG_RegisterGraphics( void ) {
 	CG_LoadingString( cgs.mapname );
 
 	cgi_R_LoadWorldMap( cgs.mapname );
+	
+	CG_LoadMinimapImages();
 
 	cg.loadLCARSStage = 4;
 	CG_LoadingString( "game media shaders" );
@@ -1352,6 +1502,11 @@ static void CG_RegisterGraphics( void ) {
 		cgs.media.smallnumberShaders[i]		= cgi_R_RegisterShaderNoMip( sb_t_nums[i] );
 		cgs.media.chunkyNumberShaders[i]	= cgi_R_RegisterShaderNoMip( sb_c_nums[i] );
 	}
+	
+	cgs.media.radarShader			= cgi_R_RegisterShaderNoMip ( "gfx/menus/radar/radar.png" );
+	cgs.media.siegeItemShader		= cgi_R_RegisterShaderNoMip ( "gfx/menus/radar/goalitem_new" );
+	cgs.media.mAutomapPlayerIcon	= cgi_R_RegisterShaderNoMip ( "gfx/menus/radar/arrow_w_new" );
+	cgs.media.radarMaskShader		= cgi_R_RegisterShaderNoMip ( "gfx/menus/spradar/mask" );
 
 	// FIXME: conditionally do this??  Something must be wrong with inventory item caching..?
 	cgi_R_RegisterModel( "models/items/remote.md3" );
@@ -1374,7 +1529,7 @@ static void CG_RegisterGraphics( void ) {
 	// FIXME: do these conditionally
 	cgi_R_RegisterShader( "gfx/2d/workingCamera" );
 	cgi_R_RegisterShader( "gfx/2d/brokenCamera" );
-	//cgi_R_RegisterShader( "gfx/effects/irid_shield" ); // for galak, but he doesn't have his own weapon so I can't register the shader there.
+	cgi_R_RegisterShader( "gfx/effects/irid_shield" ); // for galak, but he doesn't have his own weapon so I can't register the shader there.
 
 	//interface
 	for ( i = 0 ; i < NUM_CROSSHAIRS ; i++ ) {
@@ -1390,7 +1545,18 @@ static void CG_RegisterGraphics( void ) {
 	//gore decal shaders -rww
 	cgs.media.bdecal_burnmark1		= cgi_R_RegisterShader( "gfx/damage/burnmark1" );
 	cgs.media.bdecal_saberglowmark	= cgi_R_RegisterShader( "gfx/damage/saberglowmark" );
-
+	
+	cgs.media.SaberTrailShader = cgi_R_RegisterShader( "SFX_Sabers/saber_trail" );
+	cgs.media.SaberBladeShader = cgi_R_RegisterShader( "SFX_Sabers/saber_blade" );
+	cgs.media.SaberEndShader = cgi_R_RegisterShader( "SFX_Sabers/saber_end" );
+	
+	cgs.media.blackSaberTrailShader = cgi_R_RegisterShader( "SFX_Sabers/black_trail" );
+	cgs.media.blackSaberBladeShader = cgi_R_RegisterShader( "SFX_Sabers/black_blade" );
+	cgs.media.blackSaberEndShader = cgi_R_RegisterShader( "SFX_Sabers/black_end" );
+	
+	cgs.media.ignitionFlare = cgi_R_RegisterShader( "gfx/effects/flare1" );
+	cgs.media.blackIgnitionFlare = cgi_R_RegisterShader( "gfx/effects/sabers/flare1black" );
+	
 	cg.loadLCARSStage = 5;
 	CG_LoadingString( "game media models" );
 
@@ -1647,6 +1813,22 @@ Ghoul2 Insert End
 						{
 							cgi_R_RegisterShader( g_entities[i].client->ps.saber[0].g2WeaponMarkShader2 );
 						}
+						if ( g_entities[i].client->ps.saber[0].ignitionFlare[0] )
+						{
+							cgi_R_RegisterShader( g_entities[i].client->ps.saber[0].ignitionFlare );
+						}
+						if ( g_entities[i].client->ps.saber[0].ignitionFlare2[0] )
+						{
+							cgi_R_RegisterShader( g_entities[i].client->ps.saber[0].ignitionFlare2 );
+						}
+						if ( g_entities[i].client->ps.saber[0].blackIgnitionFlare[0] )
+						{
+							cgi_R_RegisterShader( g_entities[i].client->ps.saber[0].blackIgnitionFlare );
+						}
+						if ( g_entities[i].client->ps.saber[0].blackIgnitionFlare2[0] )
+						{
+							cgi_R_RegisterShader( g_entities[i].client->ps.saber[0].blackIgnitionFlare2 );
+						}
 						if ( g_entities[i].client->ps.saber[1].g2MarksShader[0] )
 						{
 							cgi_R_RegisterShader( g_entities[i].client->ps.saber[1].g2MarksShader );
@@ -1662,6 +1844,22 @@ Ghoul2 Insert End
 						if ( g_entities[i].client->ps.saber[1].g2WeaponMarkShader2[0] )
 						{
 							cgi_R_RegisterShader( g_entities[i].client->ps.saber[1].g2WeaponMarkShader2 );
+						}
+						if ( g_entities[i].client->ps.saber[1].ignitionFlare[0] )
+						{
+							cgi_R_RegisterShader( g_entities[i].client->ps.saber[1].ignitionFlare );
+						}
+						if ( g_entities[i].client->ps.saber[1].ignitionFlare2[0] )
+						{
+							cgi_R_RegisterShader( g_entities[i].client->ps.saber[1].ignitionFlare2 );
+						}
+						if ( g_entities[i].client->ps.saber[1].blackIgnitionFlare[0] )
+						{
+							cgi_R_RegisterShader( g_entities[i].client->ps.saber[1].blackIgnitionFlare );
+						}
+						if ( g_entities[i].client->ps.saber[1].blackIgnitionFlare2[0] )
+						{
+							cgi_R_RegisterShader( g_entities[i].client->ps.saber[1].blackIgnitionFlare2 );
 						}
 						CG_RegisterNPCCustomSounds( &g_entities[i].client->clientInfo );
 						//CG_RegisterNPCEffects( g_entities[i].client->playerTeam );
@@ -1762,6 +1960,21 @@ Ghoul2 Insert End
 		// Send off the terrainInfo to the renderer
 		cgi_RE_InitRendererTerrain( terrainInfo );
 	}
+	
+	const char *iconName;
+	
+	for ( i = 1 ; i < MAX_ICONS ; i++ )
+	{
+		iconName = ( char *)CG_ConfigString( CS_ICONS + i );
+		
+		if ( !iconName[0] )
+		{
+			break;
+		}
+		
+		cgs.media.radarIcons[i] = cgi_R_RegisterShaderNoMip( iconName );
+	}
+
 }
 
 //===========================================================================
@@ -2145,6 +2358,13 @@ void CG_Init( int serverCommandSequence ) {
 		"gfx/mp/f_icon_lt_absorb",		//FP_ABSORB,
 		"gfx/mp/f_icon_dk_drain",		//FP_DRAIN,
 		"gfx/mp/f_icon_sight",			//FP_SEE,
+		"gfx/mp/f_icon_dk_destruction",	//FP_DESTRUCTION,
+		"gfx/mp/f_icon_dk_insanity",		//FP_INSANITY,
+		"gfx/mp/f_icon_lt_stasis",			//FP_STASIS,
+		"gfx/mp/f_icon_lt_blinding",		//FP_BLINDING,
+		"gfx/mp/f_icon_dk_deadlysight",	//FP_DEADLYSIGHT
+		"gfx/mp/f_icon_repulse",		//FP_REPULSE
+		"gfx/mp/f_icon_lt_invulnerability",	//FP_INVULNERABILITY
 	};
 
 	// Precache inventory icons
@@ -2170,6 +2390,8 @@ void CG_Init( int serverCommandSequence ) {
 	CG_GameStateReceived();
 
 	CG_InitConsoleCommands();
+	
+	CG_TrueViewInit();
 
 	cg.weaponPickupTextTime = 0;
 
@@ -2191,6 +2413,10 @@ void CG_Shutdown( void )
 {
 	in_camera = false;
 	FX_Free();
+	
+	for (int i = 0; i < WP_NUM_WEAPONS; i++) {
+		CG_DeregisterWeapon(i);
+	}
 }
 
 //// DEBUG STUFF
@@ -3351,7 +3577,7 @@ void CG_DrawInventorySelect( void )
 
 	// Left side ICONS
 	// Work backwards from current icon
-	holdX = x - ((bigIconSize/2) + pad + smallIconSize);
+	holdX = x - ((bigIconSize/2) + pad + smallIconSize)*cgs.widthRatioCoef;
 	//height = smallIconSize * cg.iconHUDPercent;
 	addX = (float) smallIconSize * .75;
 
@@ -3372,13 +3598,13 @@ void CG_DrawInventorySelect( void )
 		if (inv_icons[i])
 		{
 			cgi_R_SetColor(NULL);
-			CG_DrawPic( holdX, y+10, smallIconSize, smallIconSize, inv_icons[i] );
+			CG_DrawPic( holdX, y+10, smallIconSize*cgs.widthRatioCoef, smallIconSize, inv_icons[i] );
 
 			cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-			CG_DrawNumField (holdX + addX, y + smallIconSize, 2, cg.snap->ps.inventory[i], 6, 12,
+			CG_DrawNumField (holdX + addX, y + smallIconSize, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[i], 6, 12,
 				NUM_FONT_SMALL,qfalse);
 
-			holdX -= (smallIconSize+pad);
+			holdX -= (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 
@@ -3387,10 +3613,10 @@ void CG_DrawInventorySelect( void )
 	if (inv_icons[cg.inventorySelect])
 	{
 		cgi_R_SetColor(NULL);
-		CG_DrawPic( x-(bigIconSize/2), (y-((bigIconSize-smallIconSize)/2))+10, bigIconSize, bigIconSize, inv_icons[cg.inventorySelect] );
+		CG_DrawPic( x-(bigIconSize*cgs.widthRatioCoef/2), (y-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, inv_icons[cg.inventorySelect] );
 		addX = (float) bigIconSize * .75;
 		cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-		CG_DrawNumField ((x-(bigIconSize/2)) + addX, y, 2, cg.snap->ps.inventory[cg.inventorySelect], 6, 12,
+		CG_DrawNumField ((x-(bigIconSize*cgs.widthRatioCoef/2)) + addX, y, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[cg.inventorySelect], 6, 12,
 			NUM_FONT_SMALL,qfalse);
 
 		if (inv_names[cg.inventorySelect])
@@ -3411,6 +3637,17 @@ void CG_DrawInventorySelect( void )
 
 					cgi_R_Font_DrawString( x, (SCREEN_HEIGHT - 24), data, textColor, cgs.media.qhFontSmall, -1, 1.0f);
 				}
+				else
+				{
+					Com_sprintf( itemName, sizeof(itemName), "SPMOD_INGAME_%s",	item->classname );
+					if ( cgi_SP_GetStringTextString( itemName, data, sizeof( data )))
+					{
+						int w = cgi_R_Font_StrLenPixels( data, cgs.media.qhFontSmall, 1.0f );
+						int x = ( SCREEN_WIDTH - w ) / 2;
+						
+						cgi_R_Font_DrawString( x, (SCREEN_HEIGHT - 24), data, textColor, cgs.media.qhFontSmall, -1, 1.0f);
+					}
+				}
 			}
 		}
 	}
@@ -3423,7 +3660,7 @@ void CG_DrawInventorySelect( void )
 
 	// Right side ICONS
 	// Work forwards from current icon
-	holdX = x + (bigIconSize/2) + pad;
+	holdX = x + ((bigIconSize/2) + pad)*cgs.widthRatioCoef;
 	//height = smallIconSize * cg.iconHUDPercent;
 	addX = (float) smallIconSize * .75;
 	for (iconCnt=0;iconCnt<sideRightIconCnt;i++)
@@ -3443,13 +3680,13 @@ void CG_DrawInventorySelect( void )
 		if (inv_icons[i])
 		{
 			cgi_R_SetColor(NULL);
-			CG_DrawPic( holdX, y+10, smallIconSize, smallIconSize, inv_icons[i] );
+			CG_DrawPic( holdX, y+10, smallIconSize*cgs.widthRatioCoef, smallIconSize, inv_icons[i] );
 
 			cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-			CG_DrawNumField (holdX + addX, y + smallIconSize, 2, cg.snap->ps.inventory[i], 6, 12,
+			CG_DrawNumField (holdX + addX, y + smallIconSize, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[i], 6, 12,
 				NUM_FONT_SMALL,qfalse);
 
-			holdX += (smallIconSize+pad);
+			holdX += (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 }
@@ -3490,7 +3727,7 @@ void CG_DrawDataPadInventorySelect( void )
 	count = 0;
 	for ( i = 0 ; i < INV_MAX ; i++ )
 	{
-		if (CG_InventorySelectable(i) && inv_icons[i])
+		if (CG_InventorySelectable(i) && dp_inv_icons[i])
 		{
 			count++;
 		}
@@ -3499,10 +3736,20 @@ void CG_DrawDataPadInventorySelect( void )
 
 	if (!count)
 	{
-		cgi_SP_GetStringTextString("SP_INGAME_EMPTY_INV",text, sizeof(text) );
-		int w = cgi_R_Font_StrLenPixels( text, cgs.media.qhFontSmall, 1.0f );
-		int x = ( SCREEN_WIDTH - w ) / 2;
-		CG_DrawProportionalString(x, 300 + 22, text, CG_CENTER | CG_SMALLFONT, colorTable[CT_ICON_BLUE]);
+		int messageYPosition = 200;
+
+		cgi_SP_GetStringTextString("SP_INGAME_EMPTY_INV", text, sizeof(text));
+		int messageXPosition = 310 - (cgi_R_Font_StrLenPixels(text, cgs.media.qhFontArimob, 0.35f) / 2);
+
+		cgi_R_Font_DrawString(
+			messageXPosition,
+			messageYPosition,
+			text,
+			colorTable[CT_HUD_GREEN],
+			cgs.media.qhFontArimob,
+			-1,
+			0.35f);
+
 		return;
 	}
 
@@ -3538,13 +3785,14 @@ void CG_DrawDataPadInventorySelect( void )
 	const int bigPad = 64;
 	const int pad = 32;
 
-	const int centerXPos = 320;
-	const int graphicYPos = 340;
+	const int centerXPos = 312;
+	const int graphicYPos = 343;
+	const int centergraphicYPos = 333;
 
 
 	// Left side ICONS
 	// Work backwards from current icon
-	holdX = centerXPos - ((bigIconSize/2) + bigPad + smallIconSize);
+	holdX = centerXPos - ((bigIconSize/2) + bigPad + smallIconSize)*cgs.widthRatioCoef;
 	//height = smallIconSize * cg.iconHUDPercent;
 	addX = (float) smallIconSize * .75;
 
@@ -3555,35 +3803,35 @@ void CG_DrawDataPadInventorySelect( void )
 			i = INV_MAX-1;
 		}
 
-		if ((!CG_InventorySelectable(i)) || (!inv_icons[i]))
+		if ((!CG_InventorySelectable(i)) || (!dp_inv_icons[i]))
 		{
 			continue;
 		}
 
 		++iconCnt;					// Good icon
 
-		if (inv_icons[i])
+		if (dp_inv_icons[i])
 		{
 			cgi_R_SetColor(colorTable[CT_WHITE]);
-			CG_DrawPic( holdX, graphicYPos+10, smallIconSize, smallIconSize, inv_icons[i] );
+			CG_DrawPic( holdX, graphicYPos+10, smallIconSize*cgs.widthRatioCoef, smallIconSize, dp_inv_icons[i] );
 
-			cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-			CG_DrawNumField (holdX + addX, graphicYPos + smallIconSize, 2, cg.snap->ps.inventory[i], 6, 12,
+			cgi_R_SetColor(colorTable[CT_HUD_GREEN]);
+			CG_DrawNumField (holdX + addX, graphicYPos - 2 + smallIconSize, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[i], 6, 12,
 				NUM_FONT_SMALL,qfalse);
 
-			holdX -= (smallIconSize+pad);
+			holdX -= (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 
 	// Current Center Icon
 	//height = bigIconSize * cg.iconHUDPercent;
-	if (inv_icons[cg.DataPadInventorySelect])
+	if (dp_inv_icons[cg.DataPadInventorySelect])
 	{
 		cgi_R_SetColor(colorTable[CT_WHITE]);
-		CG_DrawPic( centerXPos-(bigIconSize/2), (graphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize, bigIconSize, inv_icons[cg.DataPadInventorySelect] );
+		CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (centergraphicYPos-((bigIconSize-smallIconSize)/2))+10, bigIconSize*cgs.widthRatioCoef, bigIconSize, dp_inv_icons[cg.DataPadInventorySelect] );
 		addX = (float) bigIconSize * .75;
-		cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-		CG_DrawNumField ((centerXPos-(bigIconSize/2)) + addX, graphicYPos, 2, cg.snap->ps.inventory[cg.DataPadInventorySelect], 6, 12,
+		cgi_R_SetColor(colorTable[CT_HUD_GREEN]);
+		CG_DrawNumField ((centerXPos-(bigIconSize*cgs.widthRatioCoef/2)) + addX, centergraphicYPos, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[cg.DataPadInventorySelect], 6, 12,
 			NUM_FONT_SMALL,qfalse);
 
 	}
@@ -3596,7 +3844,7 @@ void CG_DrawDataPadInventorySelect( void )
 
 	// Right side ICONS
 	// Work forwards from current icon
-	holdX = centerXPos + (bigIconSize/2) + bigPad;
+	holdX = centerXPos + ((bigIconSize/2) + bigPad)*cgs.widthRatioCoef;
 	//height = smallIconSize * cg.iconHUDPercent;
 	addX = (float) smallIconSize * .75;
 	for (iconCnt=0;iconCnt<sideRightIconCnt;i++)
@@ -3606,30 +3854,33 @@ void CG_DrawDataPadInventorySelect( void )
 			i = 0;
 		}
 
-		if ((!CG_InventorySelectable(i)) || (!inv_icons[i]))
+		if ((!CG_InventorySelectable(i)) || (!dp_inv_icons[i]))
 		{
 			continue;
 		}
 
 		++iconCnt;					// Good icon
 
-		if (inv_icons[i])
+		if (dp_inv_icons[i])
 		{
 			cgi_R_SetColor(colorTable[CT_WHITE]);
-			CG_DrawPic( holdX, graphicYPos+10, smallIconSize, smallIconSize, inv_icons[i] );
+			CG_DrawPic( holdX, graphicYPos+3, smallIconSize*cgs.widthRatioCoef, smallIconSize, dp_inv_icons[i] );
 
-			cgi_R_SetColor(colorTable[CT_ICON_BLUE]);
-			CG_DrawNumField (holdX + addX, graphicYPos + smallIconSize, 2, cg.snap->ps.inventory[i], 6, 12,
+			cgi_R_SetColor(colorTable[CT_HUD_GREEN]);
+			CG_DrawNumField (holdX + addX, graphicYPos - 2 + smallIconSize, 2*cgs.widthRatioCoef, cg.snap->ps.inventory[i], 6, 12,
 				NUM_FONT_SMALL,qfalse);
 
-			holdX += (smallIconSize+pad);
+			holdX += (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 
 	// draw the weapon description
 	if ((cg.DataPadInventorySelect>=0) && (cg.DataPadInventorySelect<13))
 	{
-		cgi_SP_GetStringTextString( va("SP_INGAME_%s",inventoryDesc[cg.DataPadInventorySelect]), text, sizeof(text) );
+		if (!cgi_SP_GetStringTextString( va("SP_INGAME_%s",inventoryDesc[cg.DataPadInventorySelect]), text, sizeof(text) ))
+		{
+			cgi_SP_GetStringTextString( va("SPMOD_INGAME_%s",inventoryDesc[cg.DataPadInventorySelect]), text, sizeof(text) );
+		}
 
 		if (text[0])
 		{
@@ -3668,16 +3919,27 @@ int showPowers[MAX_SHOWPOWERS] =
 	FP_HEAL,
 	FP_PROTECT,
 	FP_TELEPATHY,
+	
+	FP_STASIS,
+	FP_BLINDING,
+	FP_INVULNERABILITY,
 
 	FP_SPEED,
 	FP_PUSH,
 	FP_PULL,
 	FP_SEE,
+	FP_REPULSE,
 
 	FP_DRAIN,
 	FP_LIGHTNING,
 	FP_RAGE,
 	FP_GRIP,
+	
+	FP_DESTRUCTION,
+	FP_INSANITY,
+	FP_DEADLYSIGHT,
+	
+	FP_SABERTHROW,
 };
 
 const char *showPowersName[MAX_SHOWPOWERS] =
@@ -3686,16 +3948,27 @@ const char *showPowersName[MAX_SHOWPOWERS] =
 	"SP_INGAME_HEAL2",
 	"SP_INGAME_PROTECT2",
 	"SP_INGAME_MINDTRICK2",
+	
+	"SPMOD_INGAME_STASIS2",
+	"SPMOD_INGAME_BLINDING2",
+	"SPMOD_INGAME_INVULNERABILITY2",
 
 	"SP_INGAME_SPEED2",
 	"SP_INGAME_PUSH2",
 	"SP_INGAME_PULL2",
 	"SP_INGAME_SEEING2",
+	"SPMOD_INGAME_REPULSE2",
 
 	"SP_INGAME_DRAIN2",
 	"SP_INGAME_LIGHTNING2",
 	"SP_INGAME_DARK_RAGE2",
 	"SP_INGAME_GRIP2",
+	
+	"SPMOD_INGAME_DESTRUCTION2",
+	"SPMOD_INGAME_INSANITY2",
+	"SPMOD_INGAME_DEADLYSIGHT2",
+	
+	"SP_INGAME_SABER_THROW2",
 };
 
 // Keep these with groups light side, core, and dark side
@@ -3706,6 +3979,10 @@ int showDataPadPowers[MAX_DPSHOWPOWERS] =
 	FP_HEAL,
 	FP_PROTECT,
 	FP_TELEPATHY,
+	
+	FP_STASIS,
+	FP_BLINDING,
+	FP_INVULNERABILITY,
 
 	// Core Powers
 	FP_LEVITATION,
@@ -3716,12 +3993,17 @@ int showDataPadPowers[MAX_DPSHOWPOWERS] =
 	FP_SABER_DEFENSE,
 	FP_SABER_OFFENSE,
 	FP_SEE,
+	FP_REPULSE,
 
 	//Dark Side
 	FP_DRAIN,
 	FP_LIGHTNING,
 	FP_RAGE,
 	FP_GRIP,
+	
+	FP_DESTRUCTION,
+	FP_INSANITY,
+	FP_DEADLYSIGHT,
 };
 
 /*
@@ -3919,7 +4201,7 @@ void CG_DrawForceSelect( void )
 
 	cgi_R_SetColor(NULL);
 	// Work backwards from current icon
-	holdX = x - ((bigIconSize/2) + pad + smallIconSize);
+	holdX = x - ((bigIconSize/2) + pad + smallIconSize)*cgs.widthRatioCoef;
 	for (iconCnt=1;iconCnt<(sideLeftIconCnt+1);i--)
 	{
 		if (i < 0)
@@ -3936,15 +4218,15 @@ void CG_DrawForceSelect( void )
 
 		if (force_icons[showPowers[i]])
 		{
-			CG_DrawPic( holdX, y + yOffset, smallIconSize, smallIconSize, force_icons[showPowers[i]] );
-			holdX -= (smallIconSize+pad);
+			CG_DrawPic( holdX, y + yOffset, smallIconSize*cgs.widthRatioCoef, smallIconSize, force_icons[showPowers[i]] );
+			holdX -= (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 
 	// Current Center Icon
 	if (force_icons[showPowers[cg.forcepowerSelect]])
 	{
-		CG_DrawPic( x-(bigIconSize/2), (y-((bigIconSize-smallIconSize)/2)) + yOffset, bigIconSize, bigIconSize, force_icons[showPowers[cg.forcepowerSelect]] );
+		CG_DrawPic( x-(bigIconSize/2), (y-((bigIconSize-smallIconSize)/2)) + yOffset, bigIconSize*cgs.widthRatioCoef, bigIconSize, force_icons[showPowers[cg.forcepowerSelect]] );
 	}
 
 
@@ -3955,7 +4237,7 @@ void CG_DrawForceSelect( void )
 	}
 
 	// Work forwards from current icon
-	holdX = x + (bigIconSize/2) + pad;
+	holdX = x + ((bigIconSize/2) + pad)*cgs.widthRatioCoef;
 	for (iconCnt=1;iconCnt<(sideRightIconCnt+1);i++)
 	{
 		if (i>=MAX_SHOWPOWERS)
@@ -3972,8 +4254,8 @@ void CG_DrawForceSelect( void )
 
 		if (force_icons[showPowers[i]])
 		{
-			CG_DrawPic( holdX, y + yOffset, smallIconSize, smallIconSize, force_icons[showPowers[i]] );
-			holdX += (smallIconSize+pad);
+			CG_DrawPic( holdX, y + yOffset, smallIconSize*cgs.widthRatioCoef, smallIconSize, force_icons[showPowers[i]] );
+			holdX += (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 
@@ -4082,6 +4364,10 @@ const char *forcepowerDesc[NUM_FORCE_POWERS] =
 "FORCE_HEAL_DESC",
 "FORCE_PROTECT_DESC",
 "FORCE_MIND_TRICK_DESC",
+	
+"FORCE_STASIS_DESC",
+"FORCE_BLINDING_DESC",
+"FORCE_INVULNERABILITY_DESC",
 
 "FORCE_JUMP_DESC",
 "FORCE_SPEED_DESC",
@@ -4091,11 +4377,16 @@ const char *forcepowerDesc[NUM_FORCE_POWERS] =
 "FORCE_SABER_DEFENSE_DESC",
 "FORCE_SABER_OFFENSE_DESC",
 "FORCE_SENSE_DESC",
+"FORCE_REPULSE_DESC",
 
 "FORCE_DRAIN_DESC",
 "FORCE_LIGHTNING_DESC",
 "FORCE_RAGE_DESC",
 "FORCE_GRIP_DESC",
+	
+"FORCE_DESTRUCTION_DESC",
+"FORCE_INSANITY_DESC",
+"FORCE_DEADLYSIGHT_DESC",
 };
 
 
@@ -4106,6 +4397,10 @@ const char *forcepowerLvl1Desc[NUM_FORCE_POWERS] =
 "FORCE_PROTECT_LVL1_DESC",
 "FORCE_MIND_TRICK_LVL1_DESC",
 
+"FORCE_STASIS_LVL1_DESC",
+"FORCE_BLINDING_LVL1_DESC",
+"FORCE_INVULNERABILITY_LVL1_DESC",
+
 "FORCE_JUMP_LVL1_DESC",
 "FORCE_SPEED_LVL1_DESC",
 "FORCE_PUSH_LVL1_DESC",
@@ -4114,11 +4409,16 @@ const char *forcepowerLvl1Desc[NUM_FORCE_POWERS] =
 "FORCE_SABER_DEFENSE_LVL1_DESC",
 "FORCE_SABER_OFFENSE_LVL1_DESC",
 "FORCE_SENSE_LVL1_DESC",
+"FORCE_REPULSE_LVL1_DESC",
 
 "FORCE_DRAIN_LVL1_DESC",
 "FORCE_LIGHTNING_LVL1_DESC",
 "FORCE_RAGE_LVL1_DESC",
 "FORCE_GRIP_LVL1_DESC",
+	
+"FORCE_DESTRUCTION_LVL1_DESC",
+"FORCE_INSANITY_LVL1_DESC",
+"FORCE_DEADLYSIGHT_LVL1_DESC",
 };
 
 const char *forcepowerLvl2Desc[NUM_FORCE_POWERS] =
@@ -4127,6 +4427,10 @@ const char *forcepowerLvl2Desc[NUM_FORCE_POWERS] =
 "FORCE_HEAL_LVL2_DESC",
 "FORCE_PROTECT_LVL2_DESC",
 "FORCE_MIND_TRICK_LVL2_DESC",
+	
+"FORCE_STASIS_LVL2_DESC",
+"FORCE_BLINDING_LVL2_DESC",
+"FORCE_INVULNERABILITY_LVL2_DESC",
 
 "FORCE_JUMP_LVL2_DESC",
 "FORCE_SPEED_LVL2_DESC",
@@ -4136,11 +4440,16 @@ const char *forcepowerLvl2Desc[NUM_FORCE_POWERS] =
 "FORCE_SABER_DEFENSE_LVL2_DESC",
 "FORCE_SABER_OFFENSE_LVL2_DESC",
 "FORCE_SENSE_LVL2_DESC",
+"FORCE_REPULSE_LVL2_DESC",
 
 "FORCE_DRAIN_LVL2_DESC",
 "FORCE_LIGHTNING_LVL2_DESC",
 "FORCE_RAGE_LVL2_DESC",
 "FORCE_GRIP_LVL2_DESC",
+	
+"FORCE_DESTRUCTION_LVL2_DESC",
+"FORCE_INSANITY_LVL2_DESC",
+"FORCE_DEADLYSIGHT_LVL2_DESC",
 };
 
 const char *forcepowerLvl3Desc[NUM_FORCE_POWERS] =
@@ -4150,6 +4459,10 @@ const char *forcepowerLvl3Desc[NUM_FORCE_POWERS] =
 "FORCE_PROTECT_LVL3_DESC",
 "FORCE_MIND_TRICK_LVL3_DESC",
 
+"FORCE_STASIS_LVL3_DESC",
+"FORCE_BLINDING_LVL3_DESC",
+"FORCE_INVULNERABILITY_LVL3_DESC",
+
 "FORCE_JUMP_LVL3_DESC",
 "FORCE_SPEED_LVL3_DESC",
 "FORCE_PUSH_LVL3_DESC",
@@ -4158,11 +4471,16 @@ const char *forcepowerLvl3Desc[NUM_FORCE_POWERS] =
 "FORCE_SABER_DEFENSE_LVL3_DESC",
 "FORCE_SABER_OFFENSE_LVL3_DESC",
 "FORCE_SENSE_LVL3_DESC",
+"FORCE_REPULSE_LVL3_DESC",
 
 "FORCE_DRAIN_LVL3_DESC",
 "FORCE_LIGHTNING_LVL3_DESC",
 "FORCE_RAGE_LVL3_DESC",
 "FORCE_GRIP_LVL3_DESC",
+	
+"FORCE_DESTRUCTION_LVL3_DESC",
+"FORCE_INSANITY_LVL3_DESC",
+"FORCE_DEADLYSIGHT_LVL3_DESC",
 };
 
 /*
@@ -4228,8 +4546,9 @@ void CG_DrawDataPadForceSelect( void )
 	const int bigPad = 64;
 	const int pad = 32;
 
-	const int centerXPos = 320;
-	const int graphicYPos = 340;
+	const int centerXPos = 312;
+	const int graphicYPos = 343;
+	const int centergraphicYPos = 333;
 
 	i = cg.DataPadforcepowerSelect - 1;
 	if (i < 0)
@@ -4241,7 +4560,7 @@ void CG_DrawDataPadForceSelect( void )
 
 	cgi_R_SetColor(colorTable[CT_WHITE]);
 	// Work backwards from current icon
-	holdX = centerXPos - ((bigIconSize/2) + bigPad + smallIconSize);
+	holdX = centerXPos - ((bigIconSize/2) + bigPad + smallIconSize)*cgs.widthRatioCoef;
 	for (iconCnt=1;iconCnt<(sideLeftIconCnt+1);i--)
 	{
 		if (i < 0)
@@ -4256,9 +4575,9 @@ void CG_DrawDataPadForceSelect( void )
 
 		++iconCnt;					// Good icon
 
-		if (force_icons[showDataPadPowers[i]])
+		if (DP_force_icons[showDataPadPowers[i]])
 		{
-			CG_DrawPic( holdX, graphicYPos, smallIconSize, smallIconSize, force_icons[showDataPadPowers[i]] );
+			CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, DP_force_icons[showDataPadPowers[i]] );
 		}
 
 		// A new force power
@@ -4266,28 +4585,28 @@ void CG_DrawDataPadForceSelect( void )
 			((cg_updatedDataPadForcePower2.integer - 1) == showDataPadPowers[i]) ||
 			((cg_updatedDataPadForcePower3.integer - 1) == showDataPadPowers[i]))
 		{
-			CG_DrawPic( holdX, graphicYPos, smallIconSize, smallIconSize, cgs.media.DPForcePowerOverlay );
+			CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, cgs.media.DPForcePowerOverlay );
 		}
 
-		if (force_icons[showDataPadPowers[i]])
+		if (DP_force_icons[showDataPadPowers[i]])
 		{
-			holdX -= (smallIconSize+pad);
+			holdX -= (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 
 	// Current Center Icon
-	if (force_icons[showDataPadPowers[cg.DataPadforcepowerSelect]])
+	if (DP_force_icons[showDataPadPowers[cg.DataPadforcepowerSelect]])
 	{
 
 		cgi_R_SetColor(colorTable[CT_WHITE]);
-		CG_DrawPic( centerXPos-(bigIconSize/2), (graphicYPos-((bigIconSize-smallIconSize)/2)), bigIconSize, bigIconSize, force_icons[showDataPadPowers[cg.DataPadforcepowerSelect]] );
+		CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (centergraphicYPos-((bigIconSize-smallIconSize)/2)), bigIconSize*cgs.widthRatioCoef, bigIconSize, DP_force_icons[showDataPadPowers[cg.DataPadforcepowerSelect]] );
 
 		// New force power
 		if (((cg_updatedDataPadForcePower1.integer - 1) == showDataPadPowers[cg.DataPadforcepowerSelect]) ||
 			((cg_updatedDataPadForcePower2.integer - 1) == showDataPadPowers[cg.DataPadforcepowerSelect]) ||
 			((cg_updatedDataPadForcePower3.integer - 1) == showDataPadPowers[cg.DataPadforcepowerSelect]))
 		{
-			CG_DrawPic( centerXPos-(bigIconSize/2), (graphicYPos-((bigIconSize-smallIconSize)/2)), bigIconSize, bigIconSize, cgs.media.DPForcePowerOverlay );
+			CG_DrawPic( centerXPos-(bigIconSize*cgs.widthRatioCoef/2), (centergraphicYPos-((bigIconSize-smallIconSize)/2)), bigIconSize*cgs.widthRatioCoef, bigIconSize, cgs.media.DPForcePowerOverlay );
 		}
 	}
 
@@ -4301,7 +4620,7 @@ void CG_DrawDataPadForceSelect( void )
 	cgi_R_SetColor(colorTable[CT_WHITE]);
 
 	// Work forwards from current icon
-	holdX = centerXPos + (bigIconSize/2) + bigPad;
+	holdX = centerXPos + ((bigIconSize/2) + bigPad)*cgs.widthRatioCoef;
 	for (iconCnt=1;iconCnt<(sideRightIconCnt+1);i++)
 	{
 		if (i>=MAX_DPSHOWPOWERS)
@@ -4316,9 +4635,9 @@ void CG_DrawDataPadForceSelect( void )
 
 		++iconCnt;					// Good icon
 
-		if (force_icons[showDataPadPowers[i]])
+		if (DP_force_icons[showDataPadPowers[i]])
 		{
-			CG_DrawPic( holdX, graphicYPos, smallIconSize, smallIconSize, force_icons[showDataPadPowers[i]] );
+			CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, DP_force_icons[showDataPadPowers[i]] );
 		}
 
 		// A new force power
@@ -4326,28 +4645,40 @@ void CG_DrawDataPadForceSelect( void )
 			((cg_updatedDataPadForcePower2.integer - 1) == showDataPadPowers[i]) ||
 			((cg_updatedDataPadForcePower3.integer - 1) == showDataPadPowers[i]))
 		{
-			CG_DrawPic( holdX, graphicYPos, smallIconSize, smallIconSize, cgs.media.DPForcePowerOverlay );
+			CG_DrawPic( holdX, graphicYPos, smallIconSize*cgs.widthRatioCoef, smallIconSize, cgs.media.DPForcePowerOverlay );
 		}
 
-		if (force_icons[showDataPadPowers[i]])
+		if (DP_force_icons[showDataPadPowers[i]])
 		{
-			holdX += (smallIconSize+pad);
+			holdX += (smallIconSize+pad)*cgs.widthRatioCoef;
 		}
 	}
 
-	cgi_SP_GetStringTextString( va("SP_INGAME_%s",forcepowerDesc[cg.DataPadforcepowerSelect]), text, sizeof(text) );
+	if (!cgi_SP_GetStringTextString( va("SP_INGAME_%s",forcepowerDesc[cg.DataPadforcepowerSelect]), text, sizeof(text) ))
+	{
+		cgi_SP_GetStringTextString( va("SPMOD_INGAME_%s",forcepowerDesc[cg.DataPadforcepowerSelect]), text, sizeof(text) );
+	}
 
 	if (player->client->ps.forcePowerLevel[showDataPadPowers[cg.DataPadforcepowerSelect]]==1)
 	{
-		cgi_SP_GetStringTextString( va("SP_INGAME_%s",forcepowerLvl1Desc[cg.DataPadforcepowerSelect]), text2, sizeof(text2) );
+		if (!cgi_SP_GetStringTextString( va("SP_INGAME_%s",forcepowerLvl1Desc[cg.DataPadforcepowerSelect]), text2, sizeof(text2) ))
+		{
+			cgi_SP_GetStringTextString( va("SPMOD_INGAME_%s",forcepowerLvl1Desc[cg.DataPadforcepowerSelect]), text2, sizeof(text2) );
+		}
 	}
 	else if (player->client->ps.forcePowerLevel[showDataPadPowers[cg.DataPadforcepowerSelect]]==2)
 	{
-		cgi_SP_GetStringTextString( va("SP_INGAME_%s",forcepowerLvl2Desc[cg.DataPadforcepowerSelect]), text2, sizeof(text2) );
+		if (!cgi_SP_GetStringTextString( va("SP_INGAME_%s",forcepowerLvl2Desc[cg.DataPadforcepowerSelect]), text2, sizeof(text2) ))
+		{
+			cgi_SP_GetStringTextString( va("SPMOD_INGAME_%s",forcepowerLvl2Desc[cg.DataPadforcepowerSelect]), text2, sizeof(text2) );
+		}
 	}
 	else
 	{
-		cgi_SP_GetStringTextString( va("SP_INGAME_%s",forcepowerLvl3Desc[cg.DataPadforcepowerSelect]), text2, sizeof(text2) );
+		if (!cgi_SP_GetStringTextString( va("SP_INGAME_%s",forcepowerLvl3Desc[cg.DataPadforcepowerSelect]), text2, sizeof(text2) ))
+		{
+			cgi_SP_GetStringTextString( va("SPMOD_INGAME_%s",forcepowerLvl3Desc[cg.DataPadforcepowerSelect]), text2, sizeof(text2) );
+		}
 	}
 
 	if (text[0])

@@ -171,9 +171,15 @@ void WP_FireRepeater( gentity_t *ent, qboolean alt_fire )
 		}
 		else
 		{
-			// add some slop to the alt-fire direction
-			angs[PITCH] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
-			angs[YAW]	+= Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
+			// add some slop to the direction
+			if(g_repeaterspread->integer == 2) {
+				angs[PITCH] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
+				angs[YAW] += Q_flrand(-1.0f, 1.0f) * REPEATER_SPREAD;
+			}
+			else if(g_repeaterspread->integer == 1) {
+				angs[PITCH] += Q_flrand(-1.0f, 1.0f) * (REPEATER_SPREAD/2.0f);
+				angs[YAW] += Q_flrand(-1.0f, 1.0f) * (REPEATER_SPREAD/2.0f);
+			}
 		}
 
 		AngleVectors( angs, dir, NULL, NULL );

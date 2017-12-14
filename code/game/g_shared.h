@@ -32,6 +32,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "g_vehicles.h"
 #include "hitlocs.h"
 #include "bset.h"
+#include "anims.h"
 
 //DT EDIT: Ghoul2 viewmodels - START
 #include "anims.h"
@@ -234,6 +235,7 @@ public:
 
 	//Fields to apply to entire model set, individual model's equivalents will modify this value
 	byte	customRGBA[4];//Red Green Blue, 0 = don't apply
+	byte	newCustomRGBA[MAX_CVAR_TINT][4];
 
 	//Allow up to 4 PCJ lookup values to be stored here.
 	//The resolve to configstrings which contain the name of the
@@ -312,6 +314,7 @@ public:
 		saved_game.write<float>(legsFpsMod);
 		saved_game.write<float>(torsoFpsMod);
 		saved_game.write<uint8_t>(customRGBA);
+        saved_game.write<uint8_t>(newCustomRGBA);
 		saved_game.write<int32_t>(boneIndex1);
 		saved_game.write<int32_t>(boneIndex2);
 		saved_game.write<int32_t>(boneIndex3);
@@ -369,6 +372,7 @@ public:
 		saved_game.read<float>(legsFpsMod);
 		saved_game.read<float>(torsoFpsMod);
 		saved_game.read<uint8_t>(customRGBA);
+        saved_game.read<uint8_t>(newCustomRGBA);
 		saved_game.read<int32_t>(boneIndex1);
 		saved_game.read<int32_t>(boneIndex2);
 		saved_game.read<int32_t>(boneIndex3);
@@ -968,6 +972,8 @@ public:
 
 #define MAX_FAILED_NODES 8
 #define MAX_INHAND_WEAPONS	2
+#define MAX_HOLSTER_WEAPONS 2
+#define MAX_SABER_PARTS 5
 
 
 typedef struct centity_s centity_t;
@@ -1169,6 +1175,17 @@ Ghoul2 Insert End
 	team_t		noDamageTeam;
 
 // Ghoul2 Animation info
+	short			headModel;
+	short			headRootBone;
+	short			headMotionBone;
+	short			headCraniumBone;
+	short			headCervicalBone;
+	short			headThoracicBone;
+	short			headUpperLumbarBone;
+	short			headLowerLumbarBone;
+	short			headHipsBone;
+	short			headFaceBone;
+	short			holsterModel[MAX_HOLSTER_WEAPONS];
 	short			playerModel;
 	short			weaponModel[MAX_INHAND_WEAPONS];
 	short			handRBolt;
@@ -1283,6 +1300,8 @@ Ghoul2 Insert End
 	//Force effects
 	int			forcePushTime;
 	int			forcePuller;	//who force-pulled me (so we don't damage them if we hit them)
+	
+	char		*radarIcon;
 
 
 	void sg_export(
@@ -1401,6 +1420,17 @@ Ghoul2 Insert End
 		saved_game.write<int32_t>(setTime);
 		saved_game.write<int32_t>(cameraGroup);
 		saved_game.write<int32_t>(noDamageTeam);
+        saved_game.write<int16_t>(headModel);
+        saved_game.write<int16_t>(headRootBone);
+        saved_game.write<int16_t>(headMotionBone);
+        saved_game.write<int16_t>(headCraniumBone);
+        saved_game.write<int16_t>(headCervicalBone);
+        saved_game.write<int16_t>(headThoracicBone);
+        saved_game.write<int16_t>(headUpperLumbarBone);
+        saved_game.write<int16_t>(headLowerLumbarBone);
+        saved_game.write<int16_t>(headHipsBone);
+        saved_game.write<int16_t>(headFaceBone);
+        saved_game.write<int16_t>(holsterModel);
 		saved_game.write<int16_t>(playerModel);
 		saved_game.write<int16_t>(weaponModel);
 		saved_game.write<int16_t>(handRBolt);
@@ -1472,6 +1502,7 @@ Ghoul2 Insert End
 		saved_game.write<float>(lightLevel);
 		saved_game.write<int32_t>(forcePushTime);
 		saved_game.write<int32_t>(forcePuller);
+        saved_game.write<int32_t>(radarIcon);
 	}
 
 	void sg_import(
@@ -1590,6 +1621,17 @@ Ghoul2 Insert End
 		saved_game.read<int32_t>(setTime);
 		saved_game.read<int32_t>(cameraGroup);
 		saved_game.read<int32_t>(noDamageTeam);
+        saved_game.read<int16_t>(headModel);
+        saved_game.read<int16_t>(headRootBone);
+        saved_game.read<int16_t>(headMotionBone);
+        saved_game.read<int16_t>(headCraniumBone);
+        saved_game.read<int16_t>(headCervicalBone);
+        saved_game.read<int16_t>(headThoracicBone);
+        saved_game.read<int16_t>(headUpperLumbarBone);
+        saved_game.read<int16_t>(headLowerLumbarBone);
+        saved_game.read<int16_t>(headHipsBone);
+        saved_game.read<int16_t>(headFaceBone);
+        saved_game.read<int16_t>(holsterModel);
 		saved_game.read<int16_t>(playerModel);
 		saved_game.read<int16_t>(weaponModel);
 		saved_game.read<int16_t>(handRBolt);
@@ -1661,6 +1703,7 @@ Ghoul2 Insert End
 		saved_game.read<float>(lightLevel);
 		saved_game.read<int32_t>(forcePushTime);
 		saved_game.read<int32_t>(forcePuller);
+        saved_game.read<int32_t>(radarIcon);
 	}
 };
 #endif //#ifdef GAME_INCLUDE
@@ -1681,6 +1724,9 @@ typedef struct weaponInfo_s {
 	qhandle_t		barrelModel[4];
 
 	vec3_t			weaponMidpoint;		// so it will rotate centered instead of by tag
+
+	qhandle_t		dp_weaponIcon;			// The version of the icon for the datapad
+	qhandle_t		dp_weaponIconNoAmmo;	// The version of the icon for the datapad with no ammo warning
 
 	qhandle_t		weaponIcon;			// The version of the icon with a glowy background
 	qhandle_t		weaponIconNoAmmo;	// The version of the icon with no ammo warning
@@ -1711,15 +1757,14 @@ typedef struct weaponInfo_s {
 	sfxHandle_t		altChargeSound;
 
 	sfxHandle_t		selectSound;	// sound played when weapon is selected
-
-	//DT EDIT: Ghoul2 viewmodels - START
-	bool			bUsesGhoul2;
+	
+	bool			bUsesGhoul2; //g2 viewmodels from eezstreet
 	CGhoul2Info_v	ghoul2;
 	qhandle_t		g2_flashbolt;
-	short			g2_index;
+	qhandle_t		g2_effectsbolt;
+	int				g2_index;
 	int				g2_skin;
 	viewModelAnimSet_t g2_anims;
-	//DT EDIT: Ghoul2 viewmodels - END
 } weaponInfo_t;
 
 extern sfxHandle_t CAS_GetBModelSound( const char *name, int stage );

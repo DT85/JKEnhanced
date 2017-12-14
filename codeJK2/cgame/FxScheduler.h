@@ -20,6 +20,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 ===========================================================================
 */
 
+#pragma once
 #if !defined(FX_UTIL_H_INC)
 	#include "FxUtil.h"
 #endif
@@ -389,12 +390,12 @@ class PoolAllocator
 {
 public:
 	PoolAllocator()
-		: pool (new T[N])
-		, freeAndAllocated (new int[N])
-		, numFree (N)
-		, highWatermark (0)
+		: pool(new T[N])
+		, freeAndAllocated(new int[N])
+		, numFree(N)
+		, highWatermark(0)
 	{
-		for ( int i = 0; i < N; i++ )
+		for (int i = 0; i < N; i++)
 		{
 			freeAndAllocated[i] = i;
 		}
@@ -628,6 +629,7 @@ public:
 
 	void	AddScheduledEffects( void );								// call once per CGame frame
 
+	int		GetHighWatermark() const { return mScheduledEffectsPool.GetHighWatermark(); }
 	int		NumScheduledFx()	{ return (int)mFxSchedule.size();	}
 	void	Clean(bool bRemoveTemplates = true, int idToPreserve = 0);	// clean out the system
 

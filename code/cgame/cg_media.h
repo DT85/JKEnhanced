@@ -97,8 +97,12 @@ typedef enum
 	OHB_SABERSTYLE_FAST,
 	OHB_SCANLINE_LEFT,
 	OHB_SCANLINE_RIGHT,
+	OHB_STATICLINE_LEFT,
+	OHB_STATICLINE_RIGHT,
 	OHB_FRAME_LEFT,
 	OHB_FRAME_RIGHT,
+	OHB_INNERFRAME_LEFT,
+	OHB_INNERFRAME_RIGHT,
 	OHB_MAX
 } otherhudbits_t;
 
@@ -135,6 +139,9 @@ typedef struct {
 
 	qhandle_t	loadTick;
 	qhandle_t	loadTickCap;
+
+	qhandle_t	newgameloadTick;
+	qhandle_t	newgameloadTickCap;
 
 	//			HUD artwork
 	int			currentBackground;
@@ -174,6 +181,15 @@ typedef struct {
 	qhandle_t	blueSaberCoreShader;
 	qhandle_t	purpleSaberGlowShader;
 	qhandle_t	purpleSaberCoreShader;
+	qhandle_t	rgbSaberGlowShader;
+	qhandle_t	rgbSaberCoreShader;
+	
+	qhandle_t	blackSaberBlurShader;
+	qhandle_t	blackSaberGlowShader;
+	qhandle_t	blackSaberCoreShader;
+	
+	qhandle_t	unstableBlurShader;
+	qhandle_t	rgbUnstableCoreShader;
 
 	qhandle_t	explosionModel;
 	qhandle_t	surfaceExplosionShader;
@@ -224,6 +240,8 @@ typedef struct {
 	//
 	qhandle_t	qhFontSmall;
 	qhandle_t	qhFontMedium;
+	qhandle_t	qhFontArimo;
+	qhandle_t	qhFontArimob;
 
 	// special effects models / etc.
 	qhandle_t	personalShieldShader;
@@ -248,6 +266,8 @@ typedef struct {
 
 	qhandle_t	levelLoad;
 
+	qhandle_t	newgamelevelLoad;
+
 	//new stuff for Jedi Academy
 	//force power icons
 //	qhandle_t	forcePowerIcons[NUM_FORCE_POWERS];
@@ -257,6 +277,26 @@ typedef struct {
 	qhandle_t	forceShell;
 	qhandle_t	sightShell;
 	qhandle_t	drainShader;
+	
+	//SFX Sabers
+	qhandle_t SaberTrailShader;
+	qhandle_t SaberBladeShader;
+	qhandle_t SaberEndShader;
+	
+	qhandle_t blackSaberTrailShader;
+	qhandle_t blackSaberBladeShader;
+	qhandle_t blackSaberEndShader;
+	
+	qhandle_t ignitionFlare;
+	qhandle_t blackIgnitionFlare;
+	
+	//Radar
+	qhandle_t radarShader;
+	qhandle_t siegeItemShader;
+	qhandle_t mAutomapPlayerIcon;
+	qhandle_t radarMaskShader;
+	
+	qhandle_t radarIcons[MAX_ICONS];
 
 	// sounds
 	sfxHandle_t disintegrateSound;
@@ -304,8 +344,14 @@ typedef struct {
 	sfxHandle_t	zoomEnd;
 	sfxHandle_t	disruptorZoomLoop;
 
+	// Zoom ratio fix helpers
+	qhandle_t	zoomLeft;
+	qhandle_t	zoomRight;
+
 	//new stuff for Jedi Academy
 	sfxHandle_t	drainSound;
+	
+	sfxHandle_t	destructionSound;
 
 } cgMedia_t;
 
@@ -339,6 +385,11 @@ typedef struct
 	fxHandle_t	flechetteShotDeathEffect;
 	fxHandle_t	flechetteFleshImpactEffect;
 	fxHandle_t	flechetteRicochetEffect;
+	
+	// CLONE BLASTER
+	fxHandle_t	cloneBlasterShotEffect;
+	fxHandle_t	cloneBlasterWallImpactEffect;
+	fxHandle_t	cloneBlasterFleshImpactEffect;
 
 	//FORCE
 	fxHandle_t	forceConfusion;
@@ -351,6 +402,9 @@ typedef struct
 	fxHandle_t forceDrain;
 	fxHandle_t forceDrainWide;
 	fxHandle_t forceDrained;
+	
+	fxHandle_t destructionProjectile;
+	fxHandle_t destructionHit;
 
 	//footstep effects
 	fxHandle_t footstepMud;
@@ -364,6 +418,16 @@ typedef struct
 	fxHandle_t landingSnow;
 	fxHandle_t landingGravel;
 } cgEffects_t;
+
+#define MAX_MINIMAPS 1
+typedef struct
+{
+	int			numMinimapImages;
+	qhandle_t	minimapImage[MAX_MINIMAPS];
+	float		minimapHeights[MAX_MINIMAPS];
+	vec2_t		topLeft;
+	vec2_t		bottomRight;
+} cgRadarMap_t;
 
 
 // The client game static (cgs) structure hold everything
@@ -406,7 +470,10 @@ typedef struct {
 
 	// effects
 	cgEffects_t		effects;
+	
+	cgRadarMap_t	radarMap;
 
+	float			widthRatioCoef;			// to make 2D images be not stretched
 } cgs_t;
 
 extern	cgs_t			cgs;

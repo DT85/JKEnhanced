@@ -169,6 +169,61 @@ cvar_t	*g_saberMoveSpeed;
 cvar_t	*g_saberAnimSpeed;
 cvar_t	*g_saberAutoAim;
 
+// JK2:HD cvars
+
+// Items
+cvar_t	*g_pullitems;
+cvar_t	*g_pushitems;
+cvar_t	*g_gripitems;
+cvar_t	*g_sentryinfiniteammo;
+cvar_t	*g_sentryexplode;
+cvar_t	*g_sentrycheat;
+cvar_t	*g_npcsentryrate;
+cvar_t	*g_sentryrate;
+cvar_t	*g_maxsentries;
+cvar_t	*g_maxseekers;
+cvar_t	*g_medpacheal;
+cvar_t	*g_medpacgrunt;
+cvar_t	*g_medpacmpsound;
+cvar_t	*g_medpacdoomsound;
+cvar_t	*g_armormpsound;
+cvar_t	*g_armorlgoverflow;
+cvar_t	*g_armoroverflowdown;
+cvar_t	*g_armorsmamount;
+cvar_t	*g_armorlgamount;
+cvar_t	*g_ammompsound;
+cvar_t	*g_bactaheal;
+cvar_t	*g_bactagrunt;
+cvar_t	*g_bactampsound;
+cvar_t	*g_bactadoomsound;
+cvar_t	*g_maxbactas;
+cvar_t	*g_maxkeys;
+cvar_t	*g_keysused;
+cvar_t	*g_binocgivebatteries;
+cvar_t	*g_binocrestrict;
+cvar_t	*g_binocdrainrate;
+cvar_t	*g_binocrandomrate;
+cvar_t	*g_lagivebatteries;
+cvar_t	*g_larestrict;
+cvar_t	*g_ladrainrate;
+cvar_t	*g_larandomrate;
+
+// Weapons
+cvar_t	*bg_repeaterrate;
+cvar_t	*g_repeaterspread;
+cvar_t	*g_weaponFile;
+
+// Ammo
+cvar_t	*g_maxAmmo_Force;
+cvar_t	*g_maxAmmo_Blaster;
+cvar_t	*g_maxAmmo_Powercell;
+cvar_t	*g_maxAmmo_MetalBolts;
+cvar_t	*g_maxAmmo_Rockets;
+cvar_t	*g_maxAmmo_Thermal;
+cvar_t	*g_maxAmmo_TripMines;
+cvar_t	*g_maxAmmo_DetPack;
+cvar_t	*g_maxAmmo_Emplaced;
+
 qboolean	stop_icarus = qfalse;
 
 extern char *G_GetLocationForEnt( gentity_t *ent );
@@ -594,6 +649,59 @@ void G_InitCvars( void ) {
 	gi.cvar( "newTotalSecrets", "0", CVAR_ROM );
 	gi.cvar_set("newTotalSecrets", "0");//used to carry over the count from SP_target_secret to ClientBegin
 	g_iscensored = gi.cvar( "ui_iscensored", "0", CVAR_ARCHIVE|CVAR_ROM|CVAR_INIT|CVAR_CHEAT|CVAR_NORESTART );
+
+	// JK2:HD cvars
+	// Items
+	g_pullitems					= gi.cvar("g_pullitems", "1", CVAR_ARCHIVE);
+	g_pushitems					= gi.cvar("g_pushitems", "1", CVAR_ARCHIVE);
+	g_gripitems					= gi.cvar("g_gripitems", "0", CVAR_ARCHIVE);
+	g_sentryinfiniteammo		= gi.cvar("g_sentryinfiniteammo", "3", CVAR_ARCHIVE);
+	g_sentryexplode				= gi.cvar("g_sentryexplode", "3", CVAR_ARCHIVE);
+	g_sentrycheat				= gi.cvar("g_sentrycheat", "1", CVAR_ARCHIVE);
+	g_npcsentryrate				= gi.cvar("g_npcsentryrate", "0", CVAR_ARCHIVE);
+	g_sentryrate				= gi.cvar("g_sentryrate", "0", CVAR_ARCHIVE);
+	g_maxsentries				= gi.cvar("g_maxsentries", "5", CVAR_ARCHIVE);
+	g_maxseekers				= gi.cvar("g_maxseekers", "5", CVAR_ARCHIVE);
+	g_medpacheal				= gi.cvar("g_medpacheal", "25", CVAR_ARCHIVE);
+	g_medpacgrunt				= gi.cvar("g_medpacgrunt", "2", CVAR_ARCHIVE);
+	g_medpacmpsound				= gi.cvar("g_medpacmpsound", "2", CVAR_ARCHIVE);
+	g_medpacdoomsound			= gi.cvar("g_medpacdoomsound", "2", CVAR_ARCHIVE);
+	g_armormpsound				= gi.cvar("g_armormpsound", "2", CVAR_ARCHIVE);
+	g_armorlgoverflow			= gi.cvar("g_armorlgoverflow", "0", CVAR_ARCHIVE);
+	g_armoroverflowdown			= gi.cvar("g_armoroverflowdown", "0", CVAR_ARCHIVE);
+	g_armorsmamount				= gi.cvar("g_armorsmamount", "25", CVAR_ARCHIVE);
+	g_armorlgamount				= gi.cvar("g_armorlgamount", "50", CVAR_ARCHIVE);
+	g_ammompsound				= gi.cvar("g_ammompsound", "0", CVAR_ARCHIVE);
+	g_bactagrunt				= gi.cvar("g_bactagrunt", "0", CVAR_ARCHIVE);
+	g_bactampsound				= gi.cvar("g_bactampsound", "2", CVAR_ARCHIVE);
+	g_bactadoomsound			= gi.cvar("g_bactadoomsound", "2", CVAR_ARCHIVE);
+	g_bactaheal					= gi.cvar("g_bactaheal", "25", CVAR_ARCHIVE);
+	g_maxbactas					= gi.cvar("g_maxbactas", "5", CVAR_ARCHIVE);
+	g_maxkeys					= gi.cvar("g_maxkeys", "5", CVAR_ARCHIVE);
+	g_keysused					= gi.cvar("g_keysused", "1", CVAR_ARCHIVE);
+	g_binocgivebatteries		= gi.cvar("g_binocgivebatteries", "1", CVAR_ARCHIVE);
+	g_binocrestrict				= gi.cvar("g_binocrestrict", "1", CVAR_ARCHIVE);
+	g_binocdrainrate			= gi.cvar("g_binocdrainrate", "1.0", CVAR_ARCHIVE);
+	g_binocrandomrate			= gi.cvar("g_binocrandomrate", "0", CVAR_ARCHIVE);
+	g_lagivebatteries			= gi.cvar("g_lagivebatteries", "1", CVAR_ARCHIVE);
+	g_larestrict				= gi.cvar("g_larestrict", "1", CVAR_ARCHIVE);
+	g_ladrainrate				= gi.cvar("g_ladrainrate", "1.0", CVAR_ARCHIVE);
+	g_larandomrate				= gi.cvar("g_larandomrate", "0", CVAR_ARCHIVE);
+
+	// Weapons
+	bg_repeaterrate				= gi.cvar("bg_repeaterrate", "1", CVAR_ARCHIVE);
+	g_repeaterspread			= gi.cvar("g_repeaterspread", "1", CVAR_ARCHIVE);
+	g_weaponFile				= gi.cvar("g_weaponFile", "ext_data/weapons/default.json", CVAR_ARCHIVE);
+
+	g_maxAmmo_Force				= gi.cvar("g_maxAmmo_Force", "100", CVAR_ARCHIVE);
+	g_maxAmmo_Blaster			= gi.cvar("g_maxAmmo_Blaster", "300", CVAR_ARCHIVE);
+	g_maxAmmo_Powercell			= gi.cvar("g_maxAmmo_Powercell", "300", CVAR_ARCHIVE);
+	g_maxAmmo_MetalBolts		= gi.cvar("g_maxAmmo_MetalBolts", "400", CVAR_ARCHIVE);
+	g_maxAmmo_Rockets			= gi.cvar("g_maxAmmo_Rockets", "10", CVAR_ARCHIVE);
+	g_maxAmmo_Thermal			= gi.cvar("g_maxAmmo_Thermal", "10", CVAR_ARCHIVE);
+	g_maxAmmo_TripMines			= gi.cvar("g_maxAmmo_TripMines", "5", CVAR_ARCHIVE);
+	g_maxAmmo_DetPack			= gi.cvar("g_maxAmmo_DetPack", "5", CVAR_ARCHIVE);
+	g_maxAmmo_Emplaced			= gi.cvar("g_maxAmmo_Emplaced", "999", CVAR_ARCHIVE);
 }
 
 /*
@@ -816,6 +924,7 @@ extern "C" Q_EXPORT game_export_t* QDECL GetGameAPI( game_import_t *import ) {
 	gameinfo_import.Cvar_VariableStringBuffer = gi.Cvar_VariableStringBuffer;
 	gameinfo_import.Cvar_Create = G_Cvar_Create;
 
+	g_weaponFile = gi.cvar("g_weaponFile", "ext_data/weapons/default.json", CVAR_ARCHIVE);
 	GI_Init( &gameinfo_import );
 
 	return &globals;
@@ -1092,81 +1201,6 @@ void G_Animate ( gentity_t *self )
 	}
 }
 
-/*
--------------------------
-ResetTeamCounters
--------------------------
-*/
-
-/*
-void ResetTeamCounters( void )
-{
-	//clear team enemy counters
-	for ( int team = TEAM_FREE; team < TEAM_NUM_TEAMS; team++ )
-	{
-		teamEnemyCount[team] = 0;
-		teamCount[team] = 0;
-	}
-}
-*/
-
-/*
--------------------------
-UpdateTeamCounters
--------------------------
-*/
-/*
-void UpdateTeamCounters( gentity_t *ent )
-{
-	if ( !ent->NPC )
-	{
-		return;
-	}
-	if ( !ent->client )
-	{
-		return;
-	}
-	if ( ent->health <= 0 )
-	{
-		return;
-	}
-	if ( (ent->s.eFlags&EF_NODRAW) )
-	{
-		return;
-	}
-	if ( ent->client->playerTeam == TEAM_FREE )
-	{
-		return;
-	}
-	//this is an NPC who is alive and visible and is on a specific team
-
-	teamCount[ent->client->playerTeam]++;
-	if ( !ent->enemy )
-	{
-		return;
-	}
-
-	//ent has an enemy
-	if ( !ent->enemy->client )
-	{//enemy is a normal ent
-		if ( ent->noDamageTeam == ent->client->playerTeam )
-		{//it's on my team, don't count it as an enemy
-			return;
-		}
-	}
-	else
-	{//enemy is another NPC/player
-		if ( ent->enemy->client->playerTeam == ent->client->playerTeam)
-		{//enemy is on the same team, don't count it as an enemy
-			return;
-		}
-	}
-
-	//ent's enemy is not on the same team
-	teamLastEnemyTime[ent->client->playerTeam] = level.time;
-	teamEnemyCount[ent->client->playerTeam]++;
-}
-*/
 extern void G_SoundOnEnt( gentity_t *ent, soundChannel_t channel, const char *soundPath );
 void G_PlayerGuiltDeath( void )
 {
@@ -1275,6 +1309,8 @@ void G_RunFrame( int levelTime ) {
 		navigator.CheckAllFailedEdges();
 	}
 	navigator.ClearCheckedNodes();
+
+	WorkshopThink();
 
 	//remember last waypoint, clear current one
 //	for ( i = 0, ent = &g_entities[0]; i < globals.num_entities ; i++, ent++)
@@ -1387,11 +1423,14 @@ void G_RunFrame( int levelTime ) {
 			// decay batteries if the goggles are active
 			if ( cg.zoomMode == 1 && ent->client->ps.batteryCharge > 0 )
 			{
-				ent->client->ps.batteryCharge--;
+				ent->client->ps.batteryCharge -= g_binocdrainrate->integer;
+
+				if ( ent->client->ps.batteryCharge < 0 )
+					ent->client->ps.batteryCharge = 0;
 			}
 			else if ( cg.zoomMode == 3 && ent->client->ps.batteryCharge > 0 )
 			{
-				ent->client->ps.batteryCharge -= 2;
+				ent->client->ps.batteryCharge -= g_ladrainrate->integer * 2;
 
 				if ( ent->client->ps.batteryCharge < 0 )
 				{

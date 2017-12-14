@@ -134,6 +134,8 @@ qboolean PM_InReboundJump( int anim );
 qboolean PM_ForceJumpingAnim( int anim );
 void PM_CmdForRoll( playerState_t *ps, usercmd_t *pCmd );
 
+extern qboolean PlayerAffectedByStasis( void );
+
 extern int parryDebounce[];
 extern qboolean cg_usingInFrontOf;
 extern qboolean		player_locked;
@@ -146,6 +148,7 @@ extern cvar_t	*g_debugMelee;
 extern cvar_t	*g_saberNewControlScheme;
 extern cvar_t	*g_stepSlideFix;
 extern cvar_t	*g_saberAutoBlocking;
+extern cvar_t	*g_noIgniteTwirl;
 
 static void PM_SetWaterLevelAtPoint( vec3_t org, int *waterlevel, int *watertype );
 
@@ -222,7 +225,10 @@ qboolean BG_UnrestrainedPitchRoll( playerState_t *ps, Vehicle_t *pVeh )
 	return qfalse;
 }
 
-
+qboolean BG_AllowThirdPersonSpecialMove( playerState_t *ps )
+{
+	return (qboolean)((cg.renderingThirdPerson || cg_trueguns.integer || ps->weapon == WP_SABER || ps->weapon == WP_MELEE) && !cg.zoomMode);
+}
 /*
 ===============
 PM_AddEvent
@@ -1080,6 +1086,11 @@ static qboolean PM_CheckJump( void )
 	{//can't jump when in a kicking anim
 		return qfalse;
 	}
+	
+	if ( pm->ps->weapon == WP_EMPLACED_GUN && !(pm->ps->eFlags & EF_LOCKED_TO_WEAPON))
+	{
+		return qfalse;
+	}
 	/*
 	if ( pm->cmd.buttons & BUTTON_FORCEJUMP )
 	{
@@ -1269,7 +1280,7 @@ static qboolean PM_CheckJump( void )
 								pm->ps->legsAnim != BOTH_ALORA_FLIP_1 &&
 								pm->ps->legsAnim != BOTH_ALORA_FLIP_2 &&
 								pm->ps->legsAnim != BOTH_ALORA_FLIP_3
-								&& cg.renderingThirdPerson//third person only
+								&& BG_AllowThirdPersonSpecialMove( pm->ps )//third person only
 								&& !cg.zoomMode //not zoomed in
 								&& !(pm->ps->saber[0].saberFlags&SFL_NO_FLIPS)//okay to do flips with this saber
 								&& (!pm->ps->dualSabers || !(pm->ps->saber[1].saberFlags&SFL_NO_FLIPS) )//okay to do flips with this saber
@@ -1483,7 +1494,7 @@ static qboolean PM_CheckJump( void )
 		//&& !PM_InKnockDown( pm->ps )//not in a knockdown
 		&& pm->ps->forceRageRecoveryTime < pm->cmd.serverTime	//not in a force Rage recovery period
 		&& pm->gent && WP_ForcePowerAvailable( pm->gent, FP_LEVITATION, 0 ) //have enough force power to jump
-		&& ((pm->ps->clientNum&&!PM_ControlledByPlayer())||((pm->ps->clientNum < MAX_CLIENTS||PM_ControlledByPlayer()) && cg.renderingThirdPerson && !cg.zoomMode	&& !(pm->gent->flags&FL_LOCK_PLAYER_WEAPONS) )) )// yes this locked weapons check also includes force powers, if we need a separate check later I'll make one
+		&& ((pm->ps->clientNum&&!PM_ControlledByPlayer())||((pm->ps->clientNum < MAX_CLIENTS||PM_ControlledByPlayer()) && BG_AllowThirdPersonSpecialMove( pm->ps ) && !cg.zoomMode	&& !(pm->gent->flags&FL_LOCK_PLAYER_WEAPONS) )) )// yes this locked weapons check also includes force powers, if we need a separate check later I'll make one
 	{
 		if ( pm->gent->NPC && pm->gent->NPC->rank != RANK_CREWMAN && pm->gent->NPC->rank <= RANK_LT_JG )
 		{//reborn who are not acrobats can't do any of these acrobatics
@@ -2360,7 +2371,7 @@ static qboolean PM_CheckJump( void )
 		&& pm->ps->forceRageRecoveryTime < pm->cmd.serverTime	//not in a force Rage recovery period
 		&& pm->ps->weapon == WP_SABER
 		&& (pm->ps->weaponTime > 0||(pm->cmd.buttons&BUTTON_ATTACK))
-		&& ((pm->ps->clientNum&&!PM_ControlledByPlayer())||((pm->ps->clientNum < MAX_CLIENTS||PM_ControlledByPlayer()) && cg.renderingThirdPerson && !cg.zoomMode)) )
+		&& ((pm->ps->clientNum&&!PM_ControlledByPlayer())||((pm->ps->clientNum < MAX_CLIENTS||PM_ControlledByPlayer()) && BG_AllowThirdPersonSpecialMove( pm->ps ) && !cg.zoomMode)) )
 	{//okay, we just jumped and we're in an attack
 		if ( !PM_RollingAnim( pm->ps->legsAnim )
 			&& !PM_InKnockDown( pm->ps )
@@ -3124,7 +3135,7 @@ static void PM_WalkMove( void ) {
 	if ( g_debugMelee->integer )
 	{
 		if ( (pm->ps->clientNum < MAX_CLIENTS||PM_ControlledByPlayer())//player
-			&& cg.renderingThirdPerson//in third person
+			&& BG_AllowThirdPersonSpecialMove( pm->ps )//in third person
 			&& ((pm->cmd.buttons&BUTTON_USE)||pm->ps->leanStopDebounceTime)//holding use or leaning
 			//&& (pm->ps->forcePowersActive&(1<<FP_SPEED))
 			&& pm->ps->groundEntityNum != ENTITYNUM_NONE//on ground
@@ -3794,11 +3805,15 @@ static qboolean PM_TryRoll( void )
 			return qfalse;
 		}
 	}
-	if ( (pm->ps->clientNum < MAX_CLIENTS||PM_ControlledByPlayer()) && (!cg.renderingThirdPerson || cg.zoomMode) )
+	if ( (pm->ps->clientNum < MAX_CLIENTS||PM_ControlledByPlayer()) && (!BG_AllowThirdPersonSpecialMove( pm->ps )) )
 	{//player can't do this in 1st person
 		return qfalse;
 	}
 	if ( !pm->gent )
+	{
+		return qfalse;
+	}
+	if ( pm->ps->weapon == WP_EMPLACED_GUN && !(pm->ps->eFlags & EF_LOCKED_TO_WEAPON))
 	{
 		return qfalse;
 	}
@@ -5697,7 +5712,7 @@ static void PM_CheckDuck (void)
 
 		if ( pm->ps->clientNum < MAX_CLIENTS
 			&& (pm->gent->client->NPC_class == CLASS_ATST ||pm->gent->client->NPC_class == CLASS_RANCOR)
-			&& !cg.renderingThirdPerson )
+			&& !BG_AllowThirdPersonSpecialMove( pm->ps ) )
 		{
 			standheight = crouchheight = 128;
 		}
@@ -7452,7 +7467,7 @@ qboolean PM_AdjustStandAnimForSlope( void )
 		return qfalse;
 	}
 	if ( (pm->ps->clientNum < MAX_CLIENTS||PM_ControlledByPlayer())
-		&& (!cg.renderingThirdPerson || cg.zoomMode) )
+		&& (!BG_AllowThirdPersonSpecialMove( pm->ps )) )
 	{//first person doesn't do this
 		return qfalse;
 	}
@@ -8231,6 +8246,7 @@ static void PM_Footsteps( void )
 			}
 			else if ( (pm->ps->weapon == WP_SABER
 				&&pm->ps->SaberLength()>0
+				&& (pm->ps->SaberActive() || !g_noIgniteTwirl->integer)
 				&&!pm->ps->saberInFlight
 				&&!PM_SaberDrawPutawayAnim( pm->ps->legsAnim )) )
 			{
@@ -8253,6 +8269,7 @@ static void PM_Footsteps( void )
 						{
 						case SS_FAST:
 						case SS_TAVION:
+						case SS_KATARN:
 							legsAnim = BOTH_SABERFAST_STANCE;
 							break;
 						case SS_STRONG:
@@ -8900,7 +8917,7 @@ static void PM_BeginWeaponChange( int weapon ) {
 		return;
 	}
 
-	if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+	if ( !( pm->ps->weapons[weapon] ) ) {
 		return;
 	}
 
@@ -8953,7 +8970,7 @@ static void PM_BeginWeaponChange( int weapon ) {
 			}
 			if (!G_IsRidingVehicle(pm->gent))
 			{
-				PM_SetSaberMove(LS_PUTAWAY);
+			//	PM_SetSaberMove(LS_PUTAWAY);
 			}
 		}
 		//put this back in because saberActive isn't being set somewhere else anymore
@@ -8984,7 +9001,7 @@ static void PM_FinishWeaponChange( void ) {
 		weapon = WP_NONE;
 	}
 
-	if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+	if ( !( pm->ps->weapons[weapon] ) ) {
 		weapon = WP_NONE;
 	}
 
@@ -8992,6 +9009,21 @@ static void PM_FinishWeaponChange( void ) {
 	{
 		trueSwitch = qfalse;
 	}
+	
+	if ( trueSwitch && pm->ps->weapon == WP_EMPLACED_GUN && !(pm->ps->eFlags & EF_LOCKED_TO_WEAPON) )
+	{
+		gitem_t *item;
+		item = FindItemForWeapon( WP_EMPLACED_GUN );
+		gentity_t *dropped = Drop_Item(pm->gent, item, 0, qfalse);
+		dropped->count = pm->ps->ammo[AMMO_EMPLACED];
+		gi.G2API_InitGhoul2Model( dropped->ghoul2, "models/map_objects/hoth/eweb_model.glm", G_ModelIndex( "models/map_objects/hoth/eweb_model.glm" ), NULL_HANDLE, NULL_HANDLE, 0, 0);
+		gi.G2API_SetSurfaceOnOff(&dropped->ghoul2[0], "eweb_cannon", 0x00000002);
+		dropped->s.radius = 10;
+		dropped->delay = level.time + 1000;
+		pm->ps->ammo[AMMO_EMPLACED] = 0;
+		pm->ps->weapons[WP_EMPLACED_GUN] = 0;
+	}
+	
 	//int oldWeap = pm->ps->weapon;
 	pm->ps->weapon = weapon;
 	pm->ps->weaponstate = WEAPON_RAISING;
@@ -8999,6 +9031,40 @@ static void PM_FinishWeaponChange( void ) {
 
 	if ( pm->gent && pm->gent->client && pm->gent->client->NPC_class == CLASS_ATST )
 	{//do nothing
+	}
+	else if ( weapon == WP_EMPLACED_GUN && !(pm->ps->eFlags & EF_LOCKED_TO_WEAPON) )
+	{
+		if ( pm->gent )
+		{
+			// remove the sabre if we had it.
+			G_RemoveWeaponModels( pm->gent );
+			//holster sabers
+			WP_SaberAddHolsteredG2SaberModels( pm->gent );
+			G_CreateG2AttachedWeaponModel( pm->gent, "models/map_objects/hoth/eweb_model.glm", pm->gent->handRBolt, 0 );
+		}
+		
+		if ( !(pm->ps->eFlags&EF_HELD_BY_WAMPA) )
+		{
+			if ( pm->ps->weapon != WP_THERMAL
+				&& pm->ps->weapon != WP_TRIP_MINE
+				&& pm->ps->weapon != WP_DET_PACK
+				&& !G_IsRidingVehicle(pm->gent))
+			{
+				PM_SetAnim(pm,SETANIM_TORSO,TORSO_RAISEWEAP1,SETANIM_FLAG_HOLD);
+			}
+		}
+		
+		if ( pm->ps->clientNum < MAX_CLIENTS
+			&& cg_gunAutoFirst.integer
+			&& !PM_RidingVehicle()
+			//			&& oldWeap == WP_SABER
+			&& weapon != WP_NONE )
+		{
+			gi.cvar_set( "cg_thirdperson", "0" );
+		}
+		pm->ps->saberMove = LS_NONE;
+		pm->ps->saberBlocking = BLK_NO;
+		pm->ps->saberBlocked = BLOCKED_NONE;
 	}
 	else if ( weapon == WP_SABER )
 	{//turn on the lightsaber
@@ -9011,6 +9077,8 @@ static void PM_FinishWeaponChange( void ) {
 		if ( pm->gent )
 		{// remove gun if we had it.
 			G_RemoveWeaponModels( pm->gent );
+			//and remove holstered saber models
+			G_RemoveHolsterModels( pm->gent );
 		}
 
 		if ( !pm->ps->saberInFlight || pm->ps->dualSabers )
@@ -9068,10 +9136,10 @@ static void PM_FinishWeaponChange( void ) {
 				G_CreateG2AttachedWeaponModel(pm->gent, weaponData[weapon].weaponMdl, pm->gent->handRBolt, 0);
 			}
 
-			else if (weaponData[weapon].worldModel[0])
+			else if (weaponData[weapon].G2_worldModel[0])
 			{
 				//might be NONE, so check if it has a model
-				G_CreateG2AttachedWeaponModel(pm->gent, weaponData[weapon].worldModel, pm->gent->handRBolt, 0);
+				G_CreateG2AttachedWeaponModel(pm->gent, weaponData[weapon].G2_worldModel, pm->gent->handRBolt, 0);
 			}
 		}
 		//DT EDIT: Ghoul2 viewmodels - END
@@ -9080,8 +9148,10 @@ static void PM_FinishWeaponChange( void ) {
 		{
 			// remove the sabre if we had it.
 			G_RemoveWeaponModels( pm->gent );
-			if (weaponData[weapon].weaponMdl[0]) {	//might be NONE, so check if it has a model
-				G_CreateG2AttachedWeaponModel( pm->gent, weaponData[weapon].weaponMdl, pm->gent->handRBolt, 0 );
+			//holster sabers
+			WP_SaberAddHolsteredG2SaberModels( pm->gent );
+			if (weaponData[weapon].worldModel[0]) {	//might be NONE, so check if it has a model
+				G_CreateG2AttachedWeaponModel( pm->gent, weaponData[weapon].worldModel, pm->gent->handRBolt, 0 );
 			}
 		}
 
@@ -9124,6 +9194,9 @@ int PM_ReadyPoseForSaberAnimLevel( void )
 		break;
 	case SS_STAFF:
 		anim = BOTH_SABERSTAFF_STANCE;
+		break;
+	case SS_KATARN:
+		anim = BOTH_STAND6;
 		break;
 	case SS_FAST:
 	case SS_TAVION:
@@ -9292,7 +9365,20 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 			pm->ps->saberMove = newMove;
 			return;
 		}
-		if ( pm->ps->saber[0].drawAnim != -1 )
+		if ( pm->ps->saber[0].holsterPlace == HOLSTER_LHIP && !pm->ps->dualSabers && pm->ps->saber[0].drawAnim == -1 )
+		{
+			//TODO: left hip draw anim
+		}
+		else if ( pm->ps->saber[0].holsterPlace == HOLSTER_LHIP
+				 && pm->ps->dualSabers
+				 && ((pm->ps->saber[1].holsterPlace == HOLSTER_LHIP) || (pm->ps->saber[1].holsterPlace == HOLSTER_HIPS))
+				 && !(pm->ps->saber[0].stylesForbidden&(1<<SS_DUAL))
+				 && !(pm->ps->saber[1].stylesForbidden&(1<<SS_DUAL)) )
+		{
+			anim = BOTH_S1_S6;
+			//TODO: nice cross draw anim
+		}
+		else if ( pm->ps->saber[0].drawAnim != -1 )
 		{
 			anim = pm->ps->saber[0].drawAnim;
 		}
@@ -9300,6 +9386,11 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 			&& pm->ps->saber[1].drawAnim != -1 )
 		{
 			anim = pm->ps->saber[1].drawAnim;
+		}
+		else if ( pm->ps->saber[0].holsterPlace == HOLSTER_BACK )
+		{
+			//TODO: nice back draw anim
+			anim = BOTH_S1_S7;
 		}
 		else if ( pm->ps->saber[0].stylesLearned==(1<<SS_STAFF) )
 		{
@@ -9318,7 +9409,21 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 	}
 	else if ( newMove == LS_PUTAWAY )
 	{
-		if ( pm->ps->saber[0].putawayAnim != -1 )
+		if ( pm->ps->saber[0].holsterPlace == HOLSTER_LHIP && !pm->ps->dualSabers && pm->ps->saber[0].putawayAnim == -1 )
+		{
+			//TODO: left hip putaway anim
+		}
+		else if ( pm->ps->saber[0].holsterPlace == HOLSTER_LHIP
+				 && pm->ps->dualSabers
+				 && ((pm->ps->saber[1].holsterPlace == HOLSTER_LHIP) || (pm->ps->saber[1].holsterPlace == HOLSTER_HIPS))
+				 && !(pm->ps->saber[0].stylesForbidden&(1<<SS_DUAL))
+				 && !(pm->ps->saber[1].stylesForbidden&(1<<SS_DUAL))
+				 && pm->ps->saber[1].Active() )
+		{
+			anim = BOTH_S6_S1;
+			//TODO: nice cross putaway anim
+		}
+		else if ( pm->ps->saber[0].putawayAnim != -1 )
 		{
 			anim = pm->ps->saber[0].putawayAnim;
 		}
@@ -9326,6 +9431,10 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 			&& pm->ps->saber[1].putawayAnim != -1 )
 		{
 			anim = pm->ps->saber[1].putawayAnim;
+		}
+		else if ( pm->ps->saber[0].holsterPlace == HOLSTER_BACK )
+		{
+			anim = BOTH_S7_S1;
 		}
 		else if ( pm->ps->saber[0].stylesLearned==(1<<SS_STAFF)
 			&& pm->ps->saber[0].blade[1].active )
@@ -9364,7 +9473,14 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 		}
 		else
 		{//add the appropriate animLevel
-			anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			if (pm->ps->saberAnimLevel < SS_KATARN)
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			}
+			else
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1-1) * SABER_ANIM_GROUP_SIZE;
+			}
 		}
 	}
 	else if ( (pm->ps->saberAnimLevel == SS_DUAL
@@ -9403,7 +9519,14 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 		}
 		else
 		{//add the appropriate animLevel
-			anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			if (pm->ps->saberAnimLevel < SS_KATARN)
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			}
+			else
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1-1) * SABER_ANIM_GROUP_SIZE;
+			}
 		}
 	}
 	/*
@@ -9421,7 +9544,14 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 		}
 		else
 		{//increment the anim to the next level of saber anims
-			anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			if (pm->ps->saberAnimLevel < SS_KATARN)
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1) * SABER_ANIM_GROUP_SIZE;
+			}
+			else
+			{
+				anim += (pm->ps->saberAnimLevel-FORCE_LEVEL_1-1) * SABER_ANIM_GROUP_SIZE;
+			}
 		}
 	}
 	else if ( newMove == LS_KICK_F_AIR
@@ -9584,6 +9714,7 @@ void PM_SetSaberMove(saberMoveName_t newMove)
 							break;
 						case SS_TAVION:
 						case SS_FAST:
+						case SS_KATARN:
 							WP_SaberSwingSound( pm->gent, 0, SWING_FAST );
 							break;
 						}
@@ -9929,9 +10060,24 @@ void PM_SetAnimFrame( gentity_t *gent, int frame, qboolean torso, qboolean legs 
 				frame, frame+1, BONE_ANIM_OVERRIDE_FREEZE|BONE_ANIM_BLEND, 1, actualTime, frame, 150 );
 		}
 	}
+	if ( torso && gent->headModel > 0 && gent->headLowerLumbarBone != -1)
+	{
+		gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->headModel], gent->headLowerLumbarBone, //gent->upperLumbarBone
+								  frame, frame+1, BONE_ANIM_OVERRIDE_FREEZE|BONE_ANIM_BLEND, 1, actualTime, frame, 150 );
+		if ( gent->motionBone != -1 )
+		{
+			gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->headModel], gent->headMotionBone, //gent->upperLumbarBone
+									  frame, frame+1, BONE_ANIM_OVERRIDE_FREEZE|BONE_ANIM_BLEND, 1, actualTime, frame, 150 );
+		}
+	}
 	if ( legs && gent->rootBone != -1 )
 	{
 		gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->playerModel], gent->rootBone,
+			frame, frame+1, BONE_ANIM_OVERRIDE_FREEZE|BONE_ANIM_BLEND, 1, actualTime, frame, 150 );
+	}
+	if ( legs && gent->headModel > 0 && gent->headRootBone != -1 )
+	{
+		gi.G2API_SetBoneAnimIndex(&gent->ghoul2[gent->headModel], gent->headRootBone,
 			frame, frame+1, BONE_ANIM_OVERRIDE_FREEZE|BONE_ANIM_BLEND, 1, actualTime, frame, 150 );
 	}
 }
@@ -11978,7 +12124,7 @@ void PM_WeaponLightsaber(void)
 		}
 	}
 
-	if ( pm->ps->stats[STAT_WEAPONS]&(1<<WP_SCEPTER)
+	if ( pm->ps->weapons[WP_SCEPTER]
 		&& !pm->ps->dualSabers
 		&& pm->gent
 		&& pm->gent->weaponModel[1] )
@@ -12164,7 +12310,7 @@ void PM_WeaponLightsaber(void)
 
 	if ( pm->ps->saberEventFlags&SEF_INWATER )//saber in water
 	{
-		pm->cmd.buttons &= ~(BUTTON_ATTACK|BUTTON_ALT_ATTACK|BUTTON_FORCE_FOCUS);
+		pm->cmd.buttons &= ~(BUTTON_ATTACK|BUTTON_ALT_ATTACK|BUTTON_FORCE_FOCUS|BUTTON_SABERTHROW);
 	}
 
 	qboolean saberInAir = qtrue;
@@ -12439,6 +12585,7 @@ void PM_WeaponLightsaber(void)
 			{
 			case SS_FAST:
 			case SS_TAVION:
+			case SS_KATARN:
 				PM_SetSaberMove( LS_A1_SPECIAL );
 				break;
 			case SS_MEDIUM:
@@ -12875,7 +13022,7 @@ void PM_WeaponLightsaber(void)
 				{
 					if ( !MatrixMode )
 					{//Special test for Matrix Mode (tm)
-						if ( pm->ps->clientNum == 0 && !player_locked && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
+						if ( pm->ps->clientNum == 0 && !player_locked && !PlayerAffectedByStasis() && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
 						{//player always fires at normal speed
 							addTime *= g_timescale->value;
 						}
@@ -13523,8 +13670,8 @@ static void PM_Weapon( void )
 		{//add the thermal model back in our hand
 			// remove anything if we have anything already
 			G_RemoveWeaponModels( pm->gent );
-			if (weaponData[pm->ps->weapon].weaponMdl[0]) {	//might be NONE, so check if it has a model
-				G_CreateG2AttachedWeaponModel( pm->gent, weaponData[pm->ps->weapon].weaponMdl, pm->gent->handRBolt, 0 );
+			if (weaponData[pm->ps->weapon].worldModel[0]) {	//might be NONE, so check if it has a model
+				G_CreateG2AttachedWeaponModel( pm->gent, weaponData[pm->ps->weapon].worldModel, pm->gent->handRBolt, 0 );
 				//make it sound like we took another one out from... uh.. somewhere...
 				if ( cg.time > 0 )
 				{//this way we don't get that annoying change weapon sound every time a map starts
@@ -13714,7 +13861,7 @@ static void PM_Weapon( void )
 									PM_CheckKick();
 								}
 							}
-							else if ( !(pm->ps->pm_flags&PMF_ATTACK_HELD) )
+							else// if ( !(pm->ps->pm_flags&PMF_ATTACK_HELD) )
 							{
 								anim = PM_PickAnim( pm->gent, BOTH_MELEE1, BOTH_MELEE2 );
 							}
@@ -13771,22 +13918,22 @@ static void PM_Weapon( void )
 						{
 							if (pm->cmd.buttons & BUTTON_ATTACK)
 							{
-								anim = BOTH_GAMM_ATTACK2;
+								anim = BOTH_GAM_ATTACK2;
 							}
 							else
 							{
-								anim = BOTH_GAMM_ATTACK1;
+								anim = BOTH_GAM_ATTACK1;
 							}
 						}
 						else
 						{
-							anim = BOTH_GAMM_ATTACK2;
+							anim = BOTH_GAM_ATTACK2;
 						}
 					}
 					{// npc
 						if (pm->cmd.buttons & BUTTON_ALT_ATTACK)
 						{
-							anim = BOTH_GAMM_ATTACK1;
+							anim = BOTH_GAM_ATTACK1;
 							if (pm->ps->torsoAnimTimer>0)
 							{
 								flags &= ~SETANIM_FLAG_RESTART;
@@ -13794,7 +13941,7 @@ static void PM_Weapon( void )
 						}
 						else
 						{
-							anim = PM_PickAnim(pm->gent, BOTH_GAMM_ATTACK2, BOTH_GAMM_ATTACK1);
+							anim = PM_PickAnim(pm->gent, BOTH_GAM_ATTACK2, BOTH_GAM_ATTACK1);
 						}
 					}
 					if (VectorCompare(pm->ps->velocity, vec3_origin) && pm->cmd.upmove >= 0)
@@ -13882,6 +14029,26 @@ static void PM_Weapon( void )
 				}
 				break;
 
+			case WP_E5_CARBINE:
+				PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
+				break;
+
+			case WP_DC15S_CARBINE:
+				PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
+				break;
+					
+			case WP_Z6_ROTARY:
+				PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
+				break;
+					
+			case WP_DC15A_RIFLE:
+				PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
+				break;
+
+			case WP_SONIC_BLASTER:
+				PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
+				break;
+
 			case WP_BLASTER:
 				PM_SetAnim( pm, SETANIM_TORSO, BOTH_ATTACK3, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART);
 				break;
@@ -13913,7 +14080,7 @@ static void PM_Weapon( void )
 				}
 				else
 				{
-					if ( cg.renderingThirdPerson )
+					if ( BG_AllowThirdPersonSpecialMove( pm->ps ) )
 					{
 						if ( PM_StandingAnim( pm->ps->legsAnim )
 							|| pm->ps->legsAnim == BOTH_THERMAL_READY )
@@ -14067,6 +14234,10 @@ static void PM_Weapon( void )
 
 		switch( pm->ps->weapon)
 		{
+		case WP_MELEE:
+			//melee with g_debugmelee on
+			addTime = pm->ps->torsoAnimTimer;
+			break;
 		case WP_REPEATER:
 			// repeater is supposed to do smoke after sustained bursts
 			pm->ps->weaponShotCount++;
@@ -14102,7 +14273,7 @@ static void PM_Weapon( void )
 		{
 			if ( !MatrixMode )
 			{//Special test for Matrix Mode (tm)
-				if ( pm->ps->clientNum == 0 && !player_locked && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
+				if ( pm->ps->clientNum == 0 && !player_locked && !PlayerAffectedByStasis() && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
 				{//player always fires at normal speed
 					addTime *= g_timescale->value;
 				}
@@ -14268,7 +14439,7 @@ static void PM_VehicleWeapon( void )
 		{
 			if ( !MatrixMode )
 			{//Special test for Matrix Mode (tm)
-				if ( pm->ps->clientNum == 0 && !player_locked && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
+				if ( pm->ps->clientNum == 0 && !player_locked && !PlayerAffectedByStasis() && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
 				{//player always fires at normal speed
 					addTime *= g_timescale->value;
 				}
@@ -14292,6 +14463,14 @@ extern void ForceRage( gentity_t *self );
 extern void ForceProtect( gentity_t *self );
 extern void ForceAbsorb( gentity_t *self );
 extern void ForceSeeing( gentity_t *self );
+extern void ForceDestruction( gentity_t *self );
+extern void ForceInsanity( gentity_t *self );
+extern void ForceStasis( gentity_t *self );
+extern void ForceBlinding( gentity_t *self );
+extern void ForceDeadlySight( gentity_t *self );
+extern void ForceRepulse( gentity_t *self );
+extern void ForceInvulnerability( gentity_t *self );
+
 void PM_CheckForceUseButton( gentity_t *ent, usercmd_t *ucmd  )
 {
 	if ( !ent )
@@ -14334,6 +14513,24 @@ void PM_CheckForceUseButton( gentity_t *ent, usercmd_t *ucmd  )
 			case FP_SEE:		//duration - detect/see hidden enemies
 				ForceSeeing( ent );
 				break;
+			case FP_DESTRUCTION:
+				ForceDestruction( ent );
+				break;
+			case FP_INSANITY:
+				ForceInsanity( ent );
+				break;
+			case FP_STASIS:
+				ForceStasis( ent );
+				break;
+			case FP_BLINDING:
+				ForceBlinding( ent );
+				break;
+			case FP_DEADLYSIGHT:
+				ForceDeadlySight( ent );
+				break;
+			case FP_INVULNERABILITY:
+				ForceInvulnerability( ent );
+				break;
 			}
 		}
 		//these stay are okay to call every frame button is down
@@ -14351,6 +14548,12 @@ void PM_CheckForceUseButton( gentity_t *ent, usercmd_t *ucmd  )
 		case FP_DRAIN:
 			// FIXME! Failing at WP_ForcePowerUsable(). -AReis
 			ucmd->buttons |= BUTTON_FORCE_DRAIN;
+			break;
+		case FP_SABERTHROW:
+			ucmd->buttons |= BUTTON_SABERTHROW;
+			break;
+		case FP_REPULSE:
+			ucmd->buttons |= BUTTON_REPULSE;
 			break;
 //		default:
 //			Com_Printf( "Use Force: Unhandled force: %d\n", showPowers[cg.forcepowerSelect]);
@@ -14467,7 +14670,7 @@ void PM_SetSpecialMoveValues (void )
 		{
 			if ( !MatrixMode )
 			{
-				if ( pm->ps->clientNum == 0 && !player_locked && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
+				if ( pm->ps->clientNum == 0 && !player_locked && !PlayerAffectedByStasis() && (pm->ps->forcePowersActive&(1<<FP_SPEED)||pm->ps->forcePowersActive&(1<<FP_RAGE)) )
 				{
 					pml.frametime *= (1.0f/g_timescale->value);
 				}
@@ -14511,7 +14714,11 @@ void PM_AdjustAttackStates( pmove_t *pm )
 	{//don't let the alt-attack be interpreted as an actual attack command
 		if ( pm->ps->saberInFlight )
 		{
-			pm->cmd.buttons &= ~BUTTON_ALT_ATTACK;
+            if (pm->ps->saberAnimLevel != SS_KATARN)
+            {
+                pm->cmd.buttons &= ~BUTTON_ALT_ATTACK;
+            }
+            pm->cmd.buttons &= ~BUTTON_SABERTHROW;
 			//FIXME: what about alt-attack modifier button?
 			if ( (!pm->ps->dualSabers || !pm->ps->saber[1].Active()) )
 			{//saber not in hand, can't swing it
@@ -14759,7 +14966,7 @@ void PM_CheckInVehicleSaberAttackAnim( void )
 //force the vehicle to turn and travel to its forced destination point
 void PM_VehForcedTurning( gentity_t *veh )
 {
-	gentity_t *dst = &g_entities[pm->ps->vehTurnaroundIndex];
+	gentity_t *dst = &g_entities[veh->client->ps.vehTurnaroundIndex];
 	float pitchD, yawD;
 	vec3_t dir;
 
@@ -14791,6 +14998,81 @@ void PM_VehForcedTurning( gentity_t *veh )
 
 	//PM_SetPMViewAngle(pm->ps, pm->ps->viewangles, &pm->cmd);
 	SetClientViewAngle(pm->gent, pm->ps->viewangles);
+}
+
+void PM_VehFaceHyperspacePoint(gentity_t *veh)
+{
+	
+	if (!veh || !veh->m_pVehicle)
+	{
+		return;
+	}
+	else
+	{
+		float timeFrac = ((float)(pm->cmd.serverTime-veh->client->ps.hyperSpaceTime))/HYPERSPACE_TIME;
+		float	turnRate, aDelta;
+		int		i, matchedAxes = 0;
+		
+		pm->cmd.upmove = veh->m_pVehicle->m_ucmd.upmove = 127;
+		pm->cmd.forwardmove = veh->m_pVehicle->m_ucmd.forwardmove = 0;
+		pm->cmd.rightmove = veh->m_pVehicle->m_ucmd.rightmove = 0;
+		
+		turnRate = (90.0f*pml.frametime);
+		for ( i = 0; i < 3; i++ )
+		{
+			aDelta = AngleSubtract(veh->client->ps.hyperSpaceAngles[i], veh->m_pVehicle->m_vOrientation[i]);
+			if ( fabs( aDelta ) < turnRate )
+			{//all is good
+				pm->ps->viewangles[i] = veh->client->ps.hyperSpaceAngles[i];
+				matchedAxes++;
+			}
+			else
+			{
+				aDelta = AngleSubtract(veh->client->ps.hyperSpaceAngles[i], pm->ps->viewangles[i]);
+				if ( fabs( aDelta ) < turnRate )
+				{
+					pm->ps->viewangles[i] = veh->client->ps.hyperSpaceAngles[i];
+				}
+				else if ( aDelta > 0 )
+				{
+					if ( i == YAW )
+					{
+						pm->ps->viewangles[i] = AngleNormalize360( pm->ps->viewangles[i]+turnRate );
+					}
+					else
+					{
+						pm->ps->viewangles[i] = AngleNormalize180( pm->ps->viewangles[i]+turnRate );
+					}
+				}
+				else
+				{
+					if ( i == YAW )
+					{
+						pm->ps->viewangles[i] = AngleNormalize360( pm->ps->viewangles[i]-turnRate );
+					}
+					else
+					{
+						pm->ps->viewangles[i] = AngleNormalize180( pm->ps->viewangles[i]-turnRate );
+					}
+				}
+			}
+		}
+		
+		SetClientViewAngle(pm->gent, pm->ps->viewangles);
+		
+		if ( timeFrac < HYPERSPACE_TELEPORT_FRAC )
+		{//haven't gone through yet
+			if ( matchedAxes < 3 )
+			{//not facing the right dir yet
+				//keep hyperspace time up to date
+				veh->client->ps.hyperSpaceTime += pml.msec;
+			}
+			else if ( !(veh->client->ps.eFlags2&EF2_HYPERSPACE))
+			{//flag us as ready to hyperspace!
+				veh->client->ps.eFlags2 |= EF2_HYPERSPACE;
+			}
+		}
+	}
 }
 /*
 ================
@@ -14863,9 +15145,15 @@ void Pmove( pmove_t *pmove )
 	}
 	else if ( pm->gent && PM_RidingVehicle() )
 	{
-		if ( pm->ps->vehTurnaroundIndex
-			&& pm->ps->vehTurnaroundTime > pm->cmd.serverTime )
+		if ( (&g_entities[pm->gent->s.m_iVehicleNum])->client &&
+			(pm->cmd.serverTime-(&g_entities[pm->gent->s.m_iVehicleNum])->client->ps.hyperSpaceTime) < HYPERSPACE_TIME)
+		{ //going into hyperspace, turn to face the right angles
+			PM_VehFaceHyperspacePoint( &g_entities[pm->gent->s.m_iVehicleNum] );
+		}
+		else if ( (&g_entities[pm->gent->s.m_iVehicleNum])->client && (&g_entities[pm->gent->s.m_iVehicleNum])->client->ps.vehTurnaroundIndex
+			&& (&g_entities[pm->gent->s.m_iVehicleNum])->client->ps.vehTurnaroundTime > pm->cmd.serverTime )
 		{ //riding this vehicle, turn my view too
+			Com_Printf("forced turning!\n");
 			PM_VehForcedTurning( &g_entities[pm->gent->s.m_iVehicleNum] );
 		}
 	}
@@ -14915,7 +15203,7 @@ void Pmove( pmove_t *pmove )
 	if (pm->ps->pm_type == PM_FREEZE) {
 		return;		// no movement at all
 	}
-
+	
 	if ( pm->ps->pm_type == PM_INTERMISSION ) {
 		return;		// no movement at all
 	}
@@ -15136,6 +15424,15 @@ void Pmove( pmove_t *pmove )
 	{
 		pm->ps->pm_flags &= ~PMF_FORCE_FOCUS_HELD;
 	}
+	
+	if ( pm->cmd.buttons & BUTTON_SABERTHROW )
+	{
+		pm->ps->pm_flags |= PMF_SABERTHROW_HELD;
+	}
+	else
+	{
+		pm->ps->pm_flags &= ~PMF_SABERTHROW_HELD;
+	}
 
 	if ( pm->gent )//&& pm->gent->s.number == 0 )//player only?
 	{
@@ -15160,7 +15457,6 @@ void Pmove( pmove_t *pmove )
 			pm->cmd.forwardmove = pm->cmd.rightmove = 0;
 		}
 	}
-
 
 	// ANIMATION
 	//================================
@@ -15194,12 +15490,16 @@ void Pmove( pmove_t *pmove )
 	else // TEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMPTEMP
 	{
 		// footstep events / legs animations
-		PM_Footsteps();
+		if (pm->ps->stasisTime < level.time) {
+			PM_Footsteps();
+		}
 	}
 	// torso animation
 	if ( !pVeh )
 	{//not riding a vehicle
-		PM_TorsoAnimation();
+		if (pm->ps->stasisTime < level.time) {
+			PM_TorsoAnimation();
+		}
 	}
 
 	// entering / leaving water splashes

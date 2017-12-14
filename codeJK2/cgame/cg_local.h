@@ -445,6 +445,7 @@ typedef struct {
 
 	int			inventorySelect;		// Current inventory item chosen
 	int			inventorySelectTime;
+	int			inventoryDebounce;
 
 	int			forcepowerSelect;		// Current force power chosen
 	int			forcepowerSelectTime;
@@ -591,6 +592,18 @@ extern	vmCvar_t		cg_fov;
 extern	vmCvar_t		cg_fovAspectAdjust;
 extern	vmCvar_t		cg_fovViewmodel;
 extern	vmCvar_t		cg_fovViewmodelAdjust;
+
+extern	vmCvar_t		cg_trueguns;
+extern	vmCvar_t		cg_trueroll;
+extern	vmCvar_t		cg_trueflip;
+extern	vmCvar_t		cg_truespin;
+extern	vmCvar_t		cg_truemoveroll;
+extern  vmCvar_t		cg_truesaberonly;
+extern	vmCvar_t		cg_trueeyeposition;
+extern	vmCvar_t		cg_trueinvertsaber;
+extern	vmCvar_t		cg_truefov;
+extern	vmCvar_t		cg_truebobbing;
+
 extern	vmCvar_t		cg_missionstatusscreen;
 extern	vmCvar_t		cg_endcredits;
 extern	vmCvar_t		cg_updatedDataPadForcePower1;
@@ -640,6 +653,12 @@ extern	vmCvar_t		cg_reliableAnimSounds;
 extern	vmCvar_t		cg_smoothPlayerPos;
 extern	vmCvar_t		cg_smoothPlayerPlat;
 extern	vmCvar_t		cg_smoothPlayerPlatAccel;
+
+extern	vmCvar_t		cg_sfxSabers;
+extern	vmCvar_t		cg_SFXSabersGlowSize;
+extern	vmCvar_t		cg_SFXSabersCoreSize;
+
+extern	vmCvar_t		cg_ignitionFlare;
 
 void CG_NewClientinfo( int clientNum );
 //
@@ -1001,7 +1020,7 @@ qhandle_t	cgi_R_RegisterFont( const char *name );
 int			cgi_R_Font_StrLenPixels(const char *text, const int iFontIndex, const float scale = 1.0f);
 int			cgi_R_Font_StrLenChars(const char *text);
 int			cgi_R_Font_HeightPixels(const int iFontIndex, const float scale = 1.0f);
-void		cgi_R_Font_DrawString(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iMaxPixelWidth, const float scale = 1.0f);
+void		cgi_R_Font_DrawString(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iMaxPixelWidth, const float scale = 1.0f, const float aspectCorrection = 1.0f);
 qboolean	cgi_Language_IsAsian(void);
 qboolean	cgi_Language_UsesSpaces(void);
 unsigned int 	cgi_AnyLanguage_ReadCharFromString( const char **ppText, qboolean *pbIsTrailingPunctuation = NULL );
@@ -1181,5 +1200,8 @@ void	CG_ClearLightStyles( void );
 void	CG_RunLightStyles( void );
 void	CG_SetLightstyle( int i );
 
+//trueview stuff
+void CG_TrueViewInit(void);
+void CG_AdjustEyePos(const char *modelName);
 
 #endif	//__CG_LOCAL_H__

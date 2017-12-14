@@ -48,6 +48,8 @@ extern void ForceRage( gentity_t *self );
 extern void ForceProtect( gentity_t *self );
 extern void ForceAbsorb( gentity_t *self );
 extern qboolean ForceDrain2( gentity_t *self );
+extern void ForceStasis( gentity_t *self );
+extern void ForceDestruction( gentity_t *self );
 extern int WP_MissileBlockForBlock( int saberBlock );
 extern qboolean WP_ForcePowerUsable( gentity_t *self, forcePowers_t forcePower, int overrideAmt );
 extern qboolean WP_ForcePowerAvailable( gentity_t *self, forcePowers_t forcePower, int overrideAmt );
@@ -1232,7 +1234,7 @@ static void Jedi_AdjustSaberAnimLevel( gentity_t *self, int newLevel )
 
 static void Jedi_CheckDecreaseSaberAnimLevel( void )
 {
-	if ( !NPC->client->ps.weaponTime && !(ucmd.buttons&(BUTTON_ATTACK|BUTTON_ALT_ATTACK|BUTTON_FORCE_FOCUS)) )
+	if ( !NPC->client->ps.weaponTime && !(ucmd.buttons&(BUTTON_ATTACK|BUTTON_ALT_ATTACK|BUTTON_FORCE_FOCUS|BUTTON_SABERTHROW)) )
 	{//not attacking
 		if ( TIMER_Done( NPC, "saberLevelDebounce" ) && !Q_irand( 0, 10 ) )
 		{
@@ -1456,7 +1458,7 @@ static void Jedi_CombatDistance( int enemy_dist )
 			&& !(NPC->client->ps.forcePowersActive&(1 << FP_SPEED))
 			&& !(NPC->client->ps.saberEventFlags&SEF_INWATER) )//saber not in water
 		{//hold it out there
-			ucmd.buttons |= BUTTON_ALT_ATTACK;
+			ucmd.buttons |= BUTTON_SABERTHROW;
 			//FIXME: time limit?
 		}
 	}
@@ -1585,7 +1587,7 @@ static void Jedi_CombatDistance( int enemy_dist )
 			Kyle_TryGrab();
 			return;
 		}
-		else if ( NPC->client->ps.stats[STAT_WEAPONS]&(1<<WP_SCEPTER)
+		else if ( NPC->client->ps.weapons[WP_SCEPTER]
 			&& !Q_irand( 0, 20 ) )
 		{
 			Tavion_StartScepterSlam();
@@ -1613,7 +1615,7 @@ static void Jedi_CombatDistance( int enemy_dist )
 				Kyle_TryGrab();
 				return;
 			}
-			else if ( NPC->client->ps.stats[STAT_WEAPONS]&(1<<WP_SCEPTER)
+			else if ( NPC->client->ps.weapons[WP_SCEPTER]
 				&& !Q_irand( 0, 20 ) )
 			{
 				Tavion_StartScepterSlam();
@@ -1739,7 +1741,7 @@ static void Jedi_CombatDistance( int enemy_dist )
 				&& !(NPC->client->ps.forcePowersActive&(1 << FP_SPEED))
 				&& !(NPC->client->ps.saberEventFlags&SEF_INWATER) )//saber not in water
 			{//throw saber
-				ucmd.buttons |= BUTTON_ALT_ATTACK;
+				ucmd.buttons |= BUTTON_SABERTHROW;
 			}
 		}
 		else if ( NPC->enemy && NPC->enemy->client && //valid enemy
@@ -1793,7 +1795,7 @@ static void Jedi_CombatDistance( int enemy_dist )
 			{
 				ForceThrow( NPC, qtrue );
 			}
-			else if ( NPC->client->ps.stats[STAT_WEAPONS]&(1<<WP_SCEPTER)
+			else if ( NPC->client->ps.weapons[WP_SCEPTER]
 				&& !Q_irand( 0, 20 ) )
 			{
 				Tavion_StartScepterBeam();
@@ -1901,13 +1903,23 @@ static void Jedi_CombatDistance( int enemy_dist )
 							TIMER_Set( NPC, "gripping", 3000 );
 							TIMER_Set( NPC, "attackDelay", 3000 );
 						}
+						else if ( WP_ForcePowerUsable( NPC, FP_STASIS, 0 ) && Q_irand(0, 1) && NPC->enemy && NPC->enemy->client && NPC->enemy->client->ps.stasisTime < level.time)
+						{
+							ForceStasis( NPC );
+							TIMER_Set( NPC, "attackDelay", NPC->client->ps.weaponTime );
+						}
+						else if ( WP_ForcePowerUsable( NPC, FP_DESTRUCTION, 0 ) && Q_irand(0, 1))
+						{
+							ForceDestruction( NPC );
+							TIMER_Set( NPC, "attackDelay", NPC->client->ps.weaponTime );
+						}
 						else
 						{
 							if ( WP_ForcePowerUsable( NPC, FP_SABERTHROW, 0 )
 								&& !(NPC->client->ps.forcePowersActive&(1 << FP_SPEED))
 								&& !(NPC->client->ps.saberEventFlags&SEF_INWATER) )//saber not in water
 							{//throw saber
-								ucmd.buttons |= BUTTON_ALT_ATTACK;
+								ucmd.buttons |= BUTTON_SABERTHROW;
 							}
 						}
 					}
@@ -1917,7 +1929,7 @@ static void Jedi_CombatDistance( int enemy_dist )
 							&& !(NPC->client->ps.forcePowersActive&(1 << FP_SPEED))
 							&& !(NPC->client->ps.saberEventFlags&SEF_INWATER) )//saber not in water
 						{//throw saber
-							ucmd.buttons |= BUTTON_ALT_ATTACK;
+							ucmd.buttons |= BUTTON_SABERTHROW;
 						}
 					}
 				}
@@ -4304,7 +4316,7 @@ static void Jedi_EvasionSaber( vec3_t enemy_movedir, float enemy_dist, vec3_t en
 					}
 					else if ( enemy_dist < 56 )
 					{//he's very close, maybe we should be more inclined to block or throw
-						whichDefense = Q_irand( NPCInfo->stats.aggression, 12 );
+						whichDefense = Q_irand( Q_min(NPCInfo->stats.aggression, 12), 12 );
 					}
 					else
 					{
@@ -5188,7 +5200,7 @@ static void Jedi_CombatIdle( int enemy_dist )
 	{//never taunt while raging or recovering from rage
 		return;
 	}
-	if ( NPC->client->ps.stats[STAT_WEAPONS]&(1<<WP_SCEPTER) )
+	if ( NPC->client->ps.weapons[WP_SCEPTER] )
 	{//never taunt when holding scepter
 		return;
 	}
@@ -5357,7 +5369,8 @@ static qboolean Jedi_AttackDecide( int enemy_dist )
 
 	if ( !(ucmd.buttons&BUTTON_ATTACK)
 		&& !(ucmd.buttons&BUTTON_ALT_ATTACK)
-		&& !(ucmd.buttons&BUTTON_FORCE_FOCUS) )
+		&& !(ucmd.buttons&BUTTON_FORCE_FOCUS)
+        && !(ucmd.buttons&BUTTON_SABERTHROW))
 	{//not already attacking
 		//Try to attack
 		WeaponThink( qtrue );
@@ -6826,7 +6839,7 @@ static void Jedi_Attack( void )
 	}
 	else if ( NPC->enemy &&
 		NPC->enemy->NPC
-		&& NPC->enemy->NPC->charmedTime > level.time )
+		&& (NPC->enemy->NPC->charmedTime > level.time || NPC->enemy->NPC->darkCharmedTime > level.time) )
 	{//my enemy was charmed
 		if ( OnSameTeam( NPC, NPC->enemy ) )
 		{//has been charmed to be on my team
@@ -6908,7 +6921,7 @@ static void Jedi_Attack( void )
 		|| ((NPC->client->ps.forcePowersActive&(1<<FP_HEAL))&&NPC->client->ps.forcePowerLevel[FP_HEAL]<FORCE_LEVEL_3)
 		|| ((NPC->client->ps.saberEventFlags&SEF_INWATER)&&!NPC->client->ps.saberInFlight) )//saber in water
 	{
-		ucmd.buttons &= ~(BUTTON_ATTACK|BUTTON_ALT_ATTACK|BUTTON_FORCE_FOCUS);
+		ucmd.buttons &= ~(BUTTON_ATTACK|BUTTON_ALT_ATTACK|BUTTON_FORCE_FOCUS|BUTTON_SABERTHROW);
 	}
 
 	if ( (NPCInfo->scriptFlags&SCF_NO_ACROBATICS) )
@@ -6979,7 +6992,7 @@ static void Jedi_Attack( void )
 		//Sometimes Alora flips towards you instead of runs
 		if ( NPC->client->NPC_class == CLASS_ALORA )
 		{
-			if ( (ucmd.buttons&BUTTON_ALT_ATTACK) )
+			if ( (ucmd.buttons&BUTTON_SABERTHROW) )
 			{//chance of doing a special dual saber throw
 				if ( NPC->client->ps.saberAnimLevel == SS_DUAL
 					&& !NPC->client->ps.saberInFlight )
@@ -7647,7 +7660,7 @@ void NPC_BSJedi_Default( void )
 			//FIXME: build a list of all local enemies (since we have to find best anyway) for other AI factors- like when to use group attacks, determine when to change tactics, when surrounded, when blocked by another in the enemy group, etc.  Should we build this group list or let the enemies maintain their own list and we just access it?
 			gentity_t *sav_enemy = NPC->enemy;//FIXME: what about NPC->lastEnemy?
 			NPC->enemy = NULL;
-			gentity_t *newEnemy = NPC_CheckEnemy( (qboolean)(NPCInfo->confusionTime < level.time), qfalse, qfalse );
+			gentity_t *newEnemy = NPC_CheckEnemy( (qboolean)((NPCInfo->confusionTime<level.time)&&(NPCInfo->insanityTime<level.time)), qfalse, qfalse );
 			NPC->enemy = sav_enemy;
 			if ( newEnemy && newEnemy != sav_enemy )
 			{//picked up a new enemy!

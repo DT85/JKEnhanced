@@ -130,7 +130,7 @@ void GEntity_ThinkFunc(gentity_t *self)
 	THINKCASE( gas_random_jet )
 	THINKCASE( poll_converter ) // dumb loop sound handling 
 	THINKCASE( spawn_rack_goods ) // delay spawn of goods to help on ents
-
+	THINKCASE( sentry_explode )
 	default:
 		Com_Error(ERR_DROP, "GEntity_ThinkFunc: case %d not handled!\n",self->e_ThinkFunc);
 		break;
@@ -320,6 +320,8 @@ void GEntity_UseFunc(gentity_t *self, gentity_t *other, gentity_t *activator)
 	USECASE( misc_use )
 	USECASE( pas_use )
 	USECASE( item_spawn_use )
+	USECASE( detpack_use )
+	USECASE( tripmine_use )
 
 	default:
 		Com_Error(ERR_DROP, "GEntity_UseFunc: case %d not handled!\n",self->e_UseFunc);

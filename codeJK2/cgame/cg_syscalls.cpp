@@ -273,7 +273,7 @@ unsigned int cgi_AnyLanguage_ReadCharFromString( const char **ppText, int *ppos,
 	return Q_syscall( CG_ANYLANGUAGE_READFROMSTRING, ppText, ppos, pbIsTrailingPunctuation );
 }
 
-void cgi_R_Font_DrawString(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iMaxPixelWidth, const float scale /*= 1.0f*/) {
+void cgi_R_Font_DrawString(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iMaxPixelWidth, const float scale /*= 1.0f*/, const float aspectCorrection) {
 	Q_syscall (CG_R_FONTDRAWSTRING, ox, oy, text, rgba, setIndex, iMaxPixelWidth, PASSFLOAT(scale) );
 }
 

@@ -478,6 +478,9 @@ Check for lava / slime contents and drowning
 void P_WorldEffects( gentity_t *ent ) {
 	int			mouthContents = 0;
 
+	if (!ent->client) {
+		return;
+	}
 	if ( ent->client->noclip ) 
 	{
 		ent->client->airOutTime = level.time + 12000;	// don't need air
@@ -1854,6 +1857,10 @@ void G_CheckClientIdle( gentity_t *ent, usercmd_t *ucmd )
 	{
 		return;
 	}
+	if (!ent->s.number && (cg_trueguns.integer || (!cg.renderingThirdPerson && (ent->client->ps.weapon == WP_SABER || ent->client->ps.weapon == WP_MELEE))))
+	{
+		return;
+	}
 	if ( !ent->s.number && ( !cg.renderingThirdPerson || cg.zoomMode ) )
 	{
 		if ( ent->client->idleTime < level.time )
@@ -1980,6 +1987,7 @@ usually be a couple times for each server frame on fast clients.
 */
 
 extern int G_FindLocalInterestPoint( gentity_t *self );
+static int lastShieldTakenAway = 0;
 void ClientThink_real( gentity_t *ent, usercmd_t *ucmd ) 
 {
 	gclient_t	*client;
@@ -1993,6 +2001,12 @@ void ClientThink_real( gentity_t *ent, usercmd_t *ucmd )
 	//Don't let the player do anything if in a camera
 	if ( ent->s.number == 0 ) 
 	{
+		if(ent->client->ps.stats[STAT_ARMOR] > 100 &&
+				g_armoroverflowdown->integer &&
+				lastShieldTakenAway < level.time) {
+			ent->client->ps.stats[STAT_ARMOR]--;
+			lastShieldTakenAway = level.time + g_armoroverflowdown->integer;
+		}
 extern cvar_t	*g_skippingcin;
 
 		if ( ent->s.eFlags & EF_LOCKED_TO_WEAPON )
@@ -2767,6 +2781,10 @@ extern cvar_t	*g_skippingcin;
 
 	// perform a pmove
 	Pmove( &pm );
+
+	if (ent->client == nullptr) {
+		return;
+	}
 
 	// save results of pmove
 	if ( ent->client->ps.eventSequence != oldEventSequence ) 

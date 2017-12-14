@@ -696,6 +696,7 @@ void Player_RestoreFromPrevLevel(gentity_t *ent)
 	{
 		char	s[MAX_STRING_CHARS];
 		const char	*var;
+		int saberActive;
 
 		gi.Cvar_VariableStringBuffer( sCVARNAME_PLAYERSAVE, s, sizeof(s) );
 
@@ -714,11 +715,12 @@ void Player_RestoreFromPrevLevel(gentity_t *ent)
 								&client->ps.viewangles[2],
 								&client->ps.forcePowersKnown,
 								&client->ps.forcePower,
-								&client->ps.saberActive,
+								&saberActive,
 								&client->ps.saberAnimLevel,
 								&client->ps.saberLockEnemy,
 								&client->ps.saberLockTime
 					);
+			client->ps.saberActive = (saberActive ? qtrue : qfalse);
 			ent->health = client->ps.stats[STAT_HEALTH];
 
 // slight issue with ths for the moment in that although it'll correctly restore angles it doesn't take into account
@@ -1365,7 +1367,7 @@ void G_PilotXWing( gentity_t *ent )
 		ent->client->ps.vehicleModel = G_ModelIndex( "models/map_objects/ships/x_wing.md3" );
 
 		ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_ATST_SIDE );
-		ent->client->ps.ammo[weaponData[WP_ATST_SIDE].ammoIndex] = ammoData[weaponData[WP_ATST_SIDE].ammoIndex].max;
+		ent->client->ps.ammo[weaponData[WP_ATST_SIDE].ammoIndex] = BG_GetAmmoMax(weaponData[WP_ATST_SIDE].ammoIndex);
 		gitem_t *item = FindItemForWeapon( WP_ATST_SIDE );
 		RegisterItem( item );	//make sure the weapon is cached in case this runs at startup
 		G_AddEvent( ent, EV_ITEM_PICKUP, (item - bg_itemlist) );
@@ -1470,8 +1472,8 @@ void G_DriveATST( gentity_t *ent, gentity_t *atst )
 		CG_RegisterItemSounds( (item-bg_itemlist) );
 		CG_RegisterItemVisuals( (item-bg_itemlist) );
 		ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_ATST_MAIN )|( 1 << WP_ATST_SIDE );
-		ent->client->ps.ammo[weaponData[WP_ATST_MAIN].ammoIndex] = ammoData[weaponData[WP_ATST_MAIN].ammoIndex].max;
-		ent->client->ps.ammo[weaponData[WP_ATST_SIDE].ammoIndex] = ammoData[weaponData[WP_ATST_SIDE].ammoIndex].max;
+		ent->client->ps.ammo[weaponData[WP_ATST_MAIN].ammoIndex] = BG_GetAmmoMax(weaponData[WP_ATST_MAIN].ammoIndex);
+		ent->client->ps.ammo[weaponData[WP_ATST_SIDE].ammoIndex] = BG_GetAmmoMax(weaponData[WP_ATST_SIDE].ammoIndex);
 		CG_ChangeWeapon( WP_ATST_MAIN );
 		//HACKHACKHACKTEMP
 		item = FindItemForWeapon( WP_EMPLACED_GUN );
@@ -1658,7 +1660,7 @@ qboolean ClientSpawn(gentity_t *ent, SavedGameJustLoaded_e eSavedGameJustLoaded 
 
 		for ( i = 0; i < AMMO_THERMAL; i++ ) // don't give ammo for explosives
 		{
-			client->ps.ammo[i] = ammoData[i].max;
+			client->ps.ammo[i] = BG_GetAmmoMax(i);
 		}
 
 		client->ps.saberColor = SABER_BLUE;
