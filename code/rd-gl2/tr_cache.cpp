@@ -103,7 +103,6 @@ qboolean CModelCacheManager::LoadFile( const char *pFileName, void **ppFileBuffe
 
 void* CModelCacheManager::Allocate( int iSize, void *pvDiskBuffer, const char *psModelFileName, qboolean *bAlreadyFound, memtag_t eTag )
 {
-	int		iChecksum;
 	char	sModelName[MAX_QPATH];
 
 	/* Standard NULL checking. */

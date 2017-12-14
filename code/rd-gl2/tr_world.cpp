@@ -23,6 +23,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 
+static world_t *R_GetWorld(int worldIndex)
+{
+	if (worldIndex == -1)
+	{
+		return tr.world;
+	}
+	else
+	{
+		return tr.bspModels[worldIndex];
+	}
+
+}
+
 /*
 ================
 R_CullSurface
@@ -336,10 +349,10 @@ static void R_AddWorldSurface( msurface_t *surf, int entityNum, int dlightBits, 
 	}
 
 	// check for pshadows
-	/*if ( pshadowBits ) *//*{
+	if ( pshadowBits ) {
 		pshadowBits = R_PshadowSurface( surf, pshadowBits);
 		pshadowBits = ( pshadowBits != 0 );
-	}*/
+	}
 
 	bool isPostRenderEntity =
 		R_IsPostRenderEntity(entityNum, tr.currentEntity);
@@ -369,16 +382,10 @@ R_AddBrushModelSurfaces
 =================
 */
 void R_AddBrushModelSurfaces ( trRefEntity_t *ent, int entityNum ) {
-	bmodel_t	*bmodel;
-	int			clip;
-	model_t		*pModel;
-	int			i;
-
-	pModel = R_GetModelByHandle( ent->e.hModel );
-
-	bmodel = pModel->data.bmodel;
-
-	clip = R_CullLocalBox( bmodel->bounds );
+	model_t *pModel = R_GetModelByHandle(ent->e.hModel);
+	bmodel_t *bmodel = pModel->data.bmodel;
+	int clip = R_CullLocalBox(bmodel->bounds);
+	
 	if ( clip == CULL_OUT ) {
 		return;
 	}
@@ -386,13 +393,14 @@ void R_AddBrushModelSurfaces ( trRefEntity_t *ent, int entityNum ) {
 	R_SetupEntityLighting( &tr.refdef, ent );
 	R_DlightBmodel( bmodel );
 
-	for ( i = 0 ; i < bmodel->numSurfaces ; i++ ) {
+	for (int i = 0 ; i < bmodel->numSurfaces ; i++ ) {
 		int surf = bmodel->firstSurface + i;
+		world_t *world = R_GetWorld(bmodel->worldIndex);
 
-		if (tr.world->surfacesViewCount[surf] != tr.viewCount)
+		if (world->surfacesViewCount[surf] != tr.viewCount)
 		{
-			tr.world->surfacesViewCount[surf] = tr.viewCount;
-			R_AddWorldSurface( tr.world->surfaces + surf, entityNum, tr.currentEntity->needDlights, 0 );
+			world->surfacesViewCount[surf] = tr.viewCount;
+			R_AddWorldSurface( world->surfaces + surf, entityNum, tr.currentEntity->needDlights, 0 );
 		}
 	}
 }
@@ -557,25 +565,13 @@ static void R_RecursiveWorldNode( mnode_t *node, int planeBits, int dlightBits, 
 		tr.pc.c_leafs++;
 
 		// add to z buffer bounds
-		if ( node->mins[0] < tr.viewParms.visBounds[0][0] ) {
-			tr.viewParms.visBounds[0][0] = node->mins[0];
-		}
-		if ( node->mins[1] < tr.viewParms.visBounds[0][1] ) {
-			tr.viewParms.visBounds[0][1] = node->mins[1];
-		}
-		if ( node->mins[2] < tr.viewParms.visBounds[0][2] ) {
-			tr.viewParms.visBounds[0][2] = node->mins[2];
-		}
+		tr.viewParms.visBounds[0][0] = MIN(node->mins[0], tr.viewParms.visBounds[0][0]);
+		tr.viewParms.visBounds[0][1] = MIN(node->mins[1], tr.viewParms.visBounds[0][1]);
+		tr.viewParms.visBounds[0][2] = MIN(node->mins[2], tr.viewParms.visBounds[0][2]);
 
-		if ( node->maxs[0] > tr.viewParms.visBounds[1][0] ) {
-			tr.viewParms.visBounds[1][0] = node->maxs[0];
-		}
-		if ( node->maxs[1] > tr.viewParms.visBounds[1][1] ) {
-			tr.viewParms.visBounds[1][1] = node->maxs[1];
-		}
-		if ( node->maxs[2] > tr.viewParms.visBounds[1][2] ) {
-			tr.viewParms.visBounds[1][2] = node->maxs[2];
-		}
+		tr.viewParms.visBounds[1][0] = MAX(node->maxs[0], tr.viewParms.visBounds[1][0]);
+		tr.viewParms.visBounds[1][1] = MAX(node->maxs[1], tr.viewParms.visBounds[1][1]);
+		tr.viewParms.visBounds[1][2] = MAX(node->maxs[2], tr.viewParms.visBounds[1][2]);
 
 		// add merged and unmerged surfaces
 		if (tr.world->viewSurfaces && !r_nocurves->integer)
@@ -776,43 +772,43 @@ static void R_MarkLeaves (void) {
 R_AddWorldSurfaces
 =============
 */
-void R_AddWorldSurfaces (void) {
+void R_AddWorldSurfaces (viewParms_t *viewParms, trRefdef_t *refdef) {
 	int planeBits, dlightBits, pshadowBits;
 
 	if ( !r_drawworld->integer ) {
 		return;
 	}
 
-	if ( tr.refdef.rdflags & RDF_NOWORLDMODEL ) {
+	if (refdef->rdflags & RDF_NOWORLDMODEL ) {
 		return;
 	}
 
 	// determine which leaves are in the PVS / areamask
-	if (!(tr.viewParms.flags & VPF_DEPTHSHADOW))
+	if (!(viewParms->flags & VPF_DEPTHSHADOW))
 		R_MarkLeaves ();
 
 	// clear out the visible min/max
-	ClearBounds( tr.viewParms.visBounds[0], tr.viewParms.visBounds[1] );
+	ClearBounds(viewParms->visBounds[0], tr.viewParms.visBounds[1] );
 
 	// perform frustum culling and flag all the potentially visible surfaces
-	tr.refdef.num_dlights = Q_min (tr.refdef.num_dlights, 32) ;
-	tr.refdef.num_pshadows = Q_min (tr.refdef.num_pshadows, 32) ;
+	refdef->num_dlights = Q_min (tr.refdef.num_dlights, 32) ;
+	refdef->num_pshadows = Q_min (tr.refdef.num_pshadows, 32) ;
 
-	planeBits = (tr.viewParms.flags & VPF_FARPLANEFRUSTUM) ? 31 : 15;
+	planeBits = (viewParms->flags & VPF_FARPLANEFRUSTUM) ? 31 : 15;
 
-	if ( tr.viewParms.flags & VPF_DEPTHSHADOW )
+	if (viewParms->flags & VPF_DEPTHSHADOW )
 	{
 		dlightBits = 0;
 		pshadowBits = 0;
 	}
-	else if ( !(tr.viewParms.flags & VPF_SHADOWMAP) )
+	else if ( !(viewParms->flags & VPF_SHADOWMAP) )
 	{
-		dlightBits = ( 1 << tr.refdef.num_dlights ) - 1;
-		pshadowBits = ( 1 << tr.refdef.num_pshadows ) - 1;
+		dlightBits = ( 1 << refdef->num_dlights ) - 1;
+		pshadowBits = ( 1 << refdef->num_pshadows ) - 1;
 	}
 	else
 	{
-		dlightBits = ( 1 << tr.refdef.num_dlights ) - 1;
+		dlightBits = ( 1 << refdef->num_dlights ) - 1;
 		pshadowBits = 0;
 	}
 
@@ -820,28 +816,34 @@ void R_AddWorldSurfaces (void) {
 
 	// now add all the potentially visible surfaces
 	// also mask invisible dlights for next frame
-	{
-		int i;
+	
+		refdef->dlightMask = 0;
 
-		tr.refdef.dlightMask = 0;
-
-		for (i = 0; i < tr.world->numWorldSurfaces; i++)
+		for (int i = 0; i < tr.world->numWorldSurfaces; i++)
 		{
 			if (tr.world->surfacesViewCount[i] != tr.viewCount)
 				continue;
 
-			R_AddWorldSurface( tr.world->surfaces + i, REFENTITYNUM_WORLD, tr.world->surfacesDlightBits[i], tr.world->surfacesPshadowBits[i] );
+			R_AddWorldSurface( tr.world->surfaces + i, 
+				REFENTITYNUM_WORLD, 
+				tr.world->surfacesDlightBits[i], 
+				tr.world->surfacesPshadowBits[i] );
 			tr.refdef.dlightMask |= tr.world->surfacesDlightBits[i];
 		}
-		for (i = 0; i < tr.world->numMergedSurfaces; i++)
+
+		for (int i = 0; i < tr.world->numMergedSurfaces; i++)
 		{
 			if (tr.world->mergedSurfacesViewCount[i] != tr.viewCount)
 				continue;
 
-			R_AddWorldSurface( tr.world->mergedSurfaces + i, REFENTITYNUM_WORLD, tr.world->mergedSurfacesDlightBits[i], tr.world->mergedSurfacesPshadowBits[i] );
-			tr.refdef.dlightMask |= tr.world->mergedSurfacesDlightBits[i];
+			R_AddWorldSurface( 
+				tr.world->mergedSurfaces + i,
+				REFENTITYNUM_WORLD, 
+				tr.world->mergedSurfacesDlightBits[i],
+				tr.world->mergedSurfacesPshadowBits[i]);
+			refdef->dlightMask |= tr.world->mergedSurfacesDlightBits[i];
 		}
 
-		tr.refdef.dlightMask = ~tr.refdef.dlightMask;
-	}
+		refdef->dlightMask = ~refdef->dlightMask;
+	
 }

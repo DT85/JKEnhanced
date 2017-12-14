@@ -306,8 +306,39 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 			*numMips = 1;
 	}
 
-	// FIXME: handle cube map
-	//if ((ddsHeader->caps2 & DDSCAPS2_CUBEMAP) == DDSCAPS2_CUBEMAP)
+	// cubemap
+	if ((ddsHeader->caps2 & DDSCAPS2_CUBEMAP) == DDSCAPS2_CUBEMAP)
+	{
+		if (ddsHeader->width != ddsHeader->height)
+		{
+			ri->Printf(PRINT_ALL, "R_LoadDDS: invalid dds image \"%s\"\n", filename);
+			ri->FS_FreeFile(buffer.v);
+			return;
+		}
+
+		*width = ddsHeader->width;
+		*height = 0;
+
+		if (*width & (*width - 1))
+		{
+			ri->Printf(PRINT_ALL, "R_LoadDDS: cubemap images must be power of two \"%s\"\n", filename);
+			ri->FS_FreeFile(buffer.v);
+			return;
+		}
+	}
+	else
+	{
+		// 2D texture
+		*width = ddsHeader->width;
+		*height = ddsHeader->height;
+
+		if ((*width & (*width - 1)) || (*height & (*height - 1)))
+		{
+			ri->Printf(PRINT_ALL, "R_LoadDDS: 2D texture images must be power of two \"%s\"\n", filename);
+			ri->FS_FreeFile(buffer.v);
+			return;
+		}
+	}
 
 	//
 	// Convert DXGI format/FourCC into OpenGL format

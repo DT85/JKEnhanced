@@ -70,6 +70,8 @@ PFNGLISBUFFERPROC qglIsBuffer;
 
 // Texturing
 PFNGLACTIVETEXTUREPROC qglActiveTexture;
+PFNGLTEXIMAGE3DPROC qglTexImage3D;
+PFNGLTEXSUBIMAGE3DPROC qglTexSubImage3D;
 
 // Shader objects
 PFNGLCREATESHADERPROC qglCreateShader;
@@ -256,7 +258,7 @@ static qboolean GetGLFunction ( GLFuncType& glFunction, const char *glFunctionSt
 	return qtrue;
 }
 
-static void __stdcall GLimp_OnError(GLenum source, GLenum type, GLuint id, GLenum severity,
+static void QCALL GLimp_OnError(GLenum source, GLenum type, GLuint id, GLenum severity,
 									GLsizei length, const GLchar *message, const void *userParam)
 {
 	const char *severityText = "";
@@ -342,7 +344,8 @@ void GLimp_InitCoreFunctions()
 
 	// Texturing
 	GetGLFunction (qglActiveTexture, "glActiveTexture", qtrue);
-
+	GetGLFunction(qglTexImage3D, "glTexImage3D", qtrue);
+	GetGLFunction(qglTexSubImage3D, "glTexSubImage3D", qtrue);
 
 	// Shader objects
 	GetGLFunction (qglCreateShader, "glCreateShader", qtrue);
