@@ -1305,7 +1305,7 @@ void R_Register(void)
 	r_dynamicGlowSoft = ri->Cvar_Get("r_dynamicGlowSoft", "1", CVAR_ARCHIVE);
 	r_dynamicGlowWidth = ri->Cvar_Get("r_dynamicGlowWidth", "320", CVAR_ARCHIVE | CVAR_LATCH);
 	r_dynamicGlowHeight = ri->Cvar_Get("r_dynamicGlowHeight", "240", CVAR_ARCHIVE | CVAR_LATCH);
-	r_bloom_threshold = ri->Cvar_Get("r_bloom_threshold", "0.85", CVAR_ARCHIVE);
+	r_bloom_threshold = ri->Cvar_Get("r_bloom_threshold", "0", CVAR_ARCHIVE);
 	r_debugContext = ri->Cvar_Get("r_debugContext", "0", CVAR_LATCH);
 	r_picmip = ri->Cvar_Get("r_picmip", "0", CVAR_ARCHIVE | CVAR_LATCH);
 	ri->Cvar_CheckRange(r_picmip, 0, 16, qtrue);
@@ -1342,7 +1342,7 @@ void R_Register(void)
 	r_normalMapping = ri->Cvar_Get("r_normalMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_specularMapping = ri->Cvar_Get("r_specularMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_deluxeMapping = ri->Cvar_Get("r_deluxeMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
-	r_deferredShading = ri->Cvar_Get("r_deferredShading", "1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_deferredShading = ri->Cvar_Get("r_deferredShading", "0", CVAR_ARCHIVE | CVAR_LATCH);
 	r_parallaxMapping = ri->Cvar_Get("r_parallaxMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_cubeMapping = ri->Cvar_Get("r_cubeMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_horizonFade = ri->Cvar_Get("r_horizonFade", "3", CVAR_ARCHIVE | CVAR_LATCH);
