@@ -1957,6 +1957,10 @@ static void RawImage_UploadTexture(byte *data, int x, int y, int width, int heig
 		dataFormat = GL_DEPTH_COMPONENT;
 		dataType = GL_UNSIGNED_BYTE;
 		break;
+	case GL_DEPTH24_STENCIL8:
+		dataFormat = GL_DEPTH_STENCIL;
+		dataType = GL_UNSIGNED_INT_24_8;
+		break;
 	case GL_RGBA16F:
 		dataFormat = GL_RGBA;
 		dataType = GL_HALF_FLOAT;
@@ -2392,6 +2396,55 @@ image_t *R_CreateImage(const char *name, byte *pic, int width, int height, imgTy
 	return image;
 }
 
+image_t *R_CreateImage3D(const char *name, byte *data, int width, int height, int depth, int internalFormat)
+{
+	image_t *image;
+	long hash;
+
+	if (strlen(name) >= MAX_QPATH) {
+		ri->Error(ERR_DROP, "R_CreateImage3D: \"%s\" is too long", name);
+
+	}
+
+	image = (image_t *)R_Hunk_Alloc(sizeof(image_t), qtrue);
+	qglGenTextures(1, &image->texnum);
+
+	image->type = IMGTYPE_COLORALPHA;
+	image->flags = IMGFLAG_3D;
+
+	Q_strncpyz(image->imgName, name, sizeof(image->imgName));
+
+	image->width = width;
+	image->height = height;
+	image->depth = depth;
+
+	GL_Bind(image);
+	if (ShouldUseImmutableTextures(image->flags, internalFormat))
+	{
+		qglTexStorage3D(GL_TEXTURE_3D, 1, internalFormat, width, height, depth);
+		if (data)
+		{
+			qglTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, width, height, depth, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		}
+	}
+	else
+	{
+		qglTexImage3D(GL_TEXTURE_3D, 0, internalFormat, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	}
+
+	qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	hash = generateHashValue(name);
+	image->next = hashTable[hash];
+	hashTable[hash] = image;
+
+	return image;
+}
+
 void R_UpdateSubImage(image_t *image, byte *pic, int x, int y, int width, int height)
 {
 	byte *scaledBuffer = NULL;
@@ -2804,9 +2857,7 @@ static void R_CreateEnvBrdfLUT(void) {
 	if (!r_cubeMapping->integer)
 		return;
 
-	int		x, y;
 	uint16_t	data[LUT_WIDTH][LUT_HEIGHT][4];
-	int		b;
 
 	float const MATH_PI = 3.14159f;
 	unsigned const sampleNum = 1024;
@@ -2817,8 +2868,7 @@ static void R_CreateEnvBrdfLUT(void) {
 
 		for (unsigned x = 0; x < LUT_WIDTH; ++x)
 		{
-			float const gloss = (x + 0.5f) / LUT_WIDTH;
-			float const roughness = powf(1.0f - gloss, 2.0f);
+			float const roughness = (x + 0.5f) / LUT_WIDTH;
 
 			float const vx = sqrtf(1.0f - ndotv * ndotv);
 			float const vy = 0.0f;
@@ -2835,7 +2885,7 @@ static void R_CreateEnvBrdfLUT(void) {
 				float const phi = 2.0f * MATH_PI * e1;
 				float const cosPhi = cosf(phi);
 				float const sinPhi = sinf(phi);
-				float const cosTheta = sqrtf((1.0f - e2) / (1.0f + (roughness * roughness - 1.0f) * e2));
+				float const cosTheta = sqrtf((1.0f - e2) / (1.0f + (roughness * roughness * roughness * roughness - 1.0f) * e2));
 				float const sinTheta = sqrtf(1.0f - cosTheta * cosTheta);
 
 				float const hx = sinTheta * cosf(phi);
@@ -2972,6 +3022,13 @@ void R_CreateBuiltinImages(void) {
 
 	tr.glowImage = R_CreateImage("*glow", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
 
+	if (r_deferredShading->integer)
+	{
+		tr.gbufferNormals = R_CreateImage("*normals", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+		tr.gbufferLight = R_CreateImage("*lighting", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+		tr.gbufferSpecularAndGloss = R_CreateImage("*specularGloss", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
+	}
+
 	int glowImageWidth = width;
 	int glowImageHeight = height;
 	for (int i = 0; i < ARRAY_LEN(tr.glowImageScaled); i++)
@@ -2984,7 +3041,7 @@ void R_CreateBuiltinImages(void) {
 	if (r_drawSunRays->integer)
 		tr.sunRaysImage = R_CreateImage("*sunRays", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, rgbFormat);
 
-	tr.renderDepthImage = R_CreateImage("*renderdepth", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
+	tr.renderDepthImage = R_CreateImage("*renderdepth", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH24_STENCIL8);
 	tr.textureDepthImage = R_CreateImage("*texturedepth", NULL, PSHADOW_MAP_SIZE, PSHADOW_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
 
 	{
@@ -3025,7 +3082,7 @@ void R_CreateBuiltinImages(void) {
 	if (r_ssao->integer)
 	{
 		tr.screenSsaoImage = R_CreateImage("*screenSsao", NULL, width / 2, height / 2, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_RGBA8);
-		tr.hdrDepthImage = R_CreateImage("*hdrDepth", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_INTENSITY32F_ARB);
+		tr.hdrDepthImage = R_CreateImage("*hdrDepth", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_R32F);
 	}
 
 	if (r_refraction->integer) 
@@ -3038,19 +3095,21 @@ void R_CreateBuiltinImages(void) {
 		tr.prefilterEnvMapImage = R_CreateImage("*prefilterEnvMapFbo", NULL, r_cubemapSize->integer / 2, r_cubemapSize->integer / 2, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
 	}
 
-	if (r_shadows->integer == 4)
+	for (x = 0; x < MAX_DRAWN_PSHADOWS; x++)
 	{
-		for (x = 0; x < MAX_DRAWN_PSHADOWS; x++)
-		{
-			tr.pshadowMaps[x] = R_CreateImage(va("*shadowmap%i", x), NULL, PSHADOW_MAP_SIZE, PSHADOW_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_RGBA8);
-		}
+		tr.pshadowMaps[x] = R_CreateImage(va("*shadowmap%i", x), NULL, PSHADOW_MAP_SIZE, PSHADOW_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
 	}
 
 	if (r_sunlightMode->integer)
 	{
-		for (x = 0; x < 3; x++)
+		for (x = 0; x < 4; x++)
 		{
 			tr.sunShadowDepthImage[x] = R_CreateImage(va("*sunshadowdepth%i", x), NULL, r_shadowMapSize->integer, r_shadowMapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24);
+			GL_Bind(tr.sunShadowDepthImage[x]);
+			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 		}
 
 		tr.screenShadowImage = R_CreateImage("*screenShadow", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_RGBA8);

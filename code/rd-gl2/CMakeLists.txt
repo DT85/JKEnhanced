@@ -101,7 +101,6 @@ if(BuildSPRdGL2 OR BuildJK2SPRdGL2)
 		"${SPDir}/rd-gl2/qgl.h"
 		"${SPDir}/rd-gl2/tr_allocator.cpp"
 		"${SPDir}/rd-gl2/tr_allocator.h"
-		"${SPDir}/rd-gl2/tr_animation.cpp"
 		"${SPDir}/rd-gl2/tr_backend.cpp"
 		"${SPDir}/rd-gl2/tr_bsp.cpp"
 		"${SPDir}/rd-gl2/tr_cache.cpp"
@@ -116,7 +115,6 @@ if(BuildSPRdGL2 OR BuildJK2SPRdGL2)
 		"${SPDir}/rd-gl2/tr_fbo.cpp"
 		"${SPDir}/rd-gl2/tr_fbo.h"
 		"${SPDir}/rd-gl2/tr_flares.cpp"
-		"${SPDir}/rd-gl2/tr_ghoul2.cpp"
 		"${SPDir}/rd-gl2/tr_glsl.cpp"
 		"${SPDir}/rd-gl2/tr_glsl_parse.cpp"
 		"${SPDir}/rd-gl2/tr_image.cpp"
@@ -126,8 +124,10 @@ if(BuildSPRdGL2 OR BuildJK2SPRdGL2)
 		"${SPDir}/rd-gl2/tr_local.h"
 		"${SPDir}/rd-gl2/tr_main.cpp"
 		"${SPDir}/rd-gl2/tr_marks.cpp"
-		"${SPDir}/rd-gl2/tr_mesh.cpp"
 		"${SPDir}/rd-gl2/tr_model.cpp"
+		"${SPDir}/rd-gl2/tr_model_mdr.cpp"
+		"${SPDir}/rd-gl2/tr_model_md3.cpp"
+		"${SPDir}/rd-gl2/tr_model_ghoul2.cpp"
 		"${SPDir}/rd-gl2/tr_model_iqm.cpp"
 		"${SPDir}/rd-gl2/tr_postprocess.cpp"
 		"${SPDir}/rd-gl2/tr_postprocess.h"
@@ -144,6 +144,8 @@ if(BuildSPRdGL2 OR BuildJK2SPRdGL2)
 		"${SPDir}/rd-gl2/tr_surface.cpp"
 		"${SPDir}/rd-gl2/tr_vbo.cpp"
 		"${SPDir}/rd-gl2/tr_world.cpp"
+		"${SPDir}/rd-gl2/tr_weather.cpp"
+		"${SPDir}/rd-gl2/tr_weather.h"
 		)
 	source_group("renderer" FILES ${SPRDGL2MainFiles})
 	set(SPRDGL2Files ${SPRDGL2Files} ${SPRDGL2MainFiles})

@@ -457,6 +457,9 @@ static void DrawSkySide( struct image_s *image, const int mins[2], const int max
 	item.program = sp;
 	item.depthRange = RB_GetDepthRange(backEnd.currentEntity, tess.shader);
 	item.ibo = backEndData->currentFrame->dynamicIbo;
+
+	item.isLightmapped = qfalse;
+
 	item.numAttributes = vertexArrays.numVertexArrays;
 	item.attributes = ojkAllocArray<vertexAttribute_t>(
 		*backEndData->perFrameMemory, vertexArrays.numVertexArrays);
@@ -827,6 +830,11 @@ Other things could be stuck in here, like birds in the sky, etc
 */
 void RB_StageIteratorSky( void ) {
 	if ( r_fastsky->integer ) {
+		return;
+	}
+
+	if (skyboxportal && !(backEnd.refdef.rdflags & RDF_SKYBOXPORTAL))
+	{
 		return;
 	}
 

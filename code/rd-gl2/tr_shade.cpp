@@ -146,7 +146,7 @@ Draws triangle outlines for debugging
 ================
 */
 static void DrawTris (shaderCommands_t *input) {
-#if 0
+#if 1
 	GL_Bind( tr.whiteImage );
 
 	GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE );
@@ -404,9 +404,9 @@ static void ComputeDeformValues(deform_t *type, genFunc_t *waveFunc, float defor
 				deformParams[1] = backEnd.ori.axis[1][2];
 				deformParams[2] = backEnd.ori.axis[2][2];
 				deformParams[3] = backEnd.ori.origin[2] - backEnd.currentEntity->e.shadowPlane;
-				deformParams[4] = backEnd.currentEntity->lightDir[0];
-				deformParams[5] = backEnd.currentEntity->lightDir[1];
-				deformParams[6] = backEnd.currentEntity->lightDir[2];
+				deformParams[4] = backEnd.currentEntity->modelLightDir[0];
+				deformParams[5] = backEnd.currentEntity->modelLightDir[1];
+				deformParams[6] = backEnd.currentEntity->modelLightDir[2];
 				break;
 
 			default:
@@ -1027,6 +1027,8 @@ static void ForwardDlight( const shaderCommands_t *input,  VertexArraysPropertie
 		item.depthRange = RB_GetDepthRange(backEnd.currentEntity, input->shader);
 		item.ibo = input->externalIBO ? input->externalIBO : backEndData->currentFrame->dynamicIbo;
 
+		item.isLightmapped = input->shader->isLightmapped;
+
 		item.numAttributes = vertexArrays->numVertexArrays;
 		item.attributes = ojkAllocArray<vertexAttribute_t>(
 			*backEndData->perFrameMemory, vertexArrays->numVertexArrays);
@@ -1051,21 +1053,29 @@ static void ForwardDlight( const shaderCommands_t *input,  VertexArraysPropertie
 }
 
 
-static void ProjectPshadowVBOGLSL( void ) {
+static void ProjectPshadowVBOGLSL( const shaderCommands_t *input, const VertexArraysProperties *vertexArrays) {
 	int		l;
 	vec3_t	origin;
 	float	radius;
-
-	shaderCommands_t *input = &tess;
 
 	if ( !backEnd.refdef.num_pshadows ) {
 		return;
 	}
 
+	cullType_t cullType = RB_GetCullType(&backEnd.viewParms, backEnd.currentEntity, input->shader->cullType);
+
+	UniformDataWriter uniformDataWriter;
+	SamplerBindingsWriter samplerBindingsWriter;
+	shaderStage_t *pStage = tess.xstages[0];
+
+	vertexAttribute_t attribs[ATTR_INDEX_MAX] = {};
+	GL_VertexArraysToAttribs(attribs, ARRAY_LEN(attribs), vertexArrays);
+
 	for ( l = 0 ; l < backEnd.refdef.num_pshadows ; l++ ) {
 		pshadow_t	*ps;
 		shaderProgram_t *sp;
 		vec4_t vector;
+		vec3_t vector2;
 
 		if ( !( tess.pshadowBits & ( 1 << l ) ) ) {
 			continue;	// this surface definately doesn't have any of this shadow
@@ -1077,43 +1087,61 @@ static void ProjectPshadowVBOGLSL( void ) {
 
 		sp = &tr.pshadowShader;
 
-		GLSL_BindProgram(sp);
+		uniformDataWriter.Start(sp);
 
-		GLSL_SetUniformMatrix4x4(sp, UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
+		uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
 
 		VectorCopy(origin, vector);
 		vector[3] = 1.0f;
-		GLSL_SetUniformVec4(sp, UNIFORM_LIGHTORIGIN, vector);
+		uniformDataWriter.SetUniformVec4(UNIFORM_LIGHTORIGIN, vector);
 
-		VectorScale(ps->lightViewAxis[0], 1.0f / ps->viewRadius, vector);
-		GLSL_SetUniformVec3(sp, UNIFORM_LIGHTFORWARD, vector);
+		VectorCopy(origin, vector2);
+		VectorScale(ps->lightViewAxis[0], 1.0f / ps->viewRadius, vector2);
+		uniformDataWriter.SetUniformVec3(UNIFORM_LIGHTFORWARD, vector2);
 
-		VectorScale(ps->lightViewAxis[1], 1.0f / ps->viewRadius, vector);
-		GLSL_SetUniformVec3(sp, UNIFORM_LIGHTRIGHT, vector);
+		VectorScale(ps->lightViewAxis[1], 1.0f / ps->viewRadius, vector2);
+		uniformDataWriter.SetUniformVec3(UNIFORM_LIGHTRIGHT, vector2);
 
-		VectorScale(ps->lightViewAxis[2], 1.0f / ps->viewRadius, vector);
-		GLSL_SetUniformVec3(sp, UNIFORM_LIGHTUP, vector);
+		VectorScale(ps->lightViewAxis[2], 1.0f / ps->viewRadius, vector2);
+		uniformDataWriter.SetUniformVec3(UNIFORM_LIGHTUP, vector2);
 
-		GLSL_SetUniformFloat(sp, UNIFORM_LIGHTRADIUS, radius);
+		uniformDataWriter.SetUniformFloat(UNIFORM_LIGHTRADIUS, radius);
 	  
 		// include GLS_DEPTHFUNC_EQUAL so alpha tested surfaces don't add light
 		// where they aren't rendered
-		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
+		uint32_t stateBits = 0;
+		stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL;
 
-		GL_BindToTMU( tr.pshadowMaps[l], TB_DIFFUSEMAP );
+		samplerBindingsWriter.AddStaticImage(tr.pshadowMaps[l], TB_DIFFUSEMAP);
 
-		//
-		// draw
-		//
+		CaptureDrawData(input, pStage, 0, 0);
 
-		if (input->multiDrawPrimitives)
-		{
-			R_DrawMultiElementsVBO(input->multiDrawPrimitives, input->multiDrawMinIndex, input->multiDrawMaxIndex, input->multiDrawNumIndexes, input->multiDrawFirstIndex);
-		}
-		else
-		{
-			R_DrawElementsVBO(input->numIndexes, input->firstIndex, input->minIndex, input->maxIndex);
-		}
+		DrawItem item = {};
+
+		// include GLS_DEPTHFUNC_EQUAL so alpha tested surfaces don't add light
+		// where they aren't rendered
+		item.stateBits = stateBits;
+		item.cullType = cullType;
+		item.program = sp;
+		item.depthRange = RB_GetDepthRange(backEnd.currentEntity, input->shader);
+		item.ibo = input->externalIBO ? input->externalIBO : backEndData->currentFrame->dynamicIbo;
+
+		item.isLightmapped = input->shader->isLightmapped;
+
+		item.numAttributes = vertexArrays->numVertexArrays;
+		item.attributes = ojkAllocArray<vertexAttribute_t>(
+			*backEndData->perFrameMemory, vertexArrays->numVertexArrays);
+		memcpy(item.attributes, attribs, sizeof(*item.attributes)*vertexArrays->numVertexArrays);
+
+		item.uniformData = uniformDataWriter.Finish(*backEndData->perFrameMemory);
+		// FIXME: This is a bit ugly with the casting
+		item.samplerBindings = samplerBindingsWriter.Finish(
+			*backEndData->perFrameMemory, (int *)&item.numSamplerBindings);
+
+		RB_FillDrawCommand(item.draw, GL_TRIANGLES, 1, input);
+
+		uint32_t key = RB_CreateSortKey(item, 14, input->shader->sort);
+		RB_AddDrawItem(backEndData->currentPass, key, item);
 
 		backEnd.pc.c_totalIndexes += tess.numIndexes;
 		//backEnd.pc.c_dlightIndexes += tess.numIndexes;
@@ -1193,6 +1221,8 @@ static void RB_FogPass( shaderCommands_t *input, const fog_t *fog, const VertexA
 	item.program = sp;
 	item.depthRange = RB_GetDepthRange(backEnd.currentEntity, input->shader);
 	item.ibo = input->externalIBO ? input->externalIBO : backEndData->currentFrame->dynamicIbo;
+
+	item.isLightmapped = input->shader->isLightmapped;
 
 	item.numAttributes = vertexArrays->numVertexArrays;
 	item.attributes = ojkAllocArray<vertexAttribute_t>(
@@ -1388,6 +1418,9 @@ static shaderProgram_t *SelectShaderProgram( int stageIndex, shaderStage_t *stag
 			}
 		}
 
+		if (backEnd.deferredPass && r_deferredShading->integer)
+			index |= LIGHTDEF_USE_DEFERRED_SHADING;
+
 		result = &stage->glslShaderGroup[index];
 		backEnd.pc.c_lightallDraws++;
 	}
@@ -1400,6 +1433,149 @@ static shaderProgram_t *SelectShaderProgram( int stageIndex, shaderStage_t *stag
 	return result;
 }
 
+void RB_StageIteratorLiquid( void ) 
+{
+	deform_t deformType;
+	genFunc_t deformGen;
+	float deformParams[7];
+
+	ComputeDeformValues(&deformType, &deformGen, deformParams);
+
+	cullType_t cullType = CT_FRONT_SIDED;
+
+	shaderCommands_t *input = &tess;
+	if (!input->numVertexes || !input->numIndexes || (tr.renderCubeFbo && glState.currentFBO == tr.renderCubeFbo))
+	{
+		return;
+	}
+	//
+	// log this call
+	//
+	if (r_logFile->integer)
+	{
+		// don't just call LogComment, or we will get
+		// a call to va() every frame!
+		GLimp_LogComment(va("--- RB_StageIteratorLiquid( %s ) ---\n", tess.shader->name));
+	}
+
+	//
+	// update vertex buffer data
+	// 
+	uint32_t vertexAttribs = RB_CalcShaderVertexAttribs(input->shader);
+	if (tess.useInternalVBO)
+	{
+		RB_DeformTessGeometry();
+		RB_UpdateVBOs(vertexAttribs);
+	}
+	else
+	{
+		backEnd.pc.c_staticVboDraws++;
+	}
+
+	//
+	// vertex arrays
+	//
+	VertexArraysProperties vertexArrays;
+	if (tess.useInternalVBO)
+	{
+		CalculateVertexArraysProperties(vertexAttribs, &vertexArrays);
+		for (int i = 0; i < vertexArrays.numVertexArrays; i++)
+		{
+			int attributeIndex = vertexArrays.enabledAttributes[i];
+			vertexArrays.offsets[attributeIndex] += backEndData->currentFrame->dynamicVboCommitOffset;
+		}
+	}
+	else
+	{
+		CalculateVertexArraysFromVBO(vertexAttribs, glState.currentVBO, &vertexArrays);
+	}
+
+	vertexAttribute_t attribs[ATTR_INDEX_MAX] = {};
+	GL_VertexArraysToAttribs(attribs, ARRAY_LEN(attribs), &vertexArrays);
+
+	UniformDataWriter uniformDataWriter;
+	SamplerBindingsWriter samplerBindingsWriter;
+
+	uniformDataWriter.Start(&tr.refractionShader);
+	uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
+	uniformDataWriter.SetUniformVec3(UNIFORM_VIEWORIGIN, backEnd.viewParms.ori.origin);
+	uniformDataWriter.SetUniformVec3(UNIFORM_LOCALVIEWORIGIN, backEnd.ori.viewOrigin);
+	uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELMATRIX, backEnd.ori.modelMatrix);
+
+	if (r_cubeMapping->integer)
+	{
+		vec4_t vec;
+		cubemap_t *cubemap = &tr.cubemaps[input->cubemapIndex - 1];
+
+		samplerBindingsWriter.AddStaticImage(cubemap->image, TB_CUBEMAP);
+
+		VectorSubtract(cubemap->origin, backEnd.viewParms.ori.origin, vec);
+		vec[3] = 1.0f;
+
+		VectorScale4(vec, 1.0f / cubemap->parallaxRadius, vec);
+
+		uniformDataWriter.SetUniformVec4(UNIFORM_CUBEMAPINFO, vec);
+	}
+
+	if (r_sunlightMode->integer)
+	{
+		samplerBindingsWriter.AddStaticImage(tr.screenShadowImage, TB_SHADOWMAP);
+		uniformDataWriter.SetUniformVec3(UNIFORM_PRIMARYLIGHTAMBIENT, backEnd.refdef.sunAmbCol);
+		uniformDataWriter.SetUniformVec3(UNIFORM_PRIMARYLIGHTCOLOR, backEnd.refdef.sunCol);
+		uniformDataWriter.SetUniformVec4(UNIFORM_PRIMARYLIGHTORIGIN, backEnd.refdef.sunDir);
+	}
+
+	LiquidBlock data = {};
+
+	data.isLiquid = 1.0;
+	data.height = tess.shader->liquid.height;
+	data.choppy = tess.shader->liquid.choppy;
+	data.speed = tess.shader->liquid.speed;
+	data.freq = tess.shader->liquid.freq;
+	data.depth = tess.shader->liquid.depth;
+	data.time = tess.shaderTime;
+	
+	RB_UpdateUniformBlock(UNIFORM_BLOCK_LIQUID, &data);
+
+	LiquidBlock2 data2 = {};
+
+	data2.water_color_r = tess.shader->liquid.water_color[0];
+	data2.water_color_g = tess.shader->liquid.water_color[1];
+	data2.water_color_b = tess.shader->liquid.water_color[2];
+	data2.fog_color_r = tess.shader->liquid.fog_color[0];
+	data2.fog_color_g = tess.shader->liquid.fog_color[1];
+	data2.fog_color_b = tess.shader->liquid.fog_color[2];
+	//ri->Printf(PRINT_ALL, "water_color should be: %f %f %f\n", tess.shader->liquid.water_color[0], tess.shader->liquid.water_color[1], tess.shader->liquid.water_color[2]);
+	//ri->Printf(PRINT_ALL, "water_color is: %f %f %f\n", data2.water_color_r, data2.water_color_g, data2.water_color_b);
+
+	RB_UpdateUniformBlock(UNIFORM_BLOCK_LIQUID2, &data2);
+
+
+	DrawItem item = {};
+	item.stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+	item.cullType = cullType;
+	item.program = &tr.refractionShader;
+	item.depthRange = RB_GetDepthRange(backEnd.currentEntity, input->shader);
+	item.ibo = input->externalIBO ? input->externalIBO : backEndData->currentFrame->dynamicIbo;
+
+	item.isLightmapped = input->shader->isLightmapped;
+
+	item.numAttributes = vertexArrays.numVertexArrays;
+	item.attributes = ojkAllocArray<vertexAttribute_t>(
+		*backEndData->perFrameMemory, vertexArrays.numVertexArrays);
+	memcpy(item.attributes, attribs, sizeof(*item.attributes)*vertexArrays.numVertexArrays);
+
+	item.uniformData = uniformDataWriter.Finish(*backEndData->perFrameMemory);
+	// FIXME: This is a bit ugly with the casting
+	item.samplerBindings = samplerBindingsWriter.Finish(
+		*backEndData->perFrameMemory, (int *)&item.numSamplerBindings);
+
+	RB_FillDrawCommand(item.draw, GL_TRIANGLES, 1, input);
+
+	uint32_t key = RB_CreateSortKey(item, 1, input->shader->sort);
+	RB_AddDrawItem(backEndData->currentPass, key, item);
+}
+
 static void RB_IterateStagesGeneric( shaderCommands_t *input, const VertexArraysProperties *vertexArrays )
 {
 	deform_t deformType;
@@ -1408,7 +1584,13 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input, const VertexArrays
 
 	ComputeDeformValues(&deformType, &deformGen, deformParams);
 
+	bool renderToCubemap = tr.renderCubeFbo && glState.currentFBO == tr.renderCubeFbo;
+	
 	cullType_t cullType = RB_GetCullType(&backEnd.viewParms, backEnd.currentEntity, input->shader->cullType);
+
+	// HACK: Not sure why this is needed
+	if (renderToCubemap)
+		cullType = CT_TWO_SIDED;
 
 	vertexAttribute_t attribs[ATTR_INDEX_MAX] = {};
 	GL_VertexArraysToAttribs(attribs, ARRAY_LEN(attribs), vertexArrays);
@@ -1592,7 +1774,18 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input, const VertexArrays
 		uniformDataWriter.SetUniformMatrix4x4(UNIFORM_MODELMATRIX, backEnd.ori.modelMatrix);
 
 		uniformDataWriter.SetUniformVec4(UNIFORM_NORMALSCALE, pStage->normalScale);
-		uniformDataWriter.SetUniformVec4(UNIFORM_SPECULARSCALE, pStage->specularScale);
+		{
+			vec4_t specularScale;
+			VectorCopy4(pStage->specularScale, specularScale);
+
+			if (renderToCubemap)
+			{
+				// force specular to nonmetal if rendering cubemaps
+				if (r_pbr->integer)
+					specularScale[1] = 0.0f;
+			}
+			uniformDataWriter.SetUniformVec4(UNIFORM_SPECULARSCALE, specularScale);
+		}
 
 		float alphaTestValue = useAlphaTestGE192 ? 0.75f : pStage->alphaTestValue;
 		uniformDataWriter.SetUniformFloat(UNIFORM_ALPHA_TEST_VALUE, alphaTestValue);
@@ -1668,6 +1861,17 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input, const VertexArrays
 				//
 				if (light && !allowVertexLighting)
 				{
+					vec2_t lightScales;
+					lightScales[0] = r_ambientScale->value;
+					lightScales[1] = r_directedScale->value;
+
+					if (tr.world)
+					{
+						uniformDataWriter.SetUniformVec3(UNIFORM_LIGHTGRIDORIGIN, tr.world->lightGridOrigin);
+						uniformDataWriter.SetUniformVec3(UNIFORM_LIGHTGRIDCELLINVERSESIZE, tr.world->lightGridInverseSize);
+						uniformDataWriter.SetUniformVec3(UNIFORM_LIGHTGRIDLIGHTSCALE, lightScales);
+					}
+
 					if (pStage->bundle[TB_NORMALMAP].image[0])
 					{
 						samplerBindingsWriter.AddAnimatedImage(&pStage->bundle[TB_NORMALMAP], TB_NORMALMAP);
@@ -1737,7 +1941,6 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input, const VertexArrays
 
 			uniformDataWriter.SetUniformVec4(UNIFORM_CUBEMAPINFO, vec);
 		}
-		samplerBindingsWriter.AddStaticImage(tr.envBrdfImage, TB_ENVBRDFMAP);
 
 		CaptureDrawData(input, pStage, index, stage);
 
@@ -1747,6 +1950,8 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input, const VertexArrays
 		item.program = sp;
 		item.depthRange = RB_GetDepthRange(backEnd.currentEntity, input->shader);
 		item.ibo = input->externalIBO ? input->externalIBO : backEndData->currentFrame->dynamicIbo;
+
+		item.isLightmapped = input->shader->isLightmapped;
 
 		item.numAttributes = vertexArrays->numVertexArrays;
 		item.attributes = ojkAllocArray<vertexAttribute_t>(
@@ -1804,6 +2009,8 @@ static void RB_RenderShadowmap( shaderCommands_t *input, const VertexArraysPrope
 	item.program = sp;
 	item.depthRange = RB_GetDepthRange(backEnd.currentEntity, input->shader);
 	item.ibo = input->externalIBO ? input->externalIBO : backEndData->currentFrame->dynamicIbo;
+
+	item.isLightmapped = input->shader->isLightmapped;
 
 	item.numAttributes = vertexArrays->numVertexArrays;
 	item.attributes = ojkAllocArray<vertexAttribute_t>(
@@ -1887,25 +2094,25 @@ void RB_StageIteratorGeneric( void )
 	{
 		RB_IterateStagesGeneric( input, &vertexArrays );
 
-#if 0 // don't do this for now while I get draw sorting working :)
 		//
 		// pshadows!
 		//
 		if (r_shadows->integer == 4 &&
 				tess.pshadowBits &&
 				tess.shader->sort <= SS_OPAQUE &&
-				!(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY)))
+				!(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY)) &&
+				!r_deferredShading->integer)
 		{
-			ProjectPshadowVBOGLSL();
+			ProjectPshadowVBOGLSL(input, &vertexArrays);
 		}
-#endif
 
 		// 
 		// now do any dynamic lighting needed
 		//
 		if ( tess.dlightBits &&
-				tess.shader->sort <= SS_OPAQUE &&
-				!(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY) ) )
+			 tess.shader->lightingStage >= 0 &&
+			 r_dlightMode->integer && 
+			 !r_deferredShading->integer)
 		{
 			ForwardDlight(input, &vertexArrays);
 		}
@@ -1980,6 +2187,29 @@ void RB_EndSurface( void ) {
 	// for debugging of sort order issues, stop rendering after a given sort value
 	if ( r_debugSort->integer && r_debugSort->integer < tess.shader->sort ) {
 		return;
+	}
+
+	if (skyboxportal)
+	{
+		// world
+		if (!(backEnd.refdef.rdflags & RDF_SKYBOXPORTAL))
+		{
+			if (tess.currentStageIteratorFunc == RB_StageIteratorSky)
+			{	// don't process these tris at all
+				return;
+			}
+		}
+		// portal sky
+		else
+		{
+			if (!drawskyboxportal)
+			{
+				if (!(tess.currentStageIteratorFunc == RB_StageIteratorSky))
+				{	// /only/ process sky tris
+					return;
+				}
+			}
+		}
 	}
 
 	//

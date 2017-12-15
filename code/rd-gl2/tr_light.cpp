@@ -402,13 +402,28 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
 	for ( i = 0 ; i < refdef->num_dlights ; i++ ) {
 		dl = &refdef->dlights[i];
 		VectorSubtract( dl->origin, lightOrigin, dir );
-		d = VectorNormalize( dir );
+		
+		if (r_pbr->integer) {
+			d = VectorNormalize(dir);
+			float sqrd = d * d;
+			float sqrr = dl->radius * dl->radius;
+			float factor = sqrd / sqrr;
+			factor = Com_Clamp(0.0f, 1.0f, (1.0f - (factor*factor)));
+			factor *= factor;
 
-		power = DLIGHT_AT_RADIUS * ( dl->radius * dl->radius );
-		if ( d < DLIGHT_MINIMUM_RADIUS ) {
-			d = DLIGHT_MINIMUM_RADIUS;
+			d = factor / d;
+			d *= DLIGHT_AT_RADIUS * dl->radius;
 		}
-		d = power / ( d * d );
+		else 
+		{
+			d = VectorNormalize(dir);
+			power = DLIGHT_AT_RADIUS * (dl->radius * dl->radius);
+			if (d < DLIGHT_MINIMUM_RADIUS) {
+				d = DLIGHT_MINIMUM_RADIUS;
+			}
+			d = power / (d * d);
+		}
+		
 
 		VectorMA( ent->directedLight, d, dl->color, ent->directedLight );
 		VectorMA( lightDir, d, dir, lightDir );

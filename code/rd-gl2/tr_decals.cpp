@@ -209,7 +209,7 @@ void RE_AddDecalToScene( qhandle_t decalShader, const vec3_t origin, const vec3_
 		// if it is a temporary (shadow) mark, add it immediately and forget about it
 		if ( temporary ) 
 		{
-			RE_AddPolyToScene( decalShader, mf->numPoints, verts );
+			RE_AddPolyToScene( decalShader, mf->numPoints, verts);
 			continue;
 		}
 

@@ -196,8 +196,13 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent, int entityNum ) {
 	personalModel = (qboolean)((ent->e.renderfx & RF_THIRD_PERSON) && !(tr.viewParms.isPortal 
 	                 || (tr.viewParms.flags & (VPF_SHADOWMAP | VPF_DEPTHSHADOW))));
 	
-	if ( ent->e.renderfx & RF_WRAP_FRAMES )
-	{
+	if (ent->e.renderfx & RF_CAP_FRAMES) {
+		if (ent->e.frame > header->numFrames - 1)
+			ent->e.frame = header->numFrames - 1;
+		if (ent->e.oldframe > header->numFrames - 1)
+			ent->e.oldframe = header->numFrames - 1;
+	}
+	else if ( ent->e.renderfx & RF_WRAP_FRAMES ) {
 		ent->e.frame %= header->numFrames;
 		ent->e.oldframe %= header->numFrames;
 	}	

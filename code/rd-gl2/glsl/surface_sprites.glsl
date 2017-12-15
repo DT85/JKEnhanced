@@ -19,12 +19,17 @@ layout(std140) uniform SurfaceSprite
 out vec2 var_TexCoords;
 out float var_Alpha;
 
+float random(vec2 n)
+{
+	return fract(sin(dot(n.xy, vec2(12.9898,78.233))) * 43758.5453);
+}
+
 void main()
 {
 	vec3 V = u_ViewOrigin - attr_Position;
 
-	float width = u_Width * (1.0 + u_WidthVariance*0.5);
-	float height = u_Height * (1.0 + u_HeightVariance*0.5);
+	float width = u_Width * (1.0 + u_WidthVariance*random(attr_Position.xz));
+	float height = u_Height * (1.0 + u_HeightVariance*random(attr_Position.xz));
 
 	float distanceToCamera = length(V);
 	float fadeScale = smoothstep(u_FadeStartDistance, u_FadeEndDistance,
@@ -35,8 +40,8 @@ void main()
 	vec3 offsets[] = vec3[](
 #if defined(FACE_UP)
 		vec3( halfWidth, -halfWidth, 0.0),
-		vec3( halfWidth,  halfWidth, 0.0),
-		vec3(-halfWidth,  halfWidth, 0.0),
+		vec3( halfWidth,  halfWidth, height),
+		vec3(-halfWidth,  halfWidth, height),
 		vec3(-halfWidth, -halfWidth, 0.0)
 #else
 		vec3( halfWidth, 0.0, 0.0),
@@ -56,11 +61,15 @@ void main()
 	vec3 offset = offsets[gl_VertexID];
 
 #if defined(FACE_CAMERA)
+	//TODO: Allow facing the camera on the z axis as well to match GL1.
 	vec2 toCamera = normalize(V.xy);
 	offset.xy = offset.x*vec2(toCamera.y, -toCamera.x);
-#elif !defined(FACE_UP)
+#elif defined(FACE_UP)
+	// Incorrect. Copied the FACE_CAMERA code (orients sprite only on X & Y axis) for FACE_UP instead. Now matches GL1.
 	// Make this sprite face in some direction
-	offset.xy = offset.x*attr_Normal.xy;
+	//offset.xy = offset.x*attr_Normal.xy;
+	vec2 toCamera = normalize(V.xy);
+	offset.xy = offset.x*vec2(toCamera.y, -toCamera.x);
 #endif
 
 	vec4 worldPos = vec4(attr_Position + offset, 1.0);

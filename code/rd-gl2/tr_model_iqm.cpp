@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "tr_local.h"
+#include "tr_cache.h"
 
 #define	LL(x) x=LittleLong(x)
 
@@ -746,7 +747,7 @@ R_CullIQM
 */
 static int R_CullIQM( iqmData_t *data, trRefEntity_t *ent ) {
 	vec3_t		bounds[2];
-	float		*oldBounds, *newBounds;
+	vec_t		*oldBounds, *newBounds;
 	int		i;
 
 	if (!data->bounds) {
@@ -788,11 +789,11 @@ R_ComputeIQMFogNum
 int R_ComputeIQMFogNum( iqmData_t *data, trRefEntity_t *ent ) {
 	int			i, j;
 	fog_t			*fog;
-	const float		*bounds;
-	const float		defaultBounds[6] = { -8, -8, -8, 8, 8, 8 };
+	const vec_t		*bounds;
+	const vec_t		defaultBounds[6] = { -8, -8, -8, 8, 8, 8 };
 	vec3_t			diag, center;
 	vec3_t			localOrigin;
-	float			radius;
+	vec_t			radius;
 
 	if ( tr.refdef.rdflags & RDF_NOWORLDMODEL ) {
 		return 0;
@@ -849,9 +850,16 @@ void R_AddIQMSurfaces( trRefEntity_t *ent, int entityNum ) {
 	surface = data->surfaces;
 
 	// don't add third_person objects if not in a portal
-	personalModel = (qboolean)((ent->e.renderfx & RF_THIRD_PERSON) && !tr.viewParms.isPortal);
+	personalModel = (qboolean)((ent->e.renderfx & RF_THIRD_PERSON) && !tr.viewParms.isPortal
+		|| (tr.viewParms.flags & (VPF_SHADOWMAP | VPF_DEPTHSHADOW)));
 
-	if ( ent->e.renderfx & RF_WRAP_FRAMES ) {
+	if (ent->e.renderfx & RF_CAP_FRAMES) {
+		if (ent->e.frame > data->num_frames - 1)
+			ent->e.frame = data->num_frames - 1;
+		if (ent->e.oldframe > data->num_frames - 1)
+			ent->e.oldframe = data->num_frames - 1;
+	}
+	else if ( ent->e.renderfx & RF_WRAP_FRAMES ) {
 		ent->e.frame %= data->num_frames;
 		ent->e.oldframe %= data->num_frames;
 	}
@@ -1136,10 +1144,10 @@ void RB_IQMSurfaceAnim( surfaceType_t *surface ) {
 			*outTangent++ = R_VboPackTangent(tangent);
 		}
 
-		(*outColor)[0] = data->colors[4*vtx+0] / 255.0f;
-		(*outColor)[1] = data->colors[4*vtx+1] / 255.0f;
-		(*outColor)[2] = data->colors[4*vtx+2] / 255.0f;
-		(*outColor)[3] = data->colors[4*vtx+3] / 255.0f;
+		(*outColor)[0] = data->colors[4*vtx+0] * 257;
+		(*outColor)[1] = data->colors[4*vtx+1] * 257;
+		(*outColor)[2] = data->colors[4*vtx+2] * 257;
+		(*outColor)[3] = data->colors[4*vtx+3] * 257;
 	}
 
 	tri = data->triangles + 3 * surf->first_triangle;

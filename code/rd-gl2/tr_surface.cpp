@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 // tr_surf.c
 #include "tr_local.h"
+#include "tr_weather.h"
 
 /*
 
@@ -2147,8 +2148,15 @@ static void RB_SurfaceSprites( srfSprites_t *surf )
 	if ( firstStage->alphaTestCmp != ATEST_CMP_NONE )
 		shaderFlags |= SSDEF_ALPHA_TEST;
 
-	if ( ss->type == SURFSPRITE_ORIENTED )
+	if (ss->type == SURFSPRITE_ORIENTED)
+	{
 		shaderFlags |= SSDEF_FACE_CAMERA;
+	}
+	
+	if (ss->type == SURFSPRITE_VERTICAL)
+	{
+		shaderFlags |= SSDEF_FACE_UP;
+	}
 
 	shaderProgram_t *program = programGroup + shaderFlags;
 	assert(program->uniformBlocks & (1 << UNIFORM_BLOCK_SURFACESPRITE));
@@ -2204,7 +2212,9 @@ void RB_Refractive(srfVBOMDVMesh_t * surface)
 	newRefractiveItem.depthRange.maxDepth = 1.0f;
 	newRefractiveItem.numSamplerBindings = 1;
 	newRefractiveItem.ibo = surface->ibo;
-	
+
+	newRefractiveItem.isLightmapped = (qboolean)(shader->lightmapIndex > 0);
+
 	VertexArraysProperties vertexArrays;
 	vertexAttribute_t attribs[ATTR_INDEX_MAX] = {};
 	
@@ -2265,5 +2275,6 @@ void (*rb_surfaceTable[SF_NUM_SURFACE_TYPES])( void *) = {
 	(void(*)(void*))RB_SurfaceVBOMesh,	    // SF_VBO_MESH,
 	(void(*)(void*))RB_SurfaceVBOMDVMesh,   // SF_VBO_MDVMESH
 	(void(*)(void*))RB_SurfaceSprites,      // SF_SPRITES
+	(void(*)(void*))RB_SurfaceWeather,      // SF_WEATHER
 	(void(*)(void*))RB_Refractive,			// SF_REFRACTIVE
 };
