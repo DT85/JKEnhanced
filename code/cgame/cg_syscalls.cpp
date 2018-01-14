@@ -290,8 +290,8 @@ unsigned int cgi_AnyLanguage_ReadCharFromString( const char *psText, int *piAdva
 	return Q_syscall( CG_ANYLANGUAGE_READFROMSTRING, psText, piAdvanceCount, pbIsTrailingPunctuation );
 }
 
-void cgi_R_Font_DrawString(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iMaxPixelWidth, const float scale /*= 1.0f*/) {
-	Q_syscall (CG_R_FONTDRAWSTRING, ox, oy, text, rgba, setIndex, iMaxPixelWidth, PASSFLOAT(scale) );
+void cgi_R_Font_DrawString(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iMaxPixelWidth, const float scale /*= 1.0f*/, const float aspectCorrection ) {
+	Q_syscall (CG_R_FONTDRAWSTRING, ox, oy, text, rgba, setIndex, iMaxPixelWidth, PASSFLOAT(scale), PASSFLOAT(aspectCorrection) );
 }
 
 //set some properties for the draw layer for my refractive effect (here primarily for mod authors) -rww
