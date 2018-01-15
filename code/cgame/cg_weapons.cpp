@@ -695,6 +695,8 @@ Clean up Ghoul2 instances (if they exist)
 */
 void CG_DeregisterWeapon (int weaponNum) {
 	weaponInfo_t *weaponInfo = &cg_weapons[weaponNum];
+	if(!weaponInfo->bUsesGhoul2)
+		return;
 	if(!gi.G2API_HaveWeGhoul2Models(weaponInfo->ghoul2))
 		return;
 	gi.G2API_RemoveBolt(&weaponInfo->ghoul2[weaponInfo->g2_index], weaponInfo->g2_flashbolt);
