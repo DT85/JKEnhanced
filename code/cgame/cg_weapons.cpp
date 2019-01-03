@@ -3044,7 +3044,7 @@ void CG_Weapon_f( void )
 					{//turn them both on
 						cg_entities[0].gent->client->ps.SaberActivate();
 						//if we'd holstered the second saber, best make sure it's in the left hand!
-						if ( cg_entities[0].gent->client->ps.dualSabers )
+						if ( cg_entities[0].gent->client->ps.dualSabers && cg_entities[0].gent->weaponModel[1] == -1 )
 						{
 							G_RemoveHolsterModels( cg_entities[0].gent );
 							WP_SaberAddG2SaberModels( cg_entities[0].gent, qtrue );

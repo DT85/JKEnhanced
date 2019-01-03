@@ -1020,6 +1020,11 @@ void G_Taunt( gentity_t *ent )
 			ent->client->ps.taunting = level.time + 100;
 			//make sure all sabers are on
 			ent->client->ps.SaberActivate();
+            if ( ent->client->ps.dualSabers && ent->weaponModel[1] == -1 )
+            {
+                G_RemoveHolsterModels( ent );
+                WP_SaberAddG2SaberModels( ent, qtrue );
+            }
 		}
 		else
 		{
@@ -1138,10 +1143,20 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 					break;
 				case SS_DUAL:
 					ent->client->ps.SaberActivate();
+                    if ( ent->client->ps.dualSabers && ent->weaponModel[1] == -1 )
+                    {
+                        G_RemoveHolsterModels( ent );
+                        WP_SaberAddG2SaberModels( ent, qtrue );
+                    }
 					anim = BOTH_DUAL_TAUNT;
 					break;
 				case SS_STAFF:
 					ent->client->ps.SaberActivate();
+                    if ( ent->client->ps.dualSabers && ent->weaponModel[1] == -1 )
+                    {
+                        G_RemoveHolsterModels( ent );
+                        WP_SaberAddG2SaberModels( ent, qtrue );
+                    }
 					anim = BOTH_STAFF_TAUNT;
 					break;
 				}
@@ -1213,6 +1228,11 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 			if ( ent->client->ps.weapon == WP_SABER )
 			{
 				ent->client->ps.SaberActivate();
+                if ( ent->client->ps.dualSabers && ent->weaponModel[1] == -1 )
+                {
+                    G_RemoveHolsterModels( ent );
+                    WP_SaberAddG2SaberModels( ent, qtrue );
+                }
 				if ( ent->client->ps.saber[0].flourishAnim != -1 )
 				{
 					anim = ent->client->ps.saber[0].flourishAnim;
@@ -1275,14 +1295,29 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 					case SS_STRONG:
 					case SS_DESANN:
 						ent->client->ps.SaberActivate();
+                        if ( ent->client->ps.dualSabers && ent->weaponModel[1] == -1 )
+                        {
+                            G_RemoveHolsterModels( ent );
+                            WP_SaberAddG2SaberModels( ent, qtrue );
+                        }
 						anim = BOTH_VICTORY_STRONG;
 						break;
 					case SS_DUAL:
 						ent->client->ps.SaberActivate();
+                        if ( ent->client->ps.dualSabers && ent->weaponModel[1] == -1 )
+                        {
+                            G_RemoveHolsterModels( ent );
+                            WP_SaberAddG2SaberModels( ent, qtrue );
+                        }
 						anim = BOTH_VICTORY_DUAL;
 						break;
 					case SS_STAFF:
 						ent->client->ps.SaberActivate();
+                        if ( ent->client->ps.dualSabers )
+                        {
+                            G_RemoveHolsterModels( ent && ent->weaponModel[1] == -1 );
+                            WP_SaberAddG2SaberModels( ent, qtrue );
+                        }
 						anim = BOTH_VICTORY_STAFF;
 						break;
 					}

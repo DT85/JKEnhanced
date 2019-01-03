@@ -8728,7 +8728,8 @@ SkipTrueView:
 									}
 								}
 								if (( cg_ignitionFlare.integer == 1 ||
-									(cg_ignitionFlare.integer > 0 && cg_SFXSabers.integer == 0)) && !(cent->gent->client->ps.saber[saberNum].type == SABER_SITH_SWORD || cent->gent->client->ps.saber[saberNum].saberFlags2&SFL2_NO_BLADE))
+									(cg_ignitionFlare.integer > 0 && cg_SFXSabers.integer == 0)) && !(cent->gent->client->ps.saber[saberNum].type == SABER_SITH_SWORD || cent->gent->client->ps.saber[saberNum].saberFlags2&SFL2_NO_BLADE) &&
+                                    cent->gent->weaponModel[saberNum] != -1)
 								{
 									vec3_t org_;
 									vec3_t	RGB	= {1.0f,0.75f,0.0f};
