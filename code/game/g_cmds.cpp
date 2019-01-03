@@ -1313,9 +1313,9 @@ void G_SetTauntAnim( gentity_t *ent, int taunt )
 						break;
 					case SS_STAFF:
 						ent->client->ps.SaberActivate();
-                        if ( ent->client->ps.dualSabers )
+                        if ( ent->client->ps.dualSabers && ent->weaponModel[1] == -1 )
                         {
-                            G_RemoveHolsterModels( ent && ent->weaponModel[1] == -1 );
+                            G_RemoveHolsterModels( ent );
                             WP_SaberAddG2SaberModels( ent, qtrue );
                         }
 						anim = BOTH_VICTORY_STAFF;
