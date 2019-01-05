@@ -296,6 +296,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	{
 		return;
 	}
+    
+    if ( cg_skippingcin.integer )
+    {
+        return;
+    }
 
 	//ci = &cent->gent->client->clientInfo;
 	clientNum = cent->gent->s.number;
