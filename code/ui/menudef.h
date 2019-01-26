@@ -36,6 +36,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define ITEM_TYPE_BIND				13		// multiple list setting, enumerated
 #define ITEM_TYPE_TEXTSCROLL		14		// scrolling text
 #define ITEM_TYPE_SLIDER_INTEGER	15
+#define ITEM_TYPE_SLIDER_ROTATE     16
 
 
 #define ITEM_ALIGN_LEFT 0                 // left alignment

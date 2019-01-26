@@ -451,6 +451,8 @@ vmCvar_t    ui_hilt2_color_red;
 vmCvar_t    ui_hilt2_color_green;
 vmCvar_t    ui_hilt2_color_blue;
 
+vmCvar_t    ui_char_model_angle;
+
 static void UI_UpdateScreenshot( void )
 {
 	qboolean changed = qfalse;
@@ -557,7 +559,8 @@ static cvarTable_t cvarTable[] =
 	{ &ui_SFXSabers,	"cg_SFXSabers",	"1", NULL, CVAR_ARCHIVE },
 	{ &ui_SFXSabersGlowSize,	"cg_SFXSabersGlowSize",	"1.0", NULL, CVAR_ARCHIVE },
 	{ &ui_SFXSabersCoreSize,	"cg_SFXSabersCoreSize",	"1.0", NULL, CVAR_ARCHIVE },
-
+    
+    { &ui_char_model_angle, "ui_char_model_angle", "180", NULL, 0},
 
 };
 
