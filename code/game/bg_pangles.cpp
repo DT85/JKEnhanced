@@ -475,12 +475,17 @@ qboolean PM_AdjustAnglesToPuller( gentity_t *ent, gentity_t *puller, usercmd_t *
 
 qboolean PM_AdjustAngleForWallRun( gentity_t *ent, usercmd_t *ucmd, qboolean doMove )
 {
-	if (( ent->client->ps.legsAnim == BOTH_WALL_RUN_RIGHT || ent->client->ps.legsAnim == BOTH_WALL_RUN_LEFT ) && ent->client->ps.legsAnimTimer > 500 )
+	if (( ent->client->ps.legsAnim == BOTH_WALL_RUN_RIGHT || ent->client->ps.legsAnim == BOTH_WALL_RUN_LEFT ) && ( ent->client->ps.legsAnimTimer > 500 || g_debugMelee->integer ) )
 	{//wall-running and not at end of anim
 		//stick to wall, if there is one
 		vec3_t	fwd, rt, traceTo, mins = {ent->mins[0],ent->mins[1],0}, maxs = {ent->maxs[0],ent->maxs[1],24}, fwdAngles = {0, ent->client->ps.viewangles[YAW], 0};
 		trace_t	trace;
 		float	dist, yawAdjust=0.0f;
+        
+        if ( ent->client->ps.legsAnimTimer <= 500 && ucmd->forwardmove > 0 )
+        {
+            NPC_SetAnim( ent, SETANIM_BOTH, ent->client->ps.legsAnim, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART );
+        }
 
 		AngleVectors( fwdAngles, fwd, rt, NULL );
 
@@ -538,12 +543,15 @@ qboolean PM_AdjustAngleForWallRun( gentity_t *ent, usercmd_t *ucmd, qboolean doM
 				VectorClear( ent->client->ps.moveDir );
 			}
 			//make me face perpendicular to the wall
-			ent->client->ps.viewangles[YAW] = vectoyaw( trace.plane.normal )+yawAdjust;
-			if ( ent->client->ps.viewEntity <= 0 || ent->client->ps.viewEntity >= ENTITYNUM_WORLD )
-			{//don't clamp angles when looking through a viewEntity
-				SetClientViewAngle( ent, ent->client->ps.viewangles );
-			}
-			ucmd->angles[YAW] = ANGLE2SHORT( ent->client->ps.viewangles[YAW] ) - ent->client->ps.delta_angles[YAW];
+            if ( !g_debugMelee->integer )
+            {
+                ent->client->ps.viewangles[YAW] = vectoyaw( trace.plane.normal )+yawAdjust;
+                if ( ent->client->ps.viewEntity <= 0 || ent->client->ps.viewEntity >= ENTITYNUM_WORLD )
+                {//don't clamp angles when looking through a viewEntity
+                    SetClientViewAngle( ent, ent->client->ps.viewangles );
+                }
+                ucmd->angles[YAW] = ANGLE2SHORT( ent->client->ps.viewangles[YAW] ) - ent->client->ps.delta_angles[YAW];
+            }
 			if ( (ent->s.number&&!G_ControlledByPlayer(ent)) || (!player_locked && !PlayerAffectedByStasis()) )
 			{
 				if ( doMove )
@@ -556,7 +564,7 @@ qboolean PM_AdjustAngleForWallRun( gentity_t *ent, usercmd_t *ucmd, qboolean doM
 					}
 					//pull me toward the wall
 					VectorScale( trace.plane.normal, -128, ent->client->ps.velocity );
-					if ( ent->client->ps.legsAnimTimer > 500 )
+					if ( ent->client->ps.legsAnimTimer > 500 || g_debugMelee->integer )
 					{//not at end of anim yet, pushing forward
 						//FIXME: or MA?
 						float speed = 175;
@@ -570,6 +578,10 @@ qboolean PM_AdjustAngleForWallRun( gentity_t *ent, usercmd_t *ucmd, qboolean doM
 						}
 						VectorMA( ent->client->ps.velocity, speed, fwd, ent->client->ps.velocity );
 					}
+                    if ( zVel < 0.0f && g_debugMelee->integer )
+                    {
+                        zVel = 0.0f;
+                    }
 					ent->client->ps.velocity[2] = zVel;//preserve z velocity
 					//VectorMA( ent->client->ps.velocity, -128, trace.plane.normal, ent->client->ps.velocity );
 					//pull me toward the wall, too
@@ -577,7 +589,7 @@ qboolean PM_AdjustAngleForWallRun( gentity_t *ent, usercmd_t *ucmd, qboolean doM
 				}
 			}
 			ucmd->forwardmove = 0;
-			return qtrue;
+			return qfalse;
 		}
 		else if ( doMove )
 		{//stop it
@@ -854,6 +866,10 @@ qboolean PM_AdjustAngleForWallRunUp( gentity_t *ent, usercmd_t *ucmd, qboolean d
 		trace_t	trace;
 		float	dist = 128;
 
+        
+        if ( ent->client->ps.legsAnimTimer <= 0 )
+            NPC_SetAnim( ent, SETANIM_BOTH, BOTH_FORCEWALLRUNFLIP_START, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_RESTART );
+
 		AngleVectors( fwdAngles, fwd, NULL, NULL );
 		VectorMA( ent->currentOrigin, dist, fwd, traceTo );
 		gi.trace( &trace, ent->currentOrigin, mins, maxs, traceTo, ent->s.number, ent->clipmask, (EG2_Collision)0, 0 );
@@ -883,7 +899,7 @@ qboolean PM_AdjustAngleForWallRunUp( gentity_t *ent, usercmd_t *ucmd, qboolean d
 			}
 		}
 		if ( //ucmd->upmove <= 0 &&
-			ent->client->ps.legsAnimTimer > 0
+			( g_debugMelee->integer || ent->client->ps.legsAnimTimer > 0 )
 			&& ucmd->forwardmove > 0
 			&& trace.fraction < 1.0f
 			&& (trace.plane.normal[2] >= 0.0f && trace.plane.normal[2] <= MAX_WALL_RUN_Z_NORMAL) )
@@ -927,7 +943,7 @@ qboolean PM_AdjustAngleForWallRunUp( gentity_t *ent, usercmd_t *ucmd, qboolean d
 						//pull me toward the wall
 						VectorScale( trace.plane.normal, -128, ent->client->ps.velocity );
 						//push me up
-						if ( ent->client->ps.legsAnimTimer > 200 )
+						if ( ent->client->ps.legsAnimTimer > 200 || g_debugMelee->integer )
 						{//not at end of anim yet
 							float speed = 300;
 							/*

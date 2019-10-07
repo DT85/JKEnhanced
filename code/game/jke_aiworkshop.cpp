@@ -245,17 +245,19 @@ void WorkshopDrawEntBox(gentity_t* ent, int colorOverride = -1) {
 //	Occurs every frame
 //
 void WorkshopThink() {
+    
+    // If the selected AI is dead, deselect it
+    if (selectedAI != ENTITYNUM_NONE) {
+        gentity_t* ent = &g_entities[selectedAI];
+        if (ent->health <= 0) {
+            selectedAI = ENTITYNUM_NONE;
+        }
+    }
+    
 	if (!inAIWorkshop) {
 		return;
 	}
 
-	// If the selected AI is dead, deselect it
-	if (selectedAI != ENTITYNUM_NONE) {
-		gentity_t* ent = &g_entities[selectedAI];
-		if (ent->health <= 0) {
-			selectedAI = ENTITYNUM_NONE;
-		}
-	}
 	if (drawBoxesTime < level.time && showDisplay) {
 		for (int i = 1; i < globals.num_entities; i++) {
 			if (!PInUse(i)) {
@@ -786,6 +788,42 @@ void Workshop_Set_BSetScript_f(gentity_t* ent) {
 	selected->behaviorSet[bset] = G_NewString(path);
 }
 
+// Set leader
+void Workshop_Set_Owner_f(gentity_t* ent) {
+    if (gi.argc() == 2) {
+        // There's a second argument. Use that.
+        if (!Q_stricmp(gi.argv(1), "me")) {
+            g_entities[selectedAI].owner = g_entities;
+            //g_entities[selectedAI].client->team_leader = g_entities;
+            return;
+        }
+        else {
+            g_entities[selectedAI].owner = &g_entities[atoi(gi.argv(1))];
+            return;
+            //g_entities[selectedAI].client->team_leader = &g_entities[atoi(gi.argv(1))];
+        }
+    }
+    
+    vec3_t        src, dest, vf;
+    trace_t        trace;
+    VectorCopy(ent->client->renderInfo.eyePoint, src);
+    AngleVectors(ent->client->ps.viewangles, vf, NULL, NULL);//ent->client->renderInfo.eyeAngles was cg.refdef.viewangles, basically
+    //extend to find end of use trace
+    VectorMA(src, 32967.0f, vf, dest);
+    
+    //Trace ahead to find a valid target
+    gi.trace(&trace, src, vec3_origin, vec3_origin, dest, ent->s.number, MASK_OPAQUE | CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_ITEM | CONTENTS_CORPSE, G2_NOCOLLIDE, 0);
+    if (trace.fraction == 1.0f || trace.entityNum < 1 || trace.entityNum == ENTITYNUM_NONE || trace.entityNum == ENTITYNUM_WORLD)
+    {
+        gi.Printf("Invalid entity\n");
+        return;
+    }
+    
+    gentity_t* target = &g_entities[trace.entityNum];
+    gentity_t* selected = &g_entities[selectedAI];
+    selected->owner = target;
+}
+
 extern void Q3_SetParm(int entID, int parmNum, const char *parmValue);
 void Workshop_Set_Parm_f(gentity_t* ent) {
 	if (gi.argc() != 3) {
@@ -901,6 +939,7 @@ workshopCmd_t workshopCommands[] = {
 	{ "workshop_activate_bset", "Activates a Behavior Set on an NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Activate_BSet_f },
 	{ "workshop_god", "Uses the god cheat (invincibility) on an NPC.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_God_f },
 	{ "workshop_notarget", "Uses the notarget cheat (can't be seen by enemies) on an NPC. Some NPCs have notarget on by default.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Notarget_f },
+    { "workshop_set_owner", "Gives the NPC a leader - the thing you are looking at.\nYou can use \"me\" or an entity number as an optional argument.", WSFLAG_ONLYINWS | WSFLAG_NEEDSELECTED, Workshop_Set_Owner_f },
 	{ "", "", 0, NULL },
 };
 

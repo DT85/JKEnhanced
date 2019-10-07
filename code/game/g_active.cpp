@@ -5603,6 +5603,19 @@ void ClientThink( int clientNum, usercmd_t *ucmd ) {
 
 	ent = g_entities + clientNum;
 
+    if ( ent->s.number && ent->owner && ent->client->NPC_class != CLASS_VEHICLE &&
+         ent->client->NPC_class != CLASS_SEEKER &&
+         ent->owner->client && ent->client->playerTeam == ent->owner->client->playerTeam &&
+         ent->client->ps.heldClient == ENTITYNUM_NONE &&
+         ent->client->ps.heldByClient == ENTITYNUM_NONE &&
+         ent->owner->client->NPC_class != CLASS_VEHICLE )
+    {
+        ucmd->rightmove = 0;
+        ucmd->upmove = 0;
+        ucmd->forwardmove = 0;
+        //VectorSet(ucmd->angles, 0, 0, 0);
+    }
+    
 	if ( ent->s.number<MAX_CLIENTS )
 	{
 		if ( ent->client->ps.viewEntity > 0 && ent->client->ps.viewEntity < ENTITYNUM_WORLD )

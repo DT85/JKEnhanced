@@ -227,7 +227,7 @@ qboolean BG_UnrestrainedPitchRoll( playerState_t *ps, Vehicle_t *pVeh )
 
 qboolean BG_AllowThirdPersonSpecialMove( playerState_t *ps )
 {
-	return (qboolean)((cg.renderingThirdPerson || cg_trueguns.integer || ps->weapon == WP_SABER || ps->weapon == WP_MELEE) && !cg.zoomMode);
+	return (qboolean)((cg.renderingThirdPerson || cg_trueguns.integer || ps->weapon == WP_SABER || ps->weapon == WP_MELEE || g_debugMelee->integer ) && !cg.zoomMode);
 }
 /*
 ===============
@@ -2070,10 +2070,10 @@ static qboolean PM_CheckJump( void )
 
 				if ( legsAnim == BOTH_WALL_RUN_LEFT )
 				{
-					if ( pm->ps->legsAnimTimer > 400 )
+					if ( pm->ps->legsAnimTimer > 400 || g_debugMelee->integer )
 					{//not at the end of the anim
 						float animLen = PM_AnimLength( pm->gent->client->clientInfo.animFileIndex, BOTH_WALL_RUN_LEFT );
-						if ( pm->ps->legsAnimTimer < animLen - 400 )
+						if ( pm->ps->legsAnimTimer < animLen - 400 || g_debugMelee->integer )
 						{//not at start of anim
 							VectorMA( pm->ps->origin, -16, right, traceto );
 							anim = BOTH_WALL_RUN_LEFT_FLIP;
@@ -2082,10 +2082,10 @@ static qboolean PM_CheckJump( void )
 				}
 				else if ( legsAnim == BOTH_WALL_RUN_RIGHT )
 				{
-					if ( pm->ps->legsAnimTimer > 400 )
+					if ( pm->ps->legsAnimTimer > 400 || g_debugMelee->integer )
 					{//not at the end of the anim
 						float animLen = PM_AnimLength( pm->gent->client->clientInfo.animFileIndex, BOTH_WALL_RUN_RIGHT );
-						if ( pm->ps->legsAnimTimer < animLen - 400 )
+						if ( pm->ps->legsAnimTimer < animLen - 400 || g_debugMelee->integer )
 						{//not at start of anim
 							VectorMA( pm->ps->origin, 16, right, traceto );
 							anim = BOTH_WALL_RUN_RIGHT_FLIP;
@@ -2128,7 +2128,7 @@ static qboolean PM_CheckJump( void )
 				AngleVectors( fwdAngles, fwd, NULL, NULL );
 
 				float animLen = PM_AnimLength( pm->gent->client->clientInfo.animFileIndex, BOTH_FORCEWALLRUNFLIP_START );
-				if ( pm->ps->legsAnimTimer < animLen - 250 )//was 400
+				if ( pm->ps->legsAnimTimer < animLen - 250 && !g_debugMelee->integer )//was 400
 				{//not at start of anim
 					VectorMA( pm->ps->origin, 16, fwd, traceto );
 					anim = BOTH_FORCEWALLRUNFLIP_END;
@@ -2373,7 +2373,7 @@ static qboolean PM_CheckJump( void )
 		&& (pm->ps->weaponTime > 0||(pm->cmd.buttons&BUTTON_ATTACK))
 		&& ((pm->ps->clientNum&&!PM_ControlledByPlayer())||((pm->ps->clientNum < MAX_CLIENTS||PM_ControlledByPlayer()) && BG_AllowThirdPersonSpecialMove( pm->ps ) && !cg.zoomMode)) )
 	{//okay, we just jumped and we're in an attack
-		if ( !PM_RollingAnim( pm->ps->legsAnim )
+		if ( (!PM_RollingAnim( pm->ps->legsAnim ) || g_debugMelee->integer)
 			&& !PM_InKnockDown( pm->ps )
 			&& !PM_InDeathAnim()
 			&& !PM_PainAnim( pm->ps->torsoAnim )
@@ -3013,7 +3013,7 @@ static void PM_AirMove( void ) {
 	{//I am force jumping and I'm not holding the button anymore
 		float curHeight = pm->ps->origin[2] - pm->ps->forceJumpZStart + (pm->ps->velocity[2]*pml.frametime);
 		float maxJumpHeight = forceJumpHeight[pm->ps->forcePowerLevel[FP_LEVITATION]];
-		if ( curHeight >= maxJumpHeight )
+		if ( curHeight >= maxJumpHeight && !(pm->ps->legsAnim == BOTH_FORCEWALLRUNFLIP_START && g_debugMelee->integer) )
 		{//reached top, cut velocity
 			pm->ps->velocity[2] = 0;
 		}
@@ -3758,7 +3758,7 @@ int PM_GetLandingAnim( void )
 		break;
 	case BOTH_WALL_RUN_LEFT://#
 	case BOTH_WALL_RUN_RIGHT://#
-		if ( pm->ps->legsAnimTimer > 500 )
+		if ( pm->ps->legsAnimTimer > 500 || g_debugMelee->integer )
 		{//only land at end of anim
 			return -1;
 		}
@@ -5178,7 +5178,17 @@ static void PM_GroundTrace( void ) {
 		*/
 		return;
 	}
-	else if ( pm->ps->legsAnimTimer > 300
+    else if ( pm->gent->owner && pm->gent->client && pm->gent->client->NPC_class != CLASS_VEHICLE &&
+              pm->gent->client->NPC_class != CLASS_SEEKER && pm->gent->owner->client &&
+              pm->gent->owner->client->NPC_class != CLASS_VEHICLE && pm->ps->heldByClient == ENTITYNUM_NONE &&
+              pm->ps->heldClient == ENTITYNUM_NONE && pm->gent->health > 0 && pm->gent->owner->health > 0 )
+    {
+        pml.groundPlane = qtrue;
+        pml.walking = qtrue;
+        pm->ps->groundEntityNum = ENTITYNUM_WORLD;
+        pm->ps->lastOnGround = level.time;
+    }
+	else if ( ( pm->ps->legsAnimTimer > 300 || g_debugMelee->integer )
 		&& (pm->ps->legsAnim == BOTH_WALL_RUN_RIGHT
 			|| pm->ps->legsAnim == BOTH_WALL_RUN_LEFT
 			|| pm->ps->legsAnim == BOTH_FORCEWALLRUNFLIP_START) )
@@ -10721,7 +10731,9 @@ qboolean PM_SaberLocked( void )
 #endif
 						gi.G2API_GetBoneAnimIndex( &gent->ghoul2[gent->playerModel], gent->lowerLumbarBone,
 						(cg.time?cg.time:level.time), &currentFrame, &junk, &junk, &junk, &junk2, NULL );
+#ifdef _DEBUG
 					assert( ret ); // this would be pretty bad, the below code seems to assume the call succeeds. -gil
+#endif
 
 					strength = G_SaberLockStrength( gent );
 					if ( PM_InSaberLockOld( pm->ps->torsoAnim ) )
@@ -15202,6 +15214,13 @@ void Pmove( pmove_t *pmove )
 	{//in an emplaced gun
 		PM_NoclipMove();
 	}
+    else if ( pm->gent && pm->gent->owner && pm->gent->client && pm->gent->client->NPC_class != CLASS_VEHICLE &&
+             pm->gent->client->NPC_class != CLASS_SEEKER && pm->gent->owner->client &&
+             pm->gent->owner->client->NPC_class != CLASS_VEHICLE && pm->ps->heldByClient == ENTITYNUM_NONE &&
+             pm->ps->heldClient == ENTITYNUM_NONE && pm->gent->health > 0 && pm->gent->owner->health > 0 )
+    {
+        PM_NoclipMove();
+    }
 	else if ( Flying == FLY_NORMAL )//|| pm->ps->gravity <= 0 )
 	{
 		// flight powerup doesn't allow jump and has different friction

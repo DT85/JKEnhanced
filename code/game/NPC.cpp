@@ -2396,6 +2396,48 @@ void NPC_Think ( gentity_t *self)//, int msec )
 	VectorCopy( self->client->ps.moveDir, oldMoveDir );
 	VectorClear( self->client->ps.moveDir );
 	// see if NPC ai is frozen
+    
+    if ( self->owner && self->client->NPC_class != CLASS_VEHICLE && self->client->NPC_class != CLASS_SEEKER &&
+         self->owner->client && self->client->playerTeam == self->owner->client->playerTeam &&
+         self->health > 0 && self->owner->health > 0 && self->owner->cervicalBolt &&
+         self->client->ps.heldByClient == ENTITYNUM_NONE &&
+         self->client->ps.heldClient == ENTITYNUM_NONE && self->owner->client->NPC_class != CLASS_VEHICLE )
+    {
+        vec3_t tempAngles;
+        vec3_t headPoint;
+        mdxaBone_t headMatrix;
+        gentity_t *rootEnt = self->owner;
+        VectorSet(tempAngles, 0, rootEnt->currentAngles[YAW], 0);
+        
+        self->NPC->stats.vfov = 90;
+        
+        gi.G2API_GetBoltMatrix( rootEnt->ghoul2, rootEnt->playerModel, rootEnt->cervicalBolt, &headMatrix,
+                               tempAngles, rootEnt->currentOrigin, level.time, NULL, rootEnt->s.modelScale );
+        
+        gi.G2API_GiveMeVectorFromMatrix( headMatrix, ORIGIN, headPoint );
+        
+        VectorCopy( headPoint, self->currentOrigin );
+        G_SetOrigin( self, self->currentOrigin );
+        
+        gi.G2API_GiveMeVectorFromMatrix( headMatrix, POSITIVE_Z, headPoint );
+        //vectoangles(headPoint, self->currentAngles);
+        //G_SetAngles(self, self->currentAngles);
+        //G_SetAngles(self, player->currentAngles);
+        
+        self->contents = CONTENTS_BODY;
+        
+        gi.linkentity( self );
+        
+        //NPC_UpdateAngles(qtrue, qtrue);
+        //ClientThink(self->s.number, &ucmd);
+        
+        VectorCopy(self->s.origin, self->s.origin2);
+        
+        //copy playerangles??
+        
+        NPC_SetAnim( self, SETANIM_LEGS, BOTH_VS_IDLE, SETANIM_FLAG_OVERRIDE | SETANIM_FLAG_HOLD );
+    }
+    
 	if ( debugNPCFreeze->integer || (NPC->svFlags&SVF_ICARUS_FREEZE) || (self && self->client && self->client->ps.stasisTime > level.time))
 	{
 		NPC_UpdateAngles( qtrue, qtrue );
