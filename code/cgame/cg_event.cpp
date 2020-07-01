@@ -297,14 +297,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		return;
 	}
     
-	//When skipping a cutscene the timescale is drastically increased, causing entities to be freed
-	//and possibly reused between the snapshot currentState and the actual state of the gent when accessed.
-	//We try to avoid this issue by ignoring events on entities that have been freed since the snapshot.
-
-	if (cent->gent->freetime > cent->snapShotTime)
-	{
-		return;
-	}
+    if ( cg_skippingcin.integer )
+    {
+        return;
+    }
 
 	//ci = &cent->gent->client->clientInfo;
 	clientNum = cent->gent->s.number;
