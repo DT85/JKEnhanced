@@ -7004,6 +7004,12 @@ void Item_ListBox_Paint(itemDef_t *item)
 				{
 
 					text = DC->feederItemText(item->special, i, 0, &optionalImage);
+					if (text && text[0]=='@')
+					{
+						const char* stringText = SE_GetString(&text[1]);
+						if (stringText && stringText[0])
+							text = stringText;
+					}
 					if (optionalImage >= 0)
 					{
 						//DC->drawHandlePic(x + 4 + listPtr->elementHeight, y, listPtr->columnInfo[j].width, listPtr->columnInfo[j].width, optionalImage);

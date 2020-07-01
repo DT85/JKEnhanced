@@ -113,6 +113,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define FEEDER_SABER2_SKIN_4				0x21
 #define FEEDER_SABER2_SKIN_5				0x22
 
+#define FEEDER_SABER_SINGLE_INFO			0x23
+#define FEEDER_SABER_STAFF_INFO				0x24
+
 
 #define UI_VERSION				200
 #define UI_HANDICAP				200

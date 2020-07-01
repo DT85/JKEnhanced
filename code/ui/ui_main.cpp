@@ -55,10 +55,15 @@ extern qboolean ItemParse_asset_model_go( itemDef_t *item, const char *name );
 extern qboolean ItemParse_asset_model_go_head( itemDef_t *item, const char *name, qboolean cleanuponly );
 extern qboolean ItemParse_model_g2skin_go( itemDef_t *item, const char *skinName );
 extern qboolean UI_SaberModelForSaber( const char *saberName, char *saberModel );
+extern qboolean UI_SaberProperNameForSaber( const char* saberName, char* saberProperName );
 extern qboolean UI_SaberSkinForSaber( const char *saberName, char *saberSkin, qboolean secondSaber );
+extern void UI_SaberGetHiltInfo(const char* singleHilts[MAX_SABER_HILTS], const char* staffHilts[MAX_SABER_HILTS]);
 extern void UI_SaberAttachToChar( itemDef_t *item );
 
 extern qboolean PC_Script_Parse(const char **out);
+
+const char* saberSingleHiltInfo[MAX_SABER_HILTS];
+const char* saberStaffHiltInfo[MAX_SABER_HILTS];
 
 #define LISTBUFSIZE 10240
 
@@ -771,6 +776,7 @@ void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const cha
 
 const char *UI_FeederItemText(float feederID, int index, int column, qhandle_t *handle)
 {
+	static char info[MAX_STRING_CHARS]; // don't change this size without changing the sizes inside the SaberProperName calls
 	*handle = -1;
 
 	if (feederID == FEEDER_SAVEGAMES)
@@ -927,6 +933,16 @@ const char *UI_FeederItemText(float feederID, int index, int column, qhandle_t *
 			*handle =  ui.R_RegisterShaderNoMip(va("models/weapons2/%s/icon_%s.jpg", uiInfo.customSabers[uiInfo.customSabers2Index].FolderName, uiInfo.customSabers[uiInfo.customSabers2Index].Skin5.skins[index].name));
 			return uiInfo.customSabers[uiInfo.customSabers2Index].Skin5.skins[index].name;
 		}
+	}
+	else if (feederID == FEEDER_SABER_SINGLE_INFO)
+	{
+		UI_SaberProperNameForSaber(saberSingleHiltInfo[index], info);
+		return info;
+	}
+	else if (feederID == FEEDER_SABER_STAFF_INFO)
+	{
+		UI_SaberProperNameForSaber(saberStaffHiltInfo[index], info);
+		return info;
 	}
 	else if (feederID == FEEDER_MODS)
 	{
@@ -1968,9 +1984,85 @@ static qboolean UI_RunMenuScript ( const char **args )
 		{
 			UI_ResetCharacterListBoxes();
 		}
+		else if (Q_stricmp(name, "getsaberhiltinfo") == 0)
+		{
+			UI_SaberGetHiltInfo(saberSingleHiltInfo, saberStaffHiltInfo);
+		}
 		else if ( Q_stricmp( name, "LaunchMP" ) == 0 )
 		{
 			// TODO for MAC_PORT, will only be valid for non-JK2 mode
+		}
+		else if (Q_stricmp(name, "setscreensaberhilt") == 0)
+		{
+			menuDef_t* menu;
+			itemDef_t* item;
+
+			menu = Menu_GetFocused();	// Get current menu
+			if (menu)
+			{
+				item = (itemDef_t*)Menu_FindItemByName((menuDef_t*)menu, "hiltbut");
+				if (item)
+				{
+					if (saberSingleHiltInfo[item->cursorPos])
+					{
+						Cvar_Set("ui_saber", saberSingleHiltInfo[item->cursorPos]);
+					}
+				}
+			}
+		}
+		else if (Q_stricmp(name, "setscreensaberhilt1") == 0)
+		{
+			menuDef_t* menu;
+			itemDef_t* item;
+
+			menu = Menu_GetFocused();	// Get current menu
+			if (menu)
+			{
+				item = (itemDef_t*)Menu_FindItemByName((menuDef_t*)menu, "hiltbut1");
+				if (item)
+				{
+					if (saberSingleHiltInfo[item->cursorPos])
+					{
+						Cvar_Set("ui_saber", saberSingleHiltInfo[item->cursorPos]);
+					}
+				}
+			}
+		}
+		else if (Q_stricmp(name, "setscreensaberhilt2") == 0)
+		{
+			menuDef_t* menu;
+			itemDef_t* item;
+
+			menu = Menu_GetFocused();	// Get current menu
+			if (menu)
+			{
+				item = (itemDef_t*)Menu_FindItemByName((menuDef_t*)menu, "hiltbut2");
+				if (item)
+				{
+					if (saberSingleHiltInfo[item->cursorPos])
+					{
+						Cvar_Set("ui_saber2", saberSingleHiltInfo[item->cursorPos]);
+					}
+				}
+			}
+		}
+		else if (Q_stricmp(name, "setscreensaberstaff") == 0)
+		{
+			menuDef_t* menu;
+			itemDef_t* item;
+
+			menu = Menu_GetFocused();	// Get current menu
+			if (menu)
+			{
+				item = (itemDef_t*)Menu_FindItemByName((menuDef_t*)menu, "hiltbut_staves");
+				if (item)
+				{
+					if (saberSingleHiltInfo[item->cursorPos])
+					{
+						Cvar_Set("ui_saber", saberStaffHiltInfo[item->cursorPos]);
+					}
+				}
+			}
 		}
 		else
 		{
@@ -2315,6 +2407,38 @@ static int UI_FeederCount(float feederID)
 	else if (feederID == FEEDER_SABER2_SKIN_5)
 	{
 		return uiInfo.customSabers[uiInfo.customSabers2Index].Skin5.count;
+	}
+	else if (feederID == FEEDER_SABER_SINGLE_INFO)
+	{
+		int count = 0, i;
+		for (i = 0; i < MAX_SABER_HILTS; i++)
+		{
+			if (saberSingleHiltInfo[i])
+			{
+				count++;
+			}
+			else
+			{//done
+				break;
+			}
+		}
+		return count;
+	}
+	else if (feederID == FEEDER_SABER_STAFF_INFO)
+	{
+		int count = 0, i;
+		for (i = 0; i < MAX_SABER_HILTS; i++)
+		{
+			if (saberStaffHiltInfo[i])
+			{
+				count++;
+			}
+			else
+			{//done
+				break;
+			}
+		}
+		return count;
 	}
 
 	return 0;
