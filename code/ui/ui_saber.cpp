@@ -416,6 +416,59 @@ float UI_SaberBladeRadiusForSaber( const char *saberName, int bladeNum )
 	return radius;
 }
 
+void UI_SaberLoadParms( void )
+{
+	int			len, totallen, saberExtFNLen, fileCnt, i;
+	char		*buffer, *holdChar, *marker;
+	char		saberExtensionListBuf[2048];			//	The list of file names read in
+
+	//ui.Printf( "UI Parsing *.sab saber definitions\n" );
+
+	ui_saber_parms_parsed = qtrue;
+	UI_CacheSaberGlowGraphics();
+
+	//set where to store the first one
+	totallen = 0;
+	marker = SaberParms;
+	marker[0] = '\0';
+
+	//now load in the sabers
+	fileCnt = ui.FS_GetFileList("ext_data/sabers", ".sab", saberExtensionListBuf, sizeof(saberExtensionListBuf) );
+
+	holdChar = saberExtensionListBuf;
+	for ( i = 0; i < fileCnt; i++, holdChar += saberExtFNLen + 1 )
+	{
+		saberExtFNLen = strlen( holdChar );
+
+		len = ui.FS_ReadFile( va( "ext_data/sabers/%s", holdChar), (void **) &buffer );
+
+		if ( len == -1 )
+		{
+			ui.Printf( "UI_SaberLoadParms: error reading %s\n", holdChar );
+		}
+		else
+		{
+			if ( totallen && *(marker-1) == '}' )
+			{//don't let it end on a } because that should be a stand-alone token
+				strcat( marker, " " );
+				totallen++;
+				marker++;
+			}
+			len = COM_Compress( buffer );
+
+			if ( totallen + len >= MAX_SABER_DATA_SIZE ) {
+				Com_Error( ERR_FATAL, "UI_SaberLoadParms: ran out of space before reading %s\n(you must make the .npc files smaller)", holdChar );
+			}
+			strcat( marker, buffer );
+			ui.FS_FreeFile( buffer );
+
+			totallen += len;
+			marker += len;
+		}
+	}
+}
+
+
 qboolean UI_SaberValidForPlayerInSP(const char* saberName)
 {
 	char allowed[8] = { 0 };
@@ -452,6 +505,12 @@ void UI_SaberGetHiltInfo(const char* singleHilts[MAX_SABER_HILTS], const char* s
 	const char* saberName;
 	const char* token;
 	const char* p;
+
+	//check the sabers have been loaded
+	if (!ui_saber_parms_parsed)
+	{
+		UI_SaberLoadParms();
+	}
 
 	//go through all the loaded sabers and put the valid ones in the proper list
 	p = SaberParms;
@@ -510,58 +569,6 @@ void UI_SaberGetHiltInfo(const char* singleHilts[MAX_SABER_HILTS], const char* s
 	singleHilts[numSingleHilts] = NULL;
 	staffHilts[numStaffHilts] = NULL;
 	COM_EndParseSession();
-}
-
-void UI_SaberLoadParms( void )
-{
-	int			len, totallen, saberExtFNLen, fileCnt, i;
-	char		*buffer, *holdChar, *marker;
-	char		saberExtensionListBuf[2048];			//	The list of file names read in
-
-	//ui.Printf( "UI Parsing *.sab saber definitions\n" );
-
-	ui_saber_parms_parsed = qtrue;
-	UI_CacheSaberGlowGraphics();
-
-	//set where to store the first one
-	totallen = 0;
-	marker = SaberParms;
-	marker[0] = '\0';
-
-	//now load in the sabers
-	fileCnt = ui.FS_GetFileList("ext_data/sabers", ".sab", saberExtensionListBuf, sizeof(saberExtensionListBuf) );
-
-	holdChar = saberExtensionListBuf;
-	for ( i = 0; i < fileCnt; i++, holdChar += saberExtFNLen + 1 )
-	{
-		saberExtFNLen = strlen( holdChar );
-
-		len = ui.FS_ReadFile( va( "ext_data/sabers/%s", holdChar), (void **) &buffer );
-
-		if ( len == -1 )
-		{
-			ui.Printf( "UI_SaberLoadParms: error reading %s\n", holdChar );
-		}
-		else
-		{
-			if ( totallen && *(marker-1) == '}' )
-			{//don't let it end on a } because that should be a stand-alone token
-				strcat( marker, " " );
-				totallen++;
-				marker++;
-			}
-			len = COM_Compress( buffer );
-
-			if ( totallen + len >= MAX_SABER_DATA_SIZE ) {
-				Com_Error( ERR_FATAL, "UI_SaberLoadParms: ran out of space before reading %s\n(you must make the .npc files smaller)", holdChar );
-			}
-			strcat( marker, buffer );
-			ui.FS_FreeFile( buffer );
-
-			totallen += len;
-			marker += len;
-		}
-	}
 }
 
 void UI_DoSFXSaber( vec3_t blade_muz, vec3_t blade_dir, float lengthMax, float radius, saber_colors_t color, saber_crystals_t crystals, int whichSaber )

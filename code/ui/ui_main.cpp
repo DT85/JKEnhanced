@@ -118,6 +118,7 @@ static void		UI_GetCharacterCvars ( void );
 static void		UI_UpdateSaberCvars ( void );
 static void		UI_GetSaberCvars ( void );
 static void		UI_ResetSaberCvars ( void );
+static void		UI_SetSaberFeeders(void);
 static void		UI_InitAllocForcePowers ( const char *forceName );
 static void		UI_AffectForcePowerLevel ( const char *forceName );
 static void		UI_ShowForceLevelDesc ( const char *forceName );
@@ -2063,6 +2064,10 @@ static qboolean UI_RunMenuScript ( const char **args )
 					}
 				}
 			}
+		}
+		else if (Q_stricmp(name, "setsaberfeeders") == 0)
+		{
+			UI_SetSaberFeeders();
 		}
 		else
 		{
@@ -7912,7 +7917,59 @@ static void UI_GetSaberCvars ( void )
     Cvar_Set ( "ui_hilt2_color_red", Cvar_VariableString ( "g_hilt2_color_red" ) );
     Cvar_Set ( "ui_hilt2_color_blue", Cvar_VariableString ( "g_hilt2_color_blue" ) );
     Cvar_Set ( "ui_hilt2_color_green", Cvar_VariableString ( "g_hilt2_color_green" ) );
+}
 
+static void UI_SetSaberFeeders(void)
+{
+	const char* saber1 = Cvar_VariableString("ui_saber");
+	const char* saber2 = Cvar_VariableString("ui_saber2");
+	menuDef_t* menu;
+	itemDef_t* item;
+	menu = Menu_GetFocused();	// Get current menu
+
+	if (!menu)
+		return;
+
+	for (int i = 0; i < MAX_SABER_HILTS; i++) // Set first saber
+	{
+		if (saberSingleHiltInfo[i] && !Q_stricmp(saberSingleHiltInfo[i], saber1))
+		{
+			item = (itemDef_t*)Menu_FindItemByName((menuDef_t*)menu, "hiltbut");
+			if (item)
+			{
+				item->cursorPos = i;
+			}
+			item = (itemDef_t*)Menu_FindItemByName((menuDef_t*)menu, "hiltbut1");
+			if (item)
+			{
+				item->cursorPos = i;
+			}
+			break;
+		}
+		
+		if (saberStaffHiltInfo[i] && !Q_stricmp(saberStaffHiltInfo[i], saber1))
+		{
+			item = (itemDef_t*)Menu_FindItemByName((menuDef_t*)menu, "hiltbut_staves");
+			if (item)
+			{
+				item->cursorPos = i;
+			}
+			break;
+		}
+	}
+
+	for (int j = 0; j < MAX_SABER_HILTS; j++) //Set second saber
+	{
+		if (saberSingleHiltInfo[j] && !Q_stricmp(saberSingleHiltInfo[j], saber2))
+		{
+			item = (itemDef_t*)Menu_FindItemByName((menuDef_t*)menu, "hiltbut2");
+			if (item)
+			{
+				item->cursorPos = j;
+			}
+			break;
+		}
+	}
 }
 
 static void UI_ResetSaberCvars ( void )
