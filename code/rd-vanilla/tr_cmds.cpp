@@ -139,7 +139,7 @@ R_GetCommandBufferReserved
 make sure there is enough command space
 ============
 */
-void *R_GetCommandBufferReserved( int bytes, int reservedBytes ) {
+void *R_GetCommandBufferReserved( unsigned int bytes, int reservedBytes ) {
 	renderCommandList_t	*cmdList;
 
 	cmdList = &backEndData->commands;
