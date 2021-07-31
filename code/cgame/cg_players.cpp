@@ -4722,6 +4722,8 @@ CG_AddRefEntityWithPowerups
 Adds a piece with modifications or duplications for powerups
 ===============
 */
+extern vmCvar_t	cg_thirdPersonAlpha;
+extern qboolean G_ControlledByPlayer(gentity_t* self);
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, int powerups, centity_t *cent )
 {
 	if ( !cent )
@@ -4800,6 +4802,25 @@ void CG_AddRefEntityWithPowerups( refEntity_t *ent, int powerups, centity_t *cen
             }
         }
     }
+
+	if ((cent->gent->s.number == 0 || G_ControlledByPlayer(cent->gent)))
+	{
+		float alpha = 1.0f;
+		if ((cg.overrides.active & CG_OVERRIDE_3RD_PERSON_APH))
+		{
+			alpha = cg.overrides.thirdPersonAlpha;
+		}
+		else
+		{
+			alpha = cg_thirdPersonAlpha.value;
+		}
+
+		if (alpha < 1.0f)
+		{
+			ent->renderfx |= RF_ALPHA_FADE;
+			ent->shaderRGBA[3] *= alpha;
+		}
+	}
     
 	// If certain states are active, we don't want to add in the regular body
 	if ( !gent->client->ps.powerups[PW_CLOAKED] &&
@@ -7499,7 +7520,7 @@ else
 	
 		if ( !(cent->gent->client->ps.saber[saberNum].type == SABER_SITH_SWORD || client->ps.saber[saberNum].saberFlags2&SFL2_NO_BLADE) )
 		{
-			CG_DoSFXSaber( fx->mVerts[0].origin, fx->mVerts[1].origin, fx->mVerts[2].origin, fx->mVerts[3].origin, (client->ps.saber[saberNum].blade[bladeNum].lengthMax), (client->ps.saber[saberNum].blade[bladeNum].radius), client->ps.saber[saberNum].blade[bladeNum].color, renderfx, (qboolean)!noDlight, client->ps.saber[saberNum].crystals );
+			CG_DoSFXSaber( fx->mVerts[0].origin, fx->mVerts[1].origin, fx->mVerts[2].origin, fx->mVerts[3].origin, (client->ps.saber[saberNum].blade[bladeNum].lengthMax), (client->ps.saber[saberNum].blade[bladeNum].radius), client->ps.saber[saberNum].blade[bladeNum].color, renderfx & ~RF_ALPHA_FADE, (qboolean)!noDlight, client->ps.saber[saberNum].crystals );
 		}
 
 		if ( cg.time > saberTrail->inAction )
@@ -8048,7 +8069,6 @@ CG_Player
 ===============
 */
 extern qboolean G_GetRootSurfNameWithVariant( gentity_t *ent, const char *rootSurfName, char *returnSurfName, int returnSize );
-extern qboolean G_ControlledByPlayer( gentity_t *self );
 extern qboolean G_RagDoll(gentity_t *ent, vec3_t forcedAngles);
 extern void CG_AddRadarEnt(centity_t *cent);
 int	cg_saberOnSoundTime[MAX_GENTITIES] = {0};
@@ -8450,27 +8470,6 @@ Ghoul2 Insert Start
 		}
 		*/
 //HACK - add swoop model
-
-extern vmCvar_t	cg_thirdPersonAlpha;
-
-		if ( (cent->gent->s.number == 0 || G_ControlledByPlayer( cent->gent )) )
-		{
-			float alpha = 1.0f;
-			if ( (cg.overrides.active&CG_OVERRIDE_3RD_PERSON_APH) )
-			{
-				alpha = cg.overrides.thirdPersonAlpha;
-			}
-			else
-			{
-				alpha = cg_thirdPersonAlpha.value;
-			}
-
-			if ( alpha < 1.0f )
-			{
-				ent.renderfx |= RF_ALPHA_FADE;
-				ent.shaderRGBA[3] = (unsigned char)(alpha * 255.0f);
-			}
-		}
 
 		if ( cg_debugHealthBars.integer )
 		{
