@@ -1981,6 +1981,50 @@ extern saber_colors_t TranslateSaberColor( const char *name );
 extern void WP_RemoveSaber( gentity_t *ent, int saberNum );
 void G_ChangePlayerModel( gentity_t *ent, const char *newModel );
 void G_ChangeHeadModel( gentity_t *ent, const char *newModel );
+
+void G_SetCustomSaberSkinFromCVars(gentity_t* ent, int saberNum)
+{
+	cvar_t** saber_skin_cvar = NULL;
+
+	if (saberNum == 0)
+		saber_skin_cvar = g_saber_skin;
+	else if (saberNum == 1)
+		saber_skin_cvar = g_saber2_skin;
+
+	if (saber_skin_cvar != NULL && ent->client->ps.saber[saberNum].name && ent->client->ps.saber[saberNum].name[0] && Q_stristr(ent->client->ps.saber[saberNum].name, "saberbuilder") && ent->client->ps.saber[saberNum].model)
+	{
+		char skinRoot[MAX_QPATH] = { 0 };
+		Q_strncpyz(skinRoot, ent->client->ps.saber[saberNum].model, MAX_QPATH);
+		int l = strlen(skinRoot);
+		while (l > 0 && skinRoot[l] != '/')
+		{ //parse back to first /
+			l--;
+		}
+
+		if (skinRoot[l] == '/')
+		{
+			l++;
+			skinRoot[l] = 0;
+
+			Q_strcat(skinRoot, MAX_QPATH, "|_");
+
+			for (int j = 0; j < MAX_SABER_PARTS; j++)
+			{
+				Q_strcat(skinRoot, MAX_QPATH, "|");
+				if (saber_skin_cvar[j] && saber_skin_cvar[j]->string && saber_skin_cvar[j]->string[0])
+				{
+					Q_strcat(skinRoot, MAX_QPATH, saber_skin_cvar[j]->string);
+				}
+			}
+
+			if (ent->client->ps.saber[saberNum].skin && gi.bIsFromZone(ent->client->ps.saber[saberNum].skin, TAG_G_ALLOC)) {
+				gi.Free(ent->client->ps.saber[saberNum].skin);
+			}
+			ent->client->ps.saber[saberNum].skin = G_NewString(skinRoot);
+		}
+	}
+}
+
 void G_SetSabersFromCVars( gentity_t *ent )
 {
 	if ( g_saber->string
@@ -1997,39 +2041,9 @@ void G_SetSabersFromCVars( gentity_t *ent )
 		{
 			ent->client->ps.saberStylesKnown |= ent->client->ps.saber[0].singleBladeStyle;
 		}
+		
 		//Custom saber stuff!
-		if (ent->client->ps.saber[0].name && ent->client->ps.saber[0].name[0] && Q_stristr(ent->client->ps.saber[0].name, "saberbuilder") && ent->client->ps.saber[0].model)
-		{
-			char skinRoot[MAX_QPATH] = {0};
-			Q_strncpyz(skinRoot, ent->client->ps.saber[0].model, MAX_QPATH);
-			int l = strlen(skinRoot);
-			while (l > 0 && skinRoot[l] != '/')
-			{ //parse back to first /
-				l--;
-			}
-			
-			if (skinRoot[l] == '/')
-			{
-				l++;
-				skinRoot[l] = 0;
-				
-				Q_strcat(skinRoot, MAX_QPATH, "|_");
-				
-				for (int j = 0; j < MAX_SABER_PARTS; j++)
-				{
-					Q_strcat(skinRoot, MAX_QPATH, "|");
-					if (g_saber_skin[j] && g_saber_skin[j]->string && g_saber_skin[j]->string[0])
-					{
-						Q_strcat(skinRoot, MAX_QPATH, g_saber_skin[j]->string);
-					}
-				}
-				
-				if(ent->client->ps.saber[0].skin && gi.bIsFromZone(ent->client->ps.saber[0].skin, TAG_G_ALLOC) ) {
-					gi.Free(ent->client->ps.saber[0].skin);
-				}
-				ent->client->ps.saber[0].skin = G_NewString(skinRoot);
-			}
-		}
+		G_SetCustomSaberSkinFromCVars(ent, 0);
 	}
 
 	if ( player
@@ -2069,38 +2083,7 @@ void G_SetSabersFromCVars( gentity_t *ent )
 			}
 			
 			//Custom saber stuff!
-			if (ent->client->ps.saber[1].name && ent->client->ps.saber[1].name[0] && Q_stristr(ent->client->ps.saber[1].name, "saberbuilder") && ent->client->ps.saber[1].model)
-			{
-				char skinRoot[MAX_QPATH] = {0};
-				Q_strncpyz(skinRoot, ent->client->ps.saber[1].model, MAX_QPATH);
-				int l = strlen(skinRoot);
-				while (l > 0 && skinRoot[l] != '/')
-				{ //parse back to first /
-					l--;
-				}
-				
-				if (skinRoot[l] == '/')
-				{
-					l++;
-					skinRoot[l] = 0;
-					
-					Q_strcat(skinRoot, MAX_QPATH, "|_");
-					
-					for (int j = 0; j < MAX_SABER_PARTS; j++)
-					{
-						Q_strcat(skinRoot, MAX_QPATH, "|");
-						if (g_saber2_skin[j] && g_saber2_skin[j]->string && g_saber2_skin[j]->string[0])
-						{
-							Q_strcat(skinRoot, MAX_QPATH, g_saber2_skin[j]->string);
-						}
-					}
-					
-					if(ent->client->ps.saber[1].skin && gi.bIsFromZone(ent->client->ps.saber[1].skin, TAG_G_ALLOC) ) {
-						gi.Free(ent->client->ps.saber[1].skin);
-					}
-					ent->client->ps.saber[1].skin = G_NewString(skinRoot);
-				}
-			}
+			G_SetCustomSaberSkinFromCVars(ent, 1);
 
 			if ( (ent->client->ps.saber[1].saberFlags&SFL_TWO_HANDED) )
 			{//tsk tsk, can't use a twoHanded saber as second saber
@@ -2457,6 +2440,8 @@ void G_ReloadSaberData( gentity_t *ent )
 		{
 			ent->client->ps.saberStylesKnown |= ent->client->ps.saber[0].singleBladeStyle;
 		}
+		//Custom saber stuff!
+		G_SetCustomSaberSkinFromCVars(ent, 0);
 	}
 	if ( ent->client->ps.saber[1].name != NULL )
 	{
@@ -2469,6 +2454,8 @@ void G_ReloadSaberData( gentity_t *ent )
 		{
 			ent->client->ps.saberStylesKnown |= ent->client->ps.saber[1].singleBladeStyle;
 		}
+		//Custom saber stuff!
+		G_SetCustomSaberSkinFromCVars(ent, 1);
 	}
 }
 
