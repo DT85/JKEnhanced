@@ -12110,7 +12110,8 @@ void PM_WeaponLightsaber(void)
 	if ( pm->ps->weapons[WP_SCEPTER]
 		&& !pm->ps->dualSabers
 		&& pm->gent
-		&& pm->gent->weaponModel[1] )
+		&& pm->gent->weaponModel[1]
+		&& pm->ps->saberAnimLevel != SS_KATARN)
 	{//holding scepter in left hand, use dual style
 		pm->ps->saberAnimLevel = SS_DUAL;
 		animLevelOverridden = qtrue;
