@@ -11493,6 +11493,33 @@ qboolean Item_Slider_Integer_HandleKey(itemDef_t *item, int key, qboolean down)
 
 /*
 =================
+Item_Slider_HandleKey_Rotate
+=================
+*/
+qboolean Item_Slider_HandleKey_Rotate(itemDef_t* item, int key, qboolean down) {
+
+	if (item->window.flags & WINDOW_HASFOCUS && item->cvar && Rect_ContainsPoint(&item->window.rect, DC->cursorx, DC->cursory)) {
+		if (key == A_MWHEELUP || key == A_MWHEELDOWN) {
+			editFieldDef_t* editDef = (editFieldDef_t*)item->typeData;
+			if (editDef) {
+				int intValue;
+				float angleDiff;
+				float curAngle = DC->getCVarValue(item->cvar);
+				if (key == A_MWHEELDOWN)
+					angleDiff = -editDef->range / 18.0f; //seems a decent step?
+				else if (key == A_MWHEELUP)
+					angleDiff = editDef->range / 18.0f;
+				intValue = (int)(angleDiff + curAngle) % 360;
+				DC->setCVar(item->cvar, va("%d", intValue));
+				return qtrue;
+			}
+		}
+	}
+	return qfalse;
+}
+
+/*
+=================
 Item_HandleKey
 =================
 */
@@ -11563,8 +11590,7 @@ qboolean Item_HandleKey(itemDef_t *item, int key, qboolean down)
 			return Item_Slider_Integer_HandleKey(item, key, down);
 			break;
         case ITEM_TYPE_SLIDER_ROTATE:
-            //don't bother with this!
-            return qfalse;
+			return Item_Slider_HandleKey_Rotate(item, key, down);
             break;
 //JLF MPMOVED
 		case ITEM_TYPE_TEXT:
