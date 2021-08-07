@@ -2459,6 +2459,9 @@ void G_FixMins( gentity_t *ent )
 	}//crap, stuck!
 }
 
+extern qboolean G_TuskenAttackAnimDamage(gentity_t* self);
+extern void Tusken_StaffTrace(gentity_t* self);
+extern void Noghri_StickTrace(gentity_t* self);
 
 qboolean G_CheckClampUcmd( gentity_t *ent, usercmd_t *ucmd )
 {
@@ -3146,6 +3149,29 @@ qboolean G_CheckClampUcmd( gentity_t *ent, usercmd_t *ucmd )
 			VectorClear( ent->client->ps.moveDir );
 		}
 		overridAngles = PM_AdjustAnglesForLongJump( ent, ucmd )?qtrue:overridAngles;
+	}
+	else if( ent->s.number < MAX_CLIENTS && G_TuskenAttackAnimDamage( ent ) &&
+			(ent->s.weapon == WP_NOGHRI_STICK || ent->s.weapon == WP_TUSKEN_RIFLE || ent->s.weapon == WP_TUSKEN_STAFF))
+	{
+		//reuse saber trace timer for this. these traces are only meant to be called every 50ms
+		//really should rework to be more like other traces.
+
+		int wait = FRAMETIME / 2;
+		//sanity check
+
+		if (ent->client->ps.saberDamageDebounceTime - level.time > wait)
+		{//when you unpause the game with force speed on, the time gets *really* wiggy...
+			ent->client->ps.saberDamageDebounceTime = level.time + wait;
+		}
+		if (ent->client->ps.saberDamageDebounceTime <= level.time)
+		{
+			if (ent->s.weapon == WP_NOGHRI_STICK)
+				Noghri_StickTrace(ent);
+			else if (ent->s.weapon == WP_TUSKEN_RIFLE || ent->s.weapon == WP_TUSKEN_STAFF)
+				Tusken_StaffTrace(ent);
+
+			ent->client->ps.saberDamageDebounceTime = level.time + wait;
+		}
 	}
 	else if ( PM_KickingAnim( ent->client->ps.legsAnim )
 		|| ent->client->ps.legsAnim == BOTH_ARIAL_F1

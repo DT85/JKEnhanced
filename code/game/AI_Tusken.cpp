@@ -408,15 +408,15 @@ void NPC_BSTusken_Attack( void )
 }
 
 extern void G_Knockdown( gentity_t *self, gentity_t *attacker, const vec3_t pushDir, float strength, qboolean breakSaberLock );
-void Tusken_StaffTrace( void )
+void Tusken_StaffTrace( gentity_t *self )
 {
-	if ( !NPC->ghoul2.size()
-		|| NPC->weaponModel[0] <= 0 )
+	if ( !self->ghoul2.size()
+		|| self->weaponModel[0] <= 0 )
 	{
 		return;
 	}
 
-	int			boltIndex = gi.G2API_AddBolt(&NPC->ghoul2[NPC->weaponModel[0]], "*weapon");
+	int			boltIndex = gi.G2API_AddBolt(&self->ghoul2[self->weaponModel[0]], "*weapon");
 	if ( boltIndex != -1 )
 	{
 		int curTime = (cg.time?cg.time:level.time);
@@ -425,14 +425,14 @@ void Tusken_StaffTrace( void )
 		for ( int time = curTime-25; time <= curTime+25&&!hit; time += 25 )
 		{
 			mdxaBone_t	boltMatrix;
-			vec3_t		tip, dir, base, angles={0,NPC->currentAngles[YAW],0};
+			vec3_t		tip, dir, base, angles={0,self->currentAngles[YAW],0};
 			vec3_t		mins={-2,-2,-2},maxs={2,2,2};
 			trace_t		trace;
 
-			gi.G2API_GetBoltMatrix( NPC->ghoul2, NPC->weaponModel[0],
+			gi.G2API_GetBoltMatrix(self->ghoul2, self->weaponModel[0],
 						boltIndex,
-						&boltMatrix, angles, NPC->currentOrigin, time,
-						NULL, NPC->s.modelScale );
+						&boltMatrix, angles, self->currentOrigin, time,
+						NULL, self->s.modelScale );
 			gi.G2API_GiveMeVectorFromMatrix( boltMatrix, ORIGIN, base );
 			gi.G2API_GiveMeVectorFromMatrix( boltMatrix, NEGATIVE_Y, dir );
 			VectorMA( base, -20, dir, base );
@@ -443,23 +443,23 @@ void Tusken_StaffTrace( void )
 				G_DebugLine(base, tip, 1000, 0x000000ff, qtrue);
 			}
 	#endif
-			gi.trace( &trace, base, mins, maxs, tip, NPC->s.number, MASK_SHOT, G2_RETURNONHIT, 10 );
+			gi.trace( &trace, base, mins, maxs, tip, self->s.number, MASK_SHOT, G2_RETURNONHIT, 10 );
 			if ( trace.fraction < 1.0f && trace.entityNum != lastHit )
 			{//hit something
 				gentity_t *traceEnt = &g_entities[trace.entityNum];
 				if ( traceEnt->takedamage
-					&& (!traceEnt->client || traceEnt == NPC->enemy || traceEnt->client->NPC_class != NPC->client->NPC_class) )
+					&& (!traceEnt->client || traceEnt == self->enemy || traceEnt->client->NPC_class != self->client->NPC_class) )
 				{//smack
 					int dmg = Q_irand( 5, 10 ) * (g_spskill->integer+1);
 
 					//FIXME: debounce?
 					G_Sound( traceEnt, G_SoundIndex( va( "sound/weapons/tusken_staff/stickhit%d.wav", Q_irand( 1, 4 ) ) ) );
-					G_Damage( traceEnt, NPC, NPC, vec3_origin, trace.endpos, dmg, DAMAGE_NO_KNOCKBACK, MOD_MELEE );
+					G_Damage( traceEnt, self, self, vec3_origin, trace.endpos, dmg, DAMAGE_NO_KNOCKBACK, MOD_MELEE );
 					if ( traceEnt->health > 0
 						&& ( (traceEnt->client&&traceEnt->client->NPC_class==CLASS_JAWA&&!Q_irand(0,1))
 							|| dmg > 19 ) )//FIXME: base on skill!
 					{//do pain on enemy
-						G_Knockdown( traceEnt, NPC, dir, 300, qtrue );
+						G_Knockdown( traceEnt, self, dir, 300, qtrue );
 					}
 					lastHit = trace.entityNum;
 					hit = qtrue;
@@ -513,7 +513,7 @@ void NPC_BSTusken_Default( void )
 
 	if ( G_TuskenAttackAnimDamage( NPC ) )
 	{
-		Tusken_StaffTrace();
+		Tusken_StaffTrace( NPC );
 	}
 
 	if( !NPC->enemy )
