@@ -169,6 +169,8 @@ cvar_t	*broadsword_smallbbox;
 cvar_t	*broadsword_extra1;
 cvar_t	*broadsword_extra2;
 
+cvar_t	*r_ratioFix;
+
 cvar_t	*broadsword_effcorr;
 cvar_t	*broadsword_ragtobase;
 cvar_t	*broadsword_dircap;
@@ -1671,6 +1673,8 @@ Ghoul2 Insert Start
 /*
 Ghoul2 Insert End
 */
+
+	r_ratioFix = ri->Cvar_Get("r_ratioFix", "1", CVAR_ARCHIVE);
 
 	sv_mapname = ri->Cvar_Get ( "mapname", "nomap", CVAR_SERVERINFO | CVAR_ROM );
 	sv_mapChecksum = ri->Cvar_Get ( "sv_mapChecksum", "", CVAR_ROM );

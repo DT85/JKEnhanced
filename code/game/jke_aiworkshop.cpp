@@ -21,111 +21,111 @@ extern stringID_table_t FPTable[];
 
 #define OL_S	0.5f
 #define OL_Y	30
-#define OL_H	6
+#define OL_H	7
 static void WorkshopDrawEntityInformation(gentity_t* ent, int x, const char* title) {
 	int add = OL_H;
 	vec4_t textcolor = { 0.4f, 0.4f, 0.8f, 1.0f };
 
-	cgi_R_Font_DrawString(x, OL_Y, title, textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	cgi_R_Font_DrawString(x, OL_Y, title, textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 
-	cgi_R_Font_DrawString(x, OL_Y + add, va("NPC_type: %s", ent->NPC_type), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	cgi_R_Font_DrawString(x, OL_Y + add, va("NPC_type: %s", ent->NPC_type), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 	add += OL_H;
 
-	cgi_R_Font_DrawString(x, OL_Y + add, va("health: %i/%i", ent->health, ent->max_health), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	cgi_R_Font_DrawString(x, OL_Y + add, va("health: %i/%i", ent->health, ent->max_health), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 	add += OL_H;
 
 	if (ent->script_targetname) {
-		cgi_R_Font_DrawString(x, OL_Y + add, va("script_targetname: %s", ent->script_targetname), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, va("script_targetname: %s", ent->script_targetname), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 	}
 
 	if (ent->NPC->goalEntity) {
-		cgi_R_Font_DrawString(x, OL_Y + add, va("goalEnt = %i", ent->NPC->goalEntity->s.number), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, va("goalEnt = %i", ent->NPC->goalEntity->s.number), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 	}
-	cgi_R_Font_DrawString(x, OL_Y + add, va("bs = %s", BSTable[ent->NPC->behaviorState].name), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	cgi_R_Font_DrawString(x, OL_Y + add, va("bs = %s", BSTable[ent->NPC->behaviorState].name), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 	add += OL_H;
 	if (ent->NPC->combatMove) {
-		cgi_R_Font_DrawString(x, OL_Y + add, "-- in combat move --", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, "-- in combat move --", textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 	}
 	
-	cgi_R_Font_DrawString(x, OL_Y + add, va("class = %s", NPCClassTable[ent->client->NPC_class].name), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	cgi_R_Font_DrawString(x, OL_Y + add, va("class = %s", NPCClassTable[ent->client->NPC_class].name), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 	add += OL_H;
-	cgi_R_Font_DrawString(x, OL_Y + add, va("rank = %s (%i)", RankTable[ent->NPC->rank].name, ent->NPC->rank), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	cgi_R_Font_DrawString(x, OL_Y + add, va("rank = %s (%i)", RankTable[ent->NPC->rank].name, ent->NPC->rank), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 	add += OL_H;
 
 	if (ent->NPC->scriptFlags) {
-		cgi_R_Font_DrawString(x, OL_Y + add, va("scriptFlags: %i", ent->NPC->scriptFlags), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, va("scriptFlags: %i", ent->NPC->scriptFlags), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 	}
 	if (ent->NPC->aiFlags) {
-		cgi_R_Font_DrawString(x, OL_Y + add, va("aiFlags: %i", ent->NPC->aiFlags), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, va("aiFlags: %i", ent->NPC->aiFlags), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 	}
 
 	if (ent->client->noclip) {
-		cgi_R_Font_DrawString(x, OL_Y + add, "cheat: NOCLIP", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, "cheat: NOCLIP", textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 	}
 
 	if (ent->flags & FL_GODMODE) {
-		cgi_R_Font_DrawString(x, OL_Y + add, "cheat: GODMODE", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, "cheat: GODMODE", textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 	}
 
 	if (ent->flags & FL_NOTARGET) {
-		cgi_R_Font_DrawString(x, OL_Y + add, "cheat: NOTARGET", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, "cheat: NOTARGET", textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 	}
 
 	if (ent->flags & FL_UNDYING) {
-		cgi_R_Font_DrawString(x, OL_Y + add, "cheat: UNDEAD", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, "cheat: UNDEAD", textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 	}
 
-	cgi_R_Font_DrawString(x, OL_Y + add, va("playerTeam: %s", teamTable[ent->client->playerTeam].name), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	cgi_R_Font_DrawString(x, OL_Y + add, va("playerTeam: %s", teamTable[ent->client->playerTeam].name), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 	add += OL_H;
 
-	cgi_R_Font_DrawString(x, OL_Y + add, va("enemyTeam: %s", teamTable[ent->client->enemyTeam].name), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	cgi_R_Font_DrawString(x, OL_Y + add, va("enemyTeam: %s", teamTable[ent->client->enemyTeam].name), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 	add += OL_H;
 
-	cgi_R_Font_DrawString(x, OL_Y + add, "-- assigned scripts --", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	cgi_R_Font_DrawString(x, OL_Y + add, "-- assigned scripts --", textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 	add += OL_H;
 
 	for (int i = BSET_SPAWN; i < NUM_BSETS; i++) {
 		if (ent->behaviorSet[i]) {
-			cgi_R_Font_DrawString(x, OL_Y + add, va("%s: %s", BSETTable[i].name, ent->behaviorSet[i]), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+			cgi_R_Font_DrawString(x, OL_Y + add, va("%s: %s", BSETTable[i].name, ent->behaviorSet[i]), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 			add += OL_H;
 		}
 	}
 
 	if (ent->parms) {
-		cgi_R_Font_DrawString(x, OL_Y + add, "-- parms --", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, "-- parms --", textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 		for (int i = 0; i < MAX_PARMS; i++) {
 			if (ent->parms->parm[i][0]) {
-				cgi_R_Font_DrawString(x, OL_Y + add, va("parm%i : %s", i + 1, ent->parms->parm[i]), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+				cgi_R_Font_DrawString(x, OL_Y + add, va("parm%i : %s", i + 1, ent->parms->parm[i]), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 				add += OL_H;
 			}
 		}
 	}
 
 	if (ent->NPC->group && ent->NPC->group->numGroup > 1) {
-		cgi_R_Font_DrawString(x, OL_Y + add, "-- squad data --", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, "-- squad data --", textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
-		cgi_R_Font_DrawString(x, OL_Y + add, va("morale: %i", ent->NPC->group->morale), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, va("morale: %i", ent->NPC->group->morale), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
-		cgi_R_Font_DrawString(x, OL_Y + add, va("morale debounce: %i", ent->NPC->group->moraleDebounce), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, va("morale debounce: %i", ent->NPC->group->moraleDebounce), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
-		cgi_R_Font_DrawString(x, OL_Y + add, va("last seen enemy: %i milliseconds", level.time - ent->NPC->group->lastSeenEnemyTime), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, va("last seen enemy: %i milliseconds", level.time - ent->NPC->group->lastSeenEnemyTime), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 		if (ent->NPC->group->commander) {
-			cgi_R_Font_DrawString(x, OL_Y + add, va("commander: %i", ent->NPC->group->commander->s.number), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+			cgi_R_Font_DrawString(x, OL_Y + add, va("commander: %i", ent->NPC->group->commander->s.number), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 			add += OL_H;
 		}
 		
-		cgi_R_Font_DrawString(x, OL_Y + add, "-- squad members --", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+		cgi_R_Font_DrawString(x, OL_Y + add, "-- squad members --", textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 		add += OL_H;
 		for (int i = 0; i < ent->NPC->group->numGroup; i++) {
 			AIGroupMember_t* memberAI = &ent->NPC->group->member[i];
@@ -134,17 +134,17 @@ static void WorkshopDrawEntityInformation(gentity_t* ent, int x, const char* tit
 			char* memberText = va("* entity %i, closestBuddy: %i, class: %s, rank: %s (%i), health: %i/%i",
 				memberNum, memberAI->closestBuddy, NPCClassTable[member->client->NPC_class].name,
 				RankTable[member->NPC->rank].name, member->NPC->rank, member->health, member->max_health);
-			cgi_R_Font_DrawString(x, OL_Y + add, memberText, textcolor, cgs.media.qhFontSmall, -1, OL_S);
+			cgi_R_Font_DrawString(x, OL_Y + add, memberText, textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 			add += OL_H;
 		}
 	}
 
-	cgi_R_Font_DrawString(x, OL_Y + add, "-- currently active timers --", textcolor, cgs.media.qhFontSmall, -1, OL_S);
+	cgi_R_Font_DrawString(x, OL_Y + add, "-- currently active timers --", textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 	add += OL_H;
 	auto timers = TIMER_List(ent);
 	for (auto it = timers.begin(); it != timers.end(); ++it) {
 		if (it->second >= 0) {
-			cgi_R_Font_DrawString(x, OL_Y + add, va("%s : %i", it->first.c_str(), it->second), textcolor, cgs.media.qhFontSmall, -1, OL_S);
+			cgi_R_Font_DrawString(x, OL_Y + add, va("%s : %i", it->first.c_str(), it->second), textcolor, cgs.media.qhFontSmall, -1, OL_S, cgs.widthRatioCoef);
 			add += OL_H;
 		}
 	}
@@ -169,7 +169,7 @@ void WorkshopDrawClientsideInformation() {
 	// Draw the information for the AI that we have selected
 	if (selectedAI != ENTITYNUM_NONE) {
 		gentity_t* selectedEnt = &g_entities[selectedAI];
-		WorkshopDrawEntityInformation(selectedEnt, 500, "Selected AI");
+		WorkshopDrawEntityInformation(selectedEnt, SCREEN_WIDTH - 160 * cgs.widthRatioCoef, "Selected AI");
 	}
 }
 

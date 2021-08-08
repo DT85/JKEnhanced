@@ -124,8 +124,8 @@ A width of 0 will draw with the original image width
 rotates around the upper right corner of the passed in point
 =================
 */
-void CG_DrawRotatePic( float x, float y, float width, float height,float angle, qhandle_t hShader ) {
-	cgi_R_DrawRotatePic( x, y, width, height, 0, 0, 1, 1, angle, hShader );
+void CG_DrawRotatePic( float x, float y, float width, float height,float angle, qhandle_t hShader, float aspectCorrection ) {
+	cgi_R_DrawRotatePic( x, y, width, height, 0, 0, 1, 1, angle, hShader, aspectCorrection );
 }
 
 /*
@@ -137,8 +137,8 @@ A width of 0 will draw with the original image width
 Actually rotates around the center point of the passed in coordinates
 =================
 */
-void CG_DrawRotatePic2( float x, float y, float width, float height,float angle, qhandle_t hShader ) {
-	cgi_R_DrawRotatePic2( x, y, width, height, 0, 0, 1, 1, angle, hShader );
+void CG_DrawRotatePic2( float x, float y, float width, float height,float angle, qhandle_t hShader, float aspectCorrection ) {
+	cgi_R_DrawRotatePic2( x, y, width, height, 0, 0, 1, 1, angle, hShader, aspectCorrection );
 }
 
 /*
@@ -486,8 +486,8 @@ void CG_DrawNumField (int x, int y, int width, int value,int charWidth,int charH
 CG_DrawProportionalString
 =================
 */
-void CG_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color )
+void CG_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color, float aspectCorrection )
 {
 	//assert(!style);//call this directly if you need style (OR it into the font handle)
-	cgi_R_Font_DrawString (x, y, str, color, cgs.media.qhFontMedium, -1, 1.0f);
+	cgi_R_Font_DrawString (x, y, str, color, cgs.media.qhFontMedium, -1, 1.0f, aspectCorrection);
 }

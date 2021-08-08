@@ -672,6 +672,8 @@ extern	vmCvar_t		cg_trueinvertsaber;
 extern	vmCvar_t		cg_truefov;
 extern  vmCvar_t        cg_truebobbing;
 
+extern	vmCvar_t		cg_hudRatio;
+
 void CG_NewClientinfo( int clientNum );
 //
 // cg_main.c
@@ -740,13 +742,13 @@ void CG_FillRect( float x, float y, float width, float height, const float *colo
 void CG_Scissor( float x, float y, float width, float height);
 void CG_DrawPic( float x, float y, float width, float height, qhandle_t hShader );
 void CG_DrawPic2( float x, float y, float width, float height, float s1, float t1, float s2, float t2, qhandle_t hShader );
-void CG_DrawRotatePic( float x, float y, float width, float height,float angle, qhandle_t hShader );
-void CG_DrawRotatePic2( float x, float y, float width, float height,float angle, qhandle_t hShader );
+void CG_DrawRotatePic( float x, float y, float width, float height,float angle, qhandle_t hShader, float aspectCorrection=1.0f );
+void CG_DrawRotatePic2( float x, float y, float width, float height,float angle, qhandle_t hShader, float aspectCorrection=1.0f );
 void CG_DrawString( float x, float y, const char *string,
 				   float charWidth, float charHeight, const float *modulate );
 void CG_PrintInterfaceGraphics(int min,int max);
 void CG_DrawNumField (int x, int y, int width, int value,int charWidth,int charHeight,int style,qboolean zeroFill);
-void CG_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color );
+void CG_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color, float aspectCorrection=1.0f);
 
 
 void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
@@ -1030,7 +1032,7 @@ qhandle_t	cgi_R_RegisterSkin( const char *name );
 qhandle_t	cgi_R_RegisterShader( const char *name );			// returns default shader if not found
 qhandle_t	cgi_R_RegisterShaderNoMip( const char *name );			// returns all white if not found
 qhandle_t	cgi_R_RegisterFont( const char *name );
-int			cgi_R_Font_StrLenPixels(const char *text, const int iFontIndex, const float scale = 1.0f);
+int			cgi_R_Font_StrLenPixels(const char *text, const int iFontIndex, const float scale = 1.0f, const float aspectCorrection = 1.0f);
 int			cgi_R_Font_StrLenChars(const char *text);
 int			cgi_R_Font_HeightPixels(const int iFontIndex, const float scale = 1.0f);
 void		cgi_R_Font_DrawString(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iMaxPixelWidth, const float scale = 1.0f, const float aspectCorrection = 1.0f );
@@ -1063,10 +1065,10 @@ void	cgi_R_LerpTag( orientation_t *tag, qhandle_t mod, int startFrame, int endFr
 					 float frac, const char *tagName );
 // Does weird, barely controllable rotation behaviour
 void	cgi_R_DrawRotatePic( float x, float y, float w, float h,
-	float s1, float t1, float s2, float t2,float a, qhandle_t hShader );
+	float s1, float t1, float s2, float t2,float a, qhandle_t hShader, float aspectCorrection );
 // rotates image around exact center point of passed in coords
 void	cgi_R_DrawRotatePic2( float x, float y, float w, float h,
-	float s1, float t1, float s2, float t2,float a, qhandle_t hShader );
+	float s1, float t1, float s2, float t2,float a, qhandle_t hShader, float aspectCorrection );
 void	cgi_R_SetRangeFog(float range);
 void	cgi_R_LAGoggles( void );
 void	cgi_R_Scissor( float x, float y, float w, float h);

@@ -769,7 +769,7 @@ void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const cha
 	strncpy(sTemp,text,iCopyCount);
 			sTemp[iCopyCount] = '\0';
 
-	int iNextXpos  = ui.R_Font_StrLenPixels(sTemp, iFontIndex, scale );
+	int iNextXpos  = ui.R_Font_StrLenPixels(sTemp, iFontIndex, scale, 1.0f );
 
 	Text_Paint(x+iNextXpos, y, scale, color, va("%c",cursor), iMaxPixelWidth, style|ITEM_TEXTSTYLE_BLINK, iFontIndex);
 }
@@ -1476,10 +1476,27 @@ static qboolean UI_RunMenuScript ( const char **args )
 					if (modelPtr)
 					{
 						uiInfo.movesBaseAnim = datapadMoveTitleBaseAnims[uiInfo.movesTitleIndex];
+
+						if (Cvar_VariableString("ui_char_head_model")[0])
+						{
+							Com_sprintf(skin, sizeof(skin), "models/players/%s/model.glm", Cvar_VariableString("ui_char_head_model"));
+							ItemParse_asset_model_go_head(item, skin, qfalse);
+						}
+						else
+						{
+							ItemParse_asset_model_go_head(item, NULL, qtrue);
+						}
+
 						ItemParse_model_g2anim_go( item, uiInfo.movesBaseAnim );
 
 						uiInfo.moveAnimTime = 0 ;
 						DC->g2hilev_SetAnim(&item->ghoul2[0], "model_root", modelPtr->g2anim, qtrue);
+
+						if (Cvar_VariableString("ui_char_head_model")[0])
+						{
+							DC->g2hilev_SetAnim(&item->ghoul2[1], "model_root", modelPtr->g2anim, qtrue);
+						}
+
 						Com_sprintf( skin, sizeof( skin ), "models/players/%s/|%s|%s|%s",
 															Cvar_VariableString ( "g_char_model"),
 															Cvar_VariableString ( "g_char_skin_head"),
@@ -1489,16 +1506,6 @@ static qboolean UI_RunMenuScript ( const char **args )
 
 						ItemParse_model_g2skin_go( item, skin );
 						
-						if (Cvar_VariableString( "ui_char_head_model" )[0])
-						{
-							Com_sprintf( skin, sizeof( skin ), "models/players/%s/model.glm", Cvar_VariableString ( "ui_char_head_model" ) );
-							ItemParse_asset_model_go_head( item, skin, qfalse );
-						}
-						else
-						{
-							ItemParse_asset_model_go_head( item, NULL, qtrue );
-						}
-
 						if (Cvar_VariableString( "ui_char_head_model" )[0])
 						{
 							if (Cvar_VariableString( "ui_char_head_skin" )[0])
@@ -2532,16 +2539,6 @@ static void UI_FeederSelection(float feederID, int index, itemDef_t *item)
 						{
 							Cvar_Set( "ui_move_desc", datapadMoveData[uiInfo.movesTitleIndex][index].desc);
 						}
-
-						Com_sprintf( skin, sizeof( skin ), "models/players/%s/|%s|%s|%s",
-															Cvar_VariableString ( "g_char_model"),
-															Cvar_VariableString ( "g_char_skin_head"),
-															Cvar_VariableString ( "g_char_skin_torso"),
-															Cvar_VariableString ( "g_char_skin_legs")
-									);
-
-						ItemParse_model_g2skin_go( item, skin );
-
 					}
 				}
 			}
@@ -5190,7 +5187,7 @@ int Text_Width(const char *text, float scale, int iFontIndex)
 	{
 		iFontIndex = uiInfo.uiDC.Assets.qhMediumFont;
 	}
-	return ui.R_Font_StrLenPixels(text, iFontIndex, scale);
+	return ui.R_Font_StrLenPixels(text, iFontIndex, scale, 1.0f);
 }
 
 /*

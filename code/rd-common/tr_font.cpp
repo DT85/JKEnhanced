@@ -1461,7 +1461,7 @@ CFontInfo *GetFont(int index)
 }
 
 
-int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float fScale)
+int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float fScale, const float fAspectCorrection)
 {
 #ifdef JK2_MODE
 	// Yes..even this func is a little different, to the point where it doesn't work. --eez
@@ -1545,7 +1545,7 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float 
 		{
 			int iPixelAdvance = curfont->GetLetterHorizAdvance( uiLetter );
 
-			float fValue = iPixelAdvance * ((uiLetter > (unsigned)g_iNonScaledCharRange) ? fScaleAsian : fScale);
+			float fValue = iPixelAdvance * fAspectCorrection * ((uiLetter > (unsigned)g_iNonScaledCharRange) ? fScaleAsian : fScale);
 			fThisWidth += curfont->mbRoundCalcs ? Round( fValue ) : fValue;
 			if (fThisWidth > fMaxWidth)
 			{
@@ -1883,7 +1883,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 			break;
 		case 32:						// Space
 			pLetter = curfont->GetLetter(' ');
-			fx += curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fScale) : pLetter->horizAdvance * fScale;
+			fx += curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fScale * fAspectCorrection) : pLetter->horizAdvance * fScale * fAspectCorrection;
 			bNextTextWouldOverflow = ( iMaxPixelWidth != -1 && ((fx-fox) > (float)iMaxPixelWidth) ) ? qtrue : qfalse; // yeuch
 			break;
 		case '_':	// has a special word-break usage if in Thai (and followed by a thai char), and should not be displayed, else treat as normal
@@ -1923,10 +1923,10 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 			//
 			if (uiLetter == TIS_SARA_AM && GetLanguageEnum() == eThai)
 			{
-				fx -= curfont->mbRoundCalcs ? Round(7.0f * fThisScale) : 7.0f * fThisScale;
+				fx -= curfont->mbRoundCalcs ? Round(7.0f * fThisScale * fAspectCorrection) : 7.0f * fThisScale * fAspectCorrection;
 			}
 
-			float fAdvancePixels = curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fThisScale) : pLetter->horizAdvance * fThisScale;
+			float fAdvancePixels = curfont->mbRoundCalcs ? Round(pLetter->horizAdvance * fThisScale * fAspectCorrection) : pLetter->horizAdvance * fThisScale * fAspectCorrection;
 			bNextTextWouldOverflow = ( iMaxPixelWidth != -1 && (((fx+fAdvancePixels)-fox) > (float)iMaxPixelWidth) ) ? qtrue : qfalse; // yeuch
 			if (!bNextTextWouldOverflow)
 			{
@@ -1938,9 +1938,9 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 					fy += 3.0f; // I'm sick and tired of going round in circles trying to do this legally, so bollocks to it
 				}
 
-				RE_StretchPic(curfont->mbRoundCalcs ? fx + Round(pLetter->horizOffset * fThisScale) : fx + pLetter->horizOffset * fThisScale, // float x
+				RE_StretchPic(curfont->mbRoundCalcs ? fx + Round(pLetter->horizOffset * fThisScale * fAspectCorrection) : fx + pLetter->horizOffset * fThisScale * fAspectCorrection, // float x
 								(uiLetter > (unsigned)g_iNonScaledCharRange) ? fy - fAsianYAdjust : fy,	// float y
-								curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale * fAspectCorrection,	// float w
+								curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale * fAspectCorrection) : pLetter->width * fThisScale * fAspectCorrection,	// float w
 								curfont->mbRoundCalcs ? Round(pLetter->height * fThisScale) : pLetter->height * fThisScale, // float h
 								pLetter->s,						// float s1
 								pLetter->t,						// float t1

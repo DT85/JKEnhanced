@@ -458,6 +458,8 @@ typedef struct {
 	
 	cgRadarMap_t	radarMap;
 
+	float			widthRatioCoef;
+
 } cgs_t;
 
 extern	cgs_t			cgs;

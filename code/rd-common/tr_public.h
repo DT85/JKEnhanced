@@ -188,9 +188,9 @@ typedef struct {
 	void	(*DrawStretchPic) ( float x, float y, float w, float h,
 		float s1, float t1, float s2, float t2, qhandle_t hShader );	// 0 = white
 	void	(*DrawRotatePic) ( float x, float y, float w, float h,
-		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
+		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader, float aspectCorrection );	// 0 = white
 	void	(*DrawRotatePic2) ( float x, float y, float w, float h,
-		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
+		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader, float aspectCorrection );	// 0 = white
 	void	(*LAGoggles)(void);
 	void	(*Scissor) ( float x, float y, float w, float h);	// 0 = white
 
@@ -240,7 +240,7 @@ typedef struct {
 	int		(*RegisterFont)(const char *name);
 
 	int		(*Font_HeightPixels)(const int index, const float scale);
-	int		(*Font_StrLenPixels)(const char *s, const int index, const float scale);
+	int		(*Font_StrLenPixels)(const char *s, const int index, const float scale, const float fAspectCorrection);
 	void	(*Font_DrawString)(int x, int y, const char *s, const float *rgba, const int iFontHandle, int iMaxPixelWidth, const float scale, const float fAspectCorrection);
 	int		(*Font_StrLenChars) (const char *s);
 	qboolean (*Language_IsAsian) (void);

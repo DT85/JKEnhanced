@@ -1578,8 +1578,8 @@ void CG_SaberClashFlare( void )
 	VectorSet( color, 0.8f, 0.8f, 0.8f );
 	cgi_R_SetColor( color );
 
-	CG_DrawPic( x - ( v * 300 ), y - ( v * 300 ),
-				v * 600, v * 600,
+	CG_DrawPic( x - ( v * 300 * cgs.widthRatioCoef ), y - ( v * 300 ),
+				v * 600 * cgs.widthRatioCoef, v * 600,
 				cgi_R_RegisterShader( "gfx/effects/saberFlare" ));
 }
 

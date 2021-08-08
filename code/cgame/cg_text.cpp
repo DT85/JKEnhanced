@@ -119,7 +119,7 @@ const char *CG_DisplayBoxedText(int iBoxX, int iBoxY, int iBoxWidth, int iBoxHei
 				break;	// print this line
 			}
 			else
-			if ( cgi_R_Font_StrLenPixels(sLineForDisplay, iFontHandle, fScale) >= iBoxWidth )
+			if ( cgi_R_Font_StrLenPixels(sLineForDisplay, iFontHandle, fScale, cgs.widthRatioCoef) >= iBoxWidth )
 			{
 				// reached screen edge, so cap off string at bytepos after last good position...
 				//
@@ -159,7 +159,7 @@ const char *CG_DisplayBoxedText(int iBoxX, int iBoxY, int iBoxWidth, int iBoxHei
 
 		// ... and print it...
 		//
-		cgi_R_Font_DrawString(iBoxX, iYpos, sLineForDisplay, v4Color, iFontHandle, -1, fScale);
+		cgi_R_Font_DrawString(iBoxX, iYpos, sLineForDisplay, v4Color, iFontHandle, -1, fScale, cgs.widthRatioCoef);
 		iYpos += iFontHeightAdvance;
 		giLinesOutput++;
 
@@ -449,11 +449,11 @@ void CG_DrawCaptionText(void)
 
 	for (i=	cg.captionTextCurrentLine;i< cg.captionTextCurrentLine + 2;++i)
 	{
-		w = cgi_R_Font_StrLenPixels(cg.captionText[i], cgs.media.qhFontMedium, fFontScale);
+		w = cgi_R_Font_StrLenPixels(cg.captionText[i], cgs.media.qhFontMedium, fFontScale, cgs.widthRatioCoef);
 		if (w)
 		{
 			x = (SCREEN_WIDTH-w) / 2;
-			cgi_R_Font_DrawString(x, y, cg.captionText[i], textcolor_caption, cgs.media.qhFontMedium, -1, fFontScale);
+			cgi_R_Font_DrawString(x, y, cg.captionText[i], textcolor_caption, cgs.media.qhFontMedium, -1, fFontScale, cgs.widthRatioCoef);
 			y += fontHeight;
 		}
 	}
@@ -572,7 +572,7 @@ void CG_ScrollText( const char *str, int iPixelWidth )
 			cg.scrollTextLines++;
 		}
 		else
-		if ( cgi_R_Font_StrLenPixels(cg.printText[i], cgs.media.qhFontMedium, 1.0f) >= iPixelWidth)
+		if ( cgi_R_Font_StrLenPixels(cg.printText[i], cgs.media.qhFontMedium, 1.0f, cgs.widthRatioCoef) >= iPixelWidth)
 		{
 			// reached screen edge, so cap off string at bytepos after last good position...
 			//
@@ -647,7 +647,7 @@ void CG_DrawScrollText(void)
 //		if (w)
 		{
 			x = (SCREEN_WIDTH - giScrollTextPixelWidth) / 2;
-			cgi_R_Font_DrawString(x,y, cg.printText[i], textcolor_scroll, cgs.media.qhFontMedium, -1, 1.0f);
+			cgi_R_Font_DrawString(x,y, cg.printText[i], textcolor_scroll, cgs.media.qhFontMedium, -1, 1.0f, cgs.widthRatioCoef);
 			y += fontHeight;
 		}
 	}
@@ -767,11 +767,11 @@ void CG_DrawCenterString( void )
 		}
 		linebuffer[iOutIndex++] = '\0';
 
-		w = cgi_R_Font_StrLenPixels(linebuffer, cgs.media.qhFontMedium, 1.0f);
+		w = cgi_R_Font_StrLenPixels(linebuffer, cgs.media.qhFontMedium, 1.0f, cgs.widthRatioCoef);
 
 		x = ( SCREEN_WIDTH - w ) / 2;
 
-		cgi_R_Font_DrawString(x,y,linebuffer, textcolor_center, cgs.media.qhFontMedium, -1, 1.0f);
+		cgi_R_Font_DrawString(x,y,linebuffer, textcolor_center, cgs.media.qhFontMedium, -1, 1.0f, cgs.widthRatioCoef);
 
 		y += fontHeight;
 

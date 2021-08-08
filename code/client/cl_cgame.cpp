@@ -973,7 +973,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_R_REGISTERFONT:
 		return re.RegisterFont( (const char *) VMA(1) );
 	case CG_R_FONTSTRLENPIXELS:
-		return re.Font_StrLenPixels( (const char *) VMA(1), args[2], VMF(3) );
+		return re.Font_StrLenPixels( (const char *) VMA(1), args[2], VMF(3), VMF(4) );
 	case CG_R_FONTSTRLENCHARS:
 		return re.Font_StrLenChars( (const char *) VMA(1) );
 	case CG_R_FONTHEIGHTPIXELS:
@@ -1033,10 +1033,10 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		re.LerpTag( (orientation_t *) VMA(1), args[2], args[3], args[4], VMF(5), (const char *) VMA(6) );
 		return 0;
 	case CG_R_DRAWROTATEPIC:
-		re.DrawRotatePic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
+		re.DrawRotatePic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10], VMF(11) );
 		return 0;
 	case CG_R_DRAWROTATEPIC2:
-		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
+		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10], VMF(11) );
 		return 0;
 	case CG_R_SETRANGEFOG:
 		re.SetRangedFog( VMF( 1 ) );

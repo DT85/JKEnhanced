@@ -89,7 +89,7 @@ static void ObjectivePrint_Line(const int color, const int objectIndex, int &mis
 		Q_strncpyz(finalText, va(finalText,currTotal,minTotal), sizeof(finalText));
 	}
 
-	pixelLen = cgi_R_Font_StrLenPixels(finalText, cgs.media.qhFontMedium, 1.0f);
+	pixelLen = cgi_R_Font_StrLenPixels(finalText, cgs.media.qhFontMedium, 1.0f, cgs.widthRatioCoef);
 
 	str = finalText;
 
@@ -144,7 +144,7 @@ static void ObjectivePrint_Line(const int color, const int objectIndex, int &mis
 				colorTable[color],
 				cgs.media.qhFontMedium,
 				-1,
-				1.0f);
+				1.0f, cgs.widthRatioCoef);
 
 			++missionYcnt;
 		}
@@ -160,7 +160,7 @@ static void ObjectivePrint_Line(const int color, const int objectIndex, int &mis
 			while( *str )
 			{
 				holdText2[0] = *str;
-				pixelLen += cgi_R_Font_StrLenPixels(holdText2, cgs.media.qhFontMedium, 1.0f);
+				pixelLen += cgi_R_Font_StrLenPixels(holdText2, cgs.media.qhFontMedium, 1.0f, cgs.widthRatioCoef);
 
 				pixelLen += 2; // For kerning
 				++charLen;
@@ -194,7 +194,7 @@ static void ObjectivePrint_Line(const int color, const int objectIndex, int &mis
 						y,
 						holdText,
 						CG_SMALLFONT,
-						colorTable[color] );
+						colorTable[color], cgs.widthRatioCoef );
 
 					++missionYcnt;
 				}
@@ -211,7 +211,7 @@ static void ObjectivePrint_Line(const int color, const int objectIndex, int &mis
 						objectiveStartingXpos,
 						y, holdText,
 						CG_SMALLFONT,
-						colorTable[color] );
+						colorTable[color], cgs.widthRatioCoef );
 
 					++missionYcnt;
 					break;
@@ -256,7 +256,7 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 	const short titleXPos = objectiveStartingXpos - 22;		// X starting position for title text
 	const short titleYPos = objectiveStartingYpos - 23;		// Y starting position for title text
 	const short graphic_size = 16;							// Size (width and height) of graphic used to show status of objective
-	const short graphicXpos = objectiveStartingXpos - graphic_size - 8;	// Amount of X to backup from text starting position
+	const short graphicXpos = objectiveStartingXpos - graphic_size*cgs.widthRatioCoef - 8;	// Amount of X to backup from text starting position
 	const short graphicYOffset = (iYPixelsPerLine - graphic_size)/2;	// Amount of Y to raise graphic so it's in the center of the text line
 
 	missionInfo_Updated = qfalse;		// This will stop the text from flashing
@@ -271,7 +271,7 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 	// Title Text at the top
 	char text[1024]={0};
 	cgi_SP_GetStringTextString( "SP_INGAME_OBJECTIVES", text, sizeof(text) );
-	cgi_R_Font_DrawString (titleXPos, titleYPos, text, colorTable[CT_TITLE], cgs.media.qhFontMedium, -1, 1.0f);
+	cgi_R_Font_DrawString (titleXPos, titleYPos, text, colorTable[CT_TITLE], cgs.media.qhFontMedium, -1, 1.0f, cgs.widthRatioCoef);
 
 	int missionYcnt = 0;
 
@@ -286,10 +286,10 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 
 			//	Draw graphics that show if mission has been accomplished or not
 			cgi_R_SetColor(colorTable[CT_BLUE3]);
-			CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size,  graphic_size, cgs.media.messageObjCircle);	// Circle in front
+			CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size*cgs.widthRatioCoef,  graphic_size, cgs.media.messageObjCircle);	// Circle in front
 			if (cent->gent->client->sess.mission_objectives[i].status == OBJECTIVE_STAT_SUCCEEDED)
 			{
-				CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size,  graphic_size, cgs.media.messageLitOn);	// Center Dot
+				CG_DrawPic( (graphicXpos),   (totalY-graphicYOffset),   graphic_size* cgs.widthRatioCoef,  graphic_size, cgs.media.messageLitOn);	// Center Dot
 			}
 
 			// Print current objective text
@@ -304,7 +304,7 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 		int messageYPosition = objectiveStartingYpos + (objectiveTextBoxHeight / 4);
 
 		cgi_SP_GetStringTextString( "SP_INGAME_OBJNONE", text, sizeof(text) );
-		int messageXPosition = objectiveStartingXpos + (objectiveTextBoxWidth/2) -  (cgi_R_Font_StrLenPixels(text, cgs.media.qhFontMedium, 1.0f) /2);
+		int messageXPosition = objectiveStartingXpos + (objectiveTextBoxWidth/2) -  (cgi_R_Font_StrLenPixels(text, cgs.media.qhFontMedium, 1.0f, cgs.widthRatioCoef) /2);
 
 		cgi_R_Font_DrawString (
 			messageXPosition,
@@ -313,7 +313,7 @@ void CG_DrawDataPadObjectives(const centity_t *cent )
 			colorTable[CT_WHITE],
 			cgs.media.qhFontMedium,
 			-1,
-			1.0f);
+			1.0f, cgs.widthRatioCoef);
 	}
 }
 

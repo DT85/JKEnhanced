@@ -263,8 +263,8 @@ qhandle_t cgi_R_RegisterFont( const char *name ) {
 	return Q_syscall( CG_R_REGISTERFONT, name );
 }
 
-int cgi_R_Font_StrLenPixels(const char *text, const int iFontIndex, const float scale /*= 1.0f*/) {
-	return Q_syscall( CG_R_FONTSTRLENPIXELS, text, iFontIndex, PASSFLOAT(scale) ) ;
+int cgi_R_Font_StrLenPixels(const char *text, const int iFontIndex, const float scale /*= 1.0f*/, const float aspectCorrection /*= 1.0f*/) {
+	return Q_syscall( CG_R_FONTSTRLENPIXELS, text, iFontIndex, PASSFLOAT(scale), PASSFLOAT(aspectCorrection) ) ;
 }
 
 int cgi_R_Font_StrLenChars(const char *text) {
@@ -349,15 +349,15 @@ void	cgi_R_LerpTag( orientation_t *tag, qhandle_t mod, int startFrame, int endFr
 }
 
 void	cgi_R_DrawRotatePic( float x, float y, float w, float h,
-				   float s1, float t1, float s2, float t2,float a, qhandle_t hShader )
+				   float s1, float t1, float s2, float t2,float a, qhandle_t hShader, float aspectCorrection )
 {
-	Q_syscall( CG_R_DRAWROTATEPIC, PASSFLOAT(x), PASSFLOAT(y), PASSFLOAT(w), PASSFLOAT(h), PASSFLOAT(s1), PASSFLOAT(t1), PASSFLOAT(s2), PASSFLOAT(t2), PASSFLOAT(a), hShader );
+	Q_syscall( CG_R_DRAWROTATEPIC, PASSFLOAT(x), PASSFLOAT(y), PASSFLOAT(w), PASSFLOAT(h), PASSFLOAT(s1), PASSFLOAT(t1), PASSFLOAT(s2), PASSFLOAT(t2), PASSFLOAT(a), hShader, PASSFLOAT(aspectCorrection) );
 }
 
 void	cgi_R_DrawRotatePic2( float x, float y, float w, float h,
-				   float s1, float t1, float s2, float t2,float a, qhandle_t hShader )
+				   float s1, float t1, float s2, float t2,float a, qhandle_t hShader, float aspectCorrection )
 {
-	Q_syscall( CG_R_DRAWROTATEPIC2, PASSFLOAT(x), PASSFLOAT(y), PASSFLOAT(w), PASSFLOAT(h), PASSFLOAT(s1), PASSFLOAT(t1), PASSFLOAT(s2), PASSFLOAT(t2), PASSFLOAT(a), hShader );
+	Q_syscall( CG_R_DRAWROTATEPIC2, PASSFLOAT(x), PASSFLOAT(y), PASSFLOAT(w), PASSFLOAT(h), PASSFLOAT(s1), PASSFLOAT(t1), PASSFLOAT(s2), PASSFLOAT(t2), PASSFLOAT(a), hShader, PASSFLOAT(aspectCorrection) );
 }
 
 //linear fogging, with settable range -rww
