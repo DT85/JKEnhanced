@@ -6910,7 +6910,7 @@ static void UI_ClearWeapons ( void )
 		}
 
 		pState->weapon = WP_NONE;
-
+		pState->weapons[WP_NONE] = 1;
 	}
 
 }
