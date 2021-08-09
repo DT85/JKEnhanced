@@ -2358,6 +2358,7 @@ static int UI_FeederCount(float feederID)
 	}
 	else if (feederID == FEEDER_PLAYER_SPECIES)
 	{
+		Com_Printf("feeder count: %d\n", uiInfo.playerSpeciesCount);
 		return uiInfo.playerSpeciesCount;
 	}
 	else if (feederID == FEEDER_PLAYER_SKIN_HEAD)
@@ -2578,6 +2579,7 @@ static void UI_FeederSelection(float feederID, int index, itemDef_t *item)
 	}
 	else if (feederID == FEEDER_PLAYER_SPECIES)
 	{
+		Com_Printf("setting index: %d count: %d\n", index, uiInfo.playerSpeciesCount);
 		if (index >= 0 && index < uiInfo.playerSpeciesCount)
 		{
 			uiInfo.playerSpeciesIndex = index;

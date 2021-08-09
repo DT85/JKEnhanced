@@ -2724,6 +2724,7 @@ int GetCurrentFeederIndex(itemDef_t * item)
 
 	if (feederID == FEEDER_PLAYER_SPECIES)
 	{
+		Com_Printf("getcurrentfeederindex %d\n", uiInfo.playerSpeciesIndex);
 		return uiInfo.playerSpeciesIndex;
 	}
 	if (feederID == FEEDER_PLAYER_SKIN_HEAD)
@@ -4712,6 +4713,7 @@ qboolean ItemParse_cvarStrList( itemDef_t *item)
 		{
 			multiPtr->cvarList[multiPtr->count] = String_Alloc(Q_strupr(va("@MENUS_%s",uiInfo.playerSpecies[multiPtr->count].Name )));	//look up translation
 			multiPtr->cvarStr[multiPtr->count] = uiInfo.playerSpecies[multiPtr->count].Name;	//value
+			Com_Printf("species %d: %s\n", multiPtr->count, uiInfo.playerSpecies[multiPtr->count].Name);
 		}
 		return qtrue;
 	}
@@ -11304,6 +11306,7 @@ qboolean Item_Multi_HandleKey(itemDef_t *item, int key)
 				{
 					int current = Item_Multi_FindCvarByValue(item);
 					int max = Item_Multi_CountSettings(item);
+					Com_Printf("current: %d, max: %d\n", current, max);
 
 					if (key == A_MOUSE2 || key == A_MWHEELDOWN)
 					{
