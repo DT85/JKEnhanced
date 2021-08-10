@@ -2047,6 +2047,8 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 	pack_t			*pak;
 	fileInPack_t	*buildBuffer;
 	char			zpath[MAX_ZPATH];
+	qboolean		stripTrailingSlash = qfalse;
+	char			strippedPath[MAX_ZPATH];
 
 	FS_AssertInitialised();
 
@@ -2056,6 +2058,10 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 	}
 	if ( !extension ) {
 		extension = "";
+	}
+	// passing a slash as extension will find directories
+	if (extension[0] == '/' && extension[1] == 0) {
+		stripTrailingSlash = qtrue; //strip slash when adding to file list
 	}
 
 	pathLength = strlen( path );
@@ -2112,6 +2118,13 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 					if (pathLength) {
 						temp++;		// include the '/'
 					}
+
+					if (stripTrailingSlash) {
+						Q_strncpyz(strippedPath, name, sizeof(strippedPath));
+						strippedPath[length - extensionLength] = '\0';
+						name = strippedPath;
+					}
+
 					nfiles = FS_AddFileToList( name + temp, list, nfiles );
 				}
 			}
