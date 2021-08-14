@@ -1974,6 +1974,10 @@ void G_AddWeaponModels( gentity_t *ent )
 			}
 			WP_SaberAddHolsteredG2SaberModels( ent );
 		}
+		else
+		{
+			WP_SaberAddHolsteredG2SaberModels( ent );
+		}
 	}
 }
 
@@ -2385,6 +2389,7 @@ void G_ChangePlayerModel( gentity_t *ent, const char *newModel )
 	}
 	ent->NPC_type = G_NewString( newModel );
 	G_RemoveWeaponModels( ent );
+	G_RemoveHolsterModels( ent );
 
 	if ( strchr(newModel,'|') )
 	{
