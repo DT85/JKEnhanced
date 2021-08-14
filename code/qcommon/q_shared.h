@@ -1082,6 +1082,8 @@ typedef struct
 	char		blackIgnitionFlare[MAX_QPATH];
 	char		blackIgnitionFlare2[MAX_QPATH];
 
+	qboolean	isCustomSaber;
+
 	//***NOTE: you can only have a maximum of 2 "styles" of blades, so this next value, "bladeStyle2Start" is the number of the first blade to use these value on... all blades before this use the normal values above, all blades at and after this number use the secondary values below***
 	int			bladeStyle2Start;			//0 - if set, blades from this number and higher use the following values (otherwise, they use the normal values already set)
 
@@ -1302,6 +1304,7 @@ typedef struct
         saved_game.write<int8_t>(ignitionFlare2);
         saved_game.write<int8_t>(blackIgnitionFlare);
         saved_game.write<int8_t>(blackIgnitionFlare2);
+		saved_game.write<int32_t>(isCustomSaber);
 		saved_game.write<int32_t>(bladeStyle2Start);
 		saved_game.write<int32_t>(trailStyle);
 		saved_game.write<int8_t>(g2MarksShader);
@@ -1389,6 +1392,7 @@ typedef struct
         saved_game.read<int8_t>(ignitionFlare2);
         saved_game.read<int8_t>(blackIgnitionFlare);
         saved_game.read<int8_t>(blackIgnitionFlare2);
+		saved_game.read<int32_t>(isCustomSaber);
 		saved_game.read<int32_t>(bladeStyle2Start);
 		saved_game.read<int32_t>(trailStyle);
 		saved_game.read<int8_t>(g2MarksShader);
