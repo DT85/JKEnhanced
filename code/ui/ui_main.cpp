@@ -8432,6 +8432,11 @@ static void	UI_UpdateCustomSaber( qboolean secondSaber )
 		if (Menu_ItemsMatchingGroup(menu, "saberskin_menus") > 0)
 		{
 			Menu_ShowItemByName(menu, "saberskin_menus", qtrue);
+			UI_FeederSelection(FEEDER_SABER2_SKIN_1, 0, listBoxItem);	//fixme, this is not really the right item!!
+			UI_FeederSelection(FEEDER_SABER2_SKIN_2, 0, listBoxItem);
+			UI_FeederSelection(FEEDER_SABER2_SKIN_3, 0, listBoxItem);
+			UI_FeederSelection(FEEDER_SABER2_SKIN_4, 0, listBoxItem);
+			UI_FeederSelection(FEEDER_SABER2_SKIN_5, 0, listBoxItem);
 		}
 	}
 	else
@@ -8511,6 +8516,11 @@ static void	UI_UpdateCustomSaber( qboolean secondSaber )
 		if (Menu_ItemsMatchingGroup(menu, "saberskin_menus") > 0)
 		{
 			Menu_ShowItemByName(menu, "saberskin_menus", qtrue);
+			UI_FeederSelection(FEEDER_SABER_SKIN_1, 0, listBoxItem);	//fixme, this is not really the right item!!
+			UI_FeederSelection(FEEDER_SABER_SKIN_2, 0, listBoxItem);
+			UI_FeederSelection(FEEDER_SABER_SKIN_3, 0, listBoxItem);
+			UI_FeederSelection(FEEDER_SABER_SKIN_4, 0, listBoxItem);
+			UI_FeederSelection(FEEDER_SABER_SKIN_5, 0, listBoxItem);
 		}
 	}
 }
