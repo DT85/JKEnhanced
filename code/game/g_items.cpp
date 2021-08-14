@@ -1170,7 +1170,7 @@ void FinishSpawningItem( gentity_t *ent ) {
 		{//player's saber
 			WP_SaberParseParms( g_saber->string, &itemSaber );
 			//Custom saber stuff!
-			if (Q_stristr(itemSaber.name, "saberbuilder"))
+			if (Q_stristr(itemSaber.name, "saberbuilder") || itemSaber.isCustomSaber)
 			{
 				char skinRoot[MAX_QPATH] = {0};
 				Q_strncpyz(skinRoot, itemSaber.model, MAX_QPATH);

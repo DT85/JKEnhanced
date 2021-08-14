@@ -1991,7 +1991,7 @@ void G_SetCustomSaberSkinFromCVars(gentity_t* ent, int saberNum)
 	else if (saberNum == 1)
 		saber_skin_cvar = g_saber2_skin;
 
-	if (saber_skin_cvar != NULL && ent->client->ps.saber[saberNum].name && ent->client->ps.saber[saberNum].name[0] && Q_stristr(ent->client->ps.saber[saberNum].name, "saberbuilder") && ent->client->ps.saber[saberNum].model)
+	if (saber_skin_cvar != NULL && ent->client->ps.saber[saberNum].name && ent->client->ps.saber[saberNum].name[0] && (Q_stristr(ent->client->ps.saber[saberNum].name, "saberbuilder") || ent->client->ps.saber[saberNum].isCustomSaber) && ent->client->ps.saber[saberNum].model)
 	{
 		char skinRoot[MAX_QPATH] = { 0 };
 		Q_strncpyz(skinRoot, ent->client->ps.saber[saberNum].model, MAX_QPATH);
