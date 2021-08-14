@@ -123,6 +123,8 @@ int G2_Add_Bolt_Surf_Num(CGhoul2Info *ghlInfo, boltInfo_v &bltlist, surfaceInfo_
 }
 
 void G2_Bolt_Not_Found(const char *boneName,const char *modName);
+const mdxmSurface_t* G2_FindSurface(CGhoul2Info* ghlInfo, surfaceInfo_v& slist, const char* surfaceName,
+	int* surfIndex/*NULL*/);
 int G2_Add_Bolt(CGhoul2Info *ghlInfo, boltInfo_v &bltlist, surfaceInfo_v &slist, const char *boneName, qboolean requireDrawn)
 {
 	assert(ghlInfo&&ghlInfo->mValid);
@@ -131,11 +133,24 @@ int G2_Add_Bolt(CGhoul2Info *ghlInfo, boltInfo_v &bltlist, surfaceInfo_v &slist,
 	mdxaSkelOffsets_t	*offsets;
 	boltInfo_t			tempBolt;
 	uint32_t			flags;
+	mdxmSurface_t* surf = NULL;
 
 	assert(G2_MODEL_OK(ghlInfo));
 
-	// first up, we'll search for that which this bolt names in all the surfaces
-	surfNum = G2_IsSurfaceLegal(ghlInfo->currentModel, boneName, &flags);
+	if (requireDrawn)
+	{
+		surf = (mdxmSurface_t*)G2_FindSurface(ghlInfo, ghlInfo->mSlist, boneName, &surfNum);
+	}
+
+	if (surf)
+	{
+		flags = ghlInfo->mSlist[surfNum].offFlags;
+	}
+	else
+	{
+		// first up, we'll search for that which this bolt names in all the surfaces
+		surfNum = G2_IsSurfaceLegal(ghlInfo->currentModel, boneName, &flags);
+	}
 
 	//check if we're not meant to draw it and we're meant to check this
 	if (requireDrawn && surfNum != -1 && (flags & G2SURFACEFLAG_OFF))
