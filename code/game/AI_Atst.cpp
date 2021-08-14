@@ -101,7 +101,7 @@ void G_ATSTCheckPain( gentity_t *self, gentity_t *other, const vec3_t point, int
 	{
 		if (self->locationDamage[hitLoc] >= LEFT_ARM_HEALTH)	// Blow it up?
 		{
-			newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash3" );
+			newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash3", qfalse );
 			if ( newBolt != -1 )
 			{
 //				G_PlayEffect( "small_chunks", self->playerModel, self->genericBolt1, self->s.number);
@@ -116,7 +116,7 @@ void G_ATSTCheckPain( gentity_t *self, gentity_t *other, const vec3_t point, int
 	{
 		if (self->locationDamage[hitLoc] >= RIGHT_ARM_HEALTH)
 		{
-			newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash4" );
+			newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash4", qfalse );
 			if ( newBolt != -1 )
 			{
 //				G_PlayEffect( "small_chunks", self->playerModel, self->genericBolt2, self->s.number);

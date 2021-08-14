@@ -982,13 +982,23 @@ void UI_SaberDrawBlade( itemDef_t *item, char *saberName, int saberModel, saberT
 	qboolean tagHack = qfalse;
 
 	char *tagName = va( "*blade%d", bladeNum+1 );
-	int bolt = DC->g2_AddBolt( &item->ghoul2[saberModel], tagName );
+	int bolt = DC->g2_AddBolt( &item->ghoul2[saberModel], tagName, qtrue );
+
+	if (bolt == -1)
+	{
+		int bolt_checker;
+		for (bolt_checker = 0; bolt_checker < 4 && bolt == -1; bolt_checker++)
+		{
+			tagName = va("*blade%d_%d", bladeNum + 1, bolt_checker + 1);
+			bolt = DC->g2_AddBolt(&item->ghoul2[saberModel], tagName, qtrue);
+		}
+	}
 
 	if ( bolt == -1 )
 	{
 		tagHack = qtrue;
 		//hmm, just fall back to the most basic tag (this will also make it work with pre-JKA saber models
-		bolt = DC->g2_AddBolt( &item->ghoul2[saberModel], "*flash" );
+		bolt = DC->g2_AddBolt( &item->ghoul2[saberModel], "*flash", qfalse );
 		if ( bolt == -1 )
 		{//no tag_flash either?!!
 			bolt = 0;
@@ -1349,11 +1359,11 @@ void UI_SaberAttachToChar( itemDef_t *item )
 				int boltNum;
 				if ( saberNum == 0 )
 				{
-					boltNum = DC->g2_AddBolt(&item->ghoul2[0], "*r_hand");
+					boltNum = DC->g2_AddBolt(&item->ghoul2[0], "*r_hand", qfalse);
 				}
 				else
 				{
-					boltNum = DC->g2_AddBolt(&item->ghoul2[0], "*l_hand");
+					boltNum = DC->g2_AddBolt(&item->ghoul2[0], "*l_hand", qfalse);
 				}
 				re.G2API_AttachG2Model(&item->ghoul2[g2Saber], &item->ghoul2[0], boltNum, 0);
                 re.G2API_SetTintType(&item->ghoul2[g2Saber], saberNum ? G2_TINT_SABER2 : G2_TINT_SABER);

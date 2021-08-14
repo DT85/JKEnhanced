@@ -31,7 +31,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../ghoul2/ghoul2_gore.h"
 
 #define JAE_REF_API_OFFSET	128
-#define	REF_API_VERSION		18 + JAE_REF_API_OFFSET
+#define	REF_API_VERSION		19 + JAE_REF_API_OFFSET
 
 typedef struct {
 	void				(QDECL *Printf)						( int printLevel, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
@@ -277,7 +277,7 @@ typedef struct {
 	IGhoul2InfoArray &(*TheGhoul2InfoArray)(void);
 
 	// GHOUL 2 API
-	int			(*G2API_AddBolt)(CGhoul2Info *ghlInfo, const char *boneName);
+	int			(*G2API_AddBolt)(CGhoul2Info *ghlInfo, const char *boneName, qboolean requireDrawn);
 	int			(*G2API_AddBoltSurfNum)(CGhoul2Info *ghlInfo, const int surfIndex);
 	int			(*G2API_AddSurface)(CGhoul2Info *ghlInfo, int surfaceNumber, int polyNumber,
 					float BarycentricI, float BarycentricJ, int lod);

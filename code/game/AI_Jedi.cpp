@@ -406,7 +406,7 @@ void Tavion_ScepterSlam( void )
 		return;
 	}
 
-	int	boltIndex = gi.G2API_AddBolt(&NPC->ghoul2[NPC->weaponModel[1]], "*weapon");
+	int	boltIndex = gi.G2API_AddBolt(&NPC->ghoul2[NPC->weaponModel[1]], "*weapon", qfalse);
 	if ( boltIndex != -1 )
 	{
 		mdxaBone_t	boltMatrix;
@@ -555,7 +555,7 @@ void Tavion_SithSwordRecharge( void )
 		&& NPC->weaponModel[0] != -1 )
 	{
 		NPC->s.loopSound = G_SoundIndex( "sound/weapons/scepter/recharge.wav" );
-		int	boltIndex = gi.G2API_AddBolt(&NPC->ghoul2[NPC->weaponModel[0]], "*weapon");
+		int	boltIndex = gi.G2API_AddBolt(&NPC->ghoul2[NPC->weaponModel[0]], "*weapon", qfalse);
 		NPC->client->ps.legsAnimTimer = NPC->client->ps.torsoAnimTimer = 0;
 		NPC_SetAnim( NPC, SETANIM_BOTH, BOTH_TAVION_SWORDPOWER, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD );
 		G_PlayEffect( G_EffectIndex( "scepter/recharge.efx" ), NPC->weaponModel[0], boltIndex, NPC->s.number, NPC->currentOrigin, NPC->client->ps.torsoAnimTimer, qtrue );

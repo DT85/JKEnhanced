@@ -434,7 +434,7 @@ void G_CreateG2HolsteredWeaponModel( gentity_t *ent, const char *psWeaponModel, 
 		if ( ent->holsterModel[weaponNum] != -1 )
 		{
 			// attach it to the hip. need some correction of rotation first though!
-			int holsterorigin = gi.G2API_AddBolt(&ent->ghoul2[ent->holsterModel[weaponNum]], "*holsterorigin");
+			int holsterorigin = gi.G2API_AddBolt(&ent->ghoul2[ent->holsterModel[weaponNum]], "*holsterorigin", qfalse);
 			mdxaBone_t boltMatrix2;
 			if (holsterorigin != -1)
 			{
@@ -457,7 +457,7 @@ void G_CreateG2HolsteredWeaponModel( gentity_t *ent, const char *psWeaponModel, 
 				
 			}
 			// set up a bolt on the end so we can get where the sabre muzzle is - we can assume this is always bolt 0
-			gi.G2API_AddBolt(&ent->ghoul2[ent->holsterModel[weaponNum]], "*flash");
+			gi.G2API_AddBolt(&ent->ghoul2[ent->holsterModel[weaponNum]], "*flash", qfalse);
 	  		//gi.G2API_SetLodBias( &ent->ghoul2[ent->weaponModel[weaponNum]], 0 );
 		}
 	}
@@ -513,7 +513,7 @@ void G_CreateG2AttachedWeaponModel( gentity_t *ent, const char *psWeaponModel, i
 			gi.G2API_AttachG2Model(&ent->ghoul2[ent->weaponModel[weaponNum]], &ent->ghoul2[ent->playerModel],
 						boltNum, ent->playerModel);
 			// set up a bolt on the end so we can get where the sabre muzzle is - we can assume this is always bolt 0
-			if (gi.G2API_AddBolt(&ent->ghoul2[ent->weaponModel[weaponNum]], "*cannonflash") != -1)
+			if (gi.G2API_AddBolt(&ent->ghoul2[ent->weaponModel[weaponNum]], "*cannonflash", qfalse) != -1)
 			{
 				vec3_t gunAngles = { 0.0f, 0.0f, 0.0f };
 				vec3_t offset = { 0.0f, 0.0f, -10.0f };
@@ -522,7 +522,7 @@ void G_CreateG2AttachedWeaponModel( gentity_t *ent, const char *psWeaponModel, i
 			}
 			else
 			{
-				gi.G2API_AddBolt(&ent->ghoul2[ent->weaponModel[weaponNum]], "*flash");
+				gi.G2API_AddBolt(&ent->ghoul2[ent->weaponModel[weaponNum]], "*flash", qfalse);
 			}
 	  		//gi.G2API_SetLodBias( &ent->ghoul2[ent->weaponModel[weaponNum]], 0 );
 		}
@@ -567,11 +567,11 @@ void WP_SaberAddG2SaberModels( gentity_t *ent, int specificSaberNum )
 		{//special case, bolt to forearm
 			if ( saberNum == 0 )
 			{
-				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*r_hand_cap_r_arm" );
+				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*r_hand_cap_r_arm", qfalse );
 			}
 			else
 			{
-				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*l_hand_cap_l_arm" );
+				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*l_hand_cap_l_arm", qfalse );
 			}
 		}
 		G_CreateG2AttachedWeaponModel( ent, ent->client->ps.saber[saberNum].model, handBolt, saberNum );
@@ -656,15 +656,15 @@ void WP_SaberAddHolsteredG2SaberModels( gentity_t *ent, int specificSaberNum )
 		{
 			if ( holsterPlace == HOLSTER_LHIP )
 			{
-				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_l" );
+				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_l", qfalse );
 			}
 			else if ( holsterPlace == HOLSTER_HIPS )
 			{
-				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_r" );
+				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_r", qfalse );
 			}
 			else if ( holsterPlace == HOLSTER_BACK )
 			{
-				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*back" );
+				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*back", qfalse );
 			}
 		}
 		else
@@ -673,11 +673,11 @@ void WP_SaberAddHolsteredG2SaberModels( gentity_t *ent, int specificSaberNum )
 			{
 				if ( ent->client->ps.saber[0].holsterPlace == HOLSTER_LHIP )
 				{
-					handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_r" );
+					handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_r", qfalse );
 				}
 				else
 				{
-					handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_l" );
+					handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*hip_l", qfalse );
 				}
 			}
 			else if ( holsterPlace == HOLSTER_BACK )
@@ -686,7 +686,7 @@ void WP_SaberAddHolsteredG2SaberModels( gentity_t *ent, int specificSaberNum )
 				{
 					continue;
 				}
-				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*back" );
+				handBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*back", qfalse );
 			}
 		}
 		G_CreateG2HolsteredWeaponModel( ent, ent->client->ps.saber[saberNum].model, handBolt, saberNum, angles, offset );
@@ -1227,7 +1227,7 @@ Ghoul2 Insert Start
 			WP_SetSaberEntModelSkin( ent, saberent );
 
 			// set up a bolt on the end so we can get where the sabre muzzle is - we can assume this is always bolt 0
-			gi.G2API_AddBolt( &saberent->ghoul2[0], "*flash" );
+			gi.G2API_AddBolt( &saberent->ghoul2[0], "*flash", qfalse );
 			//gi.G2API_SetLodBias( &saberent->ghoul2[0], 0 );
 			if ( ent->client->ps.dualSabers )
 			{
@@ -1235,7 +1235,7 @@ Ghoul2 Insert Start
 				G_ModelIndex( ent->client->ps.saber[1].model );
 				//gi.G2API_InitGhoul2Model( saberent->ghoul2, ent->client->ps.saber[1].model, saber2 );
 				// set up a bolt on the end so we can get where the sabre muzzle is - we can assume this is always bolt 0
-				//gi.G2API_AddBolt( &saberent->ghoul2[0], "*flash" );
+				//gi.G2API_AddBolt( &saberent->ghoul2[0], "*flash", qfalse );
 				//gi.G2API_SetLodBias( &saberent->ghoul2[0], 0 );
 			}
 

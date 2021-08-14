@@ -3302,7 +3302,7 @@ static inline void G2_RagGetPelvisLumbarOffsets(CGhoul2Info &ghoul2, CRagDollUpd
 	G2API_GiveMeVectorFromMatrix(final, POSITIVE_X, animDir);
 
 	//We have the anim matrix pelvis pos now, so get the normal one as well
-	int bolt = G2API_AddBolt(&ghoul2, "pelvis");
+	int bolt = G2API_AddBolt(&ghoul2, "pelvis", qfalse);
 	G2_GetBoltMatrixLow(ghoul2, bolt, params->scale, x);
 	Multiply_3x4Matrix(&final, &worldMatrix, &x);
 	G2API_GiveMeVectorFromMatrix(final, ORIGIN, pos);

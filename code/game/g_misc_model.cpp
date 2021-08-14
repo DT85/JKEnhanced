@@ -254,7 +254,7 @@ void SP_misc_model_ghoul( gentity_t *ent )
 
 //	ent->s.modelindex = G_ModelIndex( "models/weapons2/blaster_r/g2blaster_w.glm" );
 //	gi.G2API_InitGhoul2Model(ent->ghoul2, "models/weapons2/blaster_r/g2blaster_w.glm", ent->s.modelindex);
-//	gi.G2API_AddBolt(&ent->ghoul2[0], "*weapon");
+//	gi.G2API_AddBolt(&ent->ghoul2[0], "*weapon", qfalse);
 //	gi.G2API_AttachG2Model(&ent->ghoul2[1],&ent->ghoul2[0], 0, 0);
 
 	gi.linkentity (ent);
@@ -270,7 +270,7 @@ void SP_misc_model_ghoul( gentity_t *ent )
 //	gi.G2API_SetSurfaceOnOff(&ent->ghoul2[0], "l_arm",0x00000100);
 //	test = gi.G2API_GetSurfaceRenderStatus(&ent->ghoul2[0], "l_hand");
 
-//	gi.G2API_SetNewOrigin(&ent->ghoul2[0], gi.G2API_AddBolt(&ent->ghoul2[0], "rhang_tag_bone"));
+//	gi.G2API_SetNewOrigin(&ent->ghoul2[0], gi.G2API_AddBolt(&ent->ghoul2[0], "rhang_tag_bone", qfalse));
 //	ent->s.apos.trDelta[1] = 10;
 //	ent->s.apos.trType = TR_LINEAR;
 

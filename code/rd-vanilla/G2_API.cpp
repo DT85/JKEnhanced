@@ -1643,13 +1643,13 @@ qboolean G2API_RemoveBolt(CGhoul2Info *ghlInfo, const int index)
 	return ret;
 }
 
-int G2API_AddBolt(CGhoul2Info *ghlInfo, const char *boneName)
+int G2API_AddBolt(CGhoul2Info *ghlInfo, const char *boneName, qboolean requireDrawn)
 {
 	int ret=-1;
 	G2ERROR(boneName,"NULL boneName");
 	if (boneName&&G2_SetupModelPointers(ghlInfo))
 	{
-		ret=G2_Add_Bolt(ghlInfo, ghlInfo->mBltlist, ghlInfo->mSlist, boneName);
+		ret=G2_Add_Bolt(ghlInfo, ghlInfo->mBltlist, ghlInfo->mSlist, boneName, requireDrawn);
 		G2NOTE(ret>=0,va("G2API_AddBolt Failed (%s:%s)",boneName,ghlInfo->mFileName));
 	}
 	return ret;

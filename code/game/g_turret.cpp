@@ -248,7 +248,7 @@ void turret_head_think( gentity_t *self )
 		// Getting the flash bolt here
 		gi.G2API_GetBoltMatrix( self->ghoul2,
 					0,
-					(self->spawnflags&SPF_TURRETG2_TURBO) ? ( (self->alt_fire ? gi.G2API_AddBolt( &self->ghoul2[0], "*muzzle2" ) : gi.G2API_AddBolt( &self->ghoul2[0], "*muzzle1" )) ) : gi.G2API_AddBolt( &self->ghoul2[0], "*flash03" ),
+					(self->spawnflags&SPF_TURRETG2_TURBO) ? ( (self->alt_fire ? gi.G2API_AddBolt( &self->ghoul2[0], "*muzzle2", qfalse ) : gi.G2API_AddBolt( &self->ghoul2[0], "*muzzle1", qfalse )) ) : gi.G2API_AddBolt( &self->ghoul2[0], "*flash03", qfalse ),
 					&boltMatrix,
 					self->currentAngles,
 					self->currentOrigin,
@@ -318,7 +318,7 @@ static void turret_aim( gentity_t *self )
 		// Getting the "eye" here
 		gi.G2API_GetBoltMatrix( self->ghoul2,
 					0,
-					(self->spawnflags&SPF_TURRETG2_TURBO) ? ( (self->alt_fire ? gi.G2API_AddBolt( &self->ghoul2[0], "*muzzle2" ) : gi.G2API_AddBolt( &self->ghoul2[0], "*muzzle1" )) ) : gi.G2API_AddBolt( &self->ghoul2[0], "*flash03" ),
+					(self->spawnflags&SPF_TURRETG2_TURBO) ? ( (self->alt_fire ? gi.G2API_AddBolt( &self->ghoul2[0], "*muzzle2", qfalse ) : gi.G2API_AddBolt( &self->ghoul2[0], "*muzzle1", qfalse )) ) : gi.G2API_AddBolt( &self->ghoul2[0], "*flash03", qfalse ),
 					&boltMatrix,
 					self->currentAngles,
 					self->s.origin,
@@ -825,13 +825,13 @@ void turret_set_models( gentity_t *self, qboolean dying )
 		if ( (self->spawnflags&SPF_TURRETG2_TURBO) )
 		{//different pitch bone and muzzle flash points
 			turret_SetBoneAngles(self, "pitch", vec3_origin);
-			//self->genericValue11 = gi.G2API_AddBolt( self->ghoul2, 0, "*muzzle1" );
-			//self->genericValue12 = gi.G2API_AddBolt( self->ghoul2, 0, "*muzzle2" );
+			//self->genericValue11 = gi.G2API_AddBolt( self->ghoul2, 0, "*muzzle1", qfalse );
+			//self->genericValue12 = gi.G2API_AddBolt( self->ghoul2, 0, "*muzzle2", qfalse );
 		}
 		else
 		{
 			turret_SetBoneAngles(self, "Bone_body", vec3_origin);
-			//self->genericValue11 = gi.G2API_AddBolt( self->ghoul2, 0, "*flash03" );
+			//self->genericValue11 = gi.G2API_AddBolt( self->ghoul2, 0, "*flash03", qfalse );
 		}
 	}
 }
@@ -872,7 +872,7 @@ void SP_misc_turret( gentity_t *base )
 	turret_set_models( base, qfalse );
 
 	gi.G2API_SetBoneAngles( &base->ghoul2[base->playerModel], "Bone_body", vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, 0, 0 );
-	base->torsoBolt = gi.G2API_AddBolt( &base->ghoul2[base->playerModel], "*flash03" );
+	base->torsoBolt = gi.G2API_AddBolt( &base->ghoul2[base->playerModel], "*flash03", qfalse );
 
 	finish_spawning_turret( base );
 
@@ -1121,7 +1121,7 @@ void SP_misc_ns_turret( gentity_t *base )
 	base->s.radius = 80.0f;
 
 	gi.G2API_SetBoneAngles( &base->ghoul2[base->playerModel], "Bone_body", vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, 0, 0 );
-	base->torsoBolt = gi.G2API_AddBolt( &base->ghoul2[base->playerModel], "*flash02" );
+	base->torsoBolt = gi.G2API_AddBolt( &base->ghoul2[base->playerModel], "*flash02", qfalse );
 
 	finish_spawning_turret( base );
 }
@@ -1800,7 +1800,7 @@ void SP_PAS( gentity_t *base )
 	gi.G2API_SetBoneAngles( &base->ghoul2[base->playerModel], "bone_gback", vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, 0, 0 );
 	gi.G2API_SetBoneAngles( &base->ghoul2[base->playerModel], "bone_barrel", vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, 0, 0 );
 
-	base->torsoBolt = gi.G2API_AddBolt( &base->ghoul2[base->playerModel], "*flash02" );
+	base->torsoBolt = gi.G2API_AddBolt( &base->ghoul2[base->playerModel], "*flash02", qfalse );
 
 	base->s.eType = ET_GENERAL;
 
@@ -2074,7 +2074,7 @@ void SP_misc_ion_cannon( gentity_t *base )
 	VectorSet( base->s.modelScale, 2.0f, 2.0f, 2.0f );
 
 	base->rootBone = gi.G2API_GetBoneIndex( &base->ghoul2[base->playerModel], "model_root", qtrue );
-	base->torsoBolt = gi.G2API_AddBolt( &base->ghoul2[base->playerModel], "*flash02" );
+	base->torsoBolt = gi.G2API_AddBolt( &base->ghoul2[base->playerModel], "*flash02", qfalse );
 
 	// register damage model
 	base->s.modelindex2 = G_ModelIndex( "models/map_objects/imp_mine/ion_cannon_damage.md3" );

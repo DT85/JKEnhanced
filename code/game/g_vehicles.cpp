@@ -295,7 +295,7 @@ void G_AttachToVehicle( gentity_t *pEnt, usercmd_t **ucmd )
 		return;
 
 #ifdef _JK2MP
-	crotchBolt = trap_G2API_AddBolt(vehEnt->ghoul2, 0, "*driver");
+	crotchBolt = trap_G2API_AddBolt(vehEnt->ghoul2, 0, "*driver", qfalse);
 
 	// Get the driver tag.
 	trap_G2API_GetBoltMatrix( vehEnt->ghoul2, 0, crotchBolt, &boltMatrix,
@@ -2522,7 +2522,7 @@ static void AttachRiders( Vehicle_t *pVeh )
 			int crotchBolt;
 
 			assert(parent->ghoul2);
-			crotchBolt = trap_G2API_AddBolt(parent->ghoul2, 0, "*driver");
+			crotchBolt = trap_G2API_AddBolt(parent->ghoul2, 0, "*driver", qfalse);
 			assert(parent->client);
 			assert(pilot->client);
 

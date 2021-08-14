@@ -261,7 +261,7 @@ void PM_IKUpdate( gentity_t *ent )
 		{
 			if ( !ent->client->ps.heldByBolt )
 			{//bolt wan't set
-				ent->client->ps.heldByBolt = gi.G2API_AddBolt( &holder->ghoul2[0], defaultBoltName );
+				ent->client->ps.heldByBolt = gi.G2API_AddBolt( &holder->ghoul2[0], defaultBoltName, qfalse );
 			}
 		}
 		else
@@ -282,7 +282,7 @@ void PM_IKUpdate( gentity_t *ent )
 			gi.G2API_GetBoltMatrix( holder->ghoul2, 0, ent->client->ps.heldByBolt, &boltMatrix, tAngles, holder->client->ps.origin, level.time, 0, holder->s.modelScale );
 			gi.G2API_GiveMeVectorFromMatrix( boltMatrix, ORIGIN, boltOrg );
 
-			int grabbedByBolt = gi.G2API_AddBolt( &ent->ghoul2[0], firstBone );
+			int grabbedByBolt = gi.G2API_AddBolt( &ent->ghoul2[0], firstBone, qfalse );
 			if ( grabbedByBolt )
 			{
 				//point the limb
@@ -347,7 +347,7 @@ void PM_IKUpdate( gentity_t *ent )
 		{
 			if ( !ent->client->ps.heldByBolt )
 			{
-				ent->client->ps.heldByBolt = gi.G2API_AddBolt( &ent->ghoul2[0], defaultBoltName );
+				ent->client->ps.heldByBolt = gi.G2API_AddBolt( &ent->ghoul2[0], defaultBoltName, qfalse );
 			}
 		}
 		else

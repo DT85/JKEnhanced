@@ -421,9 +421,9 @@ static void *G_ZMalloc_Helper( int iSize, memtag_t eTag, qboolean bZeroit)
 	return Z_Malloc( iSize, eTag, bZeroit );
 }
 
-static int SV_G2API_AddBolt( CGhoul2Info *ghlInfo, const char *boneName )
+static int SV_G2API_AddBolt( CGhoul2Info *ghlInfo, const char *boneName, qboolean requireDrawn )
 {
-	return re.G2API_AddBolt( ghlInfo, boneName );
+	return re.G2API_AddBolt( ghlInfo, boneName, requireDrawn );
 }
 
 static int SV_G2API_AddBoltSurfNum( CGhoul2Info *ghlInfo, const int surfIndex )

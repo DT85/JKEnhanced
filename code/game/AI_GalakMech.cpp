@@ -172,7 +172,7 @@ void GM_Dying( gentity_t *self )
 				}
 				else if (!gi.G2API_GetSurfaceRenderStatus( &self->ghoul2[self->playerModel], "r_arm_middle" ))
 				{//r_arm_middle still there
-					newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*r_arm_elbow" );
+					newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*r_arm_elbow", qfalse );
 					gi.G2API_SetSurfaceOnOff( &self->ghoul2[self->playerModel], "r_arm_middle", TURN_OFF );
 				}
 				break;
@@ -185,33 +185,33 @@ void GM_Dying( gentity_t *self )
 				}
 				else if (!gi.G2API_GetSurfaceRenderStatus( &self->ghoul2[self->playerModel], "l_arm_wrist" ))
 				{//l_arm_wrist still there
-					newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*l_arm_cap_l_hand" );
+					newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*l_arm_cap_l_hand", qfalse );
 					gi.G2API_SetSurfaceOnOff( &self->ghoul2[self->playerModel], "l_arm_wrist", TURN_OFF );
 				}
 				else if (!gi.G2API_GetSurfaceRenderStatus( &self->ghoul2[self->playerModel], "l_arm_middle" ))
 				{//l_arm_middle still there
-					newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*l_arm_cap_l_hand" );
+					newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*l_arm_cap_l_hand", qfalse );
 					gi.G2API_SetSurfaceOnOff( &self->ghoul2[self->playerModel], "l_arm_middle", TURN_OFF );
 				}
 				else if (!gi.G2API_GetSurfaceRenderStatus( &self->ghoul2[self->playerModel], "l_arm_augment" ))
 				{//l_arm_augment still there
-					newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*l_arm_elbow" );
+					newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*l_arm_elbow", qfalse );
 					gi.G2API_SetSurfaceOnOff( &self->ghoul2[self->playerModel], "l_arm_augment", TURN_OFF );
 				}
 				break;
 			case 3:
 			case 4:
-				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*hip_fr" );
+				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*hip_fr", qfalse );
 				GM_CreateExplosion( self, newBolt );
 				break;
 			case 5:
 			case 6:
-				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*shldr_l" );
+				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*shldr_l", qfalse );
 				GM_CreateExplosion( self, newBolt );
 				break;
 			case 7:
 			case 8:
-				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*uchest_r" );
+				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*uchest_r", qfalse );
 				GM_CreateExplosion( self, newBolt );
 				break;
 			case 9:
@@ -219,19 +219,19 @@ void GM_Dying( gentity_t *self )
 				GM_CreateExplosion( self, self->headBolt );
 				break;
 			case 11:
-				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*l_leg_knee" );
+				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*l_leg_knee", qfalse );
 				GM_CreateExplosion( self, newBolt, qtrue );
 				break;
 			case 12:
-				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*r_leg_knee" );
+				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*r_leg_knee", qfalse );
 				GM_CreateExplosion( self, newBolt, qtrue );
 				break;
 			case 13:
-				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*l_leg_foot" );
+				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*l_leg_foot", qfalse );
 				GM_CreateExplosion( self, newBolt, qtrue );
 				break;
 			case 14:
-				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*r_leg_foot" );
+				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*r_leg_foot", qfalse );
 				GM_CreateExplosion( self, newBolt, qtrue );
 				break;
 			}
@@ -263,7 +263,7 @@ void NPC_GM_Pain( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, co
 		//FIXME: allow for radius damage?
 		if ( (hitLoc==HL_GENERIC1) && (self->locationDamage[HL_GENERIC1] > GENERATOR_HEALTH) )
 		{
-			int newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*antenna_base" );
+			int newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*antenna_base", qfalse );
 			if ( newBolt != -1 )
 			{
 				GM_CreateExplosion( self, newBolt );

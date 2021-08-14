@@ -674,12 +674,12 @@ void NPC_SetMiscDefaultData( gentity_t *ent )
 		{//we have the scepter, so put it in our left hand if we don't already have a second weapon
 			G_CreateG2AttachedWeaponModel( ent, weaponData[WP_SCEPTER].worldModel, ent->handLBolt, 1 );
 		}
-		ent->genericBolt1 = gi.G2API_AddBolt(&ent->ghoul2[ent->weaponModel[1]], "*flash");
+		ent->genericBolt1 = gi.G2API_AddBolt(&ent->ghoul2[ent->weaponModel[1]], "*flash", qfalse);
 	}
 
 	if ( ent->client->ps.saber[0].type == SABER_SITH_SWORD )
 	{
-		ent->genericBolt1 = gi.G2API_AddBolt(&ent->ghoul2[ent->weaponModel[0]], "*flash");
+		ent->genericBolt1 = gi.G2API_AddBolt(&ent->ghoul2[ent->weaponModel[0]], "*flash", qfalse);
 		G_PlayEffect( G_EffectIndex( "scepter/sword.efx" ), ent->weaponModel[0], ent->genericBolt1, ent->s.number, ent->currentOrigin, qtrue, qtrue );
 		//how many times can she recharge?
 		ent->count = g_spskill->integer*2;
@@ -690,7 +690,7 @@ void NPC_SetMiscDefaultData( gentity_t *ent )
 	if ( ent->client->ps.weapon == WP_NOGHRI_STICK
 		&& ent->weaponModel[0] )
 	{
-		ent->genericBolt1 = gi.G2API_AddBolt(&ent->ghoul2[ent->weaponModel[0]], "*flash");
+		ent->genericBolt1 = gi.G2API_AddBolt(&ent->ghoul2[ent->weaponModel[0]], "*flash", qfalse);
 	}
 
 	G_ClassSetDontFlee( ent );

@@ -277,13 +277,13 @@ void Mark1_dying( gentity_t *self )
 			if (num == 1)
 			{
 				num = Q_irand( 8, 10);
-				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], va("*flash%d",num) );
+				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], va("*flash%d",num), qfalse );
 				NPC_Mark1_Part_Explode(self,newBolt);
 			}
 			else
 			{
 				num = Q_irand( 1, 6);
-				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], va("*torso_tube%d",num) );
+				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], va("*torso_tube%d",num), qfalse );
 				NPC_Mark1_Part_Explode(self,newBolt);
 				gi.G2API_SetSurfaceOnOff( &self->ghoul2[self->playerModel], va("torso_tube%d",num), TURN_OFF );
 			}
@@ -356,7 +356,7 @@ void NPC_Mark1_Pain( gentity_t *self, gentity_t *inflictor, gentity_t *other, co
 	{
 		if (self->locationDamage[hitLoc] >= LEFT_ARM_HEALTH)	// Blow it up?
 		{
-			newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash3" );
+			newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash3", qfalse );
 			if ( newBolt != -1 )
 			{
 				NPC_Mark1_Part_Explode(self,newBolt);
@@ -370,7 +370,7 @@ void NPC_Mark1_Pain( gentity_t *self, gentity_t *inflictor, gentity_t *other, co
 	{
 		if (self->locationDamage[hitLoc] >= RIGHT_ARM_HEALTH)
 		{
-			newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash4" );
+			newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash4", qfalse );
 			if ( newBolt != -1 )
 			{
 //				G_PlayEffect( "small_chunks", self->playerModel, self->genericBolt2, self->s.number);
@@ -389,7 +389,7 @@ void NPC_Mark1_Pain( gentity_t *self, gentity_t *inflictor, gentity_t *other, co
 			{
 				if (self->locationDamage[hitLoc] >= AMMO_POD_HEALTH)
 				{
-					newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], va("*torso_tube%d",(i+1)) );
+					newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], va("*torso_tube%d",(i+1)), qfalse );
 					if ( newBolt != -1 )
 					{
 						NPC_Mark1_Part_Explode(self,newBolt);

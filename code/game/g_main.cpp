@@ -1607,16 +1607,16 @@ qboolean G_RagDoll(gentity_t *ent, vec3_t forcedAngles)
 			//if (deathDone)
 			if (1)
 			{ //only trace from the hands if the death anim is already done.
-				boltChecks[0] = gi.G2API_AddBolt(&ent->ghoul2[ent->playerModel], "rhand");
-				boltChecks[1] = gi.G2API_AddBolt(&ent->ghoul2[ent->playerModel], "lhand");
+				boltChecks[0] = gi.G2API_AddBolt(&ent->ghoul2[ent->playerModel], "rhand", qfalse);
+				boltChecks[1] = gi.G2API_AddBolt(&ent->ghoul2[ent->playerModel], "lhand", qfalse);
 			}
 			else
 			{ //otherwise start the trace loop at the cranium.
 				i = 2;
 			}
-			boltChecks[2] = gi.G2API_AddBolt(&ent->ghoul2[ent->playerModel], "cranium");
-			boltChecks[3] = gi.G2API_AddBolt(&ent->ghoul2[ent->playerModel], "rtalus");
-			boltChecks[4] = gi.G2API_AddBolt(&ent->ghoul2[ent->playerModel], "ltalus");
+			boltChecks[2] = gi.G2API_AddBolt(&ent->ghoul2[ent->playerModel], "cranium", qfalse);
+			boltChecks[3] = gi.G2API_AddBolt(&ent->ghoul2[ent->playerModel], "rtalus", qfalse);
+			boltChecks[4] = gi.G2API_AddBolt(&ent->ghoul2[ent->playerModel], "ltalus", qfalse);
 
 			//Do the head first, because the hands reference it anyway.
 			gi.G2API_GetBoltMatrix(ent->ghoul2, ent->playerModel, boltChecks[2], &boltMatrix, tAng, ent->client->ps.origin, (cg.time?cg.time:level.time), NULL, ent->s.modelScale);
@@ -1788,7 +1788,7 @@ qboolean G_RagDoll(gentity_t *ent, vec3_t forcedAngles)
 				VectorCopy(ent->client->renderInfo.handRPoint, thisHand);
 
 				//Get the position of the thoracic bone for hinting its velocity later on
-				//thorBolt = trap_G2API_AddBolt(cent->ghoul2, 0, "thoracic");
+				//thorBolt = trap_G2API_AddBolt(cent->ghoul2, 0, "thoracic", qfalse);
 				//trap_G2API_GetBoltMatrix(cent->ghoul2, 0, thorBolt, &matrix, cent->turAngles, cent->lerpOrigin,
 				//	cg.time, cgs.gameModels, cent->modelScale);
 				//BG_GiveMeVectorFromMatrix(&matrix, ORIGIN, thorPoint);

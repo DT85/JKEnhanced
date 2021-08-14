@@ -725,7 +725,7 @@ static void ParseAnimationEvtBlock(int glaIndex, unsigned short modelIndex, cons
 				}
 			}
 			//NOTE: this string will later be used to add a bolt and store the index, as below:
-			//animEvent->eventData[AED_BOLTINDEX] = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], animEvent->stringData );
+			//animEvent->eventData[AED_BOLTINDEX] = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], animEvent->stringData, qfalse );
 			//get probability
 			token = COM_Parse( text_p );
 			if ( !token )

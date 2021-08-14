@@ -2098,7 +2098,7 @@ extern cvar_t	*g_saberRealisticCombat;
 			{//add smoke to cap surf, spawn effect
 				if ( cent->gent->delay <= cg.time )
 				{//debounced so it only plays effect once every 50ms
-					int newBolt = gi.G2API_AddBolt( &owner->ghoul2[owner->playerModel], cent->gent->target );
+					int newBolt = gi.G2API_AddBolt( &owner->ghoul2[owner->playerModel], cent->gent->target, qfalse );
 					if ( newBolt != -1 )
 					{
 						cent->gent->delay = cg.time + 50;

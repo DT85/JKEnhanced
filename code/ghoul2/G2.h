@@ -118,7 +118,7 @@ void		G2_SaveGhoul2Models(CGhoul2Info_v &ghoul2);
 void		G2_LoadGhoul2Model(CGhoul2Info_v &ghoul2, char *buffer);
 
 // internal bolt calls. G2_bolts.cpp
-int			G2_Add_Bolt(CGhoul2Info *ghlInfo, boltInfo_v &bltlist, surfaceInfo_v &slist, const char *boneName);
+int			G2_Add_Bolt(CGhoul2Info *ghlInfo, boltInfo_v &bltlist, surfaceInfo_v &slist, const char *boneName, qboolean requireDrawn);
 qboolean	G2_Remove_Bolt (boltInfo_v &bltlist, int index);
 void		G2_Init_Bolt_List(boltInfo_v &bltlist);
 int			G2_Find_Bolt_Bone_Num(boltInfo_v &bltlist, const int boneNum);
@@ -163,7 +163,7 @@ qboolean	G2API_SetBoneAnglesOffset(CGhoul2Info *ghlInfo, const char *boneName, c
 qboolean	G2API_StopBoneAngles(CGhoul2Info *ghlInfo, const char *boneName);
 qboolean	G2API_RemoveBone(CGhoul2Info *ghlInfo, const char *boneName);
 qboolean	G2API_RemoveBolt(CGhoul2Info *ghlInfo, const int index);
-int			G2API_AddBolt(CGhoul2Info *ghlInfo, const char *boneName);
+int			G2API_AddBolt(CGhoul2Info *ghlInfo, const char *boneName, qboolean requireDrawn);
 int			G2API_AddBoltSurfNum(CGhoul2Info *ghlInfo, const int surfIndex);
 qboolean	G2API_AttachG2Model(CGhoul2Info *ghlInfo, CGhoul2Info *ghlInfoTo, int toBoltIndex, int toModel);
 qboolean	G2API_DetachG2Model(CGhoul2Info *ghlInfo);

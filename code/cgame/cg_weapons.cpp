@@ -162,8 +162,8 @@ void CG_RegisterWeapon( int weaponNum ) {
 														G_ModelIndex(path), G_SkinIndex(weaponData[weaponNum].skinPath), NULL_HANDLE, 0, 0);
 		gi.G2API_SetSkin(&weaponInfo->ghoul2[weaponInfo->g2_index], 0, weaponInfo->g2_skin);
 		// Add flash bolt
-		weaponInfo->g2_flashbolt = gi.G2API_AddBolt(&weaponInfo->ghoul2[weaponInfo->g2_index], "*flash");
-		weaponInfo->g2_effectsbolt = gi.G2API_AddBolt(&weaponInfo->ghoul2[weaponInfo->g2_index], "*l_hand");
+		weaponInfo->g2_flashbolt = gi.G2API_AddBolt(&weaponInfo->ghoul2[weaponInfo->g2_index], "*flash", qfalse);
+		weaponInfo->g2_effectsbolt = gi.G2API_AddBolt(&weaponInfo->ghoul2[weaponInfo->g2_index], "*l_hand", qfalse);
 		if(!weaponData[weaponNum].bNoHandModel)
 			weaponInfo->handsModel = cgi_R_RegisterModel( "models/weapons2/briar_pistol/briar_pistol_hand.md3" );
 

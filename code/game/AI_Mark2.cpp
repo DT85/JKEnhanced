@@ -112,7 +112,7 @@ void NPC_Mark2_Pain( gentity_t *self, gentity_t *inflictor, gentity_t *other, co
 		{
 			if (self->locationDamage[hitLoc] >= AMMO_POD_HEALTH)
 			{
-				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], va("torso_canister%d",(i+1)) );
+				newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], va("torso_canister%d",(i+1)), qfalse );
 				if ( newBolt != -1 )
 				{
 					NPC_Mark2_Part_Explode(self,newBolt);

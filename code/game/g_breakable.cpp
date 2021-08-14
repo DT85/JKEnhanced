@@ -969,7 +969,7 @@ void TieFighterUse( gentity_t *self, gentity_t *other, gentity_t *activator )
 void TouchTieBomb( gentity_t *self, gentity_t *other, trace_t *trace )
 {
 	// Stop the effect.
-	G_StopEffect( G_EffectIndex( "ships/tiebomber_bomb_falling" ), self->playerModel, gi.G2API_AddBolt( &self->ghoul2[0], "model_root" ), self->s.number );
+	G_StopEffect( G_EffectIndex( "ships/tiebomber_bomb_falling" ), self->playerModel, gi.G2API_AddBolt( &self->ghoul2[0], "model_root", qfalse ), self->s.number );
 
 	self->e_ThinkFunc = thinkF_G_FreeEntity;
 	self->nextthink = level.time + FRAMETIME;
@@ -1023,7 +1023,7 @@ void TieBomberThink( gentity_t *self )
 		SnapVector( bomb->s.pos.trDelta );		// save net bandwidth
 
 		// Start the effect.
-		G_PlayEffect( G_EffectIndex( "ships/tiebomber_bomb_falling" ), bomb->playerModel, gi.G2API_AddBolt( &bomb->ghoul2[0], "model_root" ), bomb->s.number, bomb->currentOrigin, 1000, qtrue );
+		G_PlayEffect( G_EffectIndex( "ships/tiebomber_bomb_falling" ), bomb->playerModel, gi.G2API_AddBolt( &bomb->ghoul2[0], "model_root", qfalse ), bomb->s.number, bomb->currentOrigin, 1000, qtrue );
 
 		// Set the tie bomb to have a touch function, so when it hits the ground (or whatever), there's a nice 'boom'.
 		bomb->e_TouchFunc = touchF_TouchTieBomb;

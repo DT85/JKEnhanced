@@ -1307,7 +1307,7 @@ qboolean G_GetHitLocFromSurfName( gentity_t *ent, const char *surfName, int *hit
 				}
 				if ( tagName )
 				{
-					int tagBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], tagName );
+					int tagBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], tagName, qfalse );
 					if ( tagBolt != -1 )
 					{
 						mdxaBone_t	boltMatrix;
@@ -2034,7 +2034,7 @@ static qboolean G_Dismember( gentity_t *ent, vec3_t point,
 //2) set the root surf on the limb
 	if ( limbTagName )
 	{//add smoke to cap tag
-		/*newBolt = gi.G2API_AddBolt( &limb->ghoul2[limb->playerModel], limbTagName );
+		/*newBolt = gi.G2API_AddBolt( &limb->ghoul2[limb->playerModel], limbTagName, qfalse );
 		if ( newBolt != -1 )
 		{
 			G_PlayEffect( G_EffectIndex("saber/limb_bolton"), limb->playerModel, newBolt, limb->s.number, newPoint);
@@ -2077,10 +2077,10 @@ static qboolean G_Dismember( gentity_t *ent, vec3_t point,
 	}
 	if ( rotateBone )
 	{
- 		gi.G2API_SetNewOrigin( &limb->ghoul2[0], gi.G2API_AddBolt( &limb->ghoul2[0], rotateBone ) );
+ 		gi.G2API_SetNewOrigin( &limb->ghoul2[0], gi.G2API_AddBolt( &limb->ghoul2[0], rotateBone, qfalse ) );
 
 		//now let's try to position the limb at the *exact* right spot
-		int newBolt = gi.G2API_AddBolt( &ent->ghoul2[0], rotateBone );
+		int newBolt = gi.G2API_AddBolt( &ent->ghoul2[0], rotateBone, qfalse );
 		if ( newBolt != -1 )
 		{
 			int	actualTime = (cg.time?cg.time:level.time);
@@ -2097,7 +2097,7 @@ static qboolean G_Dismember( gentity_t *ent, vec3_t point,
 			//angles, too
 			/*
 			vec3_t	limbF, limbR;
-			newBolt = gi.G2API_AddBolt( &ent->ghoul2[0], limbBone );
+			newBolt = gi.G2API_AddBolt( &ent->ghoul2[0], limbBone, qfalse );
 			if ( newBolt != -1 )
 			{
 				gi.G2API_GetBoltMatrix( ent->ghoul2, ent->playerModel, newBolt,
@@ -2128,7 +2128,7 @@ static qboolean G_Dismember( gentity_t *ent, vec3_t point,
 		//do it later
 		limb->target = G_NewString( stubTagName );
 		/*
-		newBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], stubTagName );
+		newBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], stubTagName, qfalse );
 		if ( newBolt != -1 )
 		{
 			G_PlayEffect( "blaster/smoke_bolton", ent->playerModel, newBolt, ent->s.number);

@@ -2561,8 +2561,8 @@ void welder_think( gentity_t *self )
 	int newBolt;
 
 	// could alternate between the two... or make it random... ?
-	newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash" );
-//	newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash01" );
+	newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash", qfalse );
+//	newBolt = gi.G2API_AddBolt( &self->ghoul2[self->playerModel], "*flash01", qfalse );
 
 	if ( newBolt != -1 )
 	{

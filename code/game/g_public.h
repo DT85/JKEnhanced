@@ -301,7 +301,7 @@ Ghoul2 Insert Start
 	qboolean	(*G2API_StopBoneAngles)(CGhoul2Info *ghlInfo, const char *boneName);
 	qboolean	(*G2API_RemoveBone)(CGhoul2Info *ghlInfo, const char *boneName);
 	qboolean	(*G2API_RemoveBolt)(CGhoul2Info *ghlInfo, const int index);
-	int			(*G2API_AddBolt)(CGhoul2Info *ghlInfo, const char *boneName);
+	int			(*G2API_AddBolt)(CGhoul2Info *ghlInfo, const char *boneName, qboolean requireDrawn);
 	int			(*G2API_AddBoltSurfNum)(CGhoul2Info *ghlInfo, const int surfIndex);
 	qboolean	(*G2API_AttachG2Model)(CGhoul2Info *ghlInfo, CGhoul2Info *ghlInfoTo, int toBoltIndex, int toModel);
 	qboolean	(*G2API_DetachG2Model)(CGhoul2Info *ghlInfo);

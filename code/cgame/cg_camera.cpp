@@ -724,7 +724,7 @@ void CGCam_FollowUpdate ( void )
 			focused = qfalse;
 			if ( from->client && client_camera.cameraGroupTag[0] && fromCent->gent->ghoul2.size() )
 			{
-				int newBolt = gi.G2API_AddBolt( &fromCent->gent->ghoul2[from->playerModel], client_camera.cameraGroupTag );
+				int newBolt = gi.G2API_AddBolt( &fromCent->gent->ghoul2[from->playerModel], client_camera.cameraGroupTag, qfalse );
 				if ( newBolt != -1 )
 				{
 					mdxaBone_t	boltMatrix;

@@ -416,7 +416,7 @@ void Tusken_StaffTrace( gentity_t *self )
 		return;
 	}
 
-	int			boltIndex = gi.G2API_AddBolt(&self->ghoul2[self->weaponModel[0]], "*weapon");
+	int			boltIndex = gi.G2API_AddBolt(&self->ghoul2[self->weaponModel[0]], "*weapon", qfalse);
 	if ( boltIndex != -1 )
 	{
 		int curTime = (cg.time?cg.time:level.time);

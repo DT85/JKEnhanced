@@ -1080,7 +1080,7 @@ static void CG_PlayerAnimEventDo( centity_t *cent, animevent_t *animEvent )
 					}
 					if ( modelIndex > 0 )
 					{//we have a cinematic model
-						int boltIndex = gi.G2API_AddBolt( &cent->gent->ghoul2[modelIndex], "*flash" );
+						int boltIndex = gi.G2API_AddBolt( &cent->gent->ghoul2[modelIndex], "*flash", qfalse );
 						if ( boltIndex > -1 )
 						{//cinematic model has a flash bolt
 							CG_PlayEffectBolted( "scepter/beam.efx", modelIndex, boltIndex, cent->currentState.clientNum, cent->lerpOrigin, animEvent->eventData[AED_EFFECT_PROBABILITY], qtrue );//AED_EFFECT_PROBABILITY in this case is the number of ms for the effect to last
@@ -1100,19 +1100,19 @@ static void CG_PlayerAnimEventDo( centity_t *cent, animevent_t *animEvent )
 					   || Q_stricmp( "*flash", animEvent->stringData ) == 0 )
 					&& cent->gent->weaponModel[0] > 0 )
 				{//must be a weapon, try weapon 0?
-					animEvent->eventData[AED_BOLTINDEX] = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->weaponModel[0]], animEvent->stringData );
+					animEvent->eventData[AED_BOLTINDEX] = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->weaponModel[0]], animEvent->stringData, qfalse );
 					if ( animEvent->eventData[AED_BOLTINDEX] != -1 )
 					{//found it!
 						animEvent->eventData[AED_MODELINDEX] = cent->gent->weaponModel[0];
 					}
 					else
 					{//hmm, just try on the player model, then?
-						animEvent->eventData[AED_BOLTINDEX] = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], animEvent->stringData );
+						animEvent->eventData[AED_BOLTINDEX] = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], animEvent->stringData, qfalse );
 					}
 				}
 				else
 				{
-					animEvent->eventData[AED_BOLTINDEX] = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], animEvent->stringData );
+					animEvent->eventData[AED_BOLTINDEX] = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], animEvent->stringData, qfalse );
 				}
 				animEvent->stringData = NULL;//so we don't try to do this again
 			}
@@ -1677,7 +1677,7 @@ static void CG_BreathPuffs( centity_t *cent, vec3_t angles, vec3_t origin )
 	}
 
 	// Get the head-front bolt/tag.
-	int bolt = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], "*head_front" );
+	int bolt = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], "*head_front", qfalse );
 	if ( bolt == -1 )
 	{
 		return;
@@ -2079,7 +2079,7 @@ static void CG_G2ClientSpineAngles( centity_t *cent, vec3_t viewAngles, const ve
 				int dummyHModel = cgi_R_RegisterModel( "models/players/_humanoid/_humanoid.glm" );
 				gi.G2API_InitGhoul2Model( dummyGhoul2, "models/players/_humanoid/_humanoid.glm", dummyHModel, NULL_HANDLE, NULL_HANDLE, 0, 0 );
 				dummyRootBone = gi.G2API_GetBoneIndex( &dummyGhoul2[0], "model_root", qtrue );
-				dummyHipsBolt = gi.G2API_AddBolt( &dummyGhoul2[0], "pelvis" );
+				dummyHipsBolt = gi.G2API_AddBolt( &dummyGhoul2[0], "pelvis", qfalse );
 			}
 
 			gi.G2API_GetBoneAnimIndex( &cent->gent->ghoul2[cent->gent->playerModel], cent->gent->lowerLumbarBone, cg.time, &upperFrame, &junk, &junk, &junk, &animSpeed, cgs.model_draw );
@@ -6665,7 +6665,7 @@ Ghoul2 Insert Start
 			int	upAxis = POSITIVE_Z;
 			if ( saberNum == 0 )
 			{
-				bolt = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], "*r_hand_cap_r_arm" );
+				bolt = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], "*r_hand_cap_r_arm", qfalse );
 				if ( bolt == -1 )
 				{
 					bolt = cent->gent->handRBolt;
@@ -6676,7 +6676,7 @@ Ghoul2 Insert Start
 			}
 			else
 			{
-				bolt = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], "*l_hand_cap_l_arm" );
+				bolt = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->playerModel], "*l_hand_cap_l_arm", qfalse );
 				if ( bolt == -1 )
 				{
 					bolt = cent->gent->handLBolt;
@@ -6704,13 +6704,23 @@ Ghoul2 Insert Start
 
 			//New way, multiple blade tags:
 			char *tagName = va( "*blade%d", bladeNum+1 );
-			bolt = gi.G2API_AddBolt( &scent->gent->ghoul2[modelIndex], tagName );
+			bolt = gi.G2API_AddBolt( &scent->gent->ghoul2[modelIndex], tagName, qtrue );
+
+			if (bolt == -1)
+			{
+				int bolt_checker;
+				for (bolt_checker = 0; bolt_checker < 4 && bolt == -1; bolt_checker++)
+				{
+					tagName = va("*blade%d_%d", bladeNum + 1, bolt_checker + 1);
+					bolt = gi.G2API_AddBolt(&scent->gent->ghoul2[modelIndex], tagName, qtrue);
+				}
+			}
             
 			if ( bolt == -1 )
 			{
 				tagHack = qtrue;//use the hacked switch statement below to position and orient the blades
 				//hmm, just fall back to the most basic tag (this will also make it work with pre-JKA saber models
-				bolt = gi.G2API_AddBolt( &scent->gent->ghoul2[modelIndex], "*flash" );
+				bolt = gi.G2API_AddBolt( &scent->gent->ghoul2[modelIndex], "*flash", qfalse );
 				if ( bolt == -1 )
 				{//no tag_flash either?!!
 					bolt = 0;
@@ -8562,17 +8572,17 @@ Ghoul2 Insert Start
 				//make the player's be based on the ghoul2 model
 				
 				//grab the location data for the "*head_eyes" tag surface
-				eyesBolt = gi.G2API_AddBolt(&cent->gent->ghoul2[cent->gent->playerModel], "*head_eyes");
+				eyesBolt = gi.G2API_AddBolt(&cent->gent->ghoul2[cent->gent->playerModel], "*head_eyes", qfalse);
 				if( !gi.G2API_GetBoltMatrix(cent->gent->ghoul2, cent->gent->playerModel, eyesBolt, &eyeMatrix, tempAngles, cent->lerpOrigin,
 											  cg.time, cgs.model_draw, cent->currentState.modelScale) )
 				{//Something prevented you from getting the "*head_eyes" information.  The model probably doesn't have a
 					//*head_eyes tag surface.  Try using *head_front instead
 					
-					eyesBolt = gi.G2API_AddBolt(&cent->gent->ghoul2[cent->gent->playerModel], "*head_front");
+					eyesBolt = gi.G2API_AddBolt(&cent->gent->ghoul2[cent->gent->playerModel], "*head_front", qfalse);
 					if( !gi.G2API_GetBoltMatrix(cent->gent->ghoul2, cent->gent->playerModel, eyesBolt, &eyeMatrix, tempAngles, cent->lerpOrigin,
 												  cg.time, cgs.model_draw, cent->currentState.modelScale) )
 					{
-						eyesBolt = gi.G2API_AddBolt(&cent->gent->ghoul2[cent->gent->playerModel], "reye");
+						eyesBolt = gi.G2API_AddBolt(&cent->gent->ghoul2[cent->gent->playerModel], "reye", qfalse);
 						boneBased = qtrue;
 						if( !gi.G2API_GetBoltMatrix(cent->gent->ghoul2, cent->gent->playerModel, eyesBolt, &eyeMatrix, tempAngles, cent->lerpOrigin,
 													  cg.time, cgs.model_draw, cent->currentState.modelScale) )
@@ -8736,12 +8746,22 @@ SkipTrueView:
 									
 									CG_RGBForSaberColor( cent->gent->client->ps.saber[saberNum].blade[bladeNum].color, RGB );
 									char *tagName = va( "*blade%d", bladeNum+1 );
-									int bolt = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->weaponModel[saberNum]], tagName );
+									int bolt = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->weaponModel[saberNum]], tagName, qtrue);
+
+									if (bolt == -1)
+									{
+										int bolt_checker;
+										for (bolt_checker = 0; bolt_checker < 4 && bolt == -1; bolt_checker++)
+										{
+											tagName = va("*blade%d_%d", bladeNum + 1, bolt_checker + 1);
+											bolt = gi.G2API_AddBolt(&cent->gent->ghoul2[cent->gent->weaponModel[saberNum]], tagName, qtrue);
+										}
+									}
                                     
                                     if ( bolt == -1 )
                                     {
                                         //hmm, just fall back to the most basic tag (this will also make it work with pre-JKA saber models
-                                        bolt = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->weaponModel[saberNum]], "*flash" );
+                                        bolt = gi.G2API_AddBolt( &cent->gent->ghoul2[cent->gent->weaponModel[saberNum]], "*flash", qfalse );
                                         if ( bolt == -1 )
                                         {//no tag_flash either?!!
                                             bolt = 0;

@@ -477,8 +477,8 @@ void SP_emplaced_eweb( gentity_t *ent )
 	ent->playerModel = gi.G2API_InitGhoul2Model( ent->ghoul2, name, ent->s.modelindex, NULL_HANDLE, NULL_HANDLE, 0, 0 );
 
 	// Activate our tags and bones
-	ent->handLBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*cannonflash" ); //muzzle bolt
-	ent->headBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "cannon_Xrot" ); //for placing the owner relative to rotation
+	ent->handLBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*cannonflash", qfalse ); //muzzle bolt
+	ent->headBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "cannon_Xrot", qfalse ); //for placing the owner relative to rotation
 	ent->rootBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->playerModel], "model_root", qtrue );
 	ent->lowerLumbarBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->playerModel], "cannon_Yrot", qtrue );
 	ent->upperLumbarBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->playerModel], "cannon_Xrot", qtrue );
@@ -842,9 +842,9 @@ void SP_emplaced_gun( gentity_t *ent )
 	ent->playerModel = gi.G2API_InitGhoul2Model( ent->ghoul2, name, ent->s.modelindex, NULL_HANDLE, NULL_HANDLE, 0, 0 );
 
 	// Activate our tags and bones
-	ent->headBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*seat" );
-	ent->handLBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*flash01" );
-	ent->handRBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*flash02" );
+	ent->headBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*seat", qfalse );
+	ent->handLBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*flash01", qfalse );
+	ent->handRBolt = gi.G2API_AddBolt( &ent->ghoul2[ent->playerModel], "*flash02", qfalse );
 	ent->rootBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->playerModel], "base_bone", qtrue );
 	ent->lowerLumbarBone = gi.G2API_GetBoneIndex( &ent->ghoul2[ent->playerModel], "swivel_bone", qtrue );
 	gi.G2API_SetBoneAnglesIndex( &ent->ghoul2[ent->playerModel], ent->lowerLumbarBone, vec3_origin, BONE_ANGLES_POSTMULT, POSITIVE_Y, POSITIVE_Z, POSITIVE_X, NULL, 0, 0);
