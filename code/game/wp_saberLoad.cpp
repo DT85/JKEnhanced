@@ -494,6 +494,7 @@ void WP_SaberSetDefaults( saberInfo_t *saber, qboolean setColors = qtrue )
 	saber->ignitionFlare2[0] = 0;
 	saber->blackIgnitionFlare[0] = 0;
 	saber->blackIgnitionFlare2[0] = 0;
+	saber->isCustomSaber = qfalse;
 }
 
 qboolean forcedRGBColours[MAX_BLADES];
@@ -1974,6 +1975,15 @@ static void Saber_ParseIgnitionFlareBlack2( saberInfo_t *saber, const char **p )
 	Q_strncpyz( saber->blackIgnitionFlare2, value, sizeof( saber->blackIgnitionFlare2 ) );
 	//NOTE: registers this on cgame side where it registers all client assets
 }
+static void Saber_ParseIsCustomSaber(saberInfo_t* saber, const char** p) {
+	int n;
+	if (COM_ParseInt(p, &n)) {
+		SkipRestOfLine(p);
+		return;
+	}
+	if (n)
+		saber->isCustomSaber = qtrue;
+}
 
 /*
 ===============
@@ -2188,6 +2198,7 @@ static keywordHash_t saberParseKeywords[] = {
 	{ "ignitionFlare2",			Saber_ParseIgnitionFlare2,		NULL	},
 	{ "ignitionFlareBlack",		Saber_ParseIgnitionFlareBlack,		NULL	},
 	{ "ignitionFlareBlack2",	Saber_ParseIgnitionFlareBlack2,		NULL	},
+	{ "isCustomSaber",			Saber_ParseIsCustomSaber,		NULL },
 	{ NULL,						NULL,							NULL	}
 };
 static keywordHash_t *saberParseKeywordHash[KEYWORDHASH_SIZE];
