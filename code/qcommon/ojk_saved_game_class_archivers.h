@@ -34,7 +34,8 @@ public:
 
 	static void sg_import(
 		SavedGameHelper& saved_game,
-		cplane_t& instance)
+		cplane_t& instance,
+		int32_t version)
 	{
 		saved_game.read<float>(instance.normal);
 		saved_game.read<float>(instance.dist);

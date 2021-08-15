@@ -81,15 +81,19 @@ bool SavedGame::open(
 			INT_ID('_', 'V', 'E', 'R'),
 			sg_version))
 		{
-			if (sg_version != iSAVEGAME_VERSION)
+			if (sg_version >= iSAVEGAME_VERSION_MAX || sg_version < iSAVEGAME_VERSION_ENHANCED_FIRST)
 			{
 				is_succeed = false;
 
-				::Com_Printf(
+				::Com_DPrintf(
 					S_COLOR_RED "File \"%s\" has version # %d (expecting %d)\n",
 					base_file_name.c_str(),
 					sg_version,
 					iSAVEGAME_VERSION);
+			}
+			else
+			{
+				sg_version_ = sg_version;
 			}
 		}
 		else
@@ -970,5 +974,9 @@ const uint32_t SavedGame::get_jo_magic_value()
 	return 0x1234ABCD;
 }
 
+int32_t SavedGame::version()
+{
+	return sg_version_;
+}
 
 } // ojk

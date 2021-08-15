@@ -1919,7 +1919,7 @@ void G2_LoadGhoul2Model(
 
 		// load the ghoul2 info from the buffer
 		ghoul2[i].sg_import(
-			saved_game);
+			saved_game, ::ri->saved_game->version());
 
 		if (ghoul2[i].mModelindex != -1 && ghoul2[i].mFileName[0])
 		{
@@ -1941,7 +1941,7 @@ void G2_LoadGhoul2Model(
 		for (decltype(surface_count) x = 0; x < surface_count; ++x)
 		{
 			ghoul2[i].mSlist[x].sg_import(
-				saved_game);
+				saved_game, ::ri->saved_game->version());
 		}
 
 		// give us enough bones to load up the data
@@ -1957,7 +1957,7 @@ void G2_LoadGhoul2Model(
 		for (decltype(bone_count) x = 0; x < bone_count; ++x)
 		{
 			ghoul2[i].mBlist[x].sg_import(
-				saved_game);
+				saved_game, ::ri->saved_game->version());
 		}
 
 		// give us enough bolts to load up the data
@@ -1973,7 +1973,7 @@ void G2_LoadGhoul2Model(
 		for (decltype(bolt_count) x = 0; x < bolt_count; ++x)
 		{
 			ghoul2[i].mBltlist[x].sg_import(
-				saved_game);
+				saved_game, ::ri->saved_game->version());
 		}
 	}
 

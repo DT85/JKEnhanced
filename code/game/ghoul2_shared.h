@@ -78,7 +78,7 @@ surfaceInfo_t():
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(offFlags);
 		saved_game.read<int32_t>(surface);
@@ -297,7 +297,7 @@ boneInfo_t():
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(boneNumber);
 		saved_game.read<>(matrix);
@@ -396,7 +396,7 @@ struct boltInfo_t{
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(boneNumber);
 		saved_game.read<int32_t>(surfaceNumber);
@@ -553,7 +553,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(mModelindex);
 
@@ -739,7 +739,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(mItem);
 	}
@@ -791,7 +791,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<float>(mDistance);
 		saved_game.read<int32_t>(mEntityNum);

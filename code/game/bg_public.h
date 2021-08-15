@@ -484,7 +484,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<uint16_t>(firstFrame);
 		saved_game.read<uint16_t>(numFrames);
@@ -567,7 +567,7 @@ typedef struct animevent_s
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(eventType);
 		saved_game.read<int16_t>(modelOnly);

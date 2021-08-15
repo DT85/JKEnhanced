@@ -115,7 +115,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int8_t>(filename);
 		saved_game.read<>(animations);
@@ -205,7 +205,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<float>(position);
 		saved_game.read<float>(radius);
@@ -327,7 +327,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(clients);
 		saved_game.read<int32_t>(maxclients);

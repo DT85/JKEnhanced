@@ -412,7 +412,7 @@ bool SavedGameHelper::try_read(
 	InternalTag)
 {
 	dst_value.sg_import(
-		*this);
+		*this, saved_game_->version());
 
 	return !saved_game_->is_failed();
 }
@@ -425,7 +425,7 @@ bool SavedGameHelper::try_read(
 {
 	SavedGameClassArchiver<TDst>::sg_import(
 		*this,
-		dst_value);
+		dst_value, saved_game_->version());
 
 	return !saved_game_->is_failed();
 }

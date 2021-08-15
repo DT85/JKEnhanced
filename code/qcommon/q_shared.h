@@ -330,6 +330,20 @@ typedef enum
 
 #define ENUM2STRING(arg)   { #arg,arg }
 
+//
+// note that this version number does not mean that a savegame with the same version can necessarily be loaded,
+//	since anyone can change any loadsave-affecting structure somewhere in a header and change a chunk size.
+// What it's used for is for things like mission pack etc if we need to distinguish "street-copy" savegames from
+//	any new enhanced ones that need to ask for new chunks during loading.
+//
+typedef enum {
+	iSAVEGAME_VERSION_BASE = 1,
+	iSAVEGAME_VERSION_ENHANCED_FIRST = 256,
+	iSAVEGAME_VERSION_ENHANCED = iSAVEGAME_VERSION_ENHANCED_FIRST,
+	iSAVEGAME_VERSION = iSAVEGAME_VERSION_ENHANCED,
+	iSAVEGAME_VERSION_MAX
+}iSavegame_version_e;
+
 //=============================================
 
 char	*COM_SkipPath( char *pathname );
@@ -551,7 +565,7 @@ Ghoul2 Insert End
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int8_t>(allsolid);
 		saved_game.read<int8_t>(startsolid);
@@ -859,7 +873,7 @@ typedef struct
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(inAction);
 		saved_game.read<int32_t>(duration);
@@ -919,7 +933,7 @@ typedef struct
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(active);
 		saved_game.read<int32_t>(color);
@@ -1339,7 +1353,7 @@ typedef struct
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(name);
 		saved_game.read<int32_t>(fullName);
@@ -1579,7 +1593,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(name);
 		saved_game.read<int32_t>(fullName);
@@ -2143,7 +2157,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(commandTime);
 		saved_game.read<int32_t>(pm_type);
@@ -2403,7 +2417,7 @@ typedef struct usercmd_s {
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(serverTime);
 		saved_game.read<int32_t>(buttons);
@@ -2451,7 +2465,7 @@ typedef struct {// !!!!!!!!!!! LOADSAVE-affecting struct !!!!!!!!!!
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(trType);
 		saved_game.read<int32_t>(trTime);
@@ -2554,7 +2568,6 @@ Ghoul2 Insert End
 		saved_game.write<int32_t>(number);
 		saved_game.write<int32_t>(eType);
 		saved_game.write<int32_t>(eFlags);
-//        saved_game.write<int32_t>(eFlags2);
 		saved_game.write<>(pos);
 		saved_game.write<>(apos);
 		saved_game.write<int32_t>(time);
@@ -2604,15 +2617,16 @@ Ghoul2 Insert End
 		saved_game.write<int32_t>(isPortalEnt);
 		saved_game.write<int32_t>(radarIcon);
 #endif // !JK2_MODE
+		//iSAVEGAME_VERSION_ENHANCED
+		saved_game.write<int32_t>(eFlags2);
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(number);
 		saved_game.read<int32_t>(eType);
 		saved_game.read<int32_t>(eFlags);
-//        saved_game.read<int32_t>(eFlags2);
 		saved_game.read<>(pos);
 		saved_game.read<>(apos);
 		saved_game.read<int32_t>(time);
@@ -2662,6 +2676,14 @@ Ghoul2 Insert End
 		saved_game.read<int32_t>(isPortalEnt);
 		saved_game.read<int32_t>(radarIcon);
 #endif // !JK2_MODE
+		if (version >= iSAVEGAME_VERSION_ENHANCED)
+		{
+			saved_game.read<int32_t>(eFlags2);
+		}
+		else
+		{
+			eFlags2 = 0;
+		}
 	}
 } entityState_t;
 

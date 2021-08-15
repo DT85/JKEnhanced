@@ -97,6 +97,9 @@ public:
 
 	// Calls Com_Error with last error message or with a generic one.
 	virtual void throw_error() = 0;
+
+	// Gets version of savegame
+	virtual int32_t version() = 0;
 }; // ISavedGame
 
 

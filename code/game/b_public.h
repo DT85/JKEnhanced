@@ -182,7 +182,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(aggression);
 		saved_game.read<int32_t>(aim);
@@ -511,7 +511,7 @@ public:
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(timeOfDeath);
 		saved_game.read<int32_t>(touchedByPlayer);

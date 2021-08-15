@@ -304,7 +304,8 @@ public:
 
 	static void sg_import(
 		SavedGameHelper& saved_game,
-		T& instance)
+		T& instance,
+		int32_t version)
 	{
 		static_cast<void>(saved_game);
 		static_cast<void>(instance);

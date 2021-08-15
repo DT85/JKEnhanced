@@ -170,7 +170,7 @@ typedef struct {
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<float>(matrix);
 	}

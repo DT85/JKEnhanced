@@ -478,7 +478,7 @@ struct Muzzle
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<float>(m_vMuzzlePos);
 		saved_game.read<float>(m_vMuzzleDir);
@@ -533,7 +533,7 @@ typedef struct
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(linked);
 		saved_game.read<int32_t>(ammo);
@@ -567,7 +567,7 @@ typedef struct
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game,  int32_t version)
 	{
 		saved_game.read<int32_t>(ammo);
 		saved_game.read<int32_t>(lastAmmoInc);
@@ -741,7 +741,7 @@ struct Vehicle_t
 	}
 
 	void sg_import(
-		ojk::SavedGameHelper& saved_game)
+		ojk::SavedGameHelper& saved_game, int32_t version)
 	{
 		saved_game.read<int32_t>(m_pPilot);
 		saved_game.read<int32_t>(m_iPilotTime);

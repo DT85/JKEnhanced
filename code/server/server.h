@@ -308,14 +308,7 @@ int SG_Read			(unsigned int chid, void *pvAddress, int iLength, void **ppvAddres
 int SG_ReadOptional	(unsigned int chid, void *pvAddress, int iLength, void **ppvAddressPtr = NULL);
 void SG_Shutdown();
 void SG_TestSave(void);
-//
-// note that this version number does not mean that a savegame with the same version can necessarily be loaded,
-//	since anyone can change any loadsave-affecting structure somewhere in a header and change a chunk size.
-// What it's used for is for things like mission pack etc if we need to distinguish "street-copy" savegames from
-//	any new enhanced ones that need to ask for new chunks during loading.
-//
-#define iSAVEGAME_VERSION 1
-int SG_Version(void);	// call this to know what version number a successfully-opened savegame file was
+
 //
 extern SavedGameJustLoaded_e eSavedGameJustLoaded;
 extern qboolean qbLoadTransition;

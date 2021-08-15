@@ -126,6 +126,8 @@ public:
 	// Returns a default instance of the class.
 	static SavedGame& get_instance();
 
+	int32_t version() override;
+
 
 private:
 	using Buffer = std::vector<uint8_t>;
@@ -162,6 +164,9 @@ private:
 
 	// Error flag.
 	bool is_failed_;
+
+	// Savegame version
+	int32_t sg_version_;
 
 
 	// Compresses data.
