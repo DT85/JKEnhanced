@@ -2153,6 +2153,7 @@ void G_InitPlayerFromCvars( gentity_t *ent )
 
 	//set the lightsaber
 	G_RemoveWeaponModels( ent );
+	G_RemoveHolsterModels( ent );
 	G_SetSabersFromCVars( ent );
 	//set up weapon models, etc.
 	G_AddWeaponModels( ent );
