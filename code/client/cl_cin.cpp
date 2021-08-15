@@ -1915,8 +1915,12 @@ static void PlayCinematic(const char *arg, const char *s, qboolean qbInGame)
 		}
 		//
 		////////////////////////////////////////////////////////////////////
+		float ratio = (float)(SCREEN_WIDTH * cls.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * cls.glconfig.vidWidth);
+		ratio = Com_Clamp(0.75f, 1.0f, ratio);
+		float new_height = SCREEN_HEIGHT / ratio;
+		float offset = (SCREEN_HEIGHT - (SCREEN_HEIGHT / ratio))/2.0f;
 
-		CL_handle = CIN_PlayCinematic( arg, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, bits, psAudioFile );
+		CL_handle = CIN_PlayCinematic( arg, 0, offset, SCREEN_WIDTH, new_height, bits, psAudioFile );
 		if (CL_handle >= 0)
 		{
 			cinTable[CL_handle].hCRAWLTEXT = hCrawl;
