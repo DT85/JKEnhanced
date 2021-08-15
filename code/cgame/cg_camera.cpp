@@ -76,6 +76,10 @@ CGCam_Enable
 extern void CG_CalcVrect(void);
 void CGCam_Enable( void )
 {
+	float ratio = Com_Clamp(0.5f, 1.5f, cgs.widthRatioCoef);
+	float height = 0.5f * (SCREEN_HEIGHT - 0.6f * (SCREEN_WIDTH / ratio));
+	float bar_height = Com_Clamp(0.0f, SCREEN_HEIGHT / 10.0f, height);
+
 	client_camera.bar_alpha = 0.0f;
 	client_camera.bar_time = cg.time;
 
@@ -83,8 +87,10 @@ void CGCam_Enable( void )
 	client_camera.bar_alpha_dest = 1.0f;
 
 	client_camera.bar_height_source = 0.0f;
-	client_camera.bar_height_dest = 480/10;
+	client_camera.bar_height_dest = bar_height;
 	client_camera.bar_height = 0.0f;
+
+	client_camera.text_bar_height = SCREEN_HEIGHT / 10.0f;
 
 	client_camera.info_state |= CAMERA_BAR_FADING;
 
@@ -135,6 +141,10 @@ CGCam_Disable
 
 void CGCam_Disable( void )
 {
+	float ratio = Com_Clamp(0.5f, 1.5f, cgs.widthRatioCoef);
+	float height = 0.5f * (SCREEN_HEIGHT - 0.6f * (SCREEN_WIDTH / ratio));
+	float bar_height = Com_Clamp(0.0f, SCREEN_HEIGHT / 10.0f, height);
+
 	in_camera = false;
 
 	client_camera.bar_alpha = 1.0f;
@@ -143,8 +153,10 @@ void CGCam_Disable( void )
 	client_camera.bar_alpha_source = 1.0f;
 	client_camera.bar_alpha_dest = 0.0f;
 
-	client_camera.bar_height_source = 480/10;
+	client_camera.bar_height_source = bar_height;
 	client_camera.bar_height_dest = 0.0f;
+
+	client_camera.text_bar_height = 0.0f;
 
 	client_camera.info_state |= CAMERA_BAR_FADING;
 

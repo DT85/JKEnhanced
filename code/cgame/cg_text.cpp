@@ -267,7 +267,7 @@ void CG_CaptionText( const char *str, int sound)
 
 	cg.captionTextTime = cg.time;
 	if (in_camera) {
-		cg.captionTextY = SCREEN_HEIGHT - (client_camera.bar_height_dest/2);	// ths is now a centre'd Y, not a start Y
+		cg.captionTextY = SCREEN_HEIGHT - (client_camera.text_bar_height/2);	// ths is now a centre'd Y, not a start Y
 	} else {	//get above the hud
 		cg.captionTextY = (int) (0.88f*((float)SCREEN_HEIGHT - (float)fontHeight * 1.5f));	// do NOT move this, it has to fit in between the weapon HUD and the datapad update.
 	}

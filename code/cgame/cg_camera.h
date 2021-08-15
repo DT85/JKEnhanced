@@ -106,6 +106,8 @@ typedef struct camera_s
 	float	bar_height_dest;
 	float	bar_height;
 
+	float	text_bar_height;
+
 	vec4_t	fade_color;
 	vec4_t	fade_source;
 	vec4_t	fade_dest;
