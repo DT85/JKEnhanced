@@ -3094,9 +3094,38 @@ void CG_Weapon_f( void )
 			i++;
 		}
 	}
-    else if (num == WP_BLASTER_PISTOL && cg.snap->ps.weapon == WP_BLASTER_PISTOL)
+    else if (num == WP_BLASTER_PISTOL ||
+			 num == WP_BRYAR_PISTOL)
     {
-        num = WP_BRYAR_PISTOL;
+		int weap, i = 0;
+
+		weap = cg.snap->ps.weapon;
+
+		while (i < 2)
+		{
+			if (weap == WP_BLASTER_PISTOL)
+			{
+				weap = WP_BRYAR_PISTOL;
+			}
+			else if (weap == WP_BRYAR_PISTOL)
+			{
+				weap = WP_BLASTER_PISTOL;
+			}
+			else
+			{
+				weap = num;
+			}
+
+			if (cg.snap->ps.ammo[weaponData[weap].ammoIndex] > 0)
+			{
+				if (CG_WeaponSelectable(weap, cg.snap->ps.weapon, qfalse))
+				{
+					num = weap;
+					break;
+				}
+			}
+			i++;
+		}
     }
 
 	if (!CG_WeaponSelectable(num, cg.snap->ps.weapon, qfalse))
