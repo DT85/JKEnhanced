@@ -545,6 +545,9 @@ void CG_RegisterCvars( void ) {
 
 	for ( i=0, cv=cvarTable; i<cvarTableSize; i++, cv++ ) {
 		cgi_Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
+		if (cv->vmCvar == &r_ratioFix) {
+			CG_Set2DRatio();
+		}
 	}
 }
 
@@ -2060,10 +2063,6 @@ static void CG_GameStateReceived( void ) {
 		cg.inventorySelect	= gi_cg_inventorySelect;
 	}
 
-
-	// get the rendering configuration from the client system
-	cgi_GetGlconfig( &cgs.glconfig );
-
 /*	cgs.charScale = cgs.glconfig.vidHeight * (1.0/480.0);
 	if ( cgs.glconfig.vidWidth * 480 > cgs.glconfig.vidHeight * 640 ) {
 		// wide screen
@@ -2294,6 +2293,9 @@ void CG_PreInit() {
 
 	memset( &cgs, 0, sizeof( cgs ) );
 	iCGResetCount = 0;
+
+	// get the rendering configuration from the client system
+	cgi_GetGlconfig(&cgs.glconfig);
 
 	CG_RegisterCvars();
 

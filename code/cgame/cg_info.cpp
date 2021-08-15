@@ -851,8 +851,8 @@ void CG_DrawInformation( void ) {
 
 		cgi_SP_GetStringTextString( "SP_INGAME_ALONGTIME", text, sizeof(text) );
 
-		int w = cgi_R_Font_StrLenPixels(text,cgs.media.qhFontMedium, 1.0f);
-		cgi_R_Font_DrawString((320)-(w/2), 140, text,  colorTable[CT_ICON_BLUE], cgs.media.qhFontMedium, -1, 1.0f);
+		int w = cgi_R_Font_StrLenPixels(text,cgs.media.qhFontMedium, 1.0f, cgs.widthRatioCoef);
+		cgi_R_Font_DrawString((320)-(w/2), 140, text,  colorTable[CT_ICON_BLUE], cgs.media.qhFontMedium, -1, 1.0f, cgs.widthRatioCoef);
 	}
 	else
 	{
@@ -872,7 +872,7 @@ void CG_DrawInformation( void ) {
 		// print the current item being loaded
 
 #ifdef _DEBUG
-		cgi_R_Font_DrawString( 40, 416, va("LOADING ... %s",cg.infoScreenText),colorTable[CT_LTGOLD1], cgs.media.qhFontSmall, -1, 1.0f );
+		cgi_R_Font_DrawString( 40, 416, va("LOADING ... %s",cg.infoScreenText),colorTable[CT_LTGOLD1], cgs.media.qhFontSmall, -1, 1.0f, cgs.widthRatioCoef );
 #endif
 	}
 
@@ -888,11 +888,11 @@ void CG_DrawInformation( void ) {
 		{
 			char text[1024]={0};
 			cgi_SP_GetStringTextString( s+1, text, sizeof(text) );
-			cgi_R_Font_DrawString( 15, y, va("\"%s\"",text),colorTable[CT_WHITE],cgs.media.qhFontMedium, -1, 1.0f );
+			cgi_R_Font_DrawString( 15, y, va("\"%s\"",text),colorTable[CT_WHITE],cgs.media.qhFontMedium, -1, 1.0f, cgs.widthRatioCoef );
 		}
 		else
 		{
-			cgi_R_Font_DrawString( 15, y, va("\"%s\"",s),colorTable[CT_WHITE],cgs.media.qhFontMedium, -1, 1.0f );
+			cgi_R_Font_DrawString( 15, y, va("\"%s\"",s),colorTable[CT_WHITE],cgs.media.qhFontMedium, -1, 1.0f, cgs.widthRatioCoef );
 		}
 		y += 20;
 	}

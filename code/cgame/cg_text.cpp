@@ -230,6 +230,13 @@ void CG_CaptionText( const char *str, int sound)
 
 	const float fFontScale = cgi_Language_IsAsian() ? 0.8f : 1.0f;
 
+	int screenWidth = SCREEN_WIDTH;
+
+	if (!in_camera)
+	{
+		screenWidth = SCREEN_WIDTH - 140; //only use centre of screen, don't overlap HUD
+	}
+
 	holds = strrchr(str,'/');
 	if (!holds)
 	{
@@ -330,7 +337,7 @@ void CG_CaptionText( const char *str, int sound)
 			cg.scrollTextLines++;
 		}
 		else
-		if ( cgi_R_Font_StrLenPixels(cg.captionText[i], cgs.media.qhFontMedium, fFontScale) >= SCREEN_WIDTH)
+		if ( cgi_R_Font_StrLenPixels(cg.captionText[i], cgs.media.qhFontMedium, fFontScale, cgs.widthRatioCoef) >= screenWidth)
 		{
 			// reached screen edge, so cap off string at bytepos after last good position...
 			//
