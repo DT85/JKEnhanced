@@ -123,6 +123,7 @@ extern cvar_t	*d_slowmodeath;
 extern cvar_t	*g_debugMelee;
 extern vmCvar_t	cg_thirdPersonAlpha;
 extern vmCvar_t	cg_thirdPersonAutoAlpha;
+extern cvar_t	*g_useIdleAnims;
 
 void ClientEndPowerUps( gentity_t *ent );
 
@@ -4331,14 +4332,16 @@ void G_CheckClientIdle( gentity_t *ent, usercmd_t *ucmd )
 		}
 		return;
 	}
-	if ( !VectorCompare( vec3_origin, ent->client->ps.velocity )
+	if ( !g_useIdleAnims->integer 
+		|| !VectorCompare( vec3_origin, ent->client->ps.velocity )
 		|| ucmd->buttons || ucmd->forwardmove || ucmd->rightmove || ucmd->upmove
 		|| !PM_StandingAnim( ent->client->ps.legsAnim )
 		|| ent->enemy
 		|| ent->client->ps.legsAnimTimer
 		|| ent->client->ps.torsoAnimTimer )
 	{//FIXME: also check for turning?
-		if ( !VectorCompare( vec3_origin, ent->client->ps.velocity )
+		if ( !g_useIdleAnims->integer
+			|| !VectorCompare( vec3_origin, ent->client->ps.velocity )
 			|| ucmd->buttons || ucmd->forwardmove || ucmd->rightmove || ucmd->upmove
 			|| ent->enemy )
 		{

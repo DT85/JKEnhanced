@@ -248,6 +248,8 @@ cvar_t	*g_noIgniteTwirl;
 
 cvar_t	*g_forceRegenTime;
 
+cvar_t	*g_useIdleAnims;
+
 qboolean	stop_icarus = qfalse;
 
 extern char *G_GetLocationForEnt( gentity_t *ent );
@@ -757,6 +759,8 @@ void G_InitCvars( void ) {
 	g_noIgniteTwirl = gi.cvar( "g_noIgniteTwirl", "0", CVAR_ARCHIVE );//if 1, don't do ignite twirl
 	
 	g_forceRegenTime = gi.cvar( "g_forceRegenTime", "100", CVAR_ARCHIVE );//Force regen time cvar similar to MP
+
+	g_useIdleAnims = gi.cvar( "g_useIdleAnims", "1", CVAR_ARCHIVE );//if 0, don't show idle animations
 }
 /*
 ============
