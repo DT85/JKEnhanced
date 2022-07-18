@@ -31,7 +31,7 @@ It's based on OpenJK (so the code is released under the GPL and available at <ht
     -   give weapon_e5
     -   give weapon_dc15s
     -   give weapon_dc15a
--   **Saber throw is now a force power -** If you'd like to return it to the old function, you can simply bind both attack2 and throw to the same key or button like this: **bind Mouse2 "+alt_attack;+saber_throw"**
+-   **Saber throw is now a force power -** This was to be compatible with the katarn saber style (listed below) - this was restored to alt attack to work with all styles like before.
 -   **New force powers -** Force Insanity, Destruction, Repulse and Stasis have been added. Force Repulse is gained automatically during the SP campaign. Bind the keys in the Controls menu. NPCs can use Destruction and Stasis. For faster force regeneration, **g_forceRegenTime** has been brought over from MP.
 -   **First person lightsaber with TrueView -** As seen in Open Jedi Project and all the other mods that used it, TrueView shows the player model in first person view. You can turn it on for guns with **cg_trueguns** and turn it on for sabers with **cg_fpls** or through the menu. Change FOV with **cg_trueFOV**. Recommend set to 120 if using first person lightsaber.
 -   **Radar -** The radar system from Siege in MP now works in SP. Giving NPCs and misc_radar_icon entities the icon key will set a custom icon. A 2D minimap is also loaded from minimaps/mapname.mmap.
@@ -41,6 +41,7 @@ It's based on OpenJK (so the code is released under the GPL and available at <ht
 -   **Click-drag to rotate player model in customization screen - **To help with seeing your character more easily instead of waiting on it to rotate around again.
 -   **MP-style saber hilt list -** Lists lightsabers in the menu without the need for adding menu listings
 -   **r_mode -2 is now default -** sets the game to the monitor's native resolution at launch. Change back to r_mode -1 to use windowed mode.
+-   **Widescreen HUD fix •** Fixes the HUD to support widescreen resolutions without stretching the HUD elements, default to on. **r_ratioFix**.
 -   **Removed black bars in cutscenes •** this helps with widescreen resolutions not cutting off half of the scene.
 
 **Optional features (separate PK3's):**
