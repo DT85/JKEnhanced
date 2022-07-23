@@ -8231,13 +8231,10 @@ static void UI_UpdateSaberHilt( qboolean secondSaber, qboolean changedModel )
 
 	if(!item)
 	{
-		for (int i = 0; i < menuCount; i++)
+		menu = Menus_FindByName("ingamesaberMenu");
+		if (!menu)
 		{
-			if (!Q_stricmp(Menus[i].window.name, "saberMenu"))
-			{
-				menu = &Menus[i];
-				continue;
-			}
+			menu = Menus_FindByName("saberMenu");
 		}
 		
 		item = (itemDef_s *) Menu_FindItemByName(menu, itemName );
