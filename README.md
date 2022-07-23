@@ -16,7 +16,7 @@ It's based on OpenJK (so the code is released under the GPL and available at <ht
 -   **Ignition Flare -** A lightsaber ignition flare can be enabled in the console by setting **cg_ignitionFlare** to 1. A custom ignition flare can be specified for a lightsaber with "ignitionFlare <shader>" in the .sab file.
 -   **Ignition twirl animation disable -** If that little twirl of the saber that you do in SP when activating it bothered you, you can now disable it to be more like MP with **g_noIgniteTwirl 1**.
 -   **Disable idle animations** - Use the command **g_UseIdleAnims 0** to disable them. Very helpful when taking screenshots.
--   **Saber Holsters -** Lightsabers are now holstered on the belt when not in use. A tag_holsterorigin can be added to a hilt for better placement. Adding "holsterPlace <none/hips/back/lhip>" in the .sab file specifies where a hilt will be holstered.
+-   **Saber Holsters -** Lightsabers are now holstered on the belt when not in use. ~~A tag_holsterorigin can be added to a hilt for better placement. Adding "holsterPlace <none/hips/back/lhip>" in the .sab file specifies where a hilt will be holstered.~~ Currently broken, default is right hip for now.
 -   **Headswapping -** Several new heads are available for the human male and human female species. You can add your own heads - see the .headswap files in the sp_custom.pk3 for examples. NPCs can have heads set using the playerHeadModel and customHeadSkin commands in their .npc file.
 -   **RGB Character Colors -** Adds an RGB slider option to all player species.
 -   **Better Entity Spawning -** The /spawn command now supports entity keys, e.g. "**spawn fx_runner fxFile the/file**".
@@ -31,7 +31,7 @@ It's based on OpenJK (so the code is released under the GPL and available at <ht
     -   give weapon_e5
     -   give weapon_dc15s
     -   give weapon_dc15a
--   **Saber throw is now a force power -** This was to be compatible with the katarn saber style (listed below) - this was restored to alt attack to work with all styles like before.
+-   **Saber throw is now a force power -** This was to be compatible with the katarn saber style (listed below) - this was restored to alt attack to work with all styles like before.
 -   **New force powers -** Force Insanity, Destruction, Repulse and Stasis have been added. Force Repulse is gained automatically during the SP campaign. Bind the keys in the Controls menu. NPCs can use Destruction and Stasis. For faster force regeneration, **g_forceRegenTime** has been brought over from MP.
 -   **First person lightsaber with TrueView -** As seen in Open Jedi Project and all the other mods that used it, TrueView shows the player model in first person view. You can turn it on for guns with **cg_trueguns** and turn it on for sabers with **cg_fpls** or through the menu. Change FOV with **cg_trueFOV**. Recommend set to 120 if using first person lightsaber.
 -   **Radar -** The radar system from Siege in MP now works in SP. Giving NPCs and misc_radar_icon entities the icon key will set a custom icon. A 2D minimap is also loaded from minimaps/mapname.mmap.
@@ -41,18 +41,32 @@ It's based on OpenJK (so the code is released under the GPL and available at <ht
 -   **Click-drag to rotate player model in customization screen - **To help with seeing your character more easily instead of waiting on it to rotate around again.
 -   **MP-style saber hilt list -** Lists lightsabers in the menu without the need for adding menu listings
 -   **r_mode -2 is now default -** sets the game to the monitor's native resolution at launch. Change back to r_mode -1 to use windowed mode.
--   **Widescreen HUD fix •** Fixes the HUD to support widescreen resolutions without stretching the HUD elements, default to on. **r_ratioFix**.
--   **Removed black bars in cutscenes •** this helps with widescreen resolutions not cutting off half of the scene.
+-   **Widescreen HUD fix -** Fixes the HUD to support widescreen resolutions without stretching the HUD elements, default to on. **r_ratioFix**.
+-   **Removed black bars in cutscenes -** this helps with widescreen resolutions not cutting off half of the scene.
 
 **Optional features (separate PK3's):**
 
--   **Improved jedi_hm** DT's very nice improved Human Male jedi is included with Jedi Robe options with RGB tinting features.
+-   **Improved jedi_hm -** DT's very nice improved Human Male jedi is included with Jedi Robe options with RGB tinting features.
 -   **Build Your Own Lightsaber** - Now lightsabers can be customized like the player species. Example customizable hilts are included thanks to AshuraDX and Plasma.
 
 **Unfinished features, only use if testing:**
 
 -   **Katarn saber style -** A gun / saber stance. No animations yet, but you play around with it (with cheats enabled) by doing "**give weapon_bryar_pistol**" and then "**setsaberstyle katarn**" in the console.
 -   **Z-6 rotary cannon -** Added slot for this weapon, but it has no model yet. **give weapon_z6**
+
+**Known bugs:**
+
+-   holsterPlace for .sab files currently does not work
+-   The ingame saber menu won't let you switch from dual sabers to single saber. Workaround is to use /saber kyle (or any single saber) and then use the menu to choose one.
+-   g_forceRegenTime doesn't go less than the default value
+-   Player RGB tints can't be removed in the menu
+
+**Potential future features:**
+
+-   Health regeneration
+-   Add new weapons like sabers, fitting them to existing classes - like add a new model but it functions just like a blaster pistol with a unique sound and effect color, like sabers do. Instead of .sab files we could have .weap or files or something similar. As opposed to how it is now where you have to code in new weapons directly.
+-   Adding to the above bullet point, SFX sabers translated into blaster effects with RGB and everything
+-   Headswap, but for all parts, so you can use the pants of one model, the torso of another, and the head of another
 
 
 ## Based on OpenJK
