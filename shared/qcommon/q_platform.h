@@ -108,7 +108,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 		#define idx64
 		#define ARCH_STRING "x86_64"
 		#define Q3_LITTLE_ENDIAN
-	#endif
+	#elif defined(__arm64__)
+  		#define ARCH_STRING "arm64"
+        #define Q3_LITTLE_ENDIAN
+    #endif
 
     #define DLL_EXT ".dylib"
 
