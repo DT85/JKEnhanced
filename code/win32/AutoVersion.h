@@ -19,12 +19,12 @@ This file is part of Jedi Academy.
 #define __AUTO_VERSION_HEADER
 
 #define VERSION_MAJOR_RELEASE		1
-#define VERSION_MINOR_RELEASE		0
+#define VERSION_MINOR_RELEASE		1
 #define VERSION_EXTERNAL_BUILD		1
 #define VERSION_INTERNAL_BUILD		1
 
-#define VERSION_STRING				"1, 0, 1, 1"
-#define VERSION_STRING_DOTTED		"1.0"
+#define VERSION_STRING				"1, 1"
+#define VERSION_STRING_DOTTED		"1.1"
 
 #define VERSION_BUILD_NUMBER		80
 
